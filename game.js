@@ -93,6 +93,7 @@
   var pool = "all";
   var boardTab = "daily";
   var lastSim = null;
+  var reveal = null; // staged World Cup reveal state
   var deferredPrompt = null;
   var LB_KEY = "wcxi_leaderboard_v1";
 
@@ -104,7 +105,7 @@
 
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
-  var views = { home: $("homeView"), setup: $("setupView"), draft: $("draftView"), sim: $("simView"), results: $("resultsView"), board: $("boardView") };
+  var views = { home: $("homeView"), setup: $("setupView"), draft: $("draftView"), results: $("resultsView"), board: $("boardView") };
   var elCountryStrip = $("countryStrip"), elYearStrip = $("yearStrip");
   var elSpin = $("spinBtn"), elReroll = $("rerollBtn"), elRerollCount = $("rerollCount"), elAutoPick = $("autoPickBtn");
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
@@ -516,18 +517,17 @@
 
   // ================= RESULTS =================
   function teamCell(t) { return '<span class="tname' + (t.isUser ? " me" : "") + '">' + t.flag + " " + esc(t.name) + "</span>"; }
-  function renderGroups(groups) {
-    var html = '<div class="grid-groups">';
-    groups.forEach(function (g) {
-      html += '<div class="group-card"><div class="group-name">Group ' + g.name + "</div>";
-      html += '<table class="mini"><thead><tr><th></th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
-      g.table.forEach(function (r, i) {
-        var cls = i < 2 ? "qual" : (i === 2 ? "third" : "");
-        html += '<tr class="' + cls + '"><td class="tcell">' + teamCell(r.team) + "</td><td>" + r.P + "</td><td>" + r.W + "</td><td>" + r.D + "</td><td>" + r.L + "</td><td>" + (r.GD > 0 ? "+" : "") + r.GD + "</td><td><b>" + r.Pts + "</b></td></tr>";
-      });
-      html += "</tbody></table></div>";
+  function groupCardHTML(g) {
+    var html = '<div class="group-card"><div class="group-name">Group ' + g.name + "</div>";
+    html += '<table class="mini"><thead><tr><th></th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
+    g.table.forEach(function (r, i) {
+      var cls = (i < 2 ? "qual" : (i === 2 ? "third" : "")) + (r.team.isUser ? " me-row" : "");
+      html += '<tr class="' + cls + '"><td class="tcell">' + teamCell(r.team) + "</td><td>" + r.P + "</td><td>" + r.W + "</td><td>" + r.D + "</td><td>" + r.L + "</td><td>" + (r.GD > 0 ? "+" : "") + r.GD + "</td><td><b>" + r.Pts + "</b></td></tr>";
     });
-    return html + "</div>";
+    return html + "</tbody></table></div>";
+  }
+  function renderGroups(groups) {
+    return '<div class="grid-groups">' + groups.map(groupCardHTML).join("") + "</div>";
   }
   function renderBracket(rounds) {
     var html = '<div class="bracket">';
@@ -597,11 +597,30 @@
       '<div class="stat-col"><div class="stat-h">🅰️ Top assists</div>' + statRows(s.assisters, "a", 5) + "</div></div></div>";
   }
   function renderWorldCupUser(result, label) {
+    var groupMatches = result.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; });
+    var koMatches = result.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; });
+    var userGroup = null;
+    result.groups.forEach(function (g) { if (g.table.some(function (r) { return r.team.isUser; })) userGroup = g; });
+
     var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">' + result.userResult + "</div>";
     html += statsSummaryHTML(result.userStats);
-    html += '<h3 class="sec">Your road</h3><div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
-    html += '<h3 class="sec">Knockout bracket</h3><p class="legend">All knockout results — your team highlighted in gold.</p>' + renderBracket(result.rounds);
-    html += '<h3 class="sec">Groups</h3><p class="legend">Final group standings — individual match scores hidden.</p>' + renderGroups(result.groups);
+
+    // ---- Part 1: Group stage ----
+    html += '<h3 class="sec">① Group stage</h3>';
+    if (userGroup) html += '<div class="grid-groups">' + groupCardHTML(userGroup) + "</div>";
+    html += '<div class="journey">' + groupMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+
+    // ---- Part 2: Knockouts ----
+    html += '<h3 class="sec">② Knockouts</h3>';
+    if (koMatches.length) {
+      html += '<div class="journey">' + koMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+    } else {
+      html += '<p class="legend">Your run ended in the group stage.</p>';
+    }
+    html += '<h4 class="sub-sec">Full bracket</h4><p class="legend">All knockout results — your team highlighted in gold.</p>' + renderBracket(result.rounds);
+
+    // ---- All groups (standings only) ----
+    html += '<h3 class="sec">All groups</h3><p class="legend">Final standings — individual match scores hidden.</p>' + renderGroups(result.groups);
     return html;
   }
   function renderLeagueUser(result, label) {
@@ -657,35 +676,81 @@
     elBoardBody.innerHTML = html + "</div>";
   }
 
+  function whoLabel(userTeam, comp) {
+    return userTeam.name + " · " + userTeam.formation +
+      (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : "") + " · " + comp;
+  }
+
   function runSim(type, userTeam) {
     lastSim = { type: type, userTeam: userTeam };
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
     showView("results");
     setTimeout(function () {
-      var who = userTeam ? (userTeam.name + " · " + userTeam.formation + (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : "")) : "48 Nations";
-      var html, score = null, result = null;
       if (type === "wc") {
         var wc = window.ENGINE.runWorldCup(userTeam);
-        if (userTeam) { score = wcScore(wc); result = wc.userResult; html = renderWorldCupUser(wc, who + " · World Cup"); }
-        else html = renderWorldCup(wc, who + " · World Cup");
+        reveal = {
+          wc: wc, userTeam: userTeam, label: whoLabel(userTeam, "World Cup"),
+          groupMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; }),
+          koMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; }),
+          stage: "groups", koRevealed: 0, score: wcScore(wc), saved: false
+        };
+        renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
-        if (userTeam) { score = leagueScore(lg); result = ordinal(lg.userPos) + " of " + lg.table.length; html = renderLeagueUser(lg, who + " · League"); }
-        else html = renderLeague(lg, who + " · League");
+        var score = leagueScore(lg), result = ordinal(lg.userPos) + " of " + lg.table.length;
+        addScore({ name: userTeam.name, score: score, result: result, mode: "league", ts: Date.now() });
+        elResultsBody.innerHTML = '<div class="score-banner">🎯 Total score <b>' + score + "</b> <span>· " +
+          esc(result) + " · saved to leaderboard</span></div>" + renderLeagueUser(lg, whoLabel(userTeam, "League"));
+        wireResults();
       }
-      if (userTeam && score != null) {
-        addScore({ name: userTeam.name, score: score, result: result, mode: type, ts: Date.now() });
-        html = '<div class="score-banner">🎯 Total score <b>' + score + "</b> <span>· " + esc(result) + " · saved to leaderboard</span></div>" + html;
-      }
-      elResultsBody.innerHTML = html;
-      wireResults();
     }, 30);
+  }
+
+  // ---- World Cup shown in two parts: group stage, then a result-by-result knockout reveal ----
+  function renderWCStage() {
+    var r = reveal, wc = r.wc, html = '<h2 class="res-title">' + r.label + "</h2>";
+    if (r.stage === "groups") {
+      var ug = null;
+      wc.groups.forEach(function (g) { if (g.table.some(function (row) { return row.team.isUser; })) ug = g; });
+      html += '<div class="stage-badge">Part 1 · Group stage</div>';
+      if (ug) {
+        html += '<h3 class="sec">Your group — Group ' + ug.name + "</h3>" + renderGroups([ug]);
+        html += '<h3 class="sec">Your group games</h3><div class="journey">' +
+          r.groupMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
+      }
+      html += '<h3 class="sec">All groups</h3><p class="legend">Final standings — match scores hidden.</p>' + renderGroups(wc.groups);
+      html += '<button class="start-btn" id="toKO">' + (r.koMatches.length ? "Into the knockouts →" : "See your fate →") + "</button>";
+    } else {
+      html += '<div class="stage-badge">Part 2 · Knockouts</div>';
+      if (r.koMatches.length) {
+        html += '<h3 class="sec">Your knockout run</h3><div class="journey">';
+        for (var i = 0; i < r.koRevealed && i < r.koMatches.length; i++) html += matchCardHTML(r.koMatches[i], wc.teamName);
+        html += "</div>";
+        if (r.koRevealed < r.koMatches.length) {
+          html += '<button class="start-btn" id="revealNext">Reveal the ' + esc(r.koMatches[r.koRevealed].round) + " →</button>";
+        }
+      }
+      if (r.koRevealed >= r.koMatches.length) {
+        html += '<div class="champion big">' + wc.userResult + "</div>";
+        html += '<div class="score-banner">🎯 Total score <b>' + r.score + "</b> <span>· " + esc(wc.userResult) + " · saved to leaderboard</span></div>";
+        html += statsSummaryHTML(wc.userStats);
+        html += '<h3 class="sec">Full knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
+      }
+    }
+    elResultsBody.innerHTML = html;
+    var b1 = document.getElementById("toKO");
+    if (b1) b1.addEventListener("click", function () { reveal.stage = "ko"; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); });
+    var b2 = document.getElementById("revealNext");
+    if (b2) b2.addEventListener("click", function () { reveal.koRevealed++; renderWCStage(); });
+    if (r.stage === "ko" && r.koRevealed >= r.koMatches.length && !r.saved) {
+      r.saved = true;
+      addScore({ name: r.userTeam.name, score: r.score, result: wc.userResult, mode: "wc", ts: Date.now() });
+    }
   }
 
   // ================= WIRING =================
   elTeamName.addEventListener("input", function () { teamName = elTeamName.value; paintPitches(); renderXI(); });
   $("homePlay").addEventListener("click", function () { showView("setup"); });
-  $("homeSim").addEventListener("click", function () { showView("sim"); });
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("setupBack").addEventListener("click", function () { showView("home"); });
   $("startBtn").addEventListener("click", startDraft);
@@ -700,8 +765,6 @@
   $("shareBtn").addEventListener("click", shareTeam);
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("wc", userTeamFromSquad()); });
   $("goLeague").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("league", userTeamFromSquad()); });
-  $("simWorldCup").addEventListener("click", function () { runSim("wc", null); });
-  $("simLeague").addEventListener("click", function () { runSim("league", null); });
   $("newGameBtn").addEventListener("click", newGame);
   $("boardBtn").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("boardBack").addEventListener("click", function () { showView("home"); });
