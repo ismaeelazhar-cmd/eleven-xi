@@ -158,9 +158,11 @@
     "Norway": "EU", "Poland": "EU", "Portugal": "EU", "Romania": "EU", "Russia": "EU", "Scotland": "EU",
     "Serbia": "EU", "Serbia & Montenegro": "EU", "Slovakia": "EU", "Slovenia": "EU", "Spain": "EU",
     "Sweden": "EU", "Switzerland": "EU", "Turkey": "EU", "Ukraine": "EU", "Wales": "EU", "Yugoslavia": "EU",
+    "Czechoslovakia": "EU", "Soviet Union": "EU", "West Germany": "EU", "Northern Ireland": "EU",
     "Algeria": "AF", "Angola": "AF", "Cameroon": "AF", "Cape Verde": "AF", "Egypt": "AF", "Ghana": "AF",
     "Ivory Coast": "AF", "Morocco": "AF", "Nigeria": "AF", "Senegal": "AF", "South Africa": "AF", "Togo": "AF", "Tunisia": "AF",
-    "Argentina": "SA", "Brazil": "SA", "Chile": "SA", "Colombia": "SA", "Ecuador": "SA", "Paraguay": "SA", "Peru": "SA", "Uruguay": "SA",
+    "Argentina": "SA", "Brazil": "SA", "Chile": "SA", "Colombia": "SA", "Ecuador": "SA", "Paraguay": "SA", "Peru": "SA", "Uruguay": "SA", "Bolivia": "SA",
+    "Kuwait": "AS",
     "Australia": "OC", "New Zealand": "OC",
     "Canada": "NA", "Costa Rica": "NA", "Curaçao": "NA", "El Salvador": "NA", "Haiti": "NA", "Honduras": "NA",
     "Jamaica": "NA", "Mexico": "NA", "Panama": "NA", "Trinidad and Tobago": "NA", "USA": "NA", "United States": "NA",
@@ -273,10 +275,11 @@
     return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) +
       '</span><span class="mgr-style-tag">' + st.emoji + " " + st.name + "</span></div>";
   }
+  var STYLE_SHORT = { none: "None", attack: "Attack", defence: "Defence", press: "Press", cup: "Cup", motivator: "Motivate", counter: "Counter" };
   function renderManagerStyles() {
     elManagerStyles.innerHTML = MANAGERS.map(function (m) {
-      return '<button class="formation-opt' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
-        '">' + m.emoji + " " + m.name + "</button>";
+      return '<button class="mgr-style-btn' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
+        '" title="' + esc(m.desc) + '">' + m.emoji + " " + (STYLE_SHORT[m.id] || m.name) + "</button>";
     }).join("");
     Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".formation-opt"), function (b) {
       b.addEventListener("click", function () {
@@ -371,7 +374,7 @@
     var html = "";
     DIFFICULTIES.forEach(function (d) {
       html += '<button class="formation-opt' + (d.id === difficulty ? " active" : "") +
-        '" data-diff="' + d.id + '">' + d.id + " <span class=\"diff-rr\">" + d.rr + "🎲</span></button>";
+        '" data-diff="' + d.id + '">' + d.id + " <span class=\"diff-rr\">" + d.rr + " 🎲</span></button>";
     });
     elDiffBar.innerHTML = html;
     Array.prototype.forEach.call(elDiffBar.querySelectorAll(".formation-opt"), function (b) {
@@ -882,6 +885,28 @@
     return '<div class="reveal-bar"><span class="reveal-count">' + shown + " / " + total +
       ' games</span><button class="btn-ghost" id="skipReveal">Skip ▶▶</button></div>';
   }
+  function roundOthersHTML(wc, roundName) {
+    var rd = null;
+    wc.rounds.forEach(function (r) { if (r.name === roundName) rd = r; });
+    if (!rd) return "";
+    var rows = "";
+    rd.ties.forEach(function (t) {
+      if (t.a.isUser || t.b.isUser) return; // user's own tie shown as a card above
+      var pens = t.res.pens ? ' <span class="pens">(p ' + t.res.pens[0] + "–" + t.res.pens[1] + ")</span>" : "";
+      rows += '<div class="ko-line"><span class="ko-t' + (t.winner === t.a ? " w" : "") + '">' + teamCell(t.a) + "</span>" +
+        '<span class="ko-sc">' + t.res.a + "–" + t.res.b + pens + "</span>" +
+        '<span class="ko-t' + (t.winner === t.b ? " w" : "") + '">' + teamCell(t.b) + "</span></div>";
+    });
+    if (!rows) return "";
+    return '<div class="ko-all-h">Other ' + esc(roundName) + " results</div><div class=\"ko-results\">" + rows + "</div>";
+  }
+  function koRevealListHTML(wc, km, shown) {
+    var html = '<div class="journey">';
+    for (var i = 0; i < shown && i < km.length; i++) {
+      html += '<div class="ko-round-block">' + matchCardHTML(km[i], wc.teamName) + roundOthersHTML(wc, km[i].round) + "</div>";
+    }
+    return html + "</div>";
+  }
 
   // World Cup: group games revealed one-by-one → group tables → knockouts one-by-one → result.
   function renderWCStage() {
@@ -903,9 +928,9 @@
       var km = r.koMatches;
       html += '<div class="stage-badge">Part 2 · Knockouts</div>';
       if (km.length && r.shown < km.length) {
-        html += skipBarHTML(r.shown, km.length) + revealListHTML(km, r.shown, wc.teamName);
+        html += skipBarHTML(r.shown, km.length) + koRevealListHTML(wc, km, r.shown);
       } else {
-        html += revealListHTML(km, km.length, wc.teamName);
+        html += koRevealListHTML(wc, km, km.length);
         html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
       }
     } else {

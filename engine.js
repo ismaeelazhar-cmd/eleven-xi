@@ -6,12 +6,12 @@
 window.ENGINE = (function () {
   "use strict";
 
-  var DIFFICULTY = 11;       // World Cup tax — points shaved off the user's attack & defence
+  var DIFFICULTY = 10;       // World Cup tax — points shaved off the user's attack & defence
   var LEAGUE_DIFFICULTY = -2; // League tax — gentler, so 1st is achievable (but 47-0 stays brutal)
   var activeTax = DIFFICULTY; // set per competition
   // Extra penalty applied to the user each knockout round — the deeper you go, the tougher
   // it gets (on top of the fact that only strong teams survive to face you). Index = round.
-  var KO_ESCALATION = [0, 2, 4, 7, 10]; // R32, R16, QF, SF, Final
+  var KO_ESCALATION = [0, 2, 4, 6, 9]; // R32, R16, QF, SF, Final
   var ASSIST_CHANCE = 0.66;  // chance a goal has an assist
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }

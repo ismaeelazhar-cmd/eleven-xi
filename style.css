@@ -963,3 +963,19 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 .formation-opt.active { background: rgba(249,156,0,0.12); border-color: var(--gold); color: var(--gold); box-shadow: none; }
 .formation-opt .diff-rr { opacity: 0.7; font-weight: 800; }
 .formation-options { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ===== Manager style row — all on one line ===== */
+.mgr-style-row { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.mgr-style-row::-webkit-scrollbar { height: 5px; }
+.mgr-style-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+.mgr-style-btn {
+  flex: 0 0 auto; white-space: nowrap;
+  background: #0c0c14; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.12s ease;
+}
+.mgr-style-btn:hover { border-color: rgba(249,156,0,0.45); color: var(--text); }
+.mgr-style-btn.active { background: rgba(249,156,0,0.12); border-color: var(--gold); color: var(--gold); }
+
+/* ===== Emoji spacing safety — keep a hair of space after leading emoji ===== */
+.tg-emoji, .mgr-emoji { margin-right: 2px; }
