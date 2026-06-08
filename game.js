@@ -59,8 +59,11 @@
   var teamName = "";
   var managerId = "none";
   var showRatings = true;
+  var pool = "all";          // "all" or "2026"
+  var boardTab = "daily";
   var lastSim = null;
   var deferredPrompt = null;
+  var LB_KEY = "wcxi_leaderboard_v1";
 
   function currentManager() {
     for (var i = 0; i < MANAGERS.length; i++) if (MANAGERS[i].id === managerId) return MANAGERS[i];
@@ -70,7 +73,7 @@
 
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
-  var views = { setup: $("setupView"), draft: $("draftView"), sim: $("simView"), results: $("resultsView") };
+  var views = { setup: $("setupView"), draft: $("draftView"), sim: $("simView"), results: $("resultsView"), board: $("boardView") };
   var elCountryStrip = $("countryStrip"), elYearStrip = $("yearStrip");
   var elSpin = $("spinBtn"), elReroll = $("rerollBtn"), elRerollCount = $("rerollCount");
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
@@ -80,12 +83,19 @@
   var elFormationBar = $("formationBar"), elSetupPitch = $("setupPitch"), elDraftPitch = $("draftPitch");
   var elPitchTitle = $("pitchTitle"), elDraftTeam = $("draftTeam"), elDraftMeta = $("draftMeta");
   var elRatingsToggle = $("ratingsToggle"), elRatingsDesc = $("ratingsDesc");
+  var elPoolToggle = $("poolToggle"), elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
   function shortName(n) {
     var parts = String(n).split(" "); var last = parts[parts.length - 1];
     return last.length > 10 ? last.slice(0, 9) + "…" : last;
+  }
+  function initials(n) {
+    var parts = String(n).split(" ").filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 
   function showView(name) {
@@ -123,7 +133,7 @@
         var p = byGroup[line.group][ptr[line.group]++];
         if (p) {
           html += '<div class="pdot filled ' + line.group + '">' +
-            (showRatings ? '<span class="dot-rate">' + p.r + "</span>" : "") +
+            '<span class="dot-init">' + esc(initials(p.n)) + "</span>" +
             '<span class="dot-name">' + esc(shortName(p.n)) + "</span></div>";
         } else {
           html += '<div class="pdot ' + line.group + '"><span class="dot-pos">' + line.group + "</span></div>";
@@ -195,6 +205,27 @@
       : "Ratings are hidden — draft blind for a tougher challenge.";
   }
 
+  function renderPoolToggle() {
+    Array.prototype.forEach.call(elPoolToggle.querySelectorAll(".seg-opt"), function (b) {
+      var on = b.getAttribute("data-pool") === pool;
+      b.className = "seg-opt" + (on ? " active" : "");
+      b.onclick = function () { pool = b.getAttribute("data-pool"); renderPoolToggle(); };
+    });
+    elPoolDesc.textContent = pool === "2026"
+      ? "Only 2026 World Cup squads (projected from current rosters)."
+      : "Draft from every squad across all World Cups.";
+  }
+
+  function poolPairs() {
+    var pairs = [];
+    COUNTRIES.forEach(function (c) {
+      Object.keys(DATA[c].years).forEach(function (y) {
+        if (pool === "all" || y === "2026") pairs.push({ c: c, y: y });
+      });
+    });
+    return pairs;
+  }
+
   // ================= DRAFT =================
   function countryItemHTML(c) {
     return '<div class="reel-item"><span class="flag">' + DATA[c].flag +
@@ -243,12 +274,14 @@
     if (spinning) return;
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
-    var country = rand(COUNTRIES);
-    var year = rand(Object.keys(DATA[country].years));
+    var pairs = poolPairs();
+    var pick = rand(pairs);
+    var country = pick.c, year = pick.y;
     current = { country: country, year: year };
-    var years = allYears();
-    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(COUNTRIES)); }, countryItemHTML(country), 2100);
-    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(years)); }, yearItemHTML(year), 2600);
+    var poolCountries = pairs.map(function (p) { return p.c; });
+    var poolYears = pairs.map(function (p) { return p.y; });
+    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(poolCountries)); }, countryItemHTML(country), 2100);
+    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(poolYears)); }, yearItemHTML(year), 2600);
     Promise.all([p1, p2]).then(function () {
       spinning = false; elHint.textContent = "";
       renderSquadPicker();
@@ -563,6 +596,57 @@
     });
   }
 
+  // ---- scoring + leaderboards (persisted; game state itself is NOT persisted) ----
+  function wcScore(wc) {
+    var s = wc.userStats;
+    var base = { "Eliminated in the Group stage": 100, "Out in the Round of 32": 220,
+      "Out in the Round of 16": 380, "Out in the Quarter-finals": 560,
+      "Semi-finalists": 820, "🥈 Runners-up": 1100, "🏆 Champions!": 1600 };
+    var b = base[wc.userResult] || 100;
+    return Math.max(0, Math.round(b + s.gf * 10 + s.cleanSheets * 25 - s.ga * 5 + s.w * 30));
+  }
+  function leagueScore(lg) {
+    var ur = lg.userRow, s = lg.userStats;
+    return Math.max(0, Math.round((49 - lg.userPos) * 30 + ur.Pts * 4 + ur.GD * 3 + s.cleanSheets * 20 + s.gf * 4));
+  }
+  function loadBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); } catch (e) { return []; } }
+  function saveBoard(a) { try { localStorage.setItem(LB_KEY, JSON.stringify(a)); } catch (e) {} }
+  function addScore(entry) { var a = loadBoard(); a.push(entry); saveBoard(a); }
+  function sameDay(a, b) { var x = new Date(a), y = new Date(b); return x.toDateString() === y.toDateString(); }
+
+  function renderBoard() {
+    Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
+      b.className = "seg-opt" + (b.getAttribute("data-board") === boardTab ? " active" : "");
+    });
+    var all = loadBoard(), now = Date.now();
+    var filtered = all.filter(function (e) {
+      if (boardTab === "daily") return sameDay(e.ts, now);
+      if (boardTab === "weekly") return (now - e.ts) <= 7 * 86400000;
+      return true;
+    });
+    filtered.sort(function (a, b) { return b.score - a.score; });
+    var top = filtered.slice(0, 25);
+    if (!top.length) { elBoardBody.innerHTML = '<div class="empty-note">No scores yet — finish a game to set one!</div>'; return; }
+    var html = '<div class="board-list">';
+    top.forEach(function (e, i) {
+      html += '<div class="board-row' + (i < 3 ? " top3" : "") + '"><span class="brank">' + (i + 1) + "</span>" +
+        '<span class="bname">' + esc(e.name) + "</span>" +
+        '<span class="bres">' + esc(e.result || "") + " · " + (e.mode === "wc" ? "WC" : "League") + "</span>" +
+        '<span class="bscore">' + e.score + "</span></div>";
+    });
+    elBoardBody.innerHTML = html + "</div>";
+  }
+
+  function newGame() {
+    squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false; rerollsLeft = REROLLS;
+    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all";
+    elTeamName.value = "";
+    elSquadPanel.style.display = "none"; elHint.textContent = "";
+    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
+    paintPitches(); renderXI(); updateControls();
+    showView("setup");
+  }
+
   function runSim(type, userTeam) {
     lastSim = { type: type, userTeam: userTeam };
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
@@ -571,13 +655,21 @@
       var who = userTeam
         ? (userTeam.name + " · " + userTeam.formation + (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : ""))
         : "48 Nations";
+      var html, score = null, result = null;
       if (type === "wc") {
         var wc = window.ENGINE.runWorldCup(userTeam);
-        elResultsBody.innerHTML = userTeam ? renderWorldCupUser(wc, who + " · World Cup") : renderWorldCup(wc, who + " · World Cup");
+        if (userTeam) { score = wcScore(wc); result = wc.userResult; html = renderWorldCupUser(wc, who + " · World Cup"); }
+        else html = renderWorldCup(wc, who + " · World Cup");
       } else {
-        var res = window.ENGINE.runLeague(userTeam);
-        elResultsBody.innerHTML = userTeam ? renderLeagueUser(res, who + " · League") : renderLeague(res, who + " · League");
+        var lg = window.ENGINE.runLeague(userTeam);
+        if (userTeam) { score = leagueScore(lg); result = ordinal(lg.userPos) + " of " + lg.table.length; html = renderLeagueUser(lg, who + " · League"); }
+        else html = renderLeague(lg, who + " · League");
       }
+      if (userTeam && score != null) {
+        addScore({ name: userTeam.name, score: score, result: result, mode: type, ts: Date.now() });
+        html = '<div class="score-banner">🎯 Total score <b>' + score + "</b> <span>· " + esc(result) + " · saved to leaderboard</span></div>" + html;
+      }
+      elResultsBody.innerHTML = html;
       wireResults();
     }, 30);
   }
@@ -603,7 +695,16 @@
   $("simWorldCup").addEventListener("click", function () { runSim("wc", null); });
   $("simLeague").addEventListener("click", function () { runSim("league", null); });
   $("resultsBack").addEventListener("click", function () { showView(lastSim && lastSim.userTeam ? "draft" : "sim"); });
-  $("resimBtn").addEventListener("click", function () { if (lastSim) runSim(lastSim.type, lastSim.userTeam); });
+  $("newGameBtn").addEventListener("click", newGame);
+  $("boardBtn").addEventListener("click", function () { renderBoard(); showView("board"); });
+  $("toBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
+  $("boardBack").addEventListener("click", function () { showView("setup"); });
+  $("clearBoardBtn").addEventListener("click", function () {
+    if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); }
+  });
+  Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
+    b.addEventListener("click", function () { boardTab = b.getAttribute("data-board"); renderBoard(); });
+  });
 
   // ---- PWA ----
   var installBtn = $("installBtn");
@@ -620,6 +721,7 @@
   renderManagerBar();
   renderFormationBar();
   renderRatingsToggle();
+  renderPoolToggle();
   paintPitches();
   renderXI();
   updateControls();

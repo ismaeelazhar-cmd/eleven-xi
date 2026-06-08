@@ -52,6 +52,15 @@
         </div>
 
         <div class="setup-row setup-row-col">
+          <span class="setup-label">Player pool</span>
+          <div class="seg" id="poolToggle">
+            <button class="seg-opt active" data-pool="all">🏆 All World Cups</button>
+            <button class="seg-opt" data-pool="2026">⚽ World Cup 2026 only</button>
+          </div>
+          <div class="seg-desc" id="poolDesc">Draft from every squad across all World Cups.</div>
+        </div>
+
+        <div class="setup-row setup-row-col">
           <span class="setup-label">Player ratings</span>
           <div class="seg" id="ratingsToggle">
             <button class="seg-opt active" data-ratings="show">👁 Show ratings</button>
@@ -62,6 +71,7 @@
 
         <button class="start-btn" id="startBtn">Start drafting →</button>
         <button class="link-btn" id="toSim">or simulate the 48 nations instead →</button>
+        <button class="link-btn" id="toBoard">🏆 view leaderboards</button>
       </div>
     </section>
 
@@ -138,9 +148,27 @@
     <section id="resultsView" style="display:none;">
       <div class="results-head">
         <button class="back" id="resultsBack">← Back</button>
-        <button class="btn-ghost" id="resimBtn">↻ Re-simulate</button>
+        <div class="results-head-right">
+          <button class="btn-ghost" id="boardBtn">🏆 Leaderboards</button>
+          <button class="btn-primary" id="newGameBtn">🔄 New Game</button>
+        </div>
       </div>
       <div id="resultsBody"></div>
+    </section>
+
+    <!-- ===== LEADERBOARDS ===== -->
+    <section id="boardView" style="display:none;">
+      <div class="results-head">
+        <button class="back" id="boardBack">← Back</button>
+        <button class="btn-ghost" id="clearBoardBtn">Clear scores</button>
+      </div>
+      <h2 class="res-title">🏆 Leaderboards</h2>
+      <div class="seg board-tabs" id="boardTabs">
+        <button class="seg-opt active" data-board="daily">Daily</button>
+        <button class="seg-opt" data-board="weekly">Weekly</button>
+        <button class="seg-opt" data-board="all">All-time</button>
+      </div>
+      <div id="boardBody"></div>
     </section>
 
     <footer>
@@ -149,6 +177,7 @@
   </div>
 
   <script src="data.js"></script>
+  <script src="data_extra.js"></script>
   <script src="nations.js"></script>
   <script src="engine.js"></script>
   <script src="game.js"></script>

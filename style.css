@@ -677,3 +677,68 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .stat-row .sv { font-weight: 800; color: var(--gold); }
 .stat-empty { color: var(--muted); padding: 6px 0; }
 @media (max-width: 480px) { .stat-cols { grid-template-columns: 1fr; } }
+
+/* ===== Bigger draft pitch + initials ===== */
+.dot-init { font-size: 14px; font-weight: 900; color: #0a0a0f; line-height: 1; }
+.draft-head { flex-direction: column; align-items: stretch; text-align: center; gap: 12px; }
+.draft-pitch-wrap { align-self: center; width: 100%; }
+.draft-pitch-wrap .pitch { width: 100%; max-width: 300px; padding: 16px 10px; margin: 0 auto; }
+.draft-pitch-wrap .pdot { width: 38px; height: 38px; border-width: 1.5px; }
+.draft-pitch-wrap .pdot .dot-init { font-size: 13px; }
+.draft-pitch-wrap .pdot .dot-name { display: block; font-size: 8.5px; max-width: 56px; }
+.draft-pitch-wrap .pdot .dot-pos { font-size: 9px; }
+.draft-team { font-size: 22px; }
+
+/* ===== 38-0-style slot machine ===== */
+.machine {
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(249,156,0,0.08), transparent 55%),
+    linear-gradient(180deg, #16131a, #0c0b10);
+  border: 1px solid rgba(249, 156, 0, 0.22);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.reel-box { background: #07070b; border-color: rgba(255,255,255,0.06); }
+.reel {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.75), transparent 26%, transparent 74%, rgba(0,0,0,0.75)),
+    #050409;
+}
+.reel::after {
+  box-shadow:
+    inset 0 0 0 2px rgba(249, 209, 102, 0.55),
+    0 0 18px rgba(249, 156, 0, 0.25);
+  border-radius: 8px;
+  background: linear-gradient(180deg, transparent 46%, rgba(249,156,0,0.10) 50%, transparent 54%);
+}
+.reel-label { color: var(--gold); }
+.reel-item .name { text-transform: uppercase; letter-spacing: 1px; font-size: 16px; }
+.reel-item .flag { font-size: 44px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5)); }
+.reel-item .year { color: var(--gold); }
+
+/* ===== Pool segmented (reuse .seg) — already styled ===== */
+
+/* ===== Score banner ===== */
+.score-banner {
+  background: linear-gradient(90deg, rgba(249,156,0,0.22), rgba(0,187,127,0.18));
+  border: 1px solid rgba(249,156,0,0.5); border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 16px; font-size: 18px; font-weight: 700;
+}
+.score-banner b { font-size: 26px; color: var(--gold); }
+.score-banner span { color: var(--muted); font-size: 14px; font-weight: 500; }
+
+/* ===== Results header buttons ===== */
+.results-head-right { display: flex; gap: 8px; }
+
+/* ===== Leaderboards ===== */
+.board-tabs { margin-bottom: 16px; }
+.board-list { display: grid; gap: 6px; }
+.board-row {
+  display: flex; align-items: center; gap: 10px;
+  background: #0c0c14; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+}
+.board-row.top3 { border-color: rgba(249,156,0,0.45); background: rgba(249,156,0,0.07); }
+.board-row .brank { width: 26px; font-weight: 900; color: var(--muted); text-align: center; }
+.board-row.top3 .brank { color: var(--gold); }
+.board-row .bname { flex: 1; font-weight: 700; font-size: 14px; }
+.board-row .bres { color: var(--muted); font-size: 12px; }
+.board-row .bscore { font-weight: 900; color: var(--gold); font-size: 16px; min-width: 56px; text-align: right; }
