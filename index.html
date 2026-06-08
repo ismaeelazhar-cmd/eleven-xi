@@ -47,7 +47,10 @@
 
         <div class="setup-row setup-row-col">
           <span class="setup-label">Manager</span>
-          <div class="manager-options" id="managerBar"></div>
+          <div class="mgr-wheel">
+            <div class="reel mgr-reel"><div class="reel-strip" id="managerStrip"></div></div>
+            <button class="btn-accent" id="managerSpin">🎡 Spin manager</button>
+          </div>
           <div class="manager-desc" id="managerDesc"></div>
         </div>
 
@@ -63,8 +66,18 @@
 
         <div class="setup-row setup-row-col">
           <span class="setup-label">Player pool — which World Cups</span>
-          <div class="formation-options" id="poolPresets"></div>
-          <div class="year-line" id="yearBar"></div>
+          <div class="era-wrap">
+            <div class="era-slider" id="eraSlider">
+              <div class="era-track"><div class="era-fill" id="eraFill"></div></div>
+              <input type="range" id="eraMin" min="0" max="1" value="0" />
+              <input type="range" id="eraMax" min="0" max="1" value="1" />
+            </div>
+            <div class="era-side">
+              <button class="era-btn" id="era2026">2026</button>
+              <button class="era-btn" id="eraAll">All</button>
+            </div>
+          </div>
+          <div class="era-labels"><span class="era-end" id="eraLo">—</span><span class="era-end" id="eraHi">—</span></div>
           <div class="seg-desc" id="poolDesc"></div>
         </div>
 

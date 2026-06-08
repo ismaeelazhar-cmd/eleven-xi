@@ -82,6 +82,19 @@
     { id: "cup",       emoji: "🏆", name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
     { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
   ];
+  // Legacy/iconic managers linked to a tactical style (the bonus comes from the style above).
+  var MANAGERS_DB = [
+    { n: "Rinus Michels", s: "attack" }, { n: "Johan Cruyff", s: "attack" }, { n: "Joachim Löw", s: "attack" },
+    { n: "Roberto Martínez", s: "attack" }, { n: "Mário Zagallo", s: "attack" },
+    { n: "Helenio Herrera", s: "defence" }, { n: "Giovanni Trapattoni", s: "defence" }, { n: "Diego Simeone", s: "defence" },
+    { n: "Fabio Capello", s: "defence" }, { n: "Antonio Conte", s: "defence" },
+    { n: "Marcelo Bielsa", s: "press" }, { n: "Jürgen Klopp", s: "press" }, { n: "Pep Guardiola", s: "press" },
+    { n: "Arrigo Sacchi", s: "press" }, { n: "Valeriy Lobanovskyi", s: "press" },
+    { n: "José Mourinho", s: "cup" }, { n: "Carlo Ancelotti", s: "cup" }, { n: "Didier Deschamps", s: "cup" },
+    { n: "Lionel Scaloni", s: "cup" }, { n: "Zinedine Zidane", s: "cup" },
+    { n: "Sir Alex Ferguson", s: "motivator" }, { n: "Vicente del Bosque", s: "motivator" },
+    { n: "Luiz Felipe Scolari", s: "motivator" }, { n: "Bora Milutinović", s: "motivator" }, { n: "Otto Rehhagel", s: "motivator" }
+  ];
 
   // ---- state ----
   var squad = [];        // [{id,n,p(broad),r,slot(granular),country,year}]
@@ -94,6 +107,8 @@
   var formation = "4-3-3";
   var teamName = "";
   var managerId = "none";
+  var managerName = "";
+  var managerSpinning = false;
   var showRatings = true;
   var pool = "all";
   var DIFFICULTIES = [{ id: "Rookie", rr: 3 }, { id: "Pro", rr: 1 }, { id: "Legend", rr: 0 }];
@@ -121,16 +136,18 @@
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
   var elXiList = $("xiList"), elXiCount = $("xiCount"), elFormation = $("formation");
   var elDone = $("doneBanner"), elRatingNote = $("ratingNote"), elResultsBody = $("resultsBody");
-  var elManagerBar = $("managerBar"), elManagerDesc = $("managerDesc"), elTeamName = $("teamName");
+  var elManagerStrip = $("managerStrip"), elManagerSpin = $("managerSpin"), elManagerDesc = $("managerDesc"), elTeamName = $("teamName");
   var elFormationBar = $("formationBar"), elSetupPitch = $("setupPitch"), elDraftPitch = $("draftPitch");
   var elPitchTitle = $("pitchTitle"), elDraftTeam = $("draftTeam"), elDraftMeta = $("draftMeta");
   var elRatingsToggle = $("ratingsToggle"), elRatingsDesc = $("ratingsDesc");
-  var elPoolPresets = $("poolPresets"), elYearBar = $("yearBar"), elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
+  var elEraMin = $("eraMin"), elEraMax = $("eraMax"), elEraFill = $("eraFill"), elEraLo = $("eraLo"), elEraHi = $("eraHi");
+  var elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
   var ALL_YEARS = (function () {
     var s = {}; COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { s[y] = 1; }); });
     return Object.keys(s).sort();
   })();
   var selectedYears = {}; ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
+  var minIdx = 0, maxIdx = ALL_YEARS.length - 1;
   var elDiffBar = $("difficultyBar"), elDiffDesc = $("difficultyDesc");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
@@ -230,21 +247,31 @@
   }
 
   // ---- setup controls ----
-  function renderManagerBar() {
-    var html = "";
-    MANAGERS.forEach(function (m) {
-      html += '<button class="manager-opt' + (m.id === managerId ? " active" : "") +
-        '" data-manager="' + m.id + '" title="' + esc(m.desc) + '"><span class="mgr-emoji">' +
-        m.emoji + '</span><span class="mgr-name">' + m.name + "</span></button>";
-    });
-    elManagerBar.innerHTML = html;
-    Array.prototype.forEach.call(elManagerBar.querySelectorAll(".manager-opt"), function (b) {
-      b.addEventListener("click", function () {
-        managerId = b.getAttribute("data-manager");
-        renderManagerBar(); paintPitches(); renderXI();
+  function styleById(id) { for (var i = 0; i < MANAGERS.length; i++) if (MANAGERS[i].id === id) return MANAGERS[i]; return MANAGERS[0]; }
+  function managerItemHTML(name, styleId) {
+    var st = styleById(styleId);
+    return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) +
+      '</span><span class="mgr-style-tag">' + st.emoji + " " + st.name + "</span></div>";
+  }
+  function renderManager() {
+    if (managerId === "none") {
+      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager yet</span><span class="mgr-style-tag">🎡 spin to appoint one</span></div>';
+      elManagerDesc.textContent = "Spin the wheel to appoint a manager — each brings a tactical bonus.";
+    } else {
+      elManagerStrip.innerHTML = managerItemHTML(managerName, managerId);
+      var st = currentManager();
+      elManagerDesc.textContent = st.emoji + " " + st.name + " — " + st.desc;
+    }
+  }
+  function spinManager() {
+    if (managerSpinning) return;
+    managerSpinning = true; elManagerSpin.disabled = true;
+    var pick = rand(MANAGERS_DB);
+    spinReel(elManagerStrip, function () { var m = rand(MANAGERS_DB); return managerItemHTML(m.n, m.s); },
+      managerItemHTML(pick.n, pick.s), 1700).then(function () {
+        managerName = pick.n; managerId = pick.s; managerSpinning = false; elManagerSpin.disabled = false;
+        renderManager(); paintPitches(); renderXI();
       });
-    });
-    elManagerDesc.textContent = currentManager().desc;
   }
   function renderFormationBar() {
     var html = "";
@@ -283,34 +310,23 @@
       function (v) { showRatings = (v === "show"); paintPitches(); renderXI(); if (current) renderSquadPicker(); },
       { show: "Player ratings are visible while you draft.", hide: "Ratings hidden — draft blind for a tougher challenge." });
   }
-  function setYears(fn) { ALL_YEARS.forEach(function (y) { selectedYears[y] = fn(parseInt(y, 10)); }); renderYearBar(); }
-  function renderYearBar() {
-    var presets = [["all", "All"], ["modern", "Modern (1998+)"], ["2026", "2026 only"], ["legacy", "Legacy (pre-1998)"]];
-    elPoolPresets.innerHTML = presets.map(function (p) {
-      return '<button class="formation-opt" data-preset="' + p[0] + '">' + p[1] + "</button>";
-    }).join("");
-    Array.prototype.forEach.call(elPoolPresets.querySelectorAll(".formation-opt"), function (b) {
-      b.addEventListener("click", function () {
-        var p = b.getAttribute("data-preset");
-        if (p === "all") setYears(function () { return true; });
-        else if (p === "2026") setYears(function (y) { return y === 2026; });
-        else if (p === "modern") setYears(function (y) { return y >= 1998; });
-        else setYears(function (y) { return y < 1998; });
-      });
-    });
-    elYearBar.innerHTML = ALL_YEARS.map(function (y) {
-      return '<button class="year-chip' + (selectedYears[y] ? " on" : "") + '" data-year="' + y + '">' + y + "</button>";
-    }).join("");
-    Array.prototype.forEach.call(elYearBar.querySelectorAll(".year-chip"), function (b) {
-      b.addEventListener("click", function () {
-        var y = b.getAttribute("data-year");
-        var cnt = ALL_YEARS.filter(function (yy) { return selectedYears[yy]; }).length;
-        if (selectedYears[y] && cnt <= 1) return; // always keep at least one year
-        selectedYears[y] = !selectedYears[y]; renderYearBar();
-      });
-    });
-    var n = ALL_YEARS.filter(function (y) { return selectedYears[y]; }).length;
-    elPoolDesc.textContent = n + " of " + ALL_YEARS.length + " World Cups selected · " + poolPairs().length + " squads in the draw.";
+  function eraApply() {
+    selectedYears = {};
+    for (var i = minIdx; i <= maxIdx; i++) selectedYears[ALL_YEARS[i]] = true;
+    var n = ALL_YEARS.length - 1;
+    elEraMin.max = n; elEraMax.max = n; elEraMin.value = minIdx; elEraMax.value = maxIdx;
+    elEraFill.style.left = (n ? 100 * minIdx / n : 0) + "%";
+    elEraFill.style.width = (n ? 100 * (maxIdx - minIdx) / n : 100) + "%";
+    elEraLo.textContent = ALL_YEARS[minIdx]; elEraHi.textContent = ALL_YEARS[maxIdx];
+    var cnt = maxIdx - minIdx + 1;
+    elPoolDesc.textContent = cnt + " World Cup" + (cnt === 1 ? "" : "s") + " selected · " + poolPairs().length + " squads in the draw.";
+  }
+  function renderEra() {
+    elEraMin.oninput = function () { minIdx = Math.min(parseInt(this.value, 10), maxIdx); eraApply(); };
+    elEraMax.oninput = function () { maxIdx = Math.max(parseInt(this.value, 10), minIdx); eraApply(); };
+    $("eraAll").onclick = function () { minIdx = 0; maxIdx = ALL_YEARS.length - 1; eraApply(); };
+    $("era2026").onclick = function () { var i = ALL_YEARS.indexOf("2026"); if (i < 0) i = ALL_YEARS.length - 1; minIdx = maxIdx = i; eraApply(); };
+    eraApply();
   }
 
   function renderDifficultyBar() {
@@ -536,7 +552,7 @@
     return {
       name: teamDisplayName(), flag: "⭐", rating: rating,
       atk: rating + tilt.atk + mgr.atk, def: rating + tilt.def + mgr.def,
-      koBonus: mgr.ko, isUser: true, formation: formation, manager: mgr.name,
+      koBonus: mgr.ko, isUser: true, formation: formation, manager: (managerId === "none" ? "No manager" : managerName + " (" + mgr.name + ")"),
       players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; })
     };
   }
@@ -564,11 +580,11 @@
   function newGame() {
     clearTimeout(revealTimer);
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
-    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
-    ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
+    teamName = ""; managerId = "none"; managerName = ""; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
+    minIdx = 0; maxIdx = ALL_YEARS.length - 1;
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderYearBar(); renderDifficultyBar();
+    renderManager(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
     paintPitches(); renderXI(); updateControls(); showView("home");
   }
 
@@ -886,6 +902,7 @@
   $("draftBack").addEventListener("click", function () { paintPitches(); showView("setup"); });
   Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("home"); }); });
 
+  elManagerSpin.addEventListener("click", spinManager);
   elSpin.addEventListener("click", doSpin);
   elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; doSpin(); });
   elAutoPick.addEventListener("click", autoPickCurrent);
@@ -910,6 +927,6 @@
   if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 
   // ---- init ----
-  renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderYearBar(); renderDifficultyBar();
+  renderManager(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
 })();
