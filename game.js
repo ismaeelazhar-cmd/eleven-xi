@@ -1,4 +1,4 @@
-/* World Cup XI — controller: setup → draft (spin/reroll) → simulate */
+/* World Cup XI — controller: setup → draft (granular positions) → simulate */
 (function () {
   "use strict";
 
@@ -8,31 +8,40 @@
   var ITEM_H = 96;
   var REROLLS = 3;
 
-  // GK always 1. DEF/MID/FWD = slot counts; rows = visual pitch lines (DEF→FWD).
+  // Granular position → broad line (for pitch grouping + scoring) + full label.
+  var LINE_OF = {
+    GK: "GK", CB: "DEF", RB: "DEF", LB: "DEF", RWB: "DEF", LWB: "DEF",
+    CDM: "MID", CM: "MID", CAM: "MID", LM: "MID", RM: "MID",
+    LW: "FWD", RW: "FWD", ST: "FWD"
+  };
+  var POS_FULL = {
+    GK: "Goalkeeper", CB: "Centre-back", RB: "Right-back", LB: "Left-back",
+    RWB: "Right wing-back", LWB: "Left wing-back", CDM: "Defensive mid",
+    CM: "Centre mid", CAM: "Attacking mid", LM: "Left mid", RM: "Right mid",
+    LW: "Left wing", RW: "Right wing", ST: "Striker"
+  };
+  // Which granular positions a player of a given broad role can fill.
+  var BROAD_ELIG = {
+    GK: ["GK"],
+    DEF: ["CB", "RB", "LB", "RWB", "LWB"],
+    MID: ["CDM", "CM", "CAM", "LM", "RM", "RWB", "LWB"],
+    FWD: ["ST", "LW", "RW", "CAM"]
+  };
+
+  // Formations as lines of granular slots, defence → attack (GK implicit).
   var FORMATIONS = {
-    "4-3-3":   { DEF: 4, MID: 3, FWD: 3, rows: [4, 3, 3] },
-    "4-4-2":   { DEF: 4, MID: 4, FWD: 2, rows: [4, 4, 2] },
-    "4-2-3-1": { DEF: 4, MID: 5, FWD: 1, rows: [4, 2, 3, 1] },
-    "3-5-2":   { DEF: 3, MID: 5, FWD: 2, rows: [3, 5, 2] },
-    "3-4-1-2": { DEF: 3, MID: 5, FWD: 2, rows: [3, 4, 1, 2] },
-    "3-4-3":   { DEF: 3, MID: 4, FWD: 3, rows: [3, 4, 3] },
-    "5-3-2":   { DEF: 5, MID: 3, FWD: 2, rows: [5, 3, 2] },
-    "4-5-1":   { DEF: 4, MID: 5, FWD: 1, rows: [4, 5, 1] },
-    "5-4-1":   { DEF: 5, MID: 4, FWD: 1, rows: [5, 4, 1] }
+    "4-3-3":   { lines: [["RB", "CB", "CB", "LB"], ["CDM", "CM", "CM"], ["LW", "ST", "RW"]] },
+    "4-4-2":   { lines: [["RB", "CB", "CB", "LB"], ["RM", "CM", "CM", "LM"], ["ST", "ST"]] },
+    "4-2-3-1": { lines: [["RB", "CB", "CB", "LB"], ["CDM", "CDM"], ["RM", "CAM", "LM"], ["ST"]] },
+    "3-5-2":   { lines: [["CB", "CB", "CB"], ["RM", "CM", "CDM", "CM", "LM"], ["ST", "ST"]] },
+    "3-4-1-2": { lines: [["CB", "CB", "CB"], ["RM", "CM", "CM", "LM"], ["CAM"], ["ST", "ST"]] },
+    "3-4-3":   { lines: [["CB", "CB", "CB"], ["RM", "CM", "CM", "LM"], ["LW", "ST", "RW"]] },
+    "5-3-2":   { lines: [["RWB", "CB", "CB", "CB", "LWB"], ["CDM", "CM", "CM"], ["ST", "ST"]] },
+    "4-5-1":   { lines: [["RB", "CB", "CB", "LB"], ["RM", "CM", "CDM", "CM", "LM"], ["ST"]] },
+    "5-4-1":   { lines: [["RWB", "CB", "CB", "CB", "LWB"], ["RM", "CM", "CM", "LM"], ["ST"]] }
   };
   var FORMATION_KEYS = Object.keys(FORMATIONS);
-  var POS_LABEL = { GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward" };
 
-  var MANAGERS = [
-    { id: "none",      emoji: "🎽", name: "No manager",     atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
-    { id: "attack",    emoji: "⚔️", name: "Total Football",  atk: 4,  def: -2, ko: 0, desc: "+4 attack, −2 defence — all-out attack." },
-    { id: "defence",   emoji: "🛡️", name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
-    { id: "press",     emoji: "🔥", name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
-    { id: "cup",       emoji: "🏆", name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
-    { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
-  ];
-
-  // Versatile players can be drafted into more than one position (incl. their primary).
   var VERSATILE = {
     "Philipp Lahm": ["DEF", "MID"], "Gianluca Zambrotta": ["DEF", "MID"], "Javier Mascherano": ["MID", "DEF"],
     "Dani Alves": ["DEF", "MID"], "Marcelo": ["DEF", "MID"], "Cafu": ["DEF", "MID"], "Roberto Carlos": ["DEF", "MID"],
@@ -44,13 +53,25 @@
     "Johnny Rep": ["FWD", "MID"], "Rivaldo": ["FWD", "MID"], "Ronaldinho": ["MID", "FWD"],
     "Kingsley Coman": ["FWD", "MID"], "Florian Thauvin": ["FWD", "MID"], "Raheem Sterling": ["FWD", "MID"],
     "Marcus Rashford": ["FWD", "MID"], "Pedro": ["FWD", "MID"], "Jesús Navas": ["FWD", "MID"],
-    "Maxi Rodríguez": ["MID", "FWD"], "Simão Sabrosa": ["FWD", "MID"], "Bernard": ["FWD", "MID"]
+    "Maxi Rodríguez": ["MID", "FWD"], "Joshua Kimmich": ["DEF", "MID"], "Trent Alexander-Arnold": ["DEF", "MID"],
+    "João Cancelo": ["DEF", "MID"], "Achraf Hakimi": ["DEF", "MID"], "Federico Valverde": ["MID", "FWD"],
+    "Phil Foden": ["MID", "FWD"], "Jude Bellingham": ["MID", "FWD"], "Bukayo Saka": ["FWD", "MID"],
+    "Rodrygo": ["FWD", "MID"], "Raphinha": ["FWD", "MID"], "Bernardo Silva": ["MID", "FWD"]
   };
-  function eligOf(pl) { return VERSATILE[pl.n] || [pl.p]; }
+
+  var MANAGERS = [
+    { id: "none",      emoji: "🎽", name: "No manager",     atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
+    { id: "attack",    emoji: "⚔️", name: "Total Football",  atk: 4,  def: -2, ko: 0, desc: "+4 attack, −2 defence — all-out attack." },
+    { id: "defence",   emoji: "🛡️", name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
+    { id: "press",     emoji: "🔥", name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
+    { id: "cup",       emoji: "🏆", name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
+    { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
+  ];
 
   // ---- state ----
-  var squad = [];
-  var pendingPick = null; // {name, positions:[...]} while user chooses a slot
+  var squad = [];        // [{id,n,p(broad),r,slot(granular),country,year}]
+  var nextId = 1;
+  var pendingPick = null;
   var current = null;
   var spinning = false;
   var awaitingPick = false;
@@ -59,7 +80,7 @@
   var teamName = "";
   var managerId = "none";
   var showRatings = true;
-  var pool = "all";          // "all" or "2026"
+  var pool = "all";
   var boardTab = "daily";
   var lastSim = null;
   var deferredPrompt = null;
@@ -75,7 +96,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var views = { setup: $("setupView"), draft: $("draftView"), sim: $("simView"), results: $("resultsView"), board: $("boardView") };
   var elCountryStrip = $("countryStrip"), elYearStrip = $("yearStrip");
-  var elSpin = $("spinBtn"), elReroll = $("rerollBtn"), elRerollCount = $("rerollCount");
+  var elSpin = $("spinBtn"), elReroll = $("rerollBtn"), elRerollCount = $("rerollCount"), elAutoPick = $("autoPickBtn");
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
   var elXiList = $("xiList"), elXiCount = $("xiCount"), elFormation = $("formation");
   var elDone = $("doneBanner"), elRatingNote = $("ratingNote"), elResultsBody = $("resultsBody");
@@ -87,60 +108,83 @@
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
-  function shortName(n) {
-    var parts = String(n).split(" "); var last = parts[parts.length - 1];
-    return last.length > 10 ? last.slice(0, 9) + "…" : last;
-  }
+  function shortName(n) { var p = String(n).split(" "); var l = p[p.length - 1]; return l.length > 10 ? l.slice(0, 9) + "…" : l; }
   function initials(n) {
-    var parts = String(n).split(" ").filter(Boolean);
-    if (!parts.length) return "?";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    var p = String(n).split(" ").filter(Boolean);
+    if (!p.length) return "?";
+    if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
+    return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
   }
-
   function showView(name) {
     Object.keys(views).forEach(function (k) { views[k].style.display = "none"; });
     views[name].style.display = "block";
     if (window.scrollTo) window.scrollTo(0, 0);
   }
 
-  // ---- formation / pitch ----
-  function req() {
-    var f = FORMATIONS[formation];
-    return { GK: 1, DEF: f.DEF, MID: f.MID, FWD: f.FWD };
+  // ---- formation helpers ----
+  function formationSlots(name) {
+    var slots = [];
+    FORMATIONS[name || formation].lines.forEach(function (line) {
+      line.forEach(function (pos) { slots.push({ pos: pos, line: LINE_OF[pos] }); });
+    });
+    slots.push({ pos: "GK", line: "GK" });
+    return slots;
   }
-  function countGroup(g) { return squad.filter(function (s) { return s.p === g; }).length; }
-  function groupFull(g) { return countGroup(g) >= req()[g]; }
+  function slotCountsFor(name) {
+    var c = {}; formationSlots(name).forEach(function (s) { c[s.pos] = (c[s.pos] || 0) + 1; }); return c;
+  }
+  function pickCounts() { var c = {}; squad.forEach(function (p) { c[p.slot] = (c[p.slot] || 0) + 1; }); return c; }
+  function openOf(pos) { return (slotCountsFor(formation)[pos] || 0) - (pickCounts()[pos] || 0); }
+  function formationCounts(name) {
+    var c = { GK: 1, DEF: 0, MID: 0, FWD: 0 };
+    FORMATIONS[name].lines.forEach(function (line) { line.forEach(function (pos) { c[LINE_OF[pos]]++; }); });
+    return c;
+  }
+  function broadPositions(pl) { return VERSATILE[pl.n] || [pl.p]; }
+  function eligGranular(pl) {
+    var set = {};
+    broadPositions(pl).forEach(function (bp) { (BROAD_ELIG[bp] || [bp]).forEach(function (g) { set[g] = 1; }); });
+    return Object.keys(set);
+  }
+  function openEligiblePositions(pl) {
+    var elig = eligGranular(pl), seen = {}, out = [];
+    formationSlots().forEach(function (s) {
+      if (seen[s.pos]) return;
+      if (elig.indexOf(s.pos) !== -1 && openOf(s.pos) > 0) { seen[s.pos] = 1; out.push(s.pos); }
+    });
+    return out;
+  }
+  function preferredSlot(pl, opts) {
+    var prim = pl.p;
+    for (var i = 0; i < opts.length; i++) if (LINE_OF[opts[i]] === prim) return opts[i];
+    return opts[0];
+  }
 
-  function pitchLines() {
-    var rows = FORMATIONS[formation].rows;
-    var lines = rows.map(function (c, i) {
-      return { group: i === 0 ? "DEF" : (i === rows.length - 1 ? "FWD" : "MID"), count: c };
+  // Assign drafted picks to the formation's slots (line by line) for rendering.
+  function assignByLines() {
+    var byPos = {};
+    squad.forEach(function (p) { (byPos[p.slot] = byPos[p.slot] || []).push(p); });
+    function pop(pos) { var a = byPos[pos]; return a && a.length ? a.shift() : null; }
+    var lines = FORMATIONS[formation].lines.map(function (line) {
+      return line.map(function (pos) { return { pos: pos, line: LINE_OF[pos], pick: pop(pos) }; });
     });
-    var display = lines.slice().reverse(); // forwards on top
-    display.push({ group: "GK", count: 1 });
-    return display;
+    var gk = [{ pos: "GK", line: "GK", pick: pop("GK") }];
+    return { lines: lines, gk: gk };
   }
+
+  // ---- pitch ----
   function renderPitchInto(el) {
-    var display = pitchLines();
-    var byGroup = { GK: [], DEF: [], MID: [], FWD: [] };
-    squad.forEach(function (s) { byGroup[s.p].push(s); });
-    var ptr = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+    var a = assignByLines();
+    function cell(c) {
+      if (c.pick) return '<div class="pdot filled ' + c.line + '"><span class="dot-init">' +
+        esc(initials(c.pick.n)) + '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
+      return '<div class="pdot ' + c.line + '"><span class="dot-pos">' + c.pos + "</span></div>";
+    }
     var html = '<div class="pitch">';
-    display.forEach(function (line) {
-      html += '<div class="pitch-row">';
-      for (var k = 0; k < line.count; k++) {
-        var p = byGroup[line.group][ptr[line.group]++];
-        if (p) {
-          html += '<div class="pdot filled ' + line.group + '">' +
-            '<span class="dot-init">' + esc(initials(p.n)) + "</span>" +
-            '<span class="dot-name">' + esc(shortName(p.n)) + "</span></div>";
-        } else {
-          html += '<div class="pdot ' + line.group + '"><span class="dot-pos">' + line.group + "</span></div>";
-        }
-      }
-      html += "</div>";
+    a.lines.slice().reverse().forEach(function (line) {
+      html += '<div class="pitch-row">' + line.map(cell).join("") + "</div>";
     });
+    html += '<div class="pitch-row">' + a.gk.map(cell).join("") + "</div>";
     el.innerHTML = html + "</div>";
   }
   function paintPitches() {
@@ -157,8 +201,8 @@
     var html = "";
     MANAGERS.forEach(function (m) {
       html += '<button class="manager-opt' + (m.id === managerId ? " active" : "") +
-        '" data-manager="' + m.id + '" title="' + esc(m.desc) + '">' +
-        '<span class="mgr-emoji">' + m.emoji + '</span><span class="mgr-name">' + m.name + "</span></button>";
+        '" data-manager="' + m.id + '" title="' + esc(m.desc) + '"><span class="mgr-emoji">' +
+        m.emoji + '</span><span class="mgr-name">' + m.name + "</span></button>";
     });
     elManagerBar.innerHTML = html;
     Array.prototype.forEach.call(elManagerBar.querySelectorAll(".manager-opt"), function (b) {
@@ -169,7 +213,6 @@
     });
     elManagerDesc.textContent = currentManager().desc;
   }
-
   function renderFormationBar() {
     var html = "";
     FORMATION_KEYS.forEach(function (name) {
@@ -184,36 +227,34 @@
   function selectFormation(name) {
     if (!FORMATIONS[name]) return;
     formation = name;
-    var r = req(), counts = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
-    squad = squad.filter(function (s) { counts[s.p]++; return counts[s.p] <= r[s.p]; });
+    var cap = slotCountsFor(name), used = {};
+    squad = squad.filter(function (p) {
+      used[p.slot] = used[p.slot] || 0;
+      if (used[p.slot] < (cap[p.slot] || 0)) { used[p.slot]++; return true; }
+      return false;
+    });
     renderFormationBar(); paintPitches(); renderXI();
     if (current) renderSquadPicker();
   }
-
-  function renderRatingsToggle() {
-    Array.prototype.forEach.call(elRatingsToggle.querySelectorAll(".seg-opt"), function (b) {
-      var on = b.getAttribute("data-ratings") === (showRatings ? "show" : "hide");
-      b.className = "seg-opt" + (on ? " active" : "");
-      b.onclick = function () {
-        showRatings = b.getAttribute("data-ratings") === "show";
-        renderRatingsToggle(); paintPitches(); renderXI();
-        if (current) renderSquadPicker();
-      };
+  function renderTwoToggle(el, descEl, attr, getVal, setVal, descs) {
+    Array.prototype.forEach.call(el.querySelectorAll(".tg-opt"), function (b) {
+      var v = b.getAttribute(attr);
+      b.className = "tg-opt" + (v === getVal() ? " active" : "");
+      b.onclick = function () { setVal(v); renderTwoToggle(el, descEl, attr, getVal, setVal, descs); };
     });
-    elRatingsDesc.textContent = showRatings
-      ? "Player ratings are visible while you draft."
-      : "Ratings are hidden — draft blind for a tougher challenge.";
+    if (descEl) descEl.textContent = descs[getVal()] || "";
   }
-
+  function renderRatingsToggle() {
+    renderTwoToggle(elRatingsToggle, elRatingsDesc, "data-ratings",
+      function () { return showRatings ? "show" : "hide"; },
+      function (v) { showRatings = (v === "show"); paintPitches(); renderXI(); if (current) renderSquadPicker(); },
+      { show: "Player ratings are visible while you draft.", hide: "Ratings hidden — draft blind for a tougher challenge." });
+  }
   function renderPoolToggle() {
-    Array.prototype.forEach.call(elPoolToggle.querySelectorAll(".seg-opt"), function (b) {
-      var on = b.getAttribute("data-pool") === pool;
-      b.className = "seg-opt" + (on ? " active" : "");
-      b.onclick = function () { pool = b.getAttribute("data-pool"); renderPoolToggle(); };
-    });
-    elPoolDesc.textContent = pool === "2026"
-      ? "Only 2026 World Cup squads (projected from current rosters)."
-      : "Draft from every squad across all World Cups.";
+    renderTwoToggle(elPoolToggle, elPoolDesc, "data-pool",
+      function () { return pool; },
+      function (v) { pool = v; },
+      { all: "Draft from every squad across all World Cups.", "2026": "Only 2026 World Cup squads (projected from current rosters)." });
   }
 
   function poolPairs() {
@@ -226,40 +267,25 @@
     return pairs;
   }
 
-  // ================= DRAFT =================
+  // ---- slot machine ----
   function countryItemHTML(c) {
-    return '<div class="reel-item"><span class="flag">' + DATA[c].flag +
-           '</span><span class="name">' + c + "</span></div>";
+    return '<div class="reel-item"><span class="flag">' + DATA[c].flag + '</span><span class="name">' + c + "</span></div>";
   }
   function yearItemHTML(y) { return '<div class="reel-item"><span class="year">' + y + "</span></div>"; }
-
   function spinReel(stripEl, randomItem, finalHTML, duration) {
     return new Promise(function (resolve) {
       var BLUR = 30, html = "";
       for (var i = 0; i < BLUR; i++) html += randomItem();
       html += finalHTML;
-      stripEl.style.transition = "none";
-      stripEl.style.transform = "translateY(0)";
-      stripEl.innerHTML = html;
-      void stripEl.offsetHeight;
+      stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)";
+      stripEl.innerHTML = html; void stripEl.offsetHeight;
       stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.12,0.7,0.18,1)";
       stripEl.style.transform = "translateY(" + (-(BLUR * ITEM_H)) + "px)";
       var done = false;
-      function finish() {
-        if (done) return; done = true;
-        stripEl.style.transition = "none";
-        stripEl.style.transform = "translateY(0)";
-        stripEl.innerHTML = finalHTML;
-        resolve();
-      }
+      function finish() { if (done) return; done = true; stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)"; stripEl.innerHTML = finalHTML; resolve(); }
       stripEl.addEventListener("transitionend", finish, { once: true });
       setTimeout(finish, duration + 120);
     });
-  }
-  function allYears() {
-    var all = [];
-    COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { all.push(y); }); });
-    return all;
   }
 
   function updateControls() {
@@ -268,75 +294,60 @@
     elRerollCount.textContent = rerollsLeft;
     elReroll.hidden = !(awaitingPick && rerollsLeft > 0 && !full);
     elReroll.disabled = spinning;
+    elAutoPick.hidden = !(awaitingPick && !full);
+    elAutoPick.disabled = spinning;
   }
 
   function doSpin() {
     if (spinning) return;
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
-    var pairs = poolPairs();
-    var pick = rand(pairs);
-    var country = pick.c, year = pick.y;
-    current = { country: country, year: year };
-    var poolCountries = pairs.map(function (p) { return p.c; });
-    var poolYears = pairs.map(function (p) { return p.y; });
-    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(poolCountries)); }, countryItemHTML(country), 2100);
-    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(poolYears)); }, yearItemHTML(year), 2600);
-    Promise.all([p1, p2]).then(function () {
-      spinning = false; elHint.textContent = "";
-      renderSquadPicker();
-    });
+    var pairs = poolPairs(), pick = rand(pairs);
+    current = { country: pick.c, year: pick.y };
+    var pc = pairs.map(function (p) { return p.c; }), py = pairs.map(function (p) { return p.y; });
+    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 2100);
+    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 2600);
+    Promise.all([p1, p2]).then(function () { spinning = false; elHint.textContent = ""; renderSquadPicker(); });
   }
 
-  function ratingBadge(p) {
-    return showRatings ? '<span class="rate-badge">' + p.r + "</span>" : "";
-  }
-
-  function openSlots(pl) {
-    return eligOf(pl).filter(function (pos) { return !groupFull(pos); });
+  function ratingBadge(p) { return showRatings ? '<span class="rate-badge">' + p.r + "</span>" : ""; }
+  function playerByName(name) {
+    var list = DATA[current.country].years[current.year];
+    for (var i = 0; i < list.length; i++) if (list[i].n === name) return list[i];
+    return null;
   }
 
   function renderSquadPicker() {
     if (!current) return;
-    var c = current.country, y = current.year;
-    var players = DATA[c].years[y];
+    var c = current.country, y = current.year, players = DATA[c].years[y];
     var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
-
     var draftable = 0;
     var html = '<h2><span class="flag">' + DATA[c].flag + "</span>" + c + " &middot; " + y + " squad</h2>";
-    html += '<div class="sub">Pick a player and choose where they play.</div>';
-
+    html += '<div class="sub">Pick a player, then choose where they play.</div>';
     if (pendingPick) {
-      html += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + '</b> play? ' +
+      html += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + "</b> play? " +
         pendingPick.positions.map(function (pos) {
-          return '<button class="choose-pos ' + pos + '" data-name="' + esc(pendingPick.name) + '" data-pos="' + pos + '">' + POS_LABEL[pos] + "</button>";
+          return '<button class="choose-pos ' + LINE_OF[pos] + '" data-name="' + esc(pendingPick.name) + '" data-pos="' + pos + '">' + POS_FULL[pos] + " (" + pos + ")</button>";
         }).join("") + '<button class="choose-cancel">cancel</button></div>';
     }
-
     html += '<div class="players">';
     players.forEach(function (pl) {
       var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
-      var open = openSlots(pl);
+      var open = openEligiblePositions(pl);
       var noSlot = open.length === 0;
       if (!isTaken && !noSlot) draftable++;
-      var elig = eligOf(pl);
-      var posTag = elig.length > 1 ? elig.join("/") : pl.p;
       var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
-      html += '<div class="' + cls + '" data-name="' + esc(pl.n) + '" data-pos="' + pl.p + '">' +
-        '<span class="pos ' + pl.p + '">' + posTag + '</span><span class="pname">' + pl.n + "</span>" +
-        (noSlot && !isTaken ? '<span class="slot-tag">full</span>' : ratingBadge(pl)) + "</div>";
+      html += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + pl.p + '">' + pl.p + "</span>" +
+        '<span class="pname">' + pl.n + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
     });
     html += "</div>";
     elSquadPanel.innerHTML = html;
     elSquadPanel.style.display = "block";
-
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".player"), function (n) {
       n.addEventListener("click", function () {
         if (n.classList.contains("taken") || n.classList.contains("noslot")) return;
-        var name = n.getAttribute("data-name");
-        var pl = playerByName(name);
-        var open = openSlots(pl);
-        if (open.length <= 1) { pickPlayer(name, open[0]); }
+        var name = n.getAttribute("data-name"), pl = playerByName(name), open = openEligiblePositions(pl);
+        if (open.length <= 1) pickPlayer(name, open[0]);
         else { pendingPick = { name: name, positions: open }; renderSquadPicker(); }
       });
     });
@@ -345,124 +356,149 @@
     });
     var cancel = elSquadPanel.querySelector(".choose-cancel");
     if (cancel) cancel.addEventListener("click", function () { pendingPick = null; renderSquadPicker(); });
-
     if (draftable === 0) { awaitingPick = false; elHint.textContent = "No open slots for this squad — spin again (free)."; }
-    else { awaitingPick = true; }
+    else awaitingPick = true;
     updateControls();
   }
 
-  function playerByName(name) {
-    var list = DATA[current.country].years[current.year];
-    for (var i = 0; i < list.length; i++) if (list[i].n === name) return list[i];
-    return null;
-  }
-
   function pickPlayer(name, pos) {
-    if (squad.length >= XI_SIZE || !current || !pos || groupFull(pos)) return;
+    if (squad.length >= XI_SIZE || !current || !pos || openOf(pos) <= 0) return;
     var pl = playerByName(name);
-    squad.push({ n: name, p: pos, r: pl ? pl.r : 80, country: current.country, year: current.year });
+    squad.push({ id: nextId++, n: name, p: pl ? pl.p : "MID", r: pl ? pl.r : 80, slot: pos, country: current.country, year: current.year });
     current = null; awaitingPick = false; pendingPick = null;
     elSquadPanel.style.display = "none";
     renderXI(); paintPitches(); updateControls();
-    elHint.textContent = squad.length < XI_SIZE ? (name + " drafted! Spin for your next pick.") : "";
+    elHint.textContent = squad.length < XI_SIZE ? (name + " → " + pos + ". Spin for your next pick.") : "XI complete — enter a competition!";
   }
-  function removePlayer(i) { squad.splice(i, 1); renderXI(); paintPitches(); updateControls(); }
+  function removePlayer(id) {
+    squad = squad.filter(function (p) { return p.id !== id; });
+    renderXI(); paintPitches(); updateControls();
+  }
 
-  // ---- Your XI (slot-based) ----
+  function autoPickCurrent() {
+    if (!current) return;
+    var list = DATA[current.country].years[current.year];
+    var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
+    var best = null, bestPos = null;
+    list.forEach(function (pl) {
+      if (taken.indexOf(current.country + "|" + current.year + "|" + pl.n) !== -1) return;
+      var opts = openEligiblePositions(pl);
+      if (!opts.length) return;
+      if (!best || pl.r > best.r) { best = pl; bestPos = preferredSlot(pl, opts); }
+    });
+    if (best) pickPlayer(best.n, bestPos);
+  }
+  function autoFill() {
+    var guard = 0;
+    while (squad.length < XI_SIZE && guard < 600) {
+      guard++;
+      var pairs = poolPairs(), pk = rand(pairs), list = DATA[pk.c].years[pk.y];
+      var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
+      var cand = null, cpos = null;
+      for (var k = 0; k < list.length; k++) {
+        var pl = list[k];
+        if (taken.indexOf(pk.c + "|" + pk.y + "|" + pl.n) !== -1) continue;
+        var opts = openEligiblePositions(pl);
+        if (opts.length) { cand = pl; cpos = preferredSlot(pl, opts); break; }
+      }
+      if (cand) squad.push({ id: nextId++, n: cand.n, p: cand.p, r: cand.r, slot: cpos, country: pk.c, year: pk.y });
+    }
+    current = null; awaitingPick = false; pendingPick = null;
+    elSquadPanel.style.display = "none";
+    renderXI(); paintPitches(); updateControls();
+    elHint.textContent = "Auto-filled your XI — review and enter a competition.";
+  }
+
+  // ---- Your XI ----
   function renderXI() {
+    var a = assignByLines();
     elXiCount.textContent = squad.length + "/" + XI_SIZE;
     elFormation.textContent = "· " + formation;
-    var r = req(), groups = ["GK", "DEF", "MID", "FWD"], html = "";
+    var groups = [{ label: "Goalkeeper", cells: a.gk }];
+    a.lines.forEach(function (line, idx) {
+      groups.push({ label: idx === 0 ? "Defence" : (idx === a.lines.length - 1 ? "Attack" : "Midfield"), cells: line });
+    });
+    var html = "";
     groups.forEach(function (g) {
-      var filled = [];
-      squad.forEach(function (s, i) { if (s.p === g) filled.push({ s: s, i: i }); });
-      html += '<div class="line-label">' + POS_LABEL[g] + "s <span class=\"line-count\">" + filled.length + "/" + r[g] + "</span></div>";
-      for (var k = 0; k < r[g]; k++) {
-        if (k < filled.length) {
-          var s = filled[k].s;
-          html += '<div class="xi-row"><span class="pos ' + g + '">' + g + "</span>" +
-            '<span class="info"><span class="pn">' + s.n + (showRatings ? ' <span class="xi-rate">' + s.r + "</span>" : "") +
-            '</span><span class="meta">' + DATA[s.country].flag + " " + s.country + " &middot; " + s.year +
-            '</span></span><button class="remove" data-idx="' + filled[k].i + '">remove</button></div>';
+      html += '<div class="line-label">' + g.label + "</div>";
+      g.cells.forEach(function (c) {
+        if (c.pick) {
+          html += '<div class="xi-row"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
+            '<span class="info"><span class="pn">' + c.pick.n + (showRatings ? ' <span class="xi-rate">' + c.pick.r + "</span>" : "") +
+            '</span><span class="meta">' + DATA[c.pick.country].flag + " " + c.pick.country + " &middot; " + c.pick.year +
+            '</span></span><button class="remove" data-id="' + c.pick.id + '">remove</button></div>';
         } else {
-          html += '<div class="xi-row empty"><span class="pos ' + g + '">' + g + "</span>" +
-            '<span class="info"><span class="pn slot-empty">Empty ' + POS_LABEL[g] + " slot</span></span></div>";
+          html += '<div class="xi-row empty"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
+            '<span class="info"><span class="pn slot-empty">' + POS_FULL[c.pos] + " — empty</span></span></div>";
         }
-      }
+      });
     });
     elXiList.innerHTML = html;
     Array.prototype.forEach.call(elXiList.querySelectorAll(".remove"), function (b) {
-      b.addEventListener("click", function () { removePlayer(parseInt(b.getAttribute("data-idx"), 10)); });
+      b.addEventListener("click", function () { removePlayer(parseInt(b.getAttribute("data-id"), 10)); });
     });
 
-    var ready = squad.length >= 1, full = squad.length >= XI_SIZE;
-    $("goWorldCup").disabled = !ready;
-    $("goLeague").disabled = !ready;
-    $("shareBtn").disabled = !ready;
+    var full = squad.length >= XI_SIZE;
+    $("goWorldCup").disabled = !full;
+    $("goLeague").disabled = !full;
+    $("shareBtn").disabled = squad.length < 1;
+    $("autoFillBtn").disabled = full;
     elDone.style.display = full ? "block" : "none";
-    if (full) elDone.textContent = "🏆 Full " + formation + " XI — ready to compete!";
+    if (full) elDone.textContent = "✅ Full " + formation + " XI — choose a competition below.";
 
-    if (ready) {
+    if (squad.length) {
       var t = userTeamFromSquad(), mgr = currentManager();
       elRatingNote.textContent = teamDisplayName() + " · " + formation + " · " + mgr.emoji + " " + mgr.name +
         (showRatings ? " · ATK " + Math.round(t.atk) + " / DEF " + Math.round(t.def) + (mgr.ko ? " · +" + mgr.ko + " KO" : "") : " · ratings hidden") +
-        (full ? "" : "  — fill all 11 for full strength");
-    } else {
-      elRatingNote.textContent = "";
-    }
+        (full ? "" : "  — all 11 must be picked to enter");
+    } else elRatingNote.textContent = "";
   }
 
-  function avgRating() {
-    if (!squad.length) return 80;
-    var sum = 0; squad.forEach(function (s) { sum += s.r; });
-    return sum / squad.length;
+  function avgRating() { if (!squad.length) return 80; var s = 0; squad.forEach(function (p) { s += p.r; }); return s / squad.length; }
+  function formationTilt(name) {
+    var c = formationCounts(name), SCALE = 2;
+    return { atk: ((c.FWD - 2) + (c.MID - 4) * 0.5) * SCALE, def: (c.DEF - 4) * SCALE };
   }
   function userTeamFromSquad() {
-    var rating = Math.round(avgRating());
-    var f = FORMATIONS[formation], SCALE = 2;
-    var atkTilt = ((f.FWD - 2) + (f.MID - 4) * 0.5) * SCALE;
-    var defTilt = (f.DEF - 4) * SCALE;
-    var mgr = currentManager();
+    var rating = Math.round(avgRating()), tilt = formationTilt(formation), mgr = currentManager();
     return {
       name: teamDisplayName(), flag: "⭐", rating: rating,
-      atk: rating + atkTilt + mgr.atk, def: rating + defTilt + mgr.def,
+      atk: rating + tilt.atk + mgr.atk, def: rating + tilt.def + mgr.def,
       koBonus: mgr.ko, isUser: true, formation: formation, manager: mgr.name,
       players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; })
     };
   }
 
   function shareTeam() {
-    var order = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
-    var lines = squad.slice().sort(function (a, b) { return order[a.p] - order[b.p]; })
-      .map(function (s) { return s.p + "  " + s.n + (showRatings ? " (" + s.r + ")" : "") + " — " + s.country + " " + s.year; });
+    var a = assignByLines(), lines = [];
+    [a.gk].concat(a.lines).forEach(function (grp) {
+      grp.forEach(function (c) { if (c.pick) lines.push(c.pos + "  " + c.pick.n + (showRatings ? " (" + c.pick.r + ")" : "") + " — " + c.pick.country + " " + c.pick.year); });
+    });
     var mgr = currentManager();
-    var header = teamDisplayName() + " (" + formation + ")" + (mgr.id !== "none" ? " · Mgr: " + mgr.name : "");
-    var text = header + "\n\n" + lines.join("\n");
+    var text = teamDisplayName() + " (" + formation + ")" + (mgr.id !== "none" ? " · Mgr: " + mgr.name : "") + "\n\n" + lines.join("\n");
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(
-        function () { elHint.textContent = "Copied your XI to the clipboard!"; },
-        function () { window.prompt("Your XI:", text); });
-    } else { window.prompt("Your XI:", text); }
-  }
-
-  function clearAll() {
-    squad = []; current = null; awaitingPick = false; pendingPick = null; rerollsLeft = REROLLS;
-    elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderXI(); paintPitches(); updateControls();
+      navigator.clipboard.writeText(text).then(function () { elHint.textContent = "Copied your XI to the clipboard!"; }, function () { window.prompt("Your XI:", text); });
+    } else window.prompt("Your XI:", text);
   }
 
   function startDraft() {
     showView("draft");
     current = null; awaitingPick = false; spinning = false;
     elSquadPanel.style.display = "none"; elHint.textContent = "";
-    elCountryStrip.innerHTML = countryItemHTML(rand(COUNTRIES));
-    elYearStrip.innerHTML = yearItemHTML(Object.keys(DATA[COUNTRIES[0]].years)[0]);
+    elCountryStrip.innerHTML = countryItemHTML(rand(poolPairs().map(function (p) { return p.c; })));
+    elYearStrip.innerHTML = yearItemHTML(poolPairs()[0].y);
     paintPitches(); renderXI(); updateControls();
+  }
+  function newGame() {
+    squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false; rerollsLeft = REROLLS;
+    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all";
+    elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
+    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
+    paintPitches(); renderXI(); updateControls(); showView("setup");
   }
 
   // ================= RESULTS =================
   function teamCell(t) { return '<span class="tname' + (t.isUser ? " me" : "") + '">' + t.flag + " " + esc(t.name) + "</span>"; }
-
   function renderGroups(groups) {
     var html = '<div class="grid-groups">';
     groups.forEach(function (g) {
@@ -470,9 +506,7 @@
       html += '<table class="mini"><thead><tr><th></th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
       g.table.forEach(function (r, i) {
         var cls = i < 2 ? "qual" : (i === 2 ? "third" : "");
-        html += '<tr class="' + cls + '"><td class="tcell">' + teamCell(r.team) + "</td><td>" +
-          r.P + "</td><td>" + r.W + "</td><td>" + r.D + "</td><td>" + r.L + "</td><td>" +
-          (r.GD > 0 ? "+" : "") + r.GD + "</td><td><b>" + r.Pts + "</b></td></tr>";
+        html += '<tr class="' + cls + '"><td class="tcell">' + teamCell(r.team) + "</td><td>" + r.P + "</td><td>" + r.W + "</td><td>" + r.D + "</td><td>" + r.L + "</td><td>" + (r.GD > 0 ? "+" : "") + r.GD + "</td><td><b>" + r.Pts + "</b></td></tr>";
       });
       html += "</tbody></table></div>";
     });
@@ -485,42 +519,35 @@
       rd.ties.forEach(function (t) {
         var aw = t.winner === t.a, bw = t.winner === t.b;
         var pens = t.res.pens ? ' <span class="pens">(pens ' + t.res.pens[0] + "–" + t.res.pens[1] + ")</span>" : "";
-        html += '<div class="tie">' +
-          '<div class="side ' + (aw ? "win" : "") + '">' + teamCell(t.a) + "<b>" + t.res.a + "</b></div>" +
-          '<div class="side ' + (bw ? "win" : "") + '">' + teamCell(t.b) + "<b>" + t.res.b + "</b></div>" +
-          pens + "</div>";
+        html += '<div class="tie"><div class="side ' + (aw ? "win" : "") + '">' + teamCell(t.a) + "<b>" + t.res.a + "</b></div>" +
+          '<div class="side ' + (bw ? "win" : "") + '">' + teamCell(t.b) + "<b>" + t.res.b + "</b></div>" + pens + "</div>";
       });
       html += "</div>";
     });
     return html + "</div>";
-  }
-  function renderWorldCup(result, label) {
-    var champ = result.champion;
-    var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">🏆 Champions: ' + champ.flag + " <b>" + esc(champ.name) + "</b>" +
-            (champ.isUser ? " — your XI won the World Cup!" : "") + "</div>";
-    html += '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds);
-    html += '<h3 class="sec">Group stage</h3><p class="legend"><span class="dot qd"></span>top 2 advance · <span class="dot td"></span>3rd (best 8 advance)</p>';
-    return html + renderGroups(result.groups);
   }
   function ordinal(n) { var s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
   function leagueTableHTML(result) {
     var html = '<div class="table-scroll"><table class="league"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
     result.table.forEach(function (r, i) {
       var cls = r.team.isUser ? "me-row" : (i === 0 ? "top-row" : "");
-      html += '<tr class="' + cls + '"><td>' + (i + 1) + "</td><td class=\"tcell\">" + teamCell(r.team) +
-        "</td><td>" + r.P + "</td><td>" + r.W + "</td><td>" + r.D + "</td><td>" + r.L + "</td><td>" +
-        r.GF + "</td><td>" + r.GA + "</td><td>" + (r.GD > 0 ? "+" : "") + r.GD + "</td><td><b>" + r.Pts + "</b></td></tr>";
+      html += '<tr class="' + cls + '"><td>' + (i + 1) + "</td><td class=\"tcell\">" + teamCell(r.team) + "</td><td>" + r.P + "</td><td>" + r.W + "</td><td>" + r.D + "</td><td>" + r.L + "</td><td>" + r.GF + "</td><td>" + r.GA + "</td><td>" + (r.GD > 0 ? "+" : "") + r.GD + "</td><td><b>" + r.Pts + "</b></td></tr>";
     });
     return html + "</tbody></table></div>";
   }
   function renderLeague(result, label) {
     var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">🥇 Winners: ' + result.table[0].team.flag + " <b>" +
-            esc(result.table[0].team.name) + "</b> · " + result.totalMatches + " matches played</div>";
+    html += '<div class="champion">🥇 Winners: ' + result.table[0].team.flag + " <b>" + esc(result.table[0].team.name) + "</b> · " + result.totalMatches + " matches played</div>";
     return html + leagueTableHTML(result);
   }
-  // ---- match cards + stats (user runs) ----
+  function renderWorldCup(result, label) {
+    var champ = result.champion;
+    var html = '<h2 class="res-title">' + label + "</h2>";
+    html += '<div class="champion">🏆 Champions: ' + champ.flag + " <b>" + esc(champ.name) + "</b></div>";
+    html += '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds);
+    html += '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups);
+    return html;
+  }
   function scorerLines(events) {
     if (!events || !events.length) return "";
     return '<div class="mscorers">' + events.map(function (e) {
@@ -529,81 +556,60 @@
   }
   function matchCardHTML(m, teamName) {
     var pens = m.pens ? ' <span class="pens">(pens ' + m.pens[0] + "–" + m.pens[1] + ")</span>" : "";
-    return '<div class="mcard ' + m.result + '">' +
-      '<div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
+    return '<div class="mcard ' + m.result + '"><div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
       '<span class="pill ' + m.result + '">' + m.result + "</span></div>" +
       '<div class="mscore"><span class="me">⭐ ' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
       '<span class="oppname">' + m.opp.flag + " " + esc(m.opp.name) + "</span>" + pens + "</div>" +
-      scorerLines(m.events) +
-      (m.cleanSheet ? '<div class="mclean">🧤 Clean sheet</div>' : "") + "</div>";
+      scorerLines(m.events) + (m.cleanSheet ? '<div class="mclean">🧤 Clean sheet</div>' : "") + "</div>";
   }
   function statRows(list, key, max) {
     if (!list.length) return '<div class="stat-empty">—</div>';
     return list.slice(0, max).map(function (x) {
-      return '<div class="stat-row"><span class="sp ' + (x.p || "") + '">' + (x.p || "") + "</span>" +
-        '<span class="sn">' + esc(x.n) + "</span><span class=\"sv\">" + x[key] + "</span></div>";
+      return '<div class="stat-row"><span class="sp ' + (LINE_OF[x.p] || x.p || "") + '">' + (x.p || "") + "</span><span class=\"sn\">" + esc(x.n) + "</span><span class=\"sv\">" + x[key] + "</span></div>";
     }).join("");
   }
   function statsSummaryHTML(s) {
-    return '<div class="stats-summary"><h3 class="sec">📊 Summary</h3>' +
-      '<div class="stat-grid">' +
-        '<div class="stat-pill">Played <b>' + s.games + "</b></div>" +
-        '<div class="stat-pill">Record <b>' + s.w + "-" + s.d + "-" + s.l + "</b></div>" +
-        '<div class="stat-pill">Goals <b>' + s.gf + "</b></div>" +
-        '<div class="stat-pill">Conceded <b>' + s.ga + "</b></div>" +
-        '<div class="stat-pill">🧤 Clean sheets <b>' + s.cleanSheets + "</b></div>" +
-      "</div>" +
-      '<div class="stat-cols">' +
-        '<div class="stat-col"><div class="stat-h">⚽ Top scorers</div>' + statRows(s.scorers, "g", 5) + "</div>" +
-        '<div class="stat-col"><div class="stat-h">🅰️ Top assists</div>' + statRows(s.assisters, "a", 5) + "</div>" +
-      "</div></div>";
+    return '<div class="stats-summary"><h3 class="sec">📊 Summary</h3><div class="stat-grid">' +
+      '<div class="stat-pill">Played <b>' + s.games + "</b></div>" +
+      '<div class="stat-pill">Record <b>' + s.w + "-" + s.d + "-" + s.l + "</b></div>" +
+      '<div class="stat-pill">Goals <b>' + s.gf + "</b></div>" +
+      '<div class="stat-pill">Conceded <b>' + s.ga + "</b></div>" +
+      '<div class="stat-pill">🧤 Clean sheets <b>' + s.cleanSheets + "</b></div></div>" +
+      '<div class="stat-cols"><div class="stat-col"><div class="stat-h">⚽ Top scorers</div>' + statRows(s.scorers, "g", 5) + "</div>" +
+      '<div class="stat-col"><div class="stat-h">🅰️ Top assists</div>' + statRows(s.assisters, "a", 5) + "</div></div></div>";
   }
-
   function renderWorldCupUser(result, label) {
-    var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion big">' + result.userResult + "</div>";
-    html += statsSummaryHTML(result.userStats);
-    html += '<h3 class="sec">Your road</h3>';
+    var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">' + result.userResult + "</div>";
+    html += statsSummaryHTML(result.userStats) + '<h3 class="sec">Your road</h3>';
     html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
     html += '<button class="btn-ghost" id="toggleTable" data-show="Show full bracket &amp; groups">Show full bracket &amp; groups</button>';
-    html += '<div id="fullTableWrap" style="display:none; margin-top:14px;">' +
-      '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds) +
-      '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups) + "</div>";
+    html += '<div id="fullTableWrap" style="display:none;margin-top:14px;"><h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds) + '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups) + "</div>";
     return html;
   }
-
   function renderLeagueUser(result, label) {
     var ur = result.userRow;
-    var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion big">⭐ ' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " +
-            result.table.length + " &middot; " + ur.Pts + " pts</div>";
+    var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">⭐ ' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " + result.table.length + " &middot; " + ur.Pts + " pts</div>";
     html += statsSummaryHTML(result.userStats);
-    html += '<h3 class="sec">Your games <span class="legend-note">(' + result.userMatches.length +
-            " shown · other " + (result.totalMatches - result.userMatches.length) + " simulated in the background)</span></h3>";
+    html += '<h3 class="sec">Your games <span class="legend-note">(' + result.userMatches.length + " shown · other " + (result.totalMatches - result.userMatches.length) + " simulated in the background)</span></h3>";
     html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
     html += '<button class="btn-ghost" id="toggleTable" data-show="Show full 48-team table">Show full 48-team table</button>';
-    html += '<div id="fullTableWrap" style="display:none; margin-top:14px;">' + leagueTableHTML(result) + "</div>";
+    html += '<div id="fullTableWrap" style="display:none;margin-top:14px;">' + leagueTableHTML(result) + "</div>";
     return html;
   }
-
   function wireResults() {
     var tg = document.getElementById("toggleTable");
     if (tg) tg.addEventListener("click", function () {
-      var w = document.getElementById("fullTableWrap");
-      var shown = w.style.display !== "none";
+      var w = document.getElementById("fullTableWrap"), shown = w.style.display !== "none";
       w.style.display = shown ? "none" : "block";
       tg.innerHTML = shown ? tg.getAttribute("data-show") : "Hide";
     });
   }
 
-  // ---- scoring + leaderboards (persisted; game state itself is NOT persisted) ----
+  // ---- scoring + leaderboards (only leaderboards persist) ----
   function wcScore(wc) {
     var s = wc.userStats;
-    var base = { "Eliminated in the Group stage": 100, "Out in the Round of 32": 220,
-      "Out in the Round of 16": 380, "Out in the Quarter-finals": 560,
-      "Semi-finalists": 820, "🥈 Runners-up": 1100, "🏆 Champions!": 1600 };
-    var b = base[wc.userResult] || 100;
-    return Math.max(0, Math.round(b + s.gf * 10 + s.cleanSheets * 25 - s.ga * 5 + s.w * 30));
+    var base = { "Eliminated in the Group stage": 100, "Out in the Round of 32": 220, "Out in the Round of 16": 380, "Out in the Quarter-finals": 560, "Semi-finalists": 820, "🥈 Runners-up": 1100, "🏆 Champions!": 1600 };
+    return Math.max(0, Math.round((base[wc.userResult] || 100) + s.gf * 10 + s.cleanSheets * 25 - s.ga * 5 + s.w * 30));
   }
   function leagueScore(lg) {
     var ur = lg.userRow, s = lg.userStats;
@@ -611,9 +617,8 @@
   }
   function loadBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); } catch (e) { return []; } }
   function saveBoard(a) { try { localStorage.setItem(LB_KEY, JSON.stringify(a)); } catch (e) {} }
-  function addScore(entry) { var a = loadBoard(); a.push(entry); saveBoard(a); }
-  function sameDay(a, b) { var x = new Date(a), y = new Date(b); return x.toDateString() === y.toDateString(); }
-
+  function addScore(e) { var a = loadBoard(); a.push(e); saveBoard(a); }
+  function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
   function renderBoard() {
     Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
       b.className = "seg-opt" + (b.getAttribute("data-board") === boardTab ? " active" : "");
@@ -629,22 +634,9 @@
     if (!top.length) { elBoardBody.innerHTML = '<div class="empty-note">No scores yet — finish a game to set one!</div>'; return; }
     var html = '<div class="board-list">';
     top.forEach(function (e, i) {
-      html += '<div class="board-row' + (i < 3 ? " top3" : "") + '"><span class="brank">' + (i + 1) + "</span>" +
-        '<span class="bname">' + esc(e.name) + "</span>" +
-        '<span class="bres">' + esc(e.result || "") + " · " + (e.mode === "wc" ? "WC" : "League") + "</span>" +
-        '<span class="bscore">' + e.score + "</span></div>";
+      html += '<div class="board-row' + (i < 3 ? " top3" : "") + '"><span class="brank">' + (i + 1) + "</span><span class=\"bname\">" + esc(e.name) + "</span><span class=\"bres\">" + esc(e.result || "") + " · " + (e.mode === "wc" ? "WC" : "League") + "</span><span class=\"bscore\">" + e.score + "</span></div>";
     });
     elBoardBody.innerHTML = html + "</div>";
-  }
-
-  function newGame() {
-    squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false; rerollsLeft = REROLLS;
-    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all";
-    elTeamName.value = "";
-    elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
-    paintPitches(); renderXI(); updateControls();
-    showView("setup");
   }
 
   function runSim(type, userTeam) {
@@ -652,9 +644,7 @@
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
     showView("results");
     setTimeout(function () {
-      var who = userTeam
-        ? (userTeam.name + " · " + userTeam.formation + (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : ""))
-        : "48 Nations";
+      var who = userTeam ? (userTeam.name + " · " + userTeam.formation + (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : "")) : "48 Nations";
       var html, score = null, result = null;
       if (type === "wc") {
         var wc = window.ENGINE.runWorldCup(userTeam);
@@ -679,29 +669,23 @@
   $("startBtn").addEventListener("click", startDraft);
   $("toSim").addEventListener("click", function () { showView("sim"); });
   $("draftBack").addEventListener("click", function () { paintPitches(); showView("setup"); });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) {
-    b.addEventListener("click", function () { showView("setup"); });
-  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("setup"); }); });
 
   elSpin.addEventListener("click", doSpin);
-  elReroll.addEventListener("click", function () {
-    if (rerollsLeft <= 0 || spinning) return;
-    rerollsLeft--; doSpin();
-  });
-  $("clearBtn").addEventListener("click", clearAll);
+  elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; doSpin(); });
+  elAutoPick.addEventListener("click", autoPickCurrent);
+  $("autoFillBtn").addEventListener("click", autoFill);
+  $("clearBtn").addEventListener("click", newGame);
   $("shareBtn").addEventListener("click", shareTeam);
-  $("goWorldCup").addEventListener("click", function () { runSim("wc", userTeamFromSquad()); });
-  $("goLeague").addEventListener("click", function () { runSim("league", userTeamFromSquad()); });
+  $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("wc", userTeamFromSquad()); });
+  $("goLeague").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("league", userTeamFromSquad()); });
   $("simWorldCup").addEventListener("click", function () { runSim("wc", null); });
   $("simLeague").addEventListener("click", function () { runSim("league", null); });
-  $("resultsBack").addEventListener("click", function () { showView(lastSim && lastSim.userTeam ? "draft" : "sim"); });
   $("newGameBtn").addEventListener("click", newGame);
   $("boardBtn").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("toBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("boardBack").addEventListener("click", function () { showView("setup"); });
-  $("clearBoardBtn").addEventListener("click", function () {
-    if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); }
-  });
+  $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
   Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
     b.addEventListener("click", function () { boardTab = b.getAttribute("data-board"); renderBoard(); });
   });
@@ -709,21 +693,11 @@
   // ---- PWA ----
   var installBtn = $("installBtn");
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredPrompt = e; if (installBtn) installBtn.hidden = false; });
-  if (installBtn) installBtn.addEventListener("click", function () {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function () { deferredPrompt = null; installBtn.hidden = true; });
-  });
+  if (installBtn) installBtn.addEventListener("click", function () { if (!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; installBtn.hidden = true; }); });
   window.addEventListener("appinstalled", function () { if (installBtn) installBtn.hidden = true; });
   if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 
   // ---- init ----
-  renderManagerBar();
-  renderFormationBar();
-  renderRatingsToggle();
-  renderPoolToggle();
-  paintPitches();
-  renderXI();
-  updateControls();
-  showView("setup");
+  renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
+  paintPitches(); renderXI(); updateControls(); showView("setup");
 })();

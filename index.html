@@ -41,32 +41,32 @@
           <div class="manager-desc" id="managerDesc"></div>
         </div>
 
-        <div class="setup-row setup-row-col">
-          <span class="setup-label">Formation</span>
-          <div class="formation-options" id="formationBar"></div>
-        </div>
-
         <div class="setup-pitch-wrap">
           <div class="pitch-title" id="pitchTitle">4-3-3</div>
           <div id="setupPitch"></div>
         </div>
 
         <div class="setup-row setup-row-col">
+          <span class="setup-label">Formation</span>
+          <div class="formation-options" id="formationBar"></div>
+        </div>
+
+        <div class="setup-row setup-row-col">
           <span class="setup-label">Player pool</span>
-          <div class="seg" id="poolToggle">
-            <button class="seg-opt active" data-pool="all">🏆 All World Cups</button>
-            <button class="seg-opt" data-pool="2026">⚽ World Cup 2026 only</button>
+          <div class="toggle2" id="poolToggle">
+            <button class="tg-opt active" data-pool="all"><span class="tg-emoji">🏆</span><span class="tg-text">All World Cups</span></button>
+            <button class="tg-opt" data-pool="2026"><span class="tg-emoji">⚽</span><span class="tg-text">World Cup 2026</span></button>
           </div>
-          <div class="seg-desc" id="poolDesc">Draft from every squad across all World Cups.</div>
+          <div class="seg-desc" id="poolDesc"></div>
         </div>
 
         <div class="setup-row setup-row-col">
           <span class="setup-label">Player ratings</span>
-          <div class="seg" id="ratingsToggle">
-            <button class="seg-opt active" data-ratings="show">👁 Show ratings</button>
-            <button class="seg-opt" data-ratings="hide">🙈 Hide ratings (harder)</button>
+          <div class="toggle2" id="ratingsToggle">
+            <button class="tg-opt active" data-ratings="show"><span class="tg-emoji">👁️</span><span class="tg-text">Show ratings</span></button>
+            <button class="tg-opt" data-ratings="hide"><span class="tg-emoji">🙈</span><span class="tg-text">Hide ratings</span></button>
           </div>
-          <div class="seg-desc" id="ratingsDesc">Player ratings are visible while you draft.</div>
+          <div class="seg-desc" id="ratingsDesc"></div>
         </div>
 
         <button class="start-btn" id="startBtn">Start drafting →</button>
@@ -101,6 +101,7 @@
         <div class="controls">
           <button class="spin" id="spinBtn">SPIN</button>
           <button class="reroll" id="rerollBtn" hidden>🎲 Reroll (<span id="rerollCount">3</span>)</button>
+          <button class="autopick" id="autoPickBtn" hidden>⚡ Auto-pick</button>
         </div>
         <div class="hint" id="hint"></div>
       </div>
@@ -118,10 +119,11 @@
         <div class="xi-list" id="xiList"></div>
         <div class="done-banner" id="doneBanner" style="display:none;"></div>
         <div class="xi-actions">
+          <button class="btn-accent" id="autoFillBtn">🤖 Auto-fill XI</button>
           <button class="btn-primary" id="goWorldCup" disabled>🏆 World Cup with my XI</button>
           <button class="btn-primary" id="goLeague" disabled>📋 League with my XI</button>
           <button class="btn-ghost" id="shareBtn" disabled>Copy XI</button>
-          <button class="btn-ghost" id="clearBtn">Clear all</button>
+          <button class="btn-ghost" id="clearBtn">New game</button>
         </div>
         <div class="rating-note" id="ratingNote"></div>
       </section>
@@ -147,7 +149,7 @@
     <!-- ===== RESULTS ===== -->
     <section id="resultsView" style="display:none;">
       <div class="results-head">
-        <button class="back" id="resultsBack">← Back</button>
+        <span class="locked-note">🔒 Run complete — no going back</span>
         <div class="results-head-right">
           <button class="btn-ghost" id="boardBtn">🏆 Leaderboards</button>
           <button class="btn-primary" id="newGameBtn">🔄 New Game</button>

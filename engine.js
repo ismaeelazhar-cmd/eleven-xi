@@ -6,7 +6,10 @@
 window.ENGINE = (function () {
   "use strict";
 
-  var DIFFICULTY = 8;        // points shaved off the user's attack & defence (harder)
+  var DIFFICULTY = 11;       // base points shaved off the user's attack & defence (harder)
+  // Extra penalty applied to the user each knockout round — the deeper you go, the tougher
+  // it gets (on top of the fact that only strong teams survive to face you). Index = round.
+  var KO_ESCALATION = [0, 2, 4, 7, 10]; // R32, R16, QF, SF, Final
   var ASSIST_CHANCE = 0.66;  // chance a goal has an assist
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -27,11 +30,14 @@ window.ENGINE = (function () {
   function defOf(t) { return t.def != null ? t.def : t.rating; }
   function overall(t) { return (atkOf(t) + defOf(t)) / 2; }
 
-  function koTeam(t) {
-    if (!t.koBonus) return t;
+  function koTeam(t, roundPen) {
+    roundPen = roundPen || 0;
+    if (!t.koBonus && !t.isUser) return t;
+    var atk = atkOf(t), def = defOf(t);
+    if (t.koBonus) { atk += t.koBonus; def += t.koBonus; }
+    if (t.isUser) { atk -= roundPen; def -= roundPen; } // escalating tax hits only the user
     return {
-      name: t.name, flag: t.flag, rating: t.rating,
-      atk: atkOf(t) + t.koBonus, def: defOf(t) + t.koBonus,
+      name: t.name, flag: t.flag, rating: t.rating, atk: atk, def: def,
       isUser: t.isUser, koBonus: t.koBonus, players: t.players
     };
   }
@@ -199,9 +205,10 @@ window.ENGINE = (function () {
     var rounds = [], rIdx = 0;
     while (roundTeams.length > 1) {
       var ties = [], next = [], rname = roundNames[rIdx] || ("Round of " + roundTeams.length);
+      var pen = KO_ESCALATION[rIdx] || KO_ESCALATION[KO_ESCALATION.length - 1];
       for (var m = 0; m < roundTeams.length; m += 2) {
         var A = roundTeams[m], B = roundTeams[m + 1];
-        var res = simulateMatch(koTeam(A), koTeam(B), false);
+        var res = simulateMatch(koTeam(A, pen), koTeam(B, pen), false);
         var winner = res.winner === "A" ? A : B;
         ties.push({ a: A, b: B, res: res, winner: winner });
         next.push(winner);
