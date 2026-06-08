@@ -95,6 +95,9 @@
   var managerId = "none";
   var showRatings = true;
   var pool = "all";
+  var DIFFICULTIES = [{ id: "Easy", rr: 5 }, { id: "Medium", rr: 3 }, { id: "Hard", rr: 1 }, { id: "Extreme", rr: 0 }];
+  var difficulty = "Medium";
+  function diffRerolls() { for (var i = 0; i < DIFFICULTIES.length; i++) if (DIFFICULTIES[i].id === difficulty) return DIFFICULTIES[i].rr; return 3; }
   var boardTab = "daily";
   var lastSim = null;
   var reveal = null; // staged World Cup reveal state
@@ -120,6 +123,7 @@
   var elPitchTitle = $("pitchTitle"), elDraftTeam = $("draftTeam"), elDraftMeta = $("draftMeta");
   var elRatingsToggle = $("ratingsToggle"), elRatingsDesc = $("ratingsDesc");
   var elPoolToggle = $("poolToggle"), elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
+  var elDiffBar = $("difficultyBar"), elDiffDesc = $("difficultyDesc");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
@@ -276,6 +280,21 @@
       function () { return pool; },
       function (v) { pool = v; },
       { all: "Draft from every squad across all World Cups.", "2026": "Only 2026 World Cup squads (projected from current rosters)." });
+  }
+
+  function renderDifficultyBar() {
+    var html = "";
+    DIFFICULTIES.forEach(function (d) {
+      html += '<button class="formation-opt' + (d.id === difficulty ? " active" : "") +
+        '" data-diff="' + d.id + '">' + d.id + " <span class=\"diff-rr\">" + d.rr + "🎲</span></button>";
+    });
+    elDiffBar.innerHTML = html;
+    Array.prototype.forEach.call(elDiffBar.querySelectorAll(".formation-opt"), function (b) {
+      b.addEventListener("click", function () { difficulty = b.getAttribute("data-diff"); renderDifficultyBar(); });
+    });
+    elDiffDesc.textContent = difficulty === "Extreme"
+      ? "Extreme — no rerolls. You take whatever you spin."
+      : difficulty + " — " + diffRerolls() + " reroll" + (diffRerolls() === 1 ? "" : "s") + " during the draft.";
   }
 
   function poolPairs() {
@@ -505,17 +524,18 @@
 
   function startDraft() {
     showView("draft");
-    current = null; awaitingPick = false; spinning = false;
+    current = null; awaitingPick = false; spinning = false; rerollsLeft = diffRerolls();
     elSquadPanel.style.display = "none"; elHint.textContent = "";
     elCountryStrip.innerHTML = countryItemHTML(rand(poolPairs().map(function (p) { return p.c; })));
     elYearStrip.innerHTML = yearItemHTML(poolPairs()[0].y);
     paintPitches(); renderXI(); updateControls();
   }
   function newGame() {
-    squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false; rerollsLeft = REROLLS;
-    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all";
+    squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
+    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all"; difficulty = "Medium";
+    rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
+    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle(); renderDifficultyBar();
     paintPitches(); renderXI(); updateControls(); showView("home");
   }
 
@@ -647,14 +667,38 @@
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
+  function tallyScore(parts) {
+    var t = 0; parts.forEach(function (p) { t += p.value; });
+    return { score: Math.max(0, Math.round(t)), parts: parts };
+  }
   function wcScore(wc) {
     var s = wc.userStats;
     var base = { "Eliminated in the Group stage": 100, "Out in the Round of 32": 220, "Out in the Round of 16": 380, "Out in the Quarter-finals": 560, "Semi-finalists": 820, "🥈 Runners-up": 1100, "🏆 Champions!": 1600 };
-    return Math.max(0, Math.round((base[wc.userResult] || 100) + s.gf * 10 + s.cleanSheets * 25 - s.ga * 5 + s.w * 30));
+    return tallyScore([
+      { label: wc.userResult, value: base[wc.userResult] || 100 },
+      { label: s.gf + " goals × 10", value: s.gf * 10 },
+      { label: s.cleanSheets + " clean sheets × 25", value: s.cleanSheets * 25 },
+      { label: s.w + " wins × 30", value: s.w * 30 },
+      { label: s.ga + " conceded × −5", value: -s.ga * 5 }
+    ]);
   }
   function leagueScore(lg) {
     var ur = lg.userRow, s = lg.userStats;
-    return Math.max(0, Math.round((49 - lg.userPos) * 30 + ur.Pts * 4 + ur.GD * 3 + s.cleanSheets * 20 + s.gf * 4));
+    return tallyScore([
+      { label: "Finished " + ordinal(lg.userPos) + " (49−pos) × 30", value: (49 - lg.userPos) * 30 },
+      { label: ur.Pts + " points × 4", value: ur.Pts * 4 },
+      { label: "Goal diff " + (ur.GD > 0 ? "+" : "") + ur.GD + " × 3", value: ur.GD * 3 },
+      { label: s.cleanSheets + " clean sheets × 20", value: s.cleanSheets * 20 },
+      { label: s.gf + " goals × 4", value: s.gf * 4 }
+    ]);
+  }
+  function scoreBannerHTML(sc, result) {
+    var rows = sc.parts.map(function (p) {
+      return '<div class="sb-row"><span>' + esc(p.label) + '</span><span class="' + (p.value < 0 ? "neg" : "pos") + '">' +
+        (p.value >= 0 ? "+" : "") + p.value + "</span></div>";
+    }).join("");
+    return '<div class="score-banner"><div class="sb-top">🎯 Total score <b>' + sc.score + "</b> <span>· " + esc(result) +
+      " · saved to leaderboard</span></div><div class=\"sb-break\"><div class=\"sb-break-h\">How it was scored</div>" + rows + "</div></div>";
   }
   function loadBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); } catch (e) { return []; } }
   function saveBoard(a) { try { localStorage.setItem(LB_KEY, JSON.stringify(a)); } catch (e) {} }
@@ -692,22 +736,37 @@
     setTimeout(function () {
       if (type === "wc") {
         var wc = window.ENGINE.runWorldCup(userTeam);
+        var exitIdx = -1;
+        wc.rounds.forEach(function (rd, i) { if (rd.ties.some(function (t) { return t.a.isUser || t.b.isUser; })) exitIdx = i; });
         reveal = {
           wc: wc, userTeam: userTeam, label: whoLabel(userTeam, "World Cup"),
           groupMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; }),
           koMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; }),
-          stage: "groups", koRevealed: 0, score: wcScore(wc), saved: false
+          exitRoundIdx: exitIdx, stage: "groups", roundsRevealed: 0, sc: wcScore(wc), saved: false
         };
         renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
-        var score = leagueScore(lg), result = ordinal(lg.userPos) + " of " + lg.table.length;
-        addScore({ name: userTeam.name, score: score, result: result, mode: "league", ts: Date.now() });
-        elResultsBody.innerHTML = '<div class="score-banner">🎯 Total score <b>' + score + "</b> <span>· " +
-          esc(result) + " · saved to leaderboard</span></div>" + renderLeagueUser(lg, whoLabel(userTeam, "League"));
+        var sc = leagueScore(lg), result = ordinal(lg.userPos) + " of " + lg.table.length;
+        addScore({ name: userTeam.name, score: sc.score, result: result, mode: "league", ts: Date.now() });
+        elResultsBody.innerHTML = scoreBannerHTML(sc, result) + renderLeagueUser(lg, whoLabel(userTeam, "League"));
         wireResults();
       }
     }, 30);
+  }
+
+  // All ties in one knockout round (user's tie highlighted in gold).
+  function roundResultsHTML(wc, idx) {
+    var rd = wc.rounds[idx], html = '<div class="ko-results">';
+    rd.ties.forEach(function (t) {
+      var uTie = t.a.isUser || t.b.isUser;
+      var pens = t.res.pens ? ' <span class="pens">(p ' + t.res.pens[0] + "–" + t.res.pens[1] + ")</span>" : "";
+      html += '<div class="ko-line' + (uTie ? " user" : "") + '">' +
+        '<span class="ko-t' + (t.winner === t.a ? " w" : "") + '">' + teamCell(t.a) + "</span>" +
+        '<span class="ko-sc">' + t.res.a + "–" + t.res.b + pens + "</span>" +
+        '<span class="ko-t' + (t.winner === t.b ? " w" : "") + '">' + teamCell(t.b) + "</span></div>";
+    });
+    return html + "</div>";
   }
 
   // ---- World Cup shown in two parts: group stage, then a result-by-result knockout reveal ----
@@ -726,29 +785,37 @@
       html += '<button class="start-btn" id="toKO">' + (r.koMatches.length ? "Into the knockouts →" : "See your fate →") + "</button>";
     } else {
       html += '<div class="stage-badge">Part 2 · Knockouts</div>';
-      if (r.koMatches.length) {
-        html += '<h3 class="sec">Your knockout run</h3><div class="journey">';
-        for (var i = 0; i < r.koRevealed && i < r.koMatches.length; i++) html += matchCardHTML(r.koMatches[i], wc.teamName);
-        html += "</div>";
-        if (r.koRevealed < r.koMatches.length) {
-          html += '<button class="start-btn" id="revealNext">Reveal the ' + esc(r.koMatches[r.koRevealed].round) + " →</button>";
+      var koByRound = {};
+      r.koMatches.forEach(function (m) { koByRound[m.round] = m; });
+      if (r.exitRoundIdx >= 0) {
+        html += '<h3 class="sec">Knockouts — every result, round by round</h3>';
+        for (var i = 0; i < r.roundsRevealed && i <= r.exitRoundIdx; i++) {
+          var rd = wc.rounds[i];
+          html += '<div class="ko-round-block">';
+          if (koByRound[rd.name]) html += matchCardHTML(koByRound[rd.name], wc.teamName);
+          html += '<div class="ko-all-h">All ' + esc(rd.name) + " results</div>" + roundResultsHTML(wc, i);
+          html += "</div>";
+        }
+        if (r.roundsRevealed <= r.exitRoundIdx) {
+          html += '<button class="start-btn" id="revealNext">Reveal the ' + esc(wc.rounds[r.roundsRevealed].name) + " →</button>";
         }
       }
-      if (r.koRevealed >= r.koMatches.length) {
+      if (r.exitRoundIdx < 0 || r.roundsRevealed > r.exitRoundIdx) {
         html += '<div class="champion big">' + wc.userResult + "</div>";
-        html += '<div class="score-banner">🎯 Total score <b>' + r.score + "</b> <span>· " + esc(wc.userResult) + " · saved to leaderboard</span></div>";
+        html += scoreBannerHTML(r.sc, wc.userResult);
         html += statsSummaryHTML(wc.userStats);
         html += '<h3 class="sec">Full knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
       }
     }
     elResultsBody.innerHTML = html;
     var b1 = document.getElementById("toKO");
-    if (b1) b1.addEventListener("click", function () { reveal.stage = "ko"; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); });
+    if (b1) b1.addEventListener("click", function () { reveal.stage = "ko"; reveal.roundsRevealed = 1; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); });
     var b2 = document.getElementById("revealNext");
-    if (b2) b2.addEventListener("click", function () { reveal.koRevealed++; renderWCStage(); });
-    if (r.stage === "ko" && r.koRevealed >= r.koMatches.length && !r.saved) {
+    if (b2) b2.addEventListener("click", function () { reveal.roundsRevealed++; renderWCStage(); });
+    var done = (r.exitRoundIdx < 0) || (r.roundsRevealed > r.exitRoundIdx);
+    if (r.stage === "ko" && done && !r.saved) {
       r.saved = true;
-      addScore({ name: r.userTeam.name, score: r.score, result: wc.userResult, mode: "wc", ts: Date.now() });
+      addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: "wc", ts: Date.now() });
     }
   }
 
@@ -785,6 +852,6 @@
   if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 
   // ---- init ----
-  renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
+  renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
 })();
