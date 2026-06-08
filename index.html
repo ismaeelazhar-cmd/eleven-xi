@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>World Cup XI — Spin, Draft, Simulate</title>
-  <meta name="description" content="Spin to draft your all-time World Cup XI, pick a formation, then simulate a 48-team World Cup or a full league." />
+  <meta name="description" content="Spin to draft your all-time World Cup XI, pick a formation and manager, then simulate a 48-team World Cup or a full league." />
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -23,45 +23,58 @@
   <div class="wrap">
     <header>
       <h1>WORLD CUP XI</h1>
-      <p>Spin to draft your all-time XI, choose a formation, then take it through a 48-team World Cup or a full league — or just simulate the nations.</p>
+      <p>Set up your side, then spin to draft an all-time XI from real World Cup squads and chase glory.</p>
       <button class="install-btn" id="installBtn" hidden>⬇ Install app</button>
     </header>
 
-    <!-- ===== HOME ===== -->
-    <section id="homeView">
-      <div class="modes">
-        <button class="mode-card" id="modeDraft">
-          <div class="mode-emoji">🎰</div>
-          <div class="mode-title">Draft &amp; Compete</div>
-          <div class="mode-desc">Spin the slots, pick a formation, build your XI from real World Cup squads, then enter it into a tournament or league against the nations.</div>
-        </button>
-        <button class="mode-card" id="modeSim">
-          <div class="mode-emoji">🌍</div>
-          <div class="mode-title">Nation Simulator</div>
-          <div class="mode-desc">Skip the draft. Simulate the 48-team World Cup (groups → knockouts) or a league where every nation plays each other once.</div>
-        </button>
-      </div>
-    </section>
-
-    <!-- ===== DRAFT ===== -->
-    <section id="draftView" style="display:none;">
-      <button class="back" data-home>← Home</button>
-
+    <!-- ===== SETUP (first page) ===== -->
+    <section id="setupView">
       <div class="setup">
         <div class="setup-row">
           <label class="setup-label" for="teamName">Team name</label>
           <input id="teamName" class="team-name-input" maxlength="24" placeholder="Name your side…" autocomplete="off" />
         </div>
+
         <div class="setup-row setup-row-col">
           <span class="setup-label">Manager</span>
           <div class="manager-options" id="managerBar"></div>
           <div class="manager-desc" id="managerDesc"></div>
         </div>
-      </div>
 
-      <div class="formation-bar">
-        <span class="formation-bar-label">Formation</span>
-        <div class="formation-options" id="formationBar"></div>
+        <div class="setup-row setup-row-col">
+          <span class="setup-label">Formation</span>
+          <div class="formation-options" id="formationBar"></div>
+        </div>
+
+        <div class="setup-pitch-wrap">
+          <div class="pitch-title" id="pitchTitle">4-3-3</div>
+          <div id="setupPitch"></div>
+        </div>
+
+        <div class="setup-row setup-row-col">
+          <span class="setup-label">Player ratings</span>
+          <div class="seg" id="ratingsToggle">
+            <button class="seg-opt active" data-ratings="show">👁 Show ratings</button>
+            <button class="seg-opt" data-ratings="hide">🙈 Hide ratings (harder)</button>
+          </div>
+          <div class="seg-desc" id="ratingsDesc">Player ratings are visible while you draft.</div>
+        </div>
+
+        <button class="start-btn" id="startBtn">Start drafting →</button>
+        <button class="link-btn" id="toSim">or simulate the 48 nations instead →</button>
+      </div>
+    </section>
+
+    <!-- ===== DRAFT (second part) ===== -->
+    <section id="draftView" style="display:none;">
+      <button class="back" id="draftBack">← Setup</button>
+
+      <div class="draft-head">
+        <div class="draft-head-info">
+          <div class="draft-team" id="draftTeam">My XI</div>
+          <div class="draft-meta" id="draftMeta">4-3-3 · No manager</div>
+        </div>
+        <div class="draft-pitch-wrap"><div id="draftPitch"></div></div>
       </div>
 
       <div class="machine" aria-label="Slot machine">
@@ -77,6 +90,7 @@
         </div>
         <div class="controls">
           <button class="spin" id="spinBtn">SPIN</button>
+          <button class="reroll" id="rerollBtn" hidden>🎲 Reroll (<span id="rerollCount">3</span>)</button>
         </div>
         <div class="hint" id="hint"></div>
       </div>
@@ -105,7 +119,7 @@
 
     <!-- ===== SIM PICK ===== -->
     <section id="simView" style="display:none;">
-      <button class="back" data-home>← Home</button>
+      <button class="back" data-home>← Setup</button>
       <div class="modes">
         <button class="mode-card" id="simWorldCup">
           <div class="mode-emoji">🏆</div>
@@ -130,7 +144,7 @@
     </section>
 
     <footer>
-      A World Cup spin-slot draft &amp; simulator inspired by 38-0. Squads are real tournament rosters; nation ratings are gameplay approximations.
+      A World Cup spin-slot draft &amp; simulator inspired by 38-0. Squads are real tournament rosters; ratings are gameplay approximations.
     </footer>
   </div>
 

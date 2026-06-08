@@ -1,5 +1,5 @@
 /* Service worker: cache-first so the app installs and runs offline. */
-const CACHE = "wcxi-v4";
+const CACHE = "wcxi-v5";
 const ASSETS = [
   "./", "./index.html", "./style.css",
   "./data.js", "./nations.js", "./engine.js", "./game.js",

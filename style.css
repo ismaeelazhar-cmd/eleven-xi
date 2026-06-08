@@ -545,3 +545,85 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .pill.W { background: rgba(0, 187, 127, 0.2); color: var(--green2); }
 .pill.D { background: rgba(148, 163, 184, 0.2); color: var(--muted); }
 .pill.L { background: rgba(251, 44, 54, 0.2); color: #ff6568; }
+
+/* ---------- Ratings segmented toggle ---------- */
+.seg { display: inline-flex; background: #0c0c14; border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; flex-wrap: wrap; }
+.seg-opt { background: transparent; color: var(--muted); border: none; cursor: pointer; padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.seg-opt.active { background: linear-gradient(180deg, #ffe08a, var(--gold)); color: #1a1206; }
+.seg-desc { color: var(--muted); font-size: 13px; min-height: 16px; }
+
+/* ---------- Start / link buttons ---------- */
+.start-btn {
+  margin-top: 6px;
+  background: linear-gradient(180deg, #ffe08a, var(--gold));
+  color: #1a1206; border: none; border-radius: 999px;
+  padding: 15px 22px; font-size: 17px; font-weight: 900; cursor: pointer;
+  box-shadow: 0 8px 22px rgba(249, 156, 0, 0.35);
+}
+.start-btn:hover { filter: brightness(1.05); }
+.link-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 6px; text-decoration: underline; }
+.link-btn:hover { color: var(--gold); }
+
+/* ---------- Pitch visual ---------- */
+.setup-pitch-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pitch-title { font-size: 14px; font-weight: 800; color: var(--gold); letter-spacing: 1px; }
+.pitch {
+  width: 100%; max-width: 320px; aspect-ratio: 3 / 4;
+  display: flex; flex-direction: column; justify-content: space-around;
+  padding: 14px 10px; border-radius: 14px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 40px),
+    radial-gradient(120% 80% at 50% 0%, rgba(0,187,127,0.18), transparent 60%),
+    linear-gradient(180deg, #0c1a12, #08120c);
+  border: 1px solid rgba(0, 187, 127, 0.22);
+}
+.pitch-row { display: flex; justify-content: space-around; align-items: center; }
+.pdot {
+  position: relative; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  background: rgba(255,255,255,0.06); border: 1.5px dashed rgba(255,255,255,0.25);
+}
+.pdot .dot-pos { font-size: 10px; font-weight: 800; color: var(--muted); }
+.pdot.filled { border-style: solid; }
+.pdot.filled.GK  { background: linear-gradient(180deg,#ffe08a,#f99c00); border-color:#f99c00; }
+.pdot.filled.DEF { background: linear-gradient(180deg,#34d399,#00bb7f); border-color:#00bb7f; }
+.pdot.filled.MID { background: linear-gradient(180deg,#8fb4ff,#5b8def); border-color:#5b8def; }
+.pdot.filled.FWD { background: linear-gradient(180deg,#ff8a9c,#ef476f); border-color:#ef476f; }
+.pdot .dot-name {
+  position: absolute; top: 100%; margin-top: 2px;
+  font-size: 9px; font-weight: 700; color: var(--text);
+  white-space: nowrap; max-width: 64px; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 2px #000;
+}
+.pdot .dot-rate { font-size: 13px; font-weight: 900; color: #0a0a0f; }
+
+/* ---------- Draft header ---------- */
+.draft-head {
+  display: flex; gap: 16px; align-items: center; justify-content: space-between;
+  background: linear-gradient(180deg, #14141f, #0e0e16);
+  border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px;
+}
+.draft-team { font-size: 20px; font-weight: 900; }
+.draft-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.draft-pitch-wrap { flex: 0 0 auto; }
+.draft-pitch-wrap .pitch { width: 150px; max-width: 150px; padding: 8px 6px; }
+.draft-pitch-wrap .pdot { width: 22px; height: 22px; border-width: 1px; }
+.draft-pitch-wrap .pdot .dot-rate { font-size: 9px; }
+.draft-pitch-wrap .pdot .dot-name { display: none; }
+.draft-pitch-wrap .pdot .dot-pos { font-size: 8px; }
+
+/* ---------- Reroll + rating badges ---------- */
+.reroll {
+  background: rgba(141, 84, 255, 0.16); color: #b69bff;
+  border: 1px solid rgba(141, 84, 255, 0.5); border-radius: 999px;
+  padding: 12px 20px; font-weight: 800; font-size: 14px; cursor: pointer;
+}
+.reroll:hover { background: rgba(141, 84, 255, 0.26); }
+.reroll:disabled { opacity: 0.5; cursor: not-allowed; }
+.rate-badge { margin-left: auto; background: rgba(249, 156, 0, 0.16); color: var(--gold); border-radius: 6px; padding: 2px 7px; font-size: 12px; font-weight: 800; }
+.xi-rate { color: var(--gold); font-weight: 800; font-size: 13px; }
+
+@media (max-width: 520px) {
+  .draft-head { flex-direction: column; align-items: stretch; }
+  .draft-pitch-wrap { align-self: center; }
+}

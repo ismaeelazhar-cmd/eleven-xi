@@ -1,59 +1,58 @@
 /* Draftable World Cup squads.
- * COUNTRY -> { flag, years: { YEAR: [ {n: name, p: GK|DEF|MID|FWD} ] } }
- * Squads are real tournament rosters (full where confidently known, strong core otherwise).
- * Easy to extend: add another YEAR array, or another COUNTRY block.
+ * COUNTRY -> { flag, years: { YEAR: [ {n: name, p: GK|DEF|MID|FWD, r: rating} ] } }
+ * Squads are real tournament rosters; ratings (≈74–97) are curated for gameplay.
  */
 window.WORLD_CUP_DATA = {
   "Brazil": {
     flag: "🇧🇷",
     years: {
       "1970": [
-        { n: "Félix", p: "GK" }, { n: "Ado", p: "GK" },
-        { n: "Carlos Alberto", p: "DEF" }, { n: "Brito", p: "DEF" }, { n: "Piazza", p: "DEF" },
-        { n: "Everaldo", p: "DEF" }, { n: "Marco Antônio", p: "DEF" }, { n: "Fontana", p: "DEF" },
-        { n: "Clodoaldo", p: "MID" }, { n: "Gérson", p: "MID" }, { n: "Rivelino", p: "MID" },
-        { n: "Paulo Cézar", p: "MID" }, { n: "Edu", p: "MID" },
-        { n: "Jairzinho", p: "FWD" }, { n: "Tostão", p: "FWD" }, { n: "Pelé", p: "FWD" },
-        { n: "Roberto", p: "FWD" }
+        { n: "Félix", p: "GK", r: 78 }, { n: "Ado", p: "GK", r: 74 },
+        { n: "Carlos Alberto", p: "DEF", r: 89 }, { n: "Brito", p: "DEF", r: 80 }, { n: "Piazza", p: "DEF", r: 82 },
+        { n: "Everaldo", p: "DEF", r: 79 }, { n: "Marco Antônio", p: "DEF", r: 77 }, { n: "Fontana", p: "DEF", r: 76 },
+        { n: "Clodoaldo", p: "MID", r: 84 }, { n: "Gérson", p: "MID", r: 88 }, { n: "Rivelino", p: "MID", r: 90 },
+        { n: "Paulo Cézar", p: "MID", r: 81 }, { n: "Edu", p: "MID", r: 80 },
+        { n: "Jairzinho", p: "FWD", r: 90 }, { n: "Tostão", p: "FWD", r: 88 }, { n: "Pelé", p: "FWD", r: 97 },
+        { n: "Roberto", p: "FWD", r: 78 }
       ],
       "1982": [
-        { n: "Waldir Peres", p: "GK" }, { n: "Paulo Sérgio", p: "GK" },
-        { n: "Leandro", p: "DEF" }, { n: "Oscar", p: "DEF" }, { n: "Luizinho", p: "DEF" },
-        { n: "Júnior", p: "DEF" }, { n: "Edinho", p: "DEF" },
-        { n: "Cerezo", p: "MID" }, { n: "Falcão", p: "MID" }, { n: "Sócrates", p: "MID" },
-        { n: "Zico", p: "MID" }, { n: "Dirceu", p: "MID" },
-        { n: "Éder", p: "FWD" }, { n: "Serginho", p: "FWD" }, { n: "Careca", p: "FWD" }
+        { n: "Waldir Peres", p: "GK", r: 77 }, { n: "Paulo Sérgio", p: "GK", r: 74 },
+        { n: "Leandro", p: "DEF", r: 84 }, { n: "Oscar", p: "DEF", r: 83 }, { n: "Luizinho", p: "DEF", r: 80 },
+        { n: "Júnior", p: "DEF", r: 85 }, { n: "Edinho", p: "DEF", r: 80 },
+        { n: "Cerezo", p: "MID", r: 84 }, { n: "Falcão", p: "MID", r: 89 }, { n: "Sócrates", p: "MID", r: 91 },
+        { n: "Zico", p: "MID", r: 93 }, { n: "Dirceu", p: "MID", r: 81 },
+        { n: "Éder", p: "FWD", r: 85 }, { n: "Serginho", p: "FWD", r: 77 }, { n: "Careca", p: "FWD", r: 86 }
       ],
       "1998": [
-        { n: "Taffarel", p: "GK" }, { n: "Dida", p: "GK" }, { n: "Carlos Germano", p: "GK" },
-        { n: "Cafu", p: "DEF" }, { n: "Roberto Carlos", p: "DEF" }, { n: "Aldair", p: "DEF" },
-        { n: "Júnior Baiano", p: "DEF" }, { n: "Gonçalves", p: "DEF" }, { n: "Zé Carlos", p: "DEF" },
-        { n: "Ze Roberto", p: "MID" }, { n: "Dunga", p: "MID" }, { n: "César Sampaio", p: "MID" },
-        { n: "Leonardo", p: "MID" }, { n: "Rivaldo", p: "MID" }, { n: "Doriva", p: "MID" },
-        { n: "Emerson", p: "MID" },
-        { n: "Ronaldo", p: "FWD" }, { n: "Bebeto", p: "FWD" }, { n: "Denílson", p: "FWD" },
-        { n: "Edmundo", p: "FWD" }
+        { n: "Taffarel", p: "GK", r: 83 }, { n: "Dida", p: "GK", r: 80 }, { n: "Carlos Germano", p: "GK", r: 74 },
+        { n: "Cafu", p: "DEF", r: 88 }, { n: "Roberto Carlos", p: "DEF", r: 90 }, { n: "Aldair", p: "DEF", r: 84 },
+        { n: "Júnior Baiano", p: "DEF", r: 79 }, { n: "Gonçalves", p: "DEF", r: 77 }, { n: "Zé Carlos", p: "DEF", r: 76 },
+        { n: "Zé Roberto", p: "MID", r: 84 }, { n: "Dunga", p: "MID", r: 85 }, { n: "César Sampaio", p: "MID", r: 80 },
+        { n: "Leonardo", p: "MID", r: 85 }, { n: "Rivaldo", p: "MID", r: 92 }, { n: "Doriva", p: "MID", r: 76 },
+        { n: "Emerson", p: "MID", r: 82 },
+        { n: "Ronaldo", p: "FWD", r: 95 }, { n: "Bebeto", p: "FWD", r: 85 }, { n: "Denílson", p: "FWD", r: 80 },
+        { n: "Edmundo", p: "FWD", r: 81 }
       ],
       "2002": [
-        { n: "Marcos", p: "GK" }, { n: "Dida", p: "GK" }, { n: "Rogério Ceni", p: "GK" },
-        { n: "Cafu", p: "DEF" }, { n: "Roberto Carlos", p: "DEF" }, { n: "Lúcio", p: "DEF" },
-        { n: "Roque Júnior", p: "DEF" }, { n: "Edmílson", p: "DEF" }, { n: "Anderson Polga", p: "DEF" },
-        { n: "Júnior", p: "DEF" }, { n: "Belletti", p: "DEF" },
-        { n: "Gilberto Silva", p: "MID" }, { n: "Kléberson", p: "MID" }, { n: "Juninho Paulista", p: "MID" },
-        { n: "Ricardinho", p: "MID" }, { n: "Vampeta", p: "MID" }, { n: "Ronaldinho", p: "MID" },
-        { n: "Ronaldo", p: "FWD" }, { n: "Rivaldo", p: "FWD" }, { n: "Edílson", p: "FWD" },
-        { n: "Luizão", p: "FWD" }, { n: "Denílson", p: "FWD" }
+        { n: "Marcos", p: "GK", r: 83 }, { n: "Dida", p: "GK", r: 82 }, { n: "Rogério Ceni", p: "GK", r: 80 },
+        { n: "Cafu", p: "DEF", r: 88 }, { n: "Roberto Carlos", p: "DEF", r: 90 }, { n: "Lúcio", p: "DEF", r: 87 },
+        { n: "Roque Júnior", p: "DEF", r: 81 }, { n: "Edmílson", p: "DEF", r: 82 }, { n: "Anderson Polga", p: "DEF", r: 77 },
+        { n: "Júnior", p: "DEF", r: 80 }, { n: "Belletti", p: "DEF", r: 81 },
+        { n: "Gilberto Silva", p: "MID", r: 84 }, { n: "Kléberson", p: "MID", r: 80 }, { n: "Juninho Paulista", p: "MID", r: 81 },
+        { n: "Ricardinho", p: "MID", r: 78 }, { n: "Vampeta", p: "MID", r: 78 }, { n: "Ronaldinho", p: "MID", r: 92 },
+        { n: "Ronaldo", p: "FWD", r: 95 }, { n: "Rivaldo", p: "FWD", r: 92 }, { n: "Edílson", p: "FWD", r: 80 },
+        { n: "Luizão", p: "FWD", r: 79 }, { n: "Denílson", p: "FWD", r: 80 }
       ],
       "2014": [
-        { n: "Júlio César", p: "GK" }, { n: "Jefferson", p: "GK" }, { n: "Victor", p: "GK" },
-        { n: "Dani Alves", p: "DEF" }, { n: "Marcelo", p: "DEF" }, { n: "Thiago Silva", p: "DEF" },
-        { n: "David Luiz", p: "DEF" }, { n: "Dante", p: "DEF" }, { n: "Maicon", p: "DEF" },
-        { n: "Maxwell", p: "DEF" },
-        { n: "Luiz Gustavo", p: "MID" }, { n: "Fernandinho", p: "MID" }, { n: "Paulinho", p: "MID" },
-        { n: "Oscar", p: "MID" }, { n: "Ramires", p: "MID" }, { n: "Hernanes", p: "MID" },
-        { n: "Willian", p: "MID" },
-        { n: "Neymar", p: "FWD" }, { n: "Hulk", p: "FWD" }, { n: "Fred", p: "FWD" },
-        { n: "Jô", p: "FWD" }, { n: "Bernard", p: "FWD" }
+        { n: "Júlio César", p: "GK", r: 82 }, { n: "Jefferson", p: "GK", r: 78 }, { n: "Victor", p: "GK", r: 75 },
+        { n: "Dani Alves", p: "DEF", r: 86 }, { n: "Marcelo", p: "DEF", r: 87 }, { n: "Thiago Silva", p: "DEF", r: 89 },
+        { n: "David Luiz", p: "DEF", r: 84 }, { n: "Dante", p: "DEF", r: 80 }, { n: "Maicon", p: "DEF", r: 81 },
+        { n: "Maxwell", p: "DEF", r: 79 },
+        { n: "Luiz Gustavo", p: "MID", r: 82 }, { n: "Fernandinho", p: "MID", r: 83 }, { n: "Paulinho", p: "MID", r: 81 },
+        { n: "Oscar", p: "MID", r: 83 }, { n: "Ramires", p: "MID", r: 81 }, { n: "Hernanes", p: "MID", r: 80 },
+        { n: "Willian", p: "MID", r: 83 },
+        { n: "Neymar", p: "FWD", r: 90 }, { n: "Hulk", p: "FWD", r: 82 }, { n: "Fred", p: "FWD", r: 79 },
+        { n: "Jô", p: "FWD", r: 76 }, { n: "Bernard", p: "FWD", r: 77 }
       ]
     }
   },
@@ -61,42 +60,42 @@ window.WORLD_CUP_DATA = {
     flag: "🇦🇷",
     years: {
       "1978": [
-        { n: "Ubaldo Fillol", p: "GK" }, { n: "Héctor Baley", p: "GK" },
-        { n: "Daniel Passarella", p: "DEF" }, { n: "Alberto Tarantini", p: "DEF" },
-        { n: "Luis Galván", p: "DEF" }, { n: "Jorge Olguín", p: "DEF" }, { n: "Miguel Oviedo", p: "DEF" },
-        { n: "Américo Gallego", p: "MID" }, { n: "Osvaldo Ardiles", p: "MID" }, { n: "Daniel Valencia", p: "MID" },
-        { n: "Rubén Galván", p: "MID" }, { n: "Omar Larrosa", p: "MID" },
-        { n: "Mario Kempes", p: "FWD" }, { n: "Leopoldo Luque", p: "FWD" }, { n: "Daniel Bertoni", p: "FWD" },
-        { n: "René Houseman", p: "FWD" }, { n: "Oscar Ortiz", p: "FWD" }
+        { n: "Ubaldo Fillol", p: "GK", r: 84 }, { n: "Héctor Baley", p: "GK", r: 74 },
+        { n: "Daniel Passarella", p: "DEF", r: 88 }, { n: "Alberto Tarantini", p: "DEF", r: 80 },
+        { n: "Luis Galván", p: "DEF", r: 80 }, { n: "Jorge Olguín", p: "DEF", r: 79 }, { n: "Miguel Oviedo", p: "DEF", r: 76 },
+        { n: "Américo Gallego", p: "MID", r: 82 }, { n: "Osvaldo Ardiles", p: "MID", r: 86 }, { n: "Daniel Valencia", p: "MID", r: 80 },
+        { n: "Rubén Galván", p: "MID", r: 78 }, { n: "Omar Larrosa", p: "MID", r: 78 },
+        { n: "Mario Kempes", p: "FWD", r: 90 }, { n: "Leopoldo Luque", p: "FWD", r: 84 }, { n: "Daniel Bertoni", p: "FWD", r: 83 },
+        { n: "René Houseman", p: "FWD", r: 82 }, { n: "Oscar Ortiz", p: "FWD", r: 79 }
       ],
       "1986": [
-        { n: "Nery Pumpido", p: "GK" }, { n: "Luis Islas", p: "GK" },
-        { n: "José Luis Cuciuffo", p: "DEF" }, { n: "Oscar Ruggeri", p: "DEF" }, { n: "José Luis Brown", p: "DEF" },
-        { n: "Julio Olarticoechea", p: "DEF" }, { n: "Néstor Clausen", p: "DEF" }, { n: "Oscar Garré", p: "DEF" },
-        { n: "Sergio Batista", p: "MID" }, { n: "Ricardo Giusti", p: "MID" }, { n: "Héctor Enrique", p: "MID" },
-        { n: "Jorge Burruchaga", p: "MID" }, { n: "Julio Olarticoechea", p: "MID" }, { n: "Carlos Tapia", p: "MID" },
-        { n: "Diego Maradona", p: "FWD" }, { n: "Jorge Valdano", p: "FWD" }, { n: "Pedro Pasculli", p: "FWD" },
-        { n: "Jorge Luis Burruchaga", p: "FWD" }
+        { n: "Nery Pumpido", p: "GK", r: 82 }, { n: "Luis Islas", p: "GK", r: 76 },
+        { n: "José Luis Cuciuffo", p: "DEF", r: 79 }, { n: "Oscar Ruggeri", p: "DEF", r: 85 }, { n: "José Luis Brown", p: "DEF", r: 81 },
+        { n: "Julio Olarticoechea", p: "DEF", r: 80 }, { n: "Néstor Clausen", p: "DEF", r: 78 }, { n: "Oscar Garré", p: "DEF", r: 77 },
+        { n: "Sergio Batista", p: "MID", r: 84 }, { n: "Ricardo Giusti", p: "MID", r: 83 }, { n: "Héctor Enrique", p: "MID", r: 82 },
+        { n: "Jorge Burruchaga", p: "MID", r: 87 }, { n: "Ricardo Bochini", p: "MID", r: 82 }, { n: "Carlos Tapia", p: "MID", r: 79 },
+        { n: "Diego Maradona", p: "FWD", r: 97 }, { n: "Jorge Valdano", p: "FWD", r: 86 }, { n: "Pedro Pasculli", p: "FWD", r: 80 },
+        { n: "Claudio Borghi", p: "FWD", r: 80 }
       ],
       "2014": [
-        { n: "Sergio Romero", p: "GK" }, { n: "Mariano Andújar", p: "GK" }, { n: "Agustín Orion", p: "GK" },
-        { n: "Pablo Zabaleta", p: "DEF" }, { n: "Marcos Rojo", p: "DEF" }, { n: "Ezequiel Garay", p: "DEF" },
-        { n: "Federico Fernández", p: "DEF" }, { n: "Martín Demichelis", p: "DEF" }, { n: "Hugo Campagnaro", p: "DEF" },
-        { n: "José Basanta", p: "DEF" },
-        { n: "Javier Mascherano", p: "MID" }, { n: "Lucas Biglia", p: "MID" }, { n: "Fernando Gago", p: "MID" },
-        { n: "Ángel Di María", p: "MID" }, { n: "Maxi Rodríguez", p: "MID" }, { n: "Enzo Pérez", p: "MID" },
-        { n: "Lionel Messi", p: "FWD" }, { n: "Gonzalo Higuaín", p: "FWD" }, { n: "Sergio Agüero", p: "FWD" },
-        { n: "Ezequiel Lavezzi", p: "FWD" }, { n: "Rodrigo Palacio", p: "FWD" }
+        { n: "Sergio Romero", p: "GK", r: 82 }, { n: "Mariano Andújar", p: "GK", r: 77 }, { n: "Agustín Orion", p: "GK", r: 75 },
+        { n: "Pablo Zabaleta", p: "DEF", r: 84 }, { n: "Marcos Rojo", p: "DEF", r: 81 }, { n: "Ezequiel Garay", p: "DEF", r: 83 },
+        { n: "Federico Fernández", p: "DEF", r: 81 }, { n: "Martín Demichelis", p: "DEF", r: 80 }, { n: "Hugo Campagnaro", p: "DEF", r: 78 },
+        { n: "José Basanta", p: "DEF", r: 77 },
+        { n: "Javier Mascherano", p: "MID", r: 87 }, { n: "Lucas Biglia", p: "MID", r: 81 }, { n: "Fernando Gago", p: "MID", r: 80 },
+        { n: "Ángel Di María", p: "MID", r: 88 }, { n: "Maxi Rodríguez", p: "MID", r: 80 }, { n: "Enzo Pérez", p: "MID", r: 79 },
+        { n: "Lionel Messi", p: "FWD", r: 96 }, { n: "Gonzalo Higuaín", p: "FWD", r: 85 }, { n: "Sergio Agüero", p: "FWD", r: 88 },
+        { n: "Ezequiel Lavezzi", p: "FWD", r: 82 }, { n: "Rodrigo Palacio", p: "FWD", r: 80 }
       ],
       "2022": [
-        { n: "Emiliano Martínez", p: "GK" }, { n: "Franco Armani", p: "GK" }, { n: "Gerónimo Rulli", p: "GK" },
-        { n: "Nahuel Molina", p: "DEF" }, { n: "Cristian Romero", p: "DEF" }, { n: "Nicolás Otamendi", p: "DEF" },
-        { n: "Nicolás Tagliafico", p: "DEF" }, { n: "Marcos Acuña", p: "DEF" }, { n: "Gonzalo Montiel", p: "DEF" },
-        { n: "Germán Pezzella", p: "DEF" }, { n: "Lisandro Martínez", p: "DEF" },
-        { n: "Rodrigo De Paul", p: "MID" }, { n: "Enzo Fernández", p: "MID" }, { n: "Alexis Mac Allister", p: "MID" },
-        { n: "Leandro Paredes", p: "MID" }, { n: "Guido Rodríguez", p: "MID" }, { n: "Alejandro Gómez", p: "MID" },
-        { n: "Lionel Messi", p: "FWD" }, { n: "Julián Álvarez", p: "FWD" }, { n: "Ángel Di María", p: "FWD" },
-        { n: "Lautaro Martínez", p: "FWD" }, { n: "Nicolás González", p: "FWD" }, { n: "Paulo Dybala", p: "FWD" }
+        { n: "Emiliano Martínez", p: "GK", r: 86 }, { n: "Franco Armani", p: "GK", r: 78 }, { n: "Gerónimo Rulli", p: "GK", r: 77 },
+        { n: "Nahuel Molina", p: "DEF", r: 81 }, { n: "Cristian Romero", p: "DEF", r: 85 }, { n: "Nicolás Otamendi", p: "DEF", r: 83 },
+        { n: "Nicolás Tagliafico", p: "DEF", r: 81 }, { n: "Marcos Acuña", p: "DEF", r: 82 }, { n: "Gonzalo Montiel", p: "DEF", r: 79 },
+        { n: "Germán Pezzella", p: "DEF", r: 79 }, { n: "Lisandro Martínez", p: "DEF", r: 83 },
+        { n: "Rodrigo De Paul", p: "MID", r: 84 }, { n: "Enzo Fernández", p: "MID", r: 84 }, { n: "Alexis Mac Allister", p: "MID", r: 84 },
+        { n: "Leandro Paredes", p: "MID", r: 81 }, { n: "Guido Rodríguez", p: "MID", r: 79 }, { n: "Alejandro Gómez", p: "MID", r: 80 },
+        { n: "Lionel Messi", p: "FWD", r: 95 }, { n: "Julián Álvarez", p: "FWD", r: 85 }, { n: "Ángel Di María", p: "FWD", r: 86 },
+        { n: "Lautaro Martínez", p: "FWD", r: 85 }, { n: "Nicolás González", p: "FWD", r: 79 }, { n: "Paulo Dybala", p: "FWD", r: 84 }
       ]
     }
   },
@@ -104,46 +103,46 @@ window.WORLD_CUP_DATA = {
     flag: "🇫🇷",
     years: {
       "1998": [
-        { n: "Fabien Barthez", p: "GK" }, { n: "Bernard Lama", p: "GK" }, { n: "Lionel Charbonnier", p: "GK" },
-        { n: "Lilian Thuram", p: "DEF" }, { n: "Marcel Desailly", p: "DEF" }, { n: "Laurent Blanc", p: "DEF" },
-        { n: "Bixente Lizarazu", p: "DEF" }, { n: "Vincent Candela", p: "DEF" }, { n: "Frank Lebœuf", p: "DEF" },
-        { n: "Didier Deschamps", p: "MID" }, { n: "Emmanuel Petit", p: "MID" }, { n: "Patrick Vieira", p: "MID" },
-        { n: "Zinedine Zidane", p: "MID" }, { n: "Youri Djorkaeff", p: "MID" }, { n: "Christian Karembeu", p: "MID" },
-        { n: "Alain Boghossian", p: "MID" }, { n: "Robert Pirès", p: "MID" }, { n: "Bernard Diomède", p: "MID" },
-        { n: "Thierry Henry", p: "FWD" }, { n: "David Trezeguet", p: "FWD" }, { n: "Stéphane Guivarc'h", p: "FWD" },
-        { n: "Christophe Dugarry", p: "FWD" }
+        { n: "Fabien Barthez", p: "GK", r: 85 }, { n: "Bernard Lama", p: "GK", r: 79 }, { n: "Lionel Charbonnier", p: "GK", r: 74 },
+        { n: "Lilian Thuram", p: "DEF", r: 89 }, { n: "Marcel Desailly", p: "DEF", r: 88 }, { n: "Laurent Blanc", p: "DEF", r: 86 },
+        { n: "Bixente Lizarazu", p: "DEF", r: 85 }, { n: "Vincent Candela", p: "DEF", r: 80 }, { n: "Frank Lebœuf", p: "DEF", r: 82 },
+        { n: "Didier Deschamps", p: "MID", r: 85 }, { n: "Emmanuel Petit", p: "MID", r: 85 }, { n: "Patrick Vieira", p: "MID", r: 86 },
+        { n: "Zinedine Zidane", p: "MID", r: 95 }, { n: "Youri Djorkaeff", p: "MID", r: 85 }, { n: "Christian Karembeu", p: "MID", r: 80 },
+        { n: "Alain Boghossian", p: "MID", r: 78 }, { n: "Robert Pirès", p: "MID", r: 84 }, { n: "Bernard Diomède", p: "MID", r: 77 },
+        { n: "Thierry Henry", p: "FWD", r: 86 }, { n: "David Trezeguet", p: "FWD", r: 83 }, { n: "Stéphane Guivarc'h", p: "FWD", r: 76 },
+        { n: "Christophe Dugarry", p: "FWD", r: 80 }
       ],
       "2006": [
-        { n: "Fabien Barthez", p: "GK" }, { n: "Grégory Coupet", p: "GK" }, { n: "Mickaël Landreau", p: "GK" },
-        { n: "Lilian Thuram", p: "DEF" }, { n: "William Gallas", p: "DEF" }, { n: "Willy Sagnol", p: "DEF" },
-        { n: "Éric Abidal", p: "DEF" }, { n: "Jean-Alain Boumsong", p: "DEF" }, { n: "Mikaël Silvestre", p: "DEF" },
-        { n: "Patrick Vieira", p: "MID" }, { n: "Claude Makélélé", p: "MID" }, { n: "Zinedine Zidane", p: "MID" },
-        { n: "Florent Malouda", p: "MID" }, { n: "Franck Ribéry", p: "MID" }, { n: "Alou Diarra", p: "MID" },
-        { n: "Vikash Dhorasoo", p: "MID" },
-        { n: "Thierry Henry", p: "FWD" }, { n: "David Trezeguet", p: "FWD" }, { n: "Sylvain Wiltord", p: "FWD" },
-        { n: "Louis Saha", p: "FWD" }
+        { n: "Fabien Barthez", p: "GK", r: 82 }, { n: "Grégory Coupet", p: "GK", r: 80 }, { n: "Mickaël Landreau", p: "GK", r: 76 },
+        { n: "Lilian Thuram", p: "DEF", r: 85 }, { n: "William Gallas", p: "DEF", r: 85 }, { n: "Willy Sagnol", p: "DEF", r: 82 },
+        { n: "Éric Abidal", p: "DEF", r: 83 }, { n: "Jean-Alain Boumsong", p: "DEF", r: 78 }, { n: "Mikaël Silvestre", p: "DEF", r: 80 },
+        { n: "Patrick Vieira", p: "MID", r: 87 }, { n: "Claude Makélélé", p: "MID", r: 85 }, { n: "Zinedine Zidane", p: "MID", r: 94 },
+        { n: "Florent Malouda", p: "MID", r: 83 }, { n: "Franck Ribéry", p: "MID", r: 85 }, { n: "Alou Diarra", p: "MID", r: 79 },
+        { n: "Vikash Dhorasoo", p: "MID", r: 77 },
+        { n: "Thierry Henry", p: "FWD", r: 90 }, { n: "David Trezeguet", p: "FWD", r: 85 }, { n: "Sylvain Wiltord", p: "FWD", r: 80 },
+        { n: "Louis Saha", p: "FWD", r: 81 }
       ],
       "2018": [
-        { n: "Hugo Lloris", p: "GK" }, { n: "Steve Mandanda", p: "GK" }, { n: "Alphonse Areola", p: "GK" },
-        { n: "Benjamin Pavard", p: "DEF" }, { n: "Raphaël Varane", p: "DEF" }, { n: "Samuel Umtiti", p: "DEF" },
-        { n: "Lucas Hernández", p: "DEF" }, { n: "Presnel Kimpembe", p: "DEF" }, { n: "Djibril Sidibé", p: "DEF" },
-        { n: "Benjamin Mendy", p: "DEF" }, { n: "Adil Rami", p: "DEF" },
-        { n: "N'Golo Kanté", p: "MID" }, { n: "Paul Pogba", p: "MID" }, { n: "Blaise Matuidi", p: "MID" },
-        { n: "Corentin Tolisso", p: "MID" }, { n: "Steven N'Zonzi", p: "MID" },
-        { n: "Antoine Griezmann", p: "FWD" }, { n: "Kylian Mbappé", p: "FWD" }, { n: "Olivier Giroud", p: "FWD" },
-        { n: "Ousmane Dembélé", p: "FWD" }, { n: "Thomas Lemar", p: "FWD" }, { n: "Nabil Fekir", p: "FWD" },
-        { n: "Florian Thauvin", p: "FWD" }
+        { n: "Hugo Lloris", p: "GK", r: 86 }, { n: "Steve Mandanda", p: "GK", r: 79 }, { n: "Alphonse Areola", p: "GK", r: 77 },
+        { n: "Benjamin Pavard", p: "DEF", r: 82 }, { n: "Raphaël Varane", p: "DEF", r: 87 }, { n: "Samuel Umtiti", p: "DEF", r: 84 },
+        { n: "Lucas Hernández", p: "DEF", r: 84 }, { n: "Presnel Kimpembe", p: "DEF", r: 81 }, { n: "Djibril Sidibé", p: "DEF", r: 79 },
+        { n: "Benjamin Mendy", p: "DEF", r: 80 }, { n: "Adil Rami", p: "DEF", r: 78 },
+        { n: "N'Golo Kanté", p: "MID", r: 89 }, { n: "Paul Pogba", p: "MID", r: 87 }, { n: "Blaise Matuidi", p: "MID", r: 83 },
+        { n: "Corentin Tolisso", p: "MID", r: 81 }, { n: "Steven N'Zonzi", p: "MID", r: 80 },
+        { n: "Antoine Griezmann", p: "FWD", r: 89 }, { n: "Kylian Mbappé", p: "FWD", r: 91 }, { n: "Olivier Giroud", p: "FWD", r: 84 },
+        { n: "Ousmane Dembélé", p: "FWD", r: 83 }, { n: "Thomas Lemar", p: "FWD", r: 81 }, { n: "Nabil Fekir", p: "FWD", r: 81 },
+        { n: "Florian Thauvin", p: "FWD", r: 80 }
       ],
       "2022": [
-        { n: "Hugo Lloris", p: "GK" }, { n: "Steve Mandanda", p: "GK" }, { n: "Alphonse Areola", p: "GK" },
-        { n: "Jules Koundé", p: "DEF" }, { n: "Raphaël Varane", p: "DEF" }, { n: "Dayot Upamecano", p: "DEF" },
-        { n: "Theo Hernández", p: "DEF" }, { n: "Ibrahima Konaté", p: "DEF" }, { n: "Benjamin Pavard", p: "DEF" },
-        { n: "Lucas Hernández", p: "DEF" },
-        { n: "Aurélien Tchouaméni", p: "MID" }, { n: "Adrien Rabiot", p: "MID" }, { n: "Youssouf Fofana", p: "MID" },
-        { n: "Eduardo Camavinga", p: "MID" },
-        { n: "Antoine Griezmann", p: "FWD" }, { n: "Kylian Mbappé", p: "FWD" }, { n: "Olivier Giroud", p: "FWD" },
-        { n: "Ousmane Dembélé", p: "FWD" }, { n: "Marcus Thuram", p: "FWD" }, { n: "Randal Kolo Muani", p: "FWD" },
-        { n: "Kingsley Coman", p: "FWD" }
+        { n: "Hugo Lloris", p: "GK", r: 85 }, { n: "Steve Mandanda", p: "GK", r: 77 }, { n: "Alphonse Areola", p: "GK", r: 77 },
+        { n: "Jules Koundé", p: "DEF", r: 84 }, { n: "Raphaël Varane", p: "DEF", r: 85 }, { n: "Dayot Upamecano", p: "DEF", r: 83 },
+        { n: "Theo Hernández", p: "DEF", r: 84 }, { n: "Ibrahima Konaté", p: "DEF", r: 82 }, { n: "Benjamin Pavard", p: "DEF", r: 82 },
+        { n: "Lucas Hernández", p: "DEF", r: 84 },
+        { n: "Aurélien Tchouaméni", p: "MID", r: 84 }, { n: "Adrien Rabiot", p: "MID", r: 82 }, { n: "Youssouf Fofana", p: "MID", r: 79 },
+        { n: "Eduardo Camavinga", p: "MID", r: 82 },
+        { n: "Antoine Griezmann", p: "FWD", r: 88 }, { n: "Kylian Mbappé", p: "FWD", r: 94 }, { n: "Olivier Giroud", p: "FWD", r: 84 },
+        { n: "Ousmane Dembélé", p: "FWD", r: 84 }, { n: "Marcus Thuram", p: "FWD", r: 81 }, { n: "Randal Kolo Muani", p: "FWD", r: 80 },
+        { n: "Kingsley Coman", p: "FWD", r: 83 }
       ]
     }
   },
@@ -151,32 +150,32 @@ window.WORLD_CUP_DATA = {
     flag: "🇩🇪",
     years: {
       "1990": [
-        { n: "Bodo Illgner", p: "GK" }, { n: "Raimond Aumann", p: "GK" },
-        { n: "Andreas Brehme", p: "DEF" }, { n: "Klaus Augenthaler", p: "DEF" }, { n: "Guido Buchwald", p: "DEF" },
-        { n: "Jürgen Kohler", p: "DEF" }, { n: "Thomas Berthold", p: "DEF" }, { n: "Stefan Reuter", p: "DEF" },
-        { n: "Lothar Matthäus", p: "MID" }, { n: "Olaf Thon", p: "MID" }, { n: "Pierre Littbarski", p: "MID" },
-        { n: "Thomas Häßler", p: "MID" }, { n: "Uwe Bein", p: "MID" },
-        { n: "Jürgen Klinsmann", p: "FWD" }, { n: "Rudi Völler", p: "FWD" }, { n: "Karl-Heinz Riedle", p: "FWD" }
+        { n: "Bodo Illgner", p: "GK", r: 82 }, { n: "Raimond Aumann", p: "GK", r: 76 },
+        { n: "Andreas Brehme", p: "DEF", r: 87 }, { n: "Klaus Augenthaler", p: "DEF", r: 84 }, { n: "Guido Buchwald", p: "DEF", r: 84 },
+        { n: "Jürgen Kohler", p: "DEF", r: 85 }, { n: "Thomas Berthold", p: "DEF", r: 81 }, { n: "Stefan Reuter", p: "DEF", r: 80 },
+        { n: "Lothar Matthäus", p: "MID", r: 91 }, { n: "Olaf Thon", p: "MID", r: 82 }, { n: "Pierre Littbarski", p: "MID", r: 83 },
+        { n: "Thomas Häßler", p: "MID", r: 84 }, { n: "Uwe Bein", p: "MID", r: 80 },
+        { n: "Jürgen Klinsmann", p: "FWD", r: 88 }, { n: "Rudi Völler", p: "FWD", r: 87 }, { n: "Karl-Heinz Riedle", p: "FWD", r: 82 }
       ],
       "2002": [
-        { n: "Oliver Kahn", p: "GK" }, { n: "Jens Lehmann", p: "GK" },
-        { n: "Christoph Metzelder", p: "DEF" }, { n: "Thomas Linke", p: "DEF" }, { n: "Carsten Ramelow", p: "DEF" },
-        { n: "Marko Rehmer", p: "DEF" }, { n: "Frank Baumann", p: "DEF" },
-        { n: "Michael Ballack", p: "MID" }, { n: "Dietmar Hamann", p: "MID" }, { n: "Bernd Schneider", p: "MID" },
-        { n: "Jens Jeremies", p: "MID" }, { n: "Torsten Frings", p: "MID" }, { n: "Sebastian Kehl", p: "MID" },
-        { n: "Miroslav Klose", p: "FWD" }, { n: "Oliver Neuville", p: "FWD" }, { n: "Carsten Jancker", p: "FWD" },
-        { n: "Marco Bode", p: "FWD" }
+        { n: "Oliver Kahn", p: "GK", r: 90 }, { n: "Jens Lehmann", p: "GK", r: 82 },
+        { n: "Christoph Metzelder", p: "DEF", r: 80 }, { n: "Thomas Linke", p: "DEF", r: 79 }, { n: "Carsten Ramelow", p: "DEF", r: 80 },
+        { n: "Marko Rehmer", p: "DEF", r: 78 }, { n: "Frank Baumann", p: "DEF", r: 78 },
+        { n: "Michael Ballack", p: "MID", r: 88 }, { n: "Dietmar Hamann", p: "MID", r: 83 }, { n: "Bernd Schneider", p: "MID", r: 82 },
+        { n: "Jens Jeremies", p: "MID", r: 79 }, { n: "Torsten Frings", p: "MID", r: 82 }, { n: "Sebastian Kehl", p: "MID", r: 79 },
+        { n: "Miroslav Klose", p: "FWD", r: 85 }, { n: "Oliver Neuville", p: "FWD", r: 81 }, { n: "Carsten Jancker", p: "FWD", r: 80 },
+        { n: "Marco Bode", p: "FWD", r: 78 }
       ],
       "2014": [
-        { n: "Manuel Neuer", p: "GK" }, { n: "Roman Weidenfeller", p: "GK" }, { n: "Ron-Robert Zieler", p: "GK" },
-        { n: "Philipp Lahm", p: "DEF" }, { n: "Jérôme Boateng", p: "DEF" }, { n: "Mats Hummels", p: "DEF" },
-        { n: "Benedikt Höwedes", p: "DEF" }, { n: "Per Mertesacker", p: "DEF" }, { n: "Shkodran Mustafi", p: "DEF" },
-        { n: "Erik Durm", p: "DEF" },
-        { n: "Bastian Schweinsteiger", p: "MID" }, { n: "Toni Kroos", p: "MID" }, { n: "Sami Khedira", p: "MID" },
-        { n: "Mesut Özil", p: "MID" }, { n: "Christoph Kramer", p: "MID" }, { n: "Julian Draxler", p: "MID" },
-        { n: "André Schürrle", p: "MID" },
-        { n: "Thomas Müller", p: "FWD" }, { n: "Mario Götze", p: "FWD" }, { n: "Miroslav Klose", p: "FWD" },
-        { n: "Lukas Podolski", p: "FWD" }
+        { n: "Manuel Neuer", p: "GK", r: 92 }, { n: "Roman Weidenfeller", p: "GK", r: 78 }, { n: "Ron-Robert Zieler", p: "GK", r: 76 },
+        { n: "Philipp Lahm", p: "DEF", r: 88 }, { n: "Jérôme Boateng", p: "DEF", r: 85 }, { n: "Mats Hummels", p: "DEF", r: 87 },
+        { n: "Benedikt Höwedes", p: "DEF", r: 81 }, { n: "Per Mertesacker", p: "DEF", r: 80 }, { n: "Shkodran Mustafi", p: "DEF", r: 78 },
+        { n: "Erik Durm", p: "DEF", r: 76 },
+        { n: "Bastian Schweinsteiger", p: "MID", r: 88 }, { n: "Toni Kroos", p: "MID", r: 89 }, { n: "Sami Khedira", p: "MID", r: 84 },
+        { n: "Mesut Özil", p: "MID", r: 87 }, { n: "Christoph Kramer", p: "MID", r: 77 }, { n: "Julian Draxler", p: "MID", r: 81 },
+        { n: "André Schürrle", p: "MID", r: 82 },
+        { n: "Thomas Müller", p: "FWD", r: 89 }, { n: "Mario Götze", p: "FWD", r: 84 }, { n: "Miroslav Klose", p: "FWD", r: 85 },
+        { n: "Lukas Podolski", p: "FWD", r: 82 }
       ]
     }
   },
@@ -184,22 +183,22 @@ window.WORLD_CUP_DATA = {
     flag: "🇮🇹",
     years: {
       "1982": [
-        { n: "Dino Zoff", p: "GK" }, { n: "Ivano Bordon", p: "GK" },
-        { n: "Claudio Gentile", p: "DEF" }, { n: "Gaetano Scirea", p: "DEF" }, { n: "Antonio Cabrini", p: "DEF" },
-        { n: "Fulvio Collovati", p: "DEF" }, { n: "Giuseppe Bergomi", p: "DEF" }, { n: "Pietro Vierchowod", p: "DEF" },
-        { n: "Gabriele Oriali", p: "MID" }, { n: "Marco Tardelli", p: "MID" }, { n: "Giancarlo Antognoni", p: "MID" },
-        { n: "Bruno Conti", p: "MID" }, { n: "Giampiero Marini", p: "MID" },
-        { n: "Paolo Rossi", p: "FWD" }, { n: "Francesco Graziani", p: "FWD" }, { n: "Alessandro Altobelli", p: "FWD" }
+        { n: "Dino Zoff", p: "GK", r: 88 }, { n: "Ivano Bordon", p: "GK", r: 76 },
+        { n: "Claudio Gentile", p: "DEF", r: 85 }, { n: "Gaetano Scirea", p: "DEF", r: 87 }, { n: "Antonio Cabrini", p: "DEF", r: 84 },
+        { n: "Fulvio Collovati", p: "DEF", r: 81 }, { n: "Giuseppe Bergomi", p: "DEF", r: 82 }, { n: "Pietro Vierchowod", p: "DEF", r: 80 },
+        { n: "Gabriele Oriali", p: "MID", r: 81 }, { n: "Marco Tardelli", p: "MID", r: 85 }, { n: "Giancarlo Antognoni", p: "MID", r: 85 },
+        { n: "Bruno Conti", p: "MID", r: 86 }, { n: "Giampiero Marini", p: "MID", r: 79 },
+        { n: "Paolo Rossi", p: "FWD", r: 90 }, { n: "Francesco Graziani", p: "FWD", r: 82 }, { n: "Alessandro Altobelli", p: "FWD", r: 83 }
       ],
       "2006": [
-        { n: "Gianluigi Buffon", p: "GK" }, { n: "Angelo Peruzzi", p: "GK" }, { n: "Marco Amelia", p: "GK" },
-        { n: "Fabio Cannavaro", p: "DEF" }, { n: "Marco Materazzi", p: "DEF" }, { n: "Gianluca Zambrotta", p: "DEF" },
-        { n: "Fabio Grosso", p: "DEF" }, { n: "Alessandro Nesta", p: "DEF" }, { n: "Gianluca Zaccardo", p: "DEF" },
-        { n: "Massimo Oddo", p: "DEF" },
-        { n: "Andrea Pirlo", p: "MID" }, { n: "Gennaro Gattuso", p: "MID" }, { n: "Daniele De Rossi", p: "MID" },
-        { n: "Mauro Camoranesi", p: "MID" }, { n: "Simone Perrotta", p: "MID" }, { n: "Massimo Ambrosini", p: "MID" },
-        { n: "Francesco Totti", p: "FWD" }, { n: "Luca Toni", p: "FWD" }, { n: "Alessandro Del Piero", p: "FWD" },
-        { n: "Alberto Gilardino", p: "FWD" }, { n: "Vincenzo Iaquinta", p: "FWD" }, { n: "Filippo Inzaghi", p: "FWD" }
+        { n: "Gianluigi Buffon", p: "GK", r: 92 }, { n: "Angelo Peruzzi", p: "GK", r: 80 }, { n: "Marco Amelia", p: "GK", r: 76 },
+        { n: "Fabio Cannavaro", p: "DEF", r: 90 }, { n: "Marco Materazzi", p: "DEF", r: 83 }, { n: "Gianluca Zambrotta", p: "DEF", r: 85 },
+        { n: "Fabio Grosso", p: "DEF", r: 82 }, { n: "Alessandro Nesta", p: "DEF", r: 88 }, { n: "Gianluca Zaccardo", p: "DEF", r: 77 },
+        { n: "Massimo Oddo", p: "DEF", r: 80 },
+        { n: "Andrea Pirlo", p: "MID", r: 89 }, { n: "Gennaro Gattuso", p: "MID", r: 84 }, { n: "Daniele De Rossi", p: "MID", r: 84 },
+        { n: "Mauro Camoranesi", p: "MID", r: 82 }, { n: "Simone Perrotta", p: "MID", r: 80 }, { n: "Massimo Ambrosini", p: "MID", r: 80 },
+        { n: "Francesco Totti", p: "FWD", r: 89 }, { n: "Luca Toni", p: "FWD", r: 84 }, { n: "Alessandro Del Piero", p: "FWD", r: 87 },
+        { n: "Alberto Gilardino", p: "FWD", r: 82 }, { n: "Vincenzo Iaquinta", p: "FWD", r: 80 }, { n: "Filippo Inzaghi", p: "FWD", r: 84 }
       ]
     }
   },
@@ -207,31 +206,31 @@ window.WORLD_CUP_DATA = {
     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
     years: {
       "1966": [
-        { n: "Gordon Banks", p: "GK" }, { n: "Ron Springett", p: "GK" },
-        { n: "George Cohen", p: "DEF" }, { n: "Ray Wilson", p: "DEF" }, { n: "Jack Charlton", p: "DEF" },
-        { n: "Bobby Moore", p: "DEF" }, { n: "George Eastham", p: "DEF" },
-        { n: "Nobby Stiles", p: "MID" }, { n: "Alan Ball", p: "MID" }, { n: "Bobby Charlton", p: "MID" },
-        { n: "Martin Peters", p: "MID" },
-        { n: "Roger Hunt", p: "FWD" }, { n: "Geoff Hurst", p: "FWD" }, { n: "Jimmy Greaves", p: "FWD" },
-        { n: "Ian Callaghan", p: "FWD" }
+        { n: "Gordon Banks", p: "GK", r: 88 }, { n: "Ron Springett", p: "GK", r: 76 },
+        { n: "George Cohen", p: "DEF", r: 82 }, { n: "Ray Wilson", p: "DEF", r: 83 }, { n: "Jack Charlton", p: "DEF", r: 84 },
+        { n: "Bobby Moore", p: "DEF", r: 91 }, { n: "George Eastham", p: "DEF", r: 79 },
+        { n: "Nobby Stiles", p: "MID", r: 82 }, { n: "Alan Ball", p: "MID", r: 85 }, { n: "Bobby Charlton", p: "MID", r: 91 },
+        { n: "Martin Peters", p: "MID", r: 85 },
+        { n: "Roger Hunt", p: "FWD", r: 83 }, { n: "Geoff Hurst", p: "FWD", r: 86 }, { n: "Jimmy Greaves", p: "FWD", r: 87 },
+        { n: "Ian Callaghan", p: "FWD", r: 80 }
       ],
       "1990": [
-        { n: "Peter Shilton", p: "GK" }, { n: "Chris Woods", p: "GK" },
-        { n: "Stuart Pearce", p: "DEF" }, { n: "Des Walker", p: "DEF" }, { n: "Terry Butcher", p: "DEF" },
-        { n: "Mark Wright", p: "DEF" }, { n: "Paul Parker", p: "DEF" }, { n: "Gary Stevens", p: "DEF" },
-        { n: "Paul Gascoigne", p: "MID" }, { n: "David Platt", p: "MID" }, { n: "Chris Waddle", p: "MID" },
-        { n: "John Barnes", p: "MID" }, { n: "Trevor Steven", p: "MID" }, { n: "Steve McMahon", p: "MID" },
-        { n: "Gary Lineker", p: "FWD" }, { n: "Peter Beardsley", p: "FWD" }, { n: "Steve Bull", p: "FWD" }
+        { n: "Peter Shilton", p: "GK", r: 86 }, { n: "Chris Woods", p: "GK", r: 78 },
+        { n: "Stuart Pearce", p: "DEF", r: 85 }, { n: "Des Walker", p: "DEF", r: 83 }, { n: "Terry Butcher", p: "DEF", r: 83 },
+        { n: "Mark Wright", p: "DEF", r: 81 }, { n: "Paul Parker", p: "DEF", r: 80 }, { n: "Gary Stevens", p: "DEF", r: 79 },
+        { n: "Paul Gascoigne", p: "MID", r: 88 }, { n: "David Platt", p: "MID", r: 84 }, { n: "Chris Waddle", p: "MID", r: 85 },
+        { n: "John Barnes", p: "MID", r: 86 }, { n: "Trevor Steven", p: "MID", r: 80 }, { n: "Steve McMahon", p: "MID", r: 79 },
+        { n: "Gary Lineker", p: "FWD", r: 88 }, { n: "Peter Beardsley", p: "FWD", r: 84 }, { n: "Steve Bull", p: "FWD", r: 78 }
       ],
       "2018": [
-        { n: "Jordan Pickford", p: "GK" }, { n: "Jack Butland", p: "GK" }, { n: "Nick Pope", p: "GK" },
-        { n: "Kyle Walker", p: "DEF" }, { n: "John Stones", p: "DEF" }, { n: "Harry Maguire", p: "DEF" },
-        { n: "Kieran Trippier", p: "DEF" }, { n: "Ashley Young", p: "DEF" }, { n: "Danny Rose", p: "DEF" },
-        { n: "Gary Cahill", p: "DEF" }, { n: "Phil Jones", p: "DEF" },
-        { n: "Jordan Henderson", p: "MID" }, { n: "Dele Alli", p: "MID" }, { n: "Jesse Lingard", p: "MID" },
-        { n: "Eric Dier", p: "MID" }, { n: "Ruben Loftus-Cheek", p: "MID" },
-        { n: "Harry Kane", p: "FWD" }, { n: "Raheem Sterling", p: "FWD" }, { n: "Marcus Rashford", p: "FWD" },
-        { n: "Jamie Vardy", p: "FWD" }, { n: "Danny Welbeck", p: "FWD" }
+        { n: "Jordan Pickford", p: "GK", r: 81 }, { n: "Jack Butland", p: "GK", r: 77 }, { n: "Nick Pope", p: "GK", r: 76 },
+        { n: "Kyle Walker", p: "DEF", r: 84 }, { n: "John Stones", p: "DEF", r: 83 }, { n: "Harry Maguire", p: "DEF", r: 82 },
+        { n: "Kieran Trippier", p: "DEF", r: 82 }, { n: "Ashley Young", p: "DEF", r: 79 }, { n: "Danny Rose", p: "DEF", r: 79 },
+        { n: "Gary Cahill", p: "DEF", r: 80 }, { n: "Phil Jones", p: "DEF", r: 78 },
+        { n: "Jordan Henderson", p: "MID", r: 82 }, { n: "Dele Alli", p: "MID", r: 83 }, { n: "Jesse Lingard", p: "MID", r: 81 },
+        { n: "Eric Dier", p: "MID", r: 80 }, { n: "Ruben Loftus-Cheek", p: "MID", r: 79 },
+        { n: "Harry Kane", p: "FWD", r: 88 }, { n: "Raheem Sterling", p: "FWD", r: 85 }, { n: "Marcus Rashford", p: "FWD", r: 82 },
+        { n: "Jamie Vardy", p: "FWD", r: 82 }, { n: "Danny Welbeck", p: "FWD", r: 79 }
       ]
     }
   },
@@ -239,21 +238,21 @@ window.WORLD_CUP_DATA = {
     flag: "🇳🇱",
     years: {
       "1974": [
-        { n: "Jan Jongbloed", p: "GK" }, { n: "Piet Schrijvers", p: "GK" },
-        { n: "Wim Suurbier", p: "DEF" }, { n: "Wim Rijsbergen", p: "DEF" }, { n: "Ruud Krol", p: "DEF" },
-        { n: "Arie Haan", p: "DEF" }, { n: "Theo de Jong", p: "DEF" },
-        { n: "Wim Jansen", p: "MID" }, { n: "Johan Neeskens", p: "MID" }, { n: "Wim van Hanegem", p: "MID" },
-        { n: "René van de Kerkhof", p: "MID" }, { n: "Willy van de Kerkhof", p: "MID" },
-        { n: "Johnny Rep", p: "FWD" }, { n: "Johan Cruyff", p: "FWD" }, { n: "Rob Rensenbrink", p: "FWD" }
+        { n: "Jan Jongbloed", p: "GK", r: 78 }, { n: "Piet Schrijvers", p: "GK", r: 76 },
+        { n: "Wim Suurbier", p: "DEF", r: 82 }, { n: "Wim Rijsbergen", p: "DEF", r: 80 }, { n: "Ruud Krol", p: "DEF", r: 86 },
+        { n: "Arie Haan", p: "DEF", r: 85 }, { n: "Theo de Jong", p: "DEF", r: 78 },
+        { n: "Wim Jansen", p: "MID", r: 83 }, { n: "Johan Neeskens", p: "MID", r: 89 }, { n: "Wim van Hanegem", p: "MID", r: 86 },
+        { n: "René van de Kerkhof", p: "MID", r: 82 }, { n: "Willy van de Kerkhof", p: "MID", r: 82 },
+        { n: "Johnny Rep", p: "FWD", r: 84 }, { n: "Johan Cruyff", p: "FWD", r: 96 }, { n: "Rob Rensenbrink", p: "FWD", r: 87 }
       ],
       "2010": [
-        { n: "Maarten Stekelenburg", p: "GK" }, { n: "Michel Vorm", p: "GK" }, { n: "Sander Boschker", p: "GK" },
-        { n: "Gregory van der Wiel", p: "DEF" }, { n: "John Heitinga", p: "DEF" }, { n: "Joris Mathijsen", p: "DEF" },
-        { n: "Giovanni van Bronckhorst", p: "DEF" }, { n: "Khalid Boulahrouz", p: "DEF" }, { n: "André Ooijer", p: "DEF" },
-        { n: "Mark van Bommel", p: "MID" }, { n: "Nigel de Jong", p: "MID" }, { n: "Wesley Sneijder", p: "MID" },
-        { n: "Rafael van der Vaart", p: "MID" }, { n: "Demy de Zeeuw", p: "MID" },
-        { n: "Dirk Kuyt", p: "FWD" }, { n: "Arjen Robben", p: "FWD" }, { n: "Robin van Persie", p: "FWD" },
-        { n: "Eljero Elia", p: "FWD" }, { n: "Ryan Babel", p: "FWD" }, { n: "Klaas-Jan Huntelaar", p: "FWD" }
+        { n: "Maarten Stekelenburg", p: "GK", r: 81 }, { n: "Michel Vorm", p: "GK", r: 78 }, { n: "Sander Boschker", p: "GK", r: 73 },
+        { n: "Gregory van der Wiel", p: "DEF", r: 81 }, { n: "John Heitinga", p: "DEF", r: 82 }, { n: "Joris Mathijsen", p: "DEF", r: 80 },
+        { n: "Giovanni van Bronckhorst", p: "DEF", r: 83 }, { n: "Khalid Boulahrouz", p: "DEF", r: 77 }, { n: "André Ooijer", p: "DEF", r: 78 },
+        { n: "Mark van Bommel", p: "MID", r: 83 }, { n: "Nigel de Jong", p: "MID", r: 82 }, { n: "Wesley Sneijder", p: "MID", r: 88 },
+        { n: "Rafael van der Vaart", p: "MID", r: 84 }, { n: "Demy de Zeeuw", p: "MID", r: 79 },
+        { n: "Dirk Kuyt", p: "FWD", r: 83 }, { n: "Arjen Robben", p: "FWD", r: 90 }, { n: "Robin van Persie", p: "FWD", r: 88 },
+        { n: "Eljero Elia", p: "FWD", r: 79 }, { n: "Ryan Babel", p: "FWD", r: 79 }, { n: "Klaas-Jan Huntelaar", p: "FWD", r: 83 }
       ]
     }
   },
@@ -261,15 +260,15 @@ window.WORLD_CUP_DATA = {
     flag: "🇪🇸",
     years: {
       "2010": [
-        { n: "Iker Casillas", p: "GK" }, { n: "Pepe Reina", p: "GK" }, { n: "Víctor Valdés", p: "GK" },
-        { n: "Sergio Ramos", p: "DEF" }, { n: "Gerard Piqué", p: "DEF" }, { n: "Carles Puyol", p: "DEF" },
-        { n: "Joan Capdevila", p: "DEF" }, { n: "Carlos Marchena", p: "DEF" }, { n: "Raúl Albiol", p: "DEF" },
-        { n: "Álvaro Arbeloa", p: "DEF" },
-        { n: "Sergio Busquets", p: "MID" }, { n: "Xabi Alonso", p: "MID" }, { n: "Xavi", p: "MID" },
-        { n: "Andrés Iniesta", p: "MID" }, { n: "David Silva", p: "MID" }, { n: "Cesc Fàbregas", p: "MID" },
-        { n: "Javi Martínez", p: "MID" },
-        { n: "Pedro", p: "FWD" }, { n: "David Villa", p: "FWD" }, { n: "Fernando Torres", p: "FWD" },
-        { n: "Fernando Llorente", p: "FWD" }, { n: "Jesús Navas", p: "FWD" }
+        { n: "Iker Casillas", p: "GK", r: 91 }, { n: "Pepe Reina", p: "GK", r: 82 }, { n: "Víctor Valdés", p: "GK", r: 83 },
+        { n: "Sergio Ramos", p: "DEF", r: 88 }, { n: "Gerard Piqué", p: "DEF", r: 87 }, { n: "Carles Puyol", p: "DEF", r: 87 },
+        { n: "Joan Capdevila", p: "DEF", r: 80 }, { n: "Carlos Marchena", p: "DEF", r: 80 }, { n: "Raúl Albiol", p: "DEF", r: 79 },
+        { n: "Álvaro Arbeloa", p: "DEF", r: 80 },
+        { n: "Sergio Busquets", p: "MID", r: 85 }, { n: "Xabi Alonso", p: "MID", r: 86 }, { n: "Xavi", p: "MID", r: 91 },
+        { n: "Andrés Iniesta", p: "MID", r: 91 }, { n: "David Silva", p: "MID", r: 86 }, { n: "Cesc Fàbregas", p: "MID", r: 85 },
+        { n: "Javi Martínez", p: "MID", r: 80 },
+        { n: "Pedro", p: "FWD", r: 83 }, { n: "David Villa", p: "FWD", r: 88 }, { n: "Fernando Torres", p: "FWD", r: 86 },
+        { n: "Fernando Llorente", p: "FWD", r: 81 }, { n: "Jesús Navas", p: "FWD", r: 80 }
       ]
     }
   },
@@ -277,14 +276,14 @@ window.WORLD_CUP_DATA = {
     flag: "🇵🇹",
     years: {
       "2006": [
-        { n: "Ricardo", p: "GK" }, { n: "Quim", p: "GK" }, { n: "Paulo Santos", p: "GK" },
-        { n: "Miguel", p: "DEF" }, { n: "Ricardo Carvalho", p: "DEF" }, { n: "Fernando Meira", p: "DEF" },
-        { n: "Nuno Valente", p: "DEF" }, { n: "Paulo Ferreira", p: "DEF" }, { n: "Ricardo Costa", p: "DEF" },
-        { n: "Maniche", p: "MID" }, { n: "Costinha", p: "MID" }, { n: "Deco", p: "MID" },
-        { n: "Luís Figo", p: "MID" }, { n: "Petit", p: "MID" }, { n: "Tiago", p: "MID" },
-        { n: "Armando Petit", p: "MID" },
-        { n: "Cristiano Ronaldo", p: "FWD" }, { n: "Pauleta", p: "FWD" }, { n: "Nuno Gomes", p: "FWD" },
-        { n: "Simão Sabrosa", p: "FWD" }, { n: "Hélder Postiga", p: "FWD" }
+        { n: "Ricardo", p: "GK", r: 82 }, { n: "Quim", p: "GK", r: 78 }, { n: "Paulo Santos", p: "GK", r: 74 },
+        { n: "Miguel", p: "DEF", r: 80 }, { n: "Ricardo Carvalho", p: "DEF", r: 86 }, { n: "Fernando Meira", p: "DEF", r: 80 },
+        { n: "Nuno Valente", p: "DEF", r: 79 }, { n: "Paulo Ferreira", p: "DEF", r: 81 }, { n: "Ricardo Costa", p: "DEF", r: 77 },
+        { n: "Maniche", p: "MID", r: 83 }, { n: "Costinha", p: "MID", r: 81 }, { n: "Deco", p: "MID", r: 88 },
+        { n: "Luís Figo", p: "MID", r: 89 }, { n: "Petit", p: "MID", r: 79 }, { n: "Tiago", p: "MID", r: 81 },
+        { n: "Hugo Viana", p: "MID", r: 78 },
+        { n: "Cristiano Ronaldo", p: "FWD", r: 88 }, { n: "Pauleta", p: "FWD", r: 83 }, { n: "Nuno Gomes", p: "FWD", r: 81 },
+        { n: "Simão Sabrosa", p: "FWD", r: 83 }, { n: "Hélder Postiga", p: "FWD", r: 79 }
       ]
     }
   },
@@ -292,13 +291,13 @@ window.WORLD_CUP_DATA = {
     flag: "🇺🇾",
     years: {
       "2010": [
-        { n: "Fernando Muslera", p: "GK" }, { n: "Juan Castillo", p: "GK" }, { n: "Martín Silva", p: "GK" },
-        { n: "Diego Lugano", p: "DEF" }, { n: "Diego Godín", p: "DEF" }, { n: "Maxi Pereira", p: "DEF" },
-        { n: "Álvaro Pereira", p: "DEF" }, { n: "Mauricio Victorino", p: "DEF" }, { n: "Jorge Fucile", p: "DEF" },
-        { n: "Egidio Arévalo Ríos", p: "MID" }, { n: "Diego Pérez", p: "MID" }, { n: "Walter Gargano", p: "MID" },
-        { n: "Álvaro Fernández", p: "MID" }, { n: "Ignacio González", p: "MID" }, { n: "Nicolás Lodeiro", p: "MID" },
-        { n: "Diego Forlán", p: "FWD" }, { n: "Luis Suárez", p: "FWD" }, { n: "Edinson Cavani", p: "FWD" },
-        { n: "Sebastián Abreu", p: "FWD" }
+        { n: "Fernando Muslera", p: "GK", r: 82 }, { n: "Juan Castillo", p: "GK", r: 76 }, { n: "Martín Silva", p: "GK", r: 76 },
+        { n: "Diego Lugano", p: "DEF", r: 82 }, { n: "Diego Godín", p: "DEF", r: 86 }, { n: "Maxi Pereira", p: "DEF", r: 81 },
+        { n: "Álvaro Pereira", p: "DEF", r: 80 }, { n: "Mauricio Victorino", p: "DEF", r: 78 }, { n: "Jorge Fucile", p: "DEF", r: 78 },
+        { n: "Egidio Arévalo Ríos", p: "MID", r: 80 }, { n: "Diego Pérez", p: "MID", r: 80 }, { n: "Walter Gargano", p: "MID", r: 80 },
+        { n: "Álvaro Fernández", p: "MID", r: 78 }, { n: "Ignacio González", p: "MID", r: 76 }, { n: "Nicolás Lodeiro", p: "MID", r: 80 },
+        { n: "Diego Forlán", p: "FWD", r: 87 }, { n: "Luis Suárez", p: "FWD", r: 88 }, { n: "Edinson Cavani", p: "FWD", r: 86 },
+        { n: "Sebastián Abreu", p: "FWD", r: 79 }
       ]
     }
   },
@@ -306,14 +305,14 @@ window.WORLD_CUP_DATA = {
     flag: "🇭🇷",
     years: {
       "2018": [
-        { n: "Danijel Subašić", p: "GK" }, { n: "Lovre Kalinić", p: "GK" }, { n: "Dominik Livaković", p: "GK" },
-        { n: "Šime Vrsaljko", p: "DEF" }, { n: "Dejan Lovren", p: "DEF" }, { n: "Domagoj Vida", p: "DEF" },
-        { n: "Ivan Strinić", p: "DEF" }, { n: "Vedran Ćorluka", p: "DEF" }, { n: "Josip Pivarić", p: "DEF" },
-        { n: "Tin Jedvaj", p: "DEF" },
-        { n: "Luka Modrić", p: "MID" }, { n: "Ivan Rakitić", p: "MID" }, { n: "Marcelo Brozović", p: "MID" },
-        { n: "Mateo Kovačić", p: "MID" }, { n: "Milan Badelj", p: "MID" }, { n: "Filip Bradarić", p: "MID" },
-        { n: "Ante Rebić", p: "FWD" }, { n: "Mario Mandžukić", p: "FWD" }, { n: "Ivan Perišić", p: "FWD" },
-        { n: "Andrej Kramarić", p: "FWD" }, { n: "Marko Pjaca", p: "FWD" }, { n: "Nikola Kalinić", p: "FWD" }
+        { n: "Danijel Subašić", p: "GK", r: 81 }, { n: "Lovre Kalinić", p: "GK", r: 77 }, { n: "Dominik Livaković", p: "GK", r: 78 },
+        { n: "Šime Vrsaljko", p: "DEF", r: 82 }, { n: "Dejan Lovren", p: "DEF", r: 82 }, { n: "Domagoj Vida", p: "DEF", r: 80 },
+        { n: "Ivan Strinić", p: "DEF", r: 78 }, { n: "Vedran Ćorluka", p: "DEF", r: 79 }, { n: "Josip Pivarić", p: "DEF", r: 76 },
+        { n: "Tin Jedvaj", p: "DEF", r: 77 },
+        { n: "Luka Modrić", p: "MID", r: 91 }, { n: "Ivan Rakitić", p: "MID", r: 87 }, { n: "Marcelo Brozović", p: "MID", r: 84 },
+        { n: "Mateo Kovačić", p: "MID", r: 83 }, { n: "Milan Badelj", p: "MID", r: 80 }, { n: "Filip Bradarić", p: "MID", r: 76 },
+        { n: "Ante Rebić", p: "FWD", r: 81 }, { n: "Mario Mandžukić", p: "FWD", r: 85 }, { n: "Ivan Perišić", p: "FWD", r: 85 },
+        { n: "Andrej Kramarić", p: "FWD", r: 82 }, { n: "Marko Pjaca", p: "FWD", r: 78 }, { n: "Nikola Kalinić", p: "FWD", r: 80 }
       ]
     }
   }
