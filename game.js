@@ -35,7 +35,11 @@
     RM: ["RM", "RW"], LM: ["LM", "LW"], RW: ["RW", "RM"], LW: ["LW", "LM"], ST: ["ST"]
   };
   var PLAYER_POS = window.PLAYER_POSITIONS || {};
-  function gpOf(pl) { var g = PLAYER_POS[pl.n]; return g ? g.split(",") : null; }
+  function gpOf(pl) {
+    if (pl.gp) return pl.gp.split(",");          // exact position embedded in the squad data
+    var g = PLAYER_POS[pl.n];
+    return g ? g.split(",") : null;
+  }
 
   // Formations as lines of granular slots, defence → attack (GK implicit).
   // Each line is ordered LEFT → RIGHT, so L* roles render on the left and R* on the right.
