@@ -80,7 +80,8 @@
     { id: "defence",   emoji: "🛡️", name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
     { id: "press",     emoji: "🔥", name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
     { id: "cup",       emoji: "🏆", name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
-    { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
+    { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." },
+    { id: "counter",   emoji: "⚡", name: "Counter-Attack",  atk: 3,  def: 1,  ko: 0, desc: "+3 attack, +1 defence — lethal on the break." }
   ];
   // Legacy/iconic managers linked to a tactical style (the bonus comes from the style above).
   var MANAGERS_DB = [
@@ -93,7 +94,8 @@
     { n: "José Mourinho", s: "cup" }, { n: "Carlo Ancelotti", s: "cup" }, { n: "Didier Deschamps", s: "cup" },
     { n: "Lionel Scaloni", s: "cup" }, { n: "Zinedine Zidane", s: "cup" },
     { n: "Sir Alex Ferguson", s: "motivator" }, { n: "Vicente del Bosque", s: "motivator" },
-    { n: "Luiz Felipe Scolari", s: "motivator" }, { n: "Bora Milutinović", s: "motivator" }, { n: "Otto Rehhagel", s: "motivator" }
+    { n: "Luiz Felipe Scolari", s: "motivator" }, { n: "Bora Milutinović", s: "motivator" }, { n: "Otto Rehhagel", s: "motivator" },
+    { n: "Claudio Ranieri", s: "counter" }, { n: "Roberto Di Matteo", s: "counter" }, { n: "Sven-Göran Eriksson", s: "counter" }, { n: "Guus Hiddink", s: "counter" }
   ];
 
   // ---- state ----
@@ -787,7 +789,9 @@
       if (type === "wc") {
         var wc = window.ENGINE.runWorldCup(userTeam);
         reveal = { wc: wc, userTeam: userTeam, label: whoLabel(userTeam, "World Cup"),
-          matches: wc.userMatches, shown: 0, stage: "reveal", sc: wcScore(wc), saved: false };
+          groupMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; }),
+          koMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; }),
+          shown: 0, stage: "groups", sc: wcScore(wc), saved: false };
         renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
@@ -813,39 +817,48 @@
   }
 
   // ---- shared game-by-game auto-reveal ----
-  function scheduleReveal(state, rerender) {
+  function scheduleRevealN(total, state, rerender) {
     clearTimeout(revealTimer);
-    if (state.stage === "reveal" && state.shown < state.matches.length) {
-      var delay = Math.max(90, Math.min(420, Math.round(6000 / state.matches.length)));
+    if (state.shown < total) {
+      var delay = Math.max(90, Math.min(420, Math.round(6000 / total)));
       revealTimer = setTimeout(function () { state.shown++; rerender(); }, delay);
     }
   }
-  function revealHeaderHTML(state, finishLabel) {
-    if (state.shown < state.matches.length) {
-      return '<div class="reveal-bar"><span class="reveal-count">' + state.shown + " / " + state.matches.length +
-        ' games</span><button class="btn-ghost" id="skipReveal">Skip ▶▶</button></div>';
-    }
-    return '<div class="reveal-bar"><button class="start-btn" id="toResult">' + finishLabel + "</button></div>";
-  }
-  function revealListHTML(state, teamName) {
+  function revealListHTML(matches, shown, teamName) {
     var html = '<div class="journey">';
-    for (var i = 0; i < state.shown && i < state.matches.length; i++) html += matchCardHTML(state.matches[i], teamName);
+    for (var i = 0; i < shown && i < matches.length; i++) html += matchCardHTML(matches[i], teamName);
     return html + "</div>";
   }
-  function bindReveal(state, rerender) {
-    var skip = document.getElementById("skipReveal");
-    if (skip) skip.onclick = function () { clearTimeout(revealTimer); state.shown = state.matches.length; rerender(); };
-    var tr = document.getElementById("toResult");
-    if (tr) tr.onclick = function () { clearTimeout(revealTimer); state.stage = "result"; if (window.scrollTo) window.scrollTo(0, 0); rerender(); };
-    wireResults();
+  function skipBarHTML(shown, total) {
+    return '<div class="reveal-bar"><span class="reveal-count">' + shown + " / " + total +
+      ' games</span><button class="btn-ghost" id="skipReveal">Skip ▶▶</button></div>';
   }
 
+  // World Cup: group games revealed one-by-one → group tables → knockouts one-by-one → result.
   function renderWCStage() {
     var r = reveal, wc = r.wc, html = '<h2 class="res-title">' + r.label + "</h2>";
-    if (r.stage === "reveal") {
-      html += '<div class="stage-badge">Your run · game by game</div>';
-      html += revealHeaderHTML(r, "See your result →");
-      html += revealListHTML(r, wc.teamName);
+    if (r.stage === "groups") {
+      var gm = r.groupMatches;
+      html += '<div class="stage-badge">Part 1 · Group stage</div>';
+      if (r.shown < gm.length) {
+        html += skipBarHTML(r.shown, gm.length) + revealListHTML(gm, r.shown, wc.teamName);
+      } else {
+        html += revealListHTML(gm, gm.length, wc.teamName);
+        var ug = null;
+        wc.groups.forEach(function (g) { if (g.table.some(function (row) { return row.team.isUser; })) ug = g; });
+        if (ug) html += '<h3 class="sec">Your group — Group ' + ug.name + "</h3>" + renderGroups([ug]);
+        html += '<h3 class="sec">How the groups finished</h3><p class="legend">Top 2 of each + the 8 best thirds advance.</p>' + renderGroups(wc.groups);
+        html += '<div class="reveal-bar"><button class="start-btn" id="toKO">' + (r.koMatches.length ? "Into the knockouts →" : "See your fate →") + "</button></div>";
+      }
+    } else if (r.stage === "ko") {
+      var km = r.koMatches;
+      html += '<div class="stage-badge">Part 2 · Knockouts</div>';
+      if (km.length && r.shown < km.length) {
+        html += skipBarHTML(r.shown, km.length) + revealListHTML(km, r.shown, wc.teamName);
+      } else {
+        html += revealListHTML(km, km.length, wc.teamName);
+        html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
+      }
     } else {
       if (!r.saved) { r.saved = true; addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: "wc", ts: Date.now() }); }
       html += '<div class="champion big">' + wc.userResult + "</div>";
@@ -855,8 +868,15 @@
       html += '<h3 class="sec">Groups</h3><p class="legend">Final standings — match scores hidden.</p>' + renderGroups(wc.groups);
     }
     elResultsBody.innerHTML = html;
-    bindReveal(reveal, renderWCStage);
-    scheduleReveal(reveal, renderWCStage);
+    var skip = document.getElementById("skipReveal");
+    if (skip) skip.onclick = function () { clearTimeout(revealTimer); reveal.shown = (reveal.stage === "groups" ? reveal.groupMatches.length : reveal.koMatches.length); renderWCStage(); };
+    var toKO = document.getElementById("toKO");
+    if (toKO) toKO.onclick = function () { clearTimeout(revealTimer); reveal.stage = "ko"; reveal.shown = 0; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); };
+    var tr = document.getElementById("toResult");
+    if (tr) tr.onclick = function () { clearTimeout(revealTimer); reveal.stage = "result"; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); };
+    wireResults();
+    if (reveal.stage === "groups") scheduleRevealN(reveal.groupMatches.length, reveal, renderWCStage);
+    else if (reveal.stage === "ko") scheduleRevealN(reveal.koMatches.length, reveal, renderWCStage);
   }
 
   function leagueVerdict(actual, expected) {
@@ -870,11 +890,12 @@
   }
 
   function renderLeagueStage() {
-    var r = lReveal, lg = r.lg, html = '<h2 class="res-title">' + r.label + "</h2>";
+    var r = lReveal, lg = r.lg, gm = lg.userMatches, html = '<h2 class="res-title">' + r.label + "</h2>";
     if (r.stage === "reveal") {
       html += '<div class="stage-badge">Your season · game by game</div>';
-      html += revealHeaderHTML(r, "See your final standing →");
-      html += revealListHTML(r, lg.teamName);
+      html += (r.shown < gm.length ? skipBarHTML(r.shown, gm.length)
+        : '<div class="reveal-bar"><button class="start-btn" id="toResult">See your final standing →</button></div>');
+      html += revealListHTML(gm, r.shown, lg.teamName);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
       if (!r.saved) { r.saved = true; addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: "league", ts: Date.now() }); }
@@ -889,8 +910,12 @@
       html += '<h3 class="sec">Final 48-team table</h3>' + leagueTableHTML(lg);
     }
     elResultsBody.innerHTML = html;
-    bindReveal(lReveal, renderLeagueStage);
-    scheduleReveal(lReveal, renderLeagueStage);
+    var skip = document.getElementById("skipReveal");
+    if (skip) skip.onclick = function () { clearTimeout(revealTimer); lReveal.shown = gm.length; renderLeagueStage(); };
+    var tr = document.getElementById("toResult");
+    if (tr) tr.onclick = function () { clearTimeout(revealTimer); lReveal.stage = "result"; if (window.scrollTo) window.scrollTo(0, 0); renderLeagueStage(); };
+    wireResults();
+    if (lReveal.stage === "reveal") scheduleRevealN(gm.length, lReveal, renderLeagueStage);
   }
 
   // ================= WIRING =================
