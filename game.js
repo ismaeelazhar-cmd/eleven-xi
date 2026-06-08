@@ -100,7 +100,8 @@
   function diffRerolls() { for (var i = 0; i < DIFFICULTIES.length; i++) if (DIFFICULTIES[i].id === difficulty) return DIFFICULTIES[i].rr; return 3; }
   var boardTab = "daily";
   var lastSim = null;
-  var reveal = null; // staged World Cup reveal state
+  var reveal = null;  // staged World Cup reveal state
+  var lReveal = null; // staged League reveal state
   var deferredPrompt = null;
   var LB_KEY = "wcxi_leaderboard_v1";
 
@@ -122,7 +123,12 @@
   var elFormationBar = $("formationBar"), elSetupPitch = $("setupPitch"), elDraftPitch = $("draftPitch");
   var elPitchTitle = $("pitchTitle"), elDraftTeam = $("draftTeam"), elDraftMeta = $("draftMeta");
   var elRatingsToggle = $("ratingsToggle"), elRatingsDesc = $("ratingsDesc");
-  var elPoolToggle = $("poolToggle"), elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
+  var elPoolPresets = $("poolPresets"), elYearBar = $("yearBar"), elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
+  var ALL_YEARS = (function () {
+    var s = {}; COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { s[y] = 1; }); });
+    return Object.keys(s).sort();
+  })();
+  var selectedYears = {}; ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
   var elDiffBar = $("difficultyBar"), elDiffDesc = $("difficultyDesc");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
@@ -275,11 +281,34 @@
       function (v) { showRatings = (v === "show"); paintPitches(); renderXI(); if (current) renderSquadPicker(); },
       { show: "Player ratings are visible while you draft.", hide: "Ratings hidden — draft blind for a tougher challenge." });
   }
-  function renderPoolToggle() {
-    renderTwoToggle(elPoolToggle, elPoolDesc, "data-pool",
-      function () { return pool; },
-      function (v) { pool = v; },
-      { all: "Draft from every squad across all World Cups.", "2026": "Only 2026 World Cup squads (projected from current rosters)." });
+  function setYears(fn) { ALL_YEARS.forEach(function (y) { selectedYears[y] = fn(parseInt(y, 10)); }); renderYearBar(); }
+  function renderYearBar() {
+    var presets = [["all", "All"], ["modern", "Modern (1998+)"], ["2026", "2026 only"], ["legacy", "Legacy (pre-1998)"]];
+    elPoolPresets.innerHTML = presets.map(function (p) {
+      return '<button class="formation-opt" data-preset="' + p[0] + '">' + p[1] + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(elPoolPresets.querySelectorAll(".formation-opt"), function (b) {
+      b.addEventListener("click", function () {
+        var p = b.getAttribute("data-preset");
+        if (p === "all") setYears(function () { return true; });
+        else if (p === "2026") setYears(function (y) { return y === 2026; });
+        else if (p === "modern") setYears(function (y) { return y >= 1998; });
+        else setYears(function (y) { return y < 1998; });
+      });
+    });
+    elYearBar.innerHTML = ALL_YEARS.map(function (y) {
+      return '<button class="year-chip' + (selectedYears[y] ? " on" : "") + '" data-year="' + y + '">' + y + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(elYearBar.querySelectorAll(".year-chip"), function (b) {
+      b.addEventListener("click", function () {
+        var y = b.getAttribute("data-year");
+        var cnt = ALL_YEARS.filter(function (yy) { return selectedYears[yy]; }).length;
+        if (selectedYears[y] && cnt <= 1) return; // always keep at least one year
+        selectedYears[y] = !selectedYears[y]; renderYearBar();
+      });
+    });
+    var n = ALL_YEARS.filter(function (y) { return selectedYears[y]; }).length;
+    elPoolDesc.textContent = n + " of " + ALL_YEARS.length + " World Cups selected · " + poolPairs().length + " squads in the draw.";
   }
 
   function renderDifficultyBar() {
@@ -300,10 +329,9 @@
   function poolPairs() {
     var pairs = [];
     COUNTRIES.forEach(function (c) {
-      Object.keys(DATA[c].years).forEach(function (y) {
-        if (pool === "all" || y === "2026") pairs.push({ c: c, y: y });
-      });
+      Object.keys(DATA[c].years).forEach(function (y) { if (selectedYears[y]) pairs.push({ c: c, y: y }); });
     });
+    if (!pairs.length) COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { pairs.push({ c: c, y: y }); }); });
     return pairs;
   }
 
@@ -532,10 +560,11 @@
   }
   function newGame() {
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
-    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all"; difficulty = "Medium";
+    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; difficulty = "Medium";
+    ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle(); renderDifficultyBar();
+    renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderYearBar(); renderDifficultyBar();
     paintPitches(); renderXI(); updateControls(); showView("home");
   }
 
@@ -747,10 +776,8 @@
         renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
-        var sc = leagueScore(lg), result = ordinal(lg.userPos) + " of " + lg.table.length;
-        addScore({ name: userTeam.name, score: sc.score, result: result, mode: "league", ts: Date.now() });
-        elResultsBody.innerHTML = scoreBannerHTML(sc, result) + renderLeagueUser(lg, whoLabel(userTeam, "League"));
-        wireResults();
+        lReveal = { lg: lg, userTeam: userTeam, label: whoLabel(userTeam, "League"), stage: "games", sc: leagueScore(lg), saved: false };
+        renderLeagueStage();
       }
     }, 30);
   }
@@ -819,6 +846,52 @@
     }
   }
 
+  function leagueVerdict(actual, expected) {
+    if (actual === 1) return "🏆 Champions of the world's hardest league — the perfect campaign.";
+    var d = expected - actual; // positive = better than expected
+    if (d >= 8) return "🚀 A sensational overachievement — nobody saw that coming.";
+    if (d >= 3) return "💪 Punched well above your weight.";
+    if (d >= -2) return "👍 Just about as expected for a side this strong.";
+    if (d >= -7) return "😕 A disappointing return for the talent on paper.";
+    return "💀 A campaign to forget.";
+  }
+
+  // League shown in two parts: game-by-game season, then the final standing + verdict.
+  function renderLeagueStage() {
+    var r = lReveal, lg = r.lg, html = '<h2 class="res-title">' + r.label + "</h2>";
+    if (r.stage === "games") {
+      html += '<div class="stage-badge">Part 1 · Your season, game by game</div>';
+      html += '<p class="legend">' + lg.userMatches.length + " of your games shown · the other " +
+        (lg.totalMatches - lg.userMatches.length) + " played in the background.</p>";
+      html += '<div class="journey">' + lg.userMatches.map(function (m) { return matchCardHTML(m, lg.teamName); }).join("") + "</div>";
+      html += '<button class="start-btn" id="toResult">See your final standing →</button>';
+    } else {
+      var result = ordinal(lg.userPos) + " of " + lg.table.length;
+      html += '<div class="stage-badge">Part 2 · Final standing</div>';
+      html += scoreBannerHTML(r.sc, result);
+      html += '<div class="verdict-card"><div class="vc-row">' +
+        '<div class="vc-cell"><div class="vc-k">Finished</div><div class="vc-v">' + ordinal(lg.userPos) + "</div></div>" +
+        '<div class="vc-cell"><div class="vc-k">Expected</div><div class="vc-v">' + ordinal(lg.expectedPos) + "</div></div>" +
+        '<div class="vc-cell"><div class="vc-k">Squad rating</div><div class="vc-v">' + lg.squadRating + "</div></div>" +
+        '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
+        '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
+      html += statsSummaryHTML(lg.userStats);
+      html += '<h3 class="sec">Final 48-team table</h3>' + leagueTableHTML(lg);
+    }
+    elResultsBody.innerHTML = html;
+    var b = document.getElementById("toResult");
+    if (b) b.addEventListener("click", function () {
+      lReveal.stage = "result";
+      if (!lReveal.saved) {
+        lReveal.saved = true;
+        addScore({ name: lReveal.userTeam.name, score: lReveal.sc.score, result: ordinal(lg.userPos) + " of " + lg.table.length, mode: "league", ts: Date.now() });
+      }
+      if (window.scrollTo) window.scrollTo(0, 0);
+      renderLeagueStage();
+    });
+    wireResults();
+  }
+
   // ================= WIRING =================
   elTeamName.addEventListener("input", function () { teamName = elTeamName.value; paintPitches(); renderXI(); });
   $("homePlay").addEventListener("click", function () { showView("setup"); });
@@ -852,6 +925,6 @@
   if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 
   // ---- init ----
-  renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle(); renderDifficultyBar();
+  renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderYearBar(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
 })();

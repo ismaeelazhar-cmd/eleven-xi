@@ -6,7 +6,9 @@
 window.ENGINE = (function () {
   "use strict";
 
-  var DIFFICULTY = 11;       // base points shaved off the user's attack & defence (harder)
+  var DIFFICULTY = 11;       // World Cup tax — points shaved off the user's attack & defence
+  var LEAGUE_DIFFICULTY = 1; // League tax — gentler, so 1st is achievable (but 47-0 stays brutal)
+  var activeTax = DIFFICULTY; // set per competition
   // Extra penalty applied to the user each knockout round — the deeper you go, the tougher
   // it gets (on top of the fact that only strong teams survive to face you). Index = round.
   var KO_ESCALATION = [0, 2, 4, 7, 10]; // R32, R16, QF, SF, Final
@@ -74,8 +76,8 @@ window.ENGINE = (function () {
   // ---- single match ----
   function simulateMatch(A, B, allowDraw) {
     var base = 1.3, scale = 24;
-    var aAtk = atkOf(A) - (A.isUser ? DIFFICULTY : 0), aDef = defOf(A) - (A.isUser ? DIFFICULTY : 0);
-    var bAtk = atkOf(B) - (B.isUser ? DIFFICULTY : 0), bDef = defOf(B) - (B.isUser ? DIFFICULTY : 0);
+    var aAtk = atkOf(A) - (A.isUser ? activeTax : 0), aDef = defOf(A) - (A.isUser ? activeTax : 0);
+    var bAtk = atkOf(B) - (B.isUser ? activeTax : 0), bDef = defOf(B) - (B.isUser ? activeTax : 0);
     var la = clamp(base * Math.exp((aAtk - bDef) / scale), 0.16, 5.5);
     var lb = clamp(base * Math.exp((bAtk - aDef) / scale), 0.16, 5.5);
     var ga = poisson(la), gb = poisson(lb);
@@ -85,7 +87,7 @@ window.ENGINE = (function () {
     if (ga > gb) res.winner = "A";
     else if (gb > ga) res.winner = "B";
     else if (!allowDraw) {
-      var ovA = overall(A) - (A.isUser ? DIFFICULTY : 0), ovB = overall(B) - (B.isUser ? DIFFICULTY : 0);
+      var ovA = overall(A) - (A.isUser ? activeTax : 0), ovB = overall(B) - (B.isUser ? activeTax : 0);
       var pA = 0.5 + (ovA - ovB) / 220;
       if (Math.random() < pA) { res.winner = "A"; res.pens = [ga + 1, gb]; res.pensWinner = "A"; }
       else { res.winner = "B"; res.pens = [ga, gb + 1]; res.pensWinner = "B"; }
@@ -184,6 +186,7 @@ window.ENGINE = (function () {
   }
 
   function runWorldCup(userTeam) {
+    activeTax = DIFFICULTY;
     var field = buildField(userTeam);
     var userMatches = userTeam ? [] : null;
     var groups = seedGroups(field).map(function (g) { return playGroup(g, userMatches); });
@@ -241,6 +244,7 @@ window.ENGINE = (function () {
 
   // ---- League ----
   function runLeague(userTeam) {
+    activeTax = LEAGUE_DIFFICULTY;
     var field = buildField(userTeam);
     var rows = field.map(blankRow), total = 0, userMatches = [];
     for (var i = 0; i < field.length; i++) {
@@ -258,7 +262,15 @@ window.ENGINE = (function () {
       for (var k = 0; k < rows.length; k++) if (rows[k].team.isUser) { userRow = rows[k]; userPos = k + 1; break; }
     }
     var out = { table: rows, totalMatches: total, userMatches: userMatches, userRow: userRow, userPos: userPos };
-    if (userTeam) { out.userStats = aggregateStats(userMatches, userTeam); out.teamName = userTeam.name; }
+    if (userTeam) {
+      out.userStats = aggregateStats(userMatches, userTeam);
+      out.teamName = userTeam.name;
+      // expected position = strength rank of the user's XI among the field
+      var uo = overall(userTeam), better = 0;
+      field.forEach(function (t) { if (!t.isUser && overall(t) > uo) better++; });
+      out.expectedPos = better + 1;
+      out.squadRating = Math.round(userTeam.rating);
+    }
     return out;
   }
 

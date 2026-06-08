@@ -62,11 +62,9 @@
         </div>
 
         <div class="setup-row setup-row-col">
-          <span class="setup-label">Player pool</span>
-          <div class="toggle2" id="poolToggle">
-            <button class="tg-opt active" data-pool="all"><span class="tg-emoji">🏆</span><span class="tg-text">All World Cups</span></button>
-            <button class="tg-opt" data-pool="2026"><span class="tg-emoji">⚽</span><span class="tg-text">World Cup 2026</span></button>
-          </div>
+          <span class="setup-label">Player pool — which World Cups</span>
+          <div class="formation-options" id="poolPresets"></div>
+          <div class="year-line" id="yearBar"></div>
           <div class="seg-desc" id="poolDesc"></div>
         </div>
 
@@ -171,13 +169,25 @@
     </section>
 
     <footer>
-      A World Cup spin-slot draft &amp; simulator inspired by 38-0. Squads are real tournament rosters; ratings are gameplay approximations.
+      <div class="footer-actions">
+        <a class="foot-btn" id="feedbackBtn" href="#" target="_blank" rel="noopener">✉ Feedback &amp; bugs</a>
+        <a class="foot-btn coffee" id="coffeeBtn" href="#" target="_blank" rel="noopener">☕ Enjoying the game?</a>
+      </div>
+      <p class="foot-credit">A World Cup spin-slot draft &amp; simulator, inspired by <a href="https://38-0.app" target="_blank" rel="noopener">38-0</a>.</p>
+      <p class="foot-disclaimer">
+        World Cup XI is an independent, fan-made game. It is not affiliated with, endorsed by, sponsored by, or
+        associated with FIFA, any national football association, competition, governing body, or organisation, or with
+        any other game, publisher, or ratings provider. All country names, player names, manager names, ratings, and
+        squad data are used for informational and descriptive purposes only, and all trademarks, logos, and other
+        intellectual property remain the property of their respective owners.
+      </p>
     </footer>
   </div>
 
   <script src="data.js"></script>
   <script src="data_extra.js"></script>
   <script src="data_full.js"></script>
+  <script src="data_legacy.js"></script>
   <script src="positions.js"></script>
   <script src="nations.js"></script>
   <script src="engine.js"></script>
