@@ -47,6 +47,18 @@
     <section id="draftView" style="display:none;">
       <button class="back" data-home>← Home</button>
 
+      <div class="setup">
+        <div class="setup-row">
+          <label class="setup-label" for="teamName">Team name</label>
+          <input id="teamName" class="team-name-input" maxlength="24" placeholder="Name your side…" autocomplete="off" />
+        </div>
+        <div class="setup-row setup-row-col">
+          <span class="setup-label">Manager</span>
+          <div class="manager-options" id="managerBar"></div>
+          <div class="manager-desc" id="managerDesc"></div>
+        </div>
+      </div>
+
       <div class="formation-bar">
         <span class="formation-bar-label">Formation</span>
         <div class="formation-options" id="formationBar"></div>

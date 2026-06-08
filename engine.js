@@ -41,6 +41,16 @@ window.ENGINE = (function () {
   function defOf(t) { return t.def != null ? t.def : t.rating; }
   function overall(t) { return (atkOf(t) + defOf(t)) / 2; }
 
+  // A manager's "cup specialist" bonus only applies in knockout matches.
+  function koTeam(t) {
+    if (!t.koBonus) return t;
+    return {
+      name: t.name, flag: t.flag, rating: t.rating,
+      atk: atkOf(t) + t.koBonus, def: defOf(t) + t.koBonus,
+      isUser: t.isUser, koBonus: t.koBonus
+    };
+  }
+
   // Simulate one match. allowDraw=false forces a winner (penalties).
   // A team's goals come from ITS attack vs the OPPONENT's defence, so attacking
   // formations score more but concede more, and vice-versa.
@@ -157,7 +167,7 @@ window.ENGINE = (function () {
       var next = [];
       for (var m = 0; m < roundTeams.length; m += 2) {
         var A = roundTeams[m], B = roundTeams[m + 1];
-        var res = simulateMatch(A, B, false);
+        var res = simulateMatch(koTeam(A), koTeam(B), false); // cup-specialist bonus applies here
         var winner = res.winner === "A" ? A : B;
         ties.push({ a: A, b: B, res: res, winner: winner });
         next.push(winner);

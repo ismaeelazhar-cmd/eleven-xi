@@ -35,13 +35,31 @@
   }
   var POS_LABEL = { GK: "Goalkeeper", DEF: "Defender", MID: "Midfielder", FWD: "Forward" };
 
+  // Managers give the user's team a tactical bonus (atk/def) and/or a knockout bonus.
+  var MANAGERS = [
+    { id: "none",      emoji: "🎽", name: "No manager",     atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
+    { id: "attack",    emoji: "⚔️", name: "Total Football",  atk: 4,  def: -2, ko: 0, desc: "+4 attack, −2 defence — all-out attack." },
+    { id: "defence",   emoji: "🛡️", name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
+    { id: "press",     emoji: "🔥", name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
+    { id: "cup",       emoji: "🏆", name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
+    { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
+  ];
+
   // ---- state ----
   var squad = [];
   var current = null;
   var spinning = false;
   var formation = "4-3-3";
+  var teamName = "";
+  var managerId = "none";
   var lastSim = null;
   var deferredPrompt = null;
+
+  function currentManager() {
+    for (var i = 0; i < MANAGERS.length; i++) if (MANAGERS[i].id === managerId) return MANAGERS[i];
+    return MANAGERS[0];
+  }
+  function teamDisplayName() { return teamName.trim() || "My XI"; }
 
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
@@ -51,6 +69,7 @@
   var elXiList = $("xiList"), elXiCount = $("xiCount"), elFormation = $("formation");
   var elDone = $("doneBanner"), elRatingNote = $("ratingNote");
   var elResultsBody = $("resultsBody"), elFormationBar = $("formationBar");
+  var elManagerBar = $("managerBar"), elManagerDesc = $("managerDesc"), elTeamName = $("teamName");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
@@ -81,6 +100,26 @@
     Array.prototype.forEach.call(elFormationBar.querySelectorAll(".formation-opt"), function (b) {
       b.addEventListener("click", function () { selectFormation(b.getAttribute("data-formation")); });
     });
+  }
+
+  function renderManagerBar() {
+    var html = "";
+    MANAGERS.forEach(function (m) {
+      html += '<button class="manager-opt' + (m.id === managerId ? " active" : "") +
+        '" data-manager="' + m.id + '" title="' + esc(m.desc) + '">' +
+        '<span class="mgr-emoji">' + m.emoji + '</span><span class="mgr-name">' + m.name + "</span></button>";
+    });
+    elManagerBar.innerHTML = html;
+    Array.prototype.forEach.call(elManagerBar.querySelectorAll(".manager-opt"), function (b) {
+      b.addEventListener("click", function () { selectManager(b.getAttribute("data-manager")); });
+    });
+    elManagerDesc.textContent = currentManager().desc;
+  }
+
+  function selectManager(id) {
+    managerId = id;
+    renderManagerBar();
+    renderXI();
   }
 
   function selectFormation(name) {
@@ -232,7 +271,12 @@
 
     if (ready) {
       var rating = window.ENGINE.teamRatingFromXI(squad);
-      elRatingNote.textContent = "XI strength: " + rating + "/100 · " + formation + " (" + formationStyle(formation) + ")" +
+      var tilt = formationTilt(formation);
+      var mgr = currentManager();
+      var atk = Math.round(rating + tilt.atk + mgr.atk);
+      var def = Math.round(rating + tilt.def + mgr.def);
+      elRatingNote.textContent = teamDisplayName() + " · " + formation + " · " + mgr.emoji + " " + mgr.name +
+        " · ATK " + atk + " / DEF " + def + (mgr.ko ? " · +" + mgr.ko + " KO" : "") +
         (full ? "" : "  — fill all 11 for full strength");
     } else {
       elRatingNote.textContent = "";
@@ -242,10 +286,13 @@
   function userTeamFromSquad() {
     var rating = window.ENGINE.teamRatingFromXI(squad);
     var tilt = formationTilt(formation);
+    var mgr = currentManager();
     return {
-      name: "My XI", flag: "⭐", rating: rating,
-      atk: rating + tilt.atk, def: rating + tilt.def,
-      isUser: true, formation: formation
+      name: teamDisplayName(), flag: "⭐", rating: rating,
+      atk: rating + tilt.atk + mgr.atk,
+      def: rating + tilt.def + mgr.def,
+      koBonus: mgr.ko,
+      isUser: true, formation: formation, manager: mgr.name
     };
   }
 
@@ -253,7 +300,9 @@
     var order = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
     var lines = squad.slice().sort(function (a, b) { return order[a.p] - order[b.p]; })
       .map(function (s) { return s.p + "  " + s.n + " (" + s.country + " " + s.year + ")"; });
-    var text = "My World Cup XI (" + formation + ")\n\n" + lines.join("\n");
+    var mgr = currentManager();
+    var header = teamDisplayName() + " (" + formation + ")" + (mgr.id !== "none" ? " · Mgr: " + mgr.name : "");
+    var text = header + "\n\n" + lines.join("\n");
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(
         function () { elHint.textContent = "Copied your XI to the clipboard!"; },
@@ -381,7 +430,9 @@
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
     showView("results");
     setTimeout(function () {
-      var who = userTeam ? ("Your XI (" + userTeam.formation + ")") : "48 Nations";
+      var who = userTeam
+        ? (userTeam.name + " · " + userTeam.formation + (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : ""))
+        : "48 Nations";
       if (type === "wc") {
         elResultsBody.innerHTML = renderWorldCup(window.ENGINE.runWorldCup(userTeam), who + " · World Cup");
       } else {
@@ -432,7 +483,14 @@
     });
   }
 
+  // team name input
+  elTeamName.addEventListener("input", function () {
+    teamName = elTeamName.value;
+    if (squad.length) renderXI();
+  });
+
   // ---- init ----
+  renderManagerBar();
   renderFormationBar();
   elCountryStrip.innerHTML = countryItemHTML(rand(COUNTRIES));
   elYearStrip.innerHTML = yearItemHTML(Object.keys(DATA[COUNTRIES[0]].years)[0]);
