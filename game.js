@@ -150,6 +150,24 @@
   })();
   var selectedYears = {}; ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
   var minIdx = 0, maxIdx = ALL_YEARS.length - 1;
+  var continent = "all";
+  var CONTINENT = {
+    "Austria": "EU", "Belgium": "EU", "Bosnia and Herzegovina": "EU", "Bulgaria": "EU", "Croatia": "EU",
+    "Czech Republic": "EU", "Denmark": "EU", "England": "EU", "France": "EU", "Georgia": "EU", "Germany": "EU",
+    "Greece": "EU", "Hungary": "EU", "Iceland": "EU", "Ireland": "EU", "Italy": "EU", "Netherlands": "EU",
+    "Norway": "EU", "Poland": "EU", "Portugal": "EU", "Romania": "EU", "Russia": "EU", "Scotland": "EU",
+    "Serbia": "EU", "Serbia & Montenegro": "EU", "Slovakia": "EU", "Slovenia": "EU", "Spain": "EU",
+    "Sweden": "EU", "Switzerland": "EU", "Turkey": "EU", "Ukraine": "EU", "Wales": "EU", "Yugoslavia": "EU",
+    "Algeria": "AF", "Angola": "AF", "Cameroon": "AF", "Cape Verde": "AF", "Egypt": "AF", "Ghana": "AF",
+    "Ivory Coast": "AF", "Morocco": "AF", "Nigeria": "AF", "Senegal": "AF", "South Africa": "AF", "Togo": "AF", "Tunisia": "AF",
+    "Argentina": "SA", "Brazil": "SA", "Chile": "SA", "Colombia": "SA", "Ecuador": "SA", "Paraguay": "SA", "Peru": "SA", "Uruguay": "SA",
+    "Australia": "OC", "New Zealand": "OC",
+    "Canada": "NA", "Costa Rica": "NA", "Curaçao": "NA", "El Salvador": "NA", "Haiti": "NA", "Honduras": "NA",
+    "Jamaica": "NA", "Mexico": "NA", "Panama": "NA", "Trinidad and Tobago": "NA", "USA": "NA", "United States": "NA",
+    "China": "AS", "Iran": "AS", "Iraq": "AS", "Japan": "AS", "Jordan": "AS", "North Korea": "AS", "Qatar": "AS",
+    "Saudi Arabia": "AS", "South Korea": "AS", "United Arab Emirates": "AS", "Uzbekistan": "AS"
+  };
+  var elContinentBar = $("continentBar");
   var elDiffBar = $("difficultyBar"), elDiffDesc = $("difficultyDesc");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
@@ -338,7 +356,8 @@
     elEraFill.style.width = (n ? 100 * (maxIdx - minIdx) / n : 100) + "%";
     elEraLo.textContent = ALL_YEARS[minIdx]; elEraHi.textContent = ALL_YEARS[maxIdx];
     var cnt = maxIdx - minIdx + 1;
-    elPoolDesc.textContent = cnt + " World Cup" + (cnt === 1 ? "" : "s") + " selected · " + poolPairs().length + " squads in the draw.";
+    var contName = { all: "all continents", EU: "Europe", AF: "Africa", SA: "South America" }[continent];
+    elPoolDesc.textContent = cnt + " World Cup" + (cnt === 1 ? "" : "s") + " · " + contName + " · " + poolPairs().length + " squads in the draw.";
   }
   function renderEra() {
     elEraMin.oninput = function () { minIdx = Math.min(parseInt(this.value, 10), maxIdx); eraApply(); };
@@ -364,13 +383,26 @@
       : difficulty + " — " + rr + " reroll" + (rr === 1 ? "" : "s") + " during the draft.";
   }
 
+  function inContinent(c) { return continent === "all" || CONTINENT[c] === continent; }
   function poolPairs() {
     var pairs = [];
     COUNTRIES.forEach(function (c) {
+      if (!inContinent(c)) return;
       Object.keys(DATA[c].years).forEach(function (y) { if (selectedYears[y]) pairs.push({ c: c, y: y }); });
     });
+    // fallback: keep continent, ignore era; then drop everything
+    if (!pairs.length) COUNTRIES.forEach(function (c) { if (inContinent(c)) Object.keys(DATA[c].years).forEach(function (y) { pairs.push({ c: c, y: y }); }); });
     if (!pairs.length) COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { pairs.push({ c: c, y: y }); }); });
     return pairs;
+  }
+  function renderContinent() {
+    var opts = [["all", "🌐 Everywhere"], ["EU", "🇪🇺 Europe"], ["AF", "🌍 Africa"], ["SA", "🌎 South America"]];
+    elContinentBar.innerHTML = opts.map(function (o) {
+      return '<button class="formation-opt' + (o[0] === continent ? " active" : "") + '" data-cont="' + o[0] + '">' + o[1] + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(elContinentBar.querySelectorAll(".formation-opt"), function (b) {
+      b.addEventListener("click", function () { continent = b.getAttribute("data-cont"); renderContinent(); eraApply(); });
+    });
   }
 
   // ---- slot machine ----
@@ -600,10 +632,10 @@
     clearTimeout(revealTimer);
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
     teamName = ""; managerId = "none"; managerName = ""; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
-    minIdx = 0; maxIdx = ALL_YEARS.length - 1;
+    minIdx = 0; maxIdx = ALL_YEARS.length - 1; continent = "all";
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
+    renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderContinent(); renderDifficultyBar();
     paintPitches(); renderXI(); updateControls(); showView("home");
   }
 
@@ -969,6 +1001,6 @@
   if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 
   // ---- init ----
-  renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
+  renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderContinent(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
 })();
