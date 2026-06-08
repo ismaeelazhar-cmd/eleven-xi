@@ -745,6 +745,22 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .board-row .bres { color: var(--muted); font-size: 12px; }
 .board-row .bscore { font-weight: 900; color: var(--gold); font-size: 16px; min-width: 56px; text-align: right; }
 
+/* ===== Home (two-button landing, 38-0 style) ===== */
+.home-hero {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 30px 16px 10px; text-align: center;
+}
+.home-tag { color: var(--muted); font-size: 15px; max-width: 420px; margin: 0 0 6px; line-height: 1.5; }
+.home-play { width: 100%; max-width: 340px; font-size: 20px; padding: 18px 22px; }
+.home-secondary {
+  width: 100%; max-width: 340px;
+  background: #14141f; color: var(--text);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 15px 22px; font-size: 16px; font-weight: 800; cursor: pointer;
+  transition: all 0.12s ease;
+}
+.home-secondary:hover { border-color: var(--green2); color: var(--green2); }
+
 /* ===== Two-button toggles (neater than the old segmented look) ===== */
 .toggle2 { display: flex; gap: 10px; width: 100%; }
 .tg-opt {

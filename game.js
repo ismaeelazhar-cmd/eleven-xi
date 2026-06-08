@@ -94,7 +94,7 @@
 
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
-  var views = { setup: $("setupView"), draft: $("draftView"), sim: $("simView"), results: $("resultsView"), board: $("boardView") };
+  var views = { home: $("homeView"), setup: $("setupView"), draft: $("draftView"), sim: $("simView"), results: $("resultsView"), board: $("boardView") };
   var elCountryStrip = $("countryStrip"), elYearStrip = $("yearStrip");
   var elSpin = $("spinBtn"), elReroll = $("rerollBtn"), elRerollCount = $("rerollCount"), elAutoPick = $("autoPickBtn");
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
@@ -495,7 +495,7 @@
     teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; pool = "all";
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
     renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
-    paintPitches(); renderXI(); updateControls(); showView("setup");
+    paintPitches(); renderXI(); updateControls(); showView("home");
   }
 
   // ================= RESULTS =================
@@ -667,10 +667,13 @@
 
   // ================= WIRING =================
   elTeamName.addEventListener("input", function () { teamName = elTeamName.value; paintPitches(); renderXI(); });
+  $("homePlay").addEventListener("click", function () { showView("setup"); });
+  $("homeSim").addEventListener("click", function () { showView("sim"); });
+  $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
+  $("setupBack").addEventListener("click", function () { showView("home"); });
   $("startBtn").addEventListener("click", startDraft);
-  $("toSim").addEventListener("click", function () { showView("sim"); });
   $("draftBack").addEventListener("click", function () { paintPitches(); showView("setup"); });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("setup"); }); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("home"); }); });
 
   elSpin.addEventListener("click", doSpin);
   elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; doSpin(); });
@@ -684,8 +687,7 @@
   $("simLeague").addEventListener("click", function () { runSim("league", null); });
   $("newGameBtn").addEventListener("click", newGame);
   $("boardBtn").addEventListener("click", function () { renderBoard(); showView("board"); });
-  $("toBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
-  $("boardBack").addEventListener("click", function () { showView("setup"); });
+  $("boardBack").addEventListener("click", function () { showView("home"); });
   $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
   Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
     b.addEventListener("click", function () { boardTab = b.getAttribute("data-board"); renderBoard(); });
@@ -700,5 +702,5 @@
 
   // ---- init ----
   renderManagerBar(); renderFormationBar(); renderRatingsToggle(); renderPoolToggle();
-  paintPitches(); renderXI(); updateControls(); showView("setup");
+  paintPitches(); renderXI(); updateControls(); showView("home");
 })();

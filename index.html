@@ -27,8 +27,19 @@
       <button class="install-btn" id="installBtn" hidden>⬇ Install app</button>
     </header>
 
-    <!-- ===== SETUP (first page) ===== -->
-    <section id="setupView">
+    <!-- ===== HOME (first page) ===== -->
+    <section id="homeView">
+      <div class="home-hero">
+        <p class="home-tag">Draft an all-time XI from every World Cup, pick a manager and formation, then chase glory.</p>
+        <button class="start-btn home-play" id="homePlay">▶ Play</button>
+        <button class="home-secondary" id="homeSim">🌍 Nation Simulator</button>
+        <button class="link-btn" id="homeBoard">🏆 Leaderboards</button>
+      </div>
+    </section>
+
+    <!-- ===== SETUP ===== -->
+    <section id="setupView" style="display:none;">
+      <button class="back" id="setupBack">← Home</button>
       <div class="setup">
         <div class="setup-row">
           <label class="setup-label" for="teamName">Team name</label>
@@ -70,8 +81,6 @@
         </div>
 
         <button class="start-btn" id="startBtn">Start drafting →</button>
-        <button class="link-btn" id="toSim">or simulate the 48 nations instead →</button>
-        <button class="link-btn" id="toBoard">🏆 view leaderboards</button>
       </div>
     </section>
 
@@ -131,7 +140,7 @@
 
     <!-- ===== SIM PICK ===== -->
     <section id="simView" style="display:none;">
-      <button class="back" data-home>← Setup</button>
+      <button class="back" data-home>← Home</button>
       <div class="modes">
         <button class="mode-card" id="simWorldCup">
           <div class="mode-emoji">🏆</div>
