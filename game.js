@@ -30,9 +30,10 @@
   };
   // For a player's EXACT position, which formation slots they may fill (tight adjacency).
   var SLOT_FILL = {
-    GK: ["GK"], CB: ["CB"], RB: ["RB", "RWB"], LB: ["LB", "LWB"], RWB: ["RWB", "RB"], LWB: ["LWB", "LB"],
+    GK: ["GK"], CB: ["CB"],
+    RB: ["RB", "RWB", "RM"], LB: ["LB", "LWB", "LM"], RWB: ["RWB", "RB", "RM"], LWB: ["LWB", "LB", "LM"],
     CDM: ["CDM", "CM"], CM: ["CM", "CDM", "CAM"], CAM: ["CAM", "CM"],
-    RM: ["RM", "RW"], LM: ["LM", "LW"], RW: ["RW", "RM"], LW: ["LW", "LM"], ST: ["ST"]
+    RM: ["RM", "RW", "RB"], LM: ["LM", "LW", "LB"], RW: ["RW", "RM"], LW: ["LW", "LM"], ST: ["ST"]
   };
   var PLAYER_POS = window.PLAYER_POSITIONS || {};
   function gpOf(pl) {
@@ -95,13 +96,14 @@
   var managerId = "none";
   var showRatings = true;
   var pool = "all";
-  var DIFFICULTIES = [{ id: "Easy", rr: 5 }, { id: "Medium", rr: 3 }, { id: "Hard", rr: 1 }, { id: "Extreme", rr: 0 }];
-  var difficulty = "Medium";
+  var DIFFICULTIES = [{ id: "Rookie", rr: 3 }, { id: "Pro", rr: 1 }, { id: "Legend", rr: 0 }];
+  var difficulty = "Pro";
   function diffRerolls() { for (var i = 0; i < DIFFICULTIES.length; i++) if (DIFFICULTIES[i].id === difficulty) return DIFFICULTIES[i].rr; return 3; }
   var boardTab = "daily";
   var lastSim = null;
   var reveal = null;  // staged World Cup reveal state
   var lReveal = null; // staged League reveal state
+  var revealTimer = null; // game-by-game auto-reveal timer
   var deferredPrompt = null;
   var LB_KEY = "wcxi_leaderboard_v1";
 
@@ -206,8 +208,8 @@
   function renderPitchInto(el) {
     var a = assignByLines();
     function cell(c) {
-      if (c.pick) return '<div class="pdot filled ' + c.line + '"><span class="dot-postag">' + c.pos +
-        '</span><span class="dot-init">' + esc(initials(c.pick.n)) +
+      if (c.pick) return '<div class="pdot filled ' + c.line + '">' +
+        '<span class="dot-init">' + esc(initials(c.pick.n)) +
         '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
       return '<div class="pdot ' + c.line + '"><span class="dot-pos">' + c.pos + "</span></div>";
     }
@@ -321,9 +323,10 @@
     Array.prototype.forEach.call(elDiffBar.querySelectorAll(".formation-opt"), function (b) {
       b.addEventListener("click", function () { difficulty = b.getAttribute("data-diff"); renderDifficultyBar(); });
     });
-    elDiffDesc.textContent = difficulty === "Extreme"
-      ? "Extreme — no rerolls. You take whatever you spin."
-      : difficulty + " — " + diffRerolls() + " reroll" + (diffRerolls() === 1 ? "" : "s") + " during the draft.";
+    var rr = diffRerolls();
+    elDiffDesc.textContent = rr === 0
+      ? difficulty + " — no rerolls. You take whatever you spin."
+      : difficulty + " — " + rr + " reroll" + (rr === 1 ? "" : "s") + " during the draft.";
   }
 
   function poolPairs() {
@@ -416,8 +419,8 @@
       n.addEventListener("click", function () {
         if (n.classList.contains("taken") || n.classList.contains("noslot")) return;
         var name = n.getAttribute("data-name"), pl = playerByName(name), open = openEligiblePositions(pl);
-        if (open.length <= 1) pickPlayer(name, open[0]);
-        else { pendingPick = { name: name, positions: open }; renderSquadPicker(); }
+        if (!open.length) return;
+        pendingPick = { name: name, positions: open }; renderSquadPicker(); // always choose, even one slot
       });
     });
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".choose-pos"), function (b) {
@@ -559,8 +562,9 @@
     paintPitches(); renderXI(); updateControls();
   }
   function newGame() {
+    clearTimeout(revealTimer);
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
-    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; difficulty = "Medium";
+    teamName = ""; managerId = "none"; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
     ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
@@ -759,24 +763,20 @@
   }
 
   function runSim(type, userTeam) {
+    clearTimeout(revealTimer);
     lastSim = { type: type, userTeam: userTeam };
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
     showView("results");
     setTimeout(function () {
       if (type === "wc") {
         var wc = window.ENGINE.runWorldCup(userTeam);
-        var exitIdx = -1;
-        wc.rounds.forEach(function (rd, i) { if (rd.ties.some(function (t) { return t.a.isUser || t.b.isUser; })) exitIdx = i; });
-        reveal = {
-          wc: wc, userTeam: userTeam, label: whoLabel(userTeam, "World Cup"),
-          groupMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; }),
-          koMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; }),
-          exitRoundIdx: exitIdx, stage: "groups", roundsRevealed: 0, sc: wcScore(wc), saved: false
-        };
+        reveal = { wc: wc, userTeam: userTeam, label: whoLabel(userTeam, "World Cup"),
+          matches: wc.userMatches, shown: 0, stage: "reveal", sc: wcScore(wc), saved: false };
         renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
-        lReveal = { lg: lg, userTeam: userTeam, label: whoLabel(userTeam, "League"), stage: "games", sc: leagueScore(lg), saved: false };
+        lReveal = { lg: lg, userTeam: userTeam, label: whoLabel(userTeam, "League"),
+          matches: lg.userMatches, shown: 0, stage: "reveal", sc: leagueScore(lg), saved: false };
         renderLeagueStage();
       }
     }, 30);
@@ -796,54 +796,51 @@
     return html + "</div>";
   }
 
-  // ---- World Cup shown in two parts: group stage, then a result-by-result knockout reveal ----
+  // ---- shared game-by-game auto-reveal ----
+  function scheduleReveal(state, rerender) {
+    clearTimeout(revealTimer);
+    if (state.stage === "reveal" && state.shown < state.matches.length) {
+      var delay = Math.max(90, Math.min(420, Math.round(6000 / state.matches.length)));
+      revealTimer = setTimeout(function () { state.shown++; rerender(); }, delay);
+    }
+  }
+  function revealHeaderHTML(state, finishLabel) {
+    if (state.shown < state.matches.length) {
+      return '<div class="reveal-bar"><span class="reveal-count">' + state.shown + " / " + state.matches.length +
+        ' games</span><button class="btn-ghost" id="skipReveal">Skip ▶▶</button></div>';
+    }
+    return '<div class="reveal-bar"><button class="start-btn" id="toResult">' + finishLabel + "</button></div>";
+  }
+  function revealListHTML(state, teamName) {
+    var html = '<div class="journey">';
+    for (var i = 0; i < state.shown && i < state.matches.length; i++) html += matchCardHTML(state.matches[i], teamName);
+    return html + "</div>";
+  }
+  function bindReveal(state, rerender) {
+    var skip = document.getElementById("skipReveal");
+    if (skip) skip.onclick = function () { clearTimeout(revealTimer); state.shown = state.matches.length; rerender(); };
+    var tr = document.getElementById("toResult");
+    if (tr) tr.onclick = function () { clearTimeout(revealTimer); state.stage = "result"; if (window.scrollTo) window.scrollTo(0, 0); rerender(); };
+    wireResults();
+  }
+
   function renderWCStage() {
     var r = reveal, wc = r.wc, html = '<h2 class="res-title">' + r.label + "</h2>";
-    if (r.stage === "groups") {
-      var ug = null;
-      wc.groups.forEach(function (g) { if (g.table.some(function (row) { return row.team.isUser; })) ug = g; });
-      html += '<div class="stage-badge">Part 1 · Group stage</div>';
-      if (ug) {
-        html += '<h3 class="sec">Your group — Group ' + ug.name + "</h3>" + renderGroups([ug]);
-        html += '<h3 class="sec">Your group games</h3><div class="journey">' +
-          r.groupMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
-      }
-      html += '<h3 class="sec">All groups</h3><p class="legend">Final standings — match scores hidden.</p>' + renderGroups(wc.groups);
-      html += '<button class="start-btn" id="toKO">' + (r.koMatches.length ? "Into the knockouts →" : "See your fate →") + "</button>";
+    if (r.stage === "reveal") {
+      html += '<div class="stage-badge">Your run · game by game</div>';
+      html += revealHeaderHTML(r, "See your result →");
+      html += revealListHTML(r, wc.teamName);
     } else {
-      html += '<div class="stage-badge">Part 2 · Knockouts</div>';
-      var koByRound = {};
-      r.koMatches.forEach(function (m) { koByRound[m.round] = m; });
-      if (r.exitRoundIdx >= 0) {
-        html += '<h3 class="sec">Knockouts — every result, round by round</h3>';
-        for (var i = 0; i < r.roundsRevealed && i <= r.exitRoundIdx; i++) {
-          var rd = wc.rounds[i];
-          html += '<div class="ko-round-block">';
-          if (koByRound[rd.name]) html += matchCardHTML(koByRound[rd.name], wc.teamName);
-          html += '<div class="ko-all-h">All ' + esc(rd.name) + " results</div>" + roundResultsHTML(wc, i);
-          html += "</div>";
-        }
-        if (r.roundsRevealed <= r.exitRoundIdx) {
-          html += '<button class="start-btn" id="revealNext">Reveal the ' + esc(wc.rounds[r.roundsRevealed].name) + " →</button>";
-        }
-      }
-      if (r.exitRoundIdx < 0 || r.roundsRevealed > r.exitRoundIdx) {
-        html += '<div class="champion big">' + wc.userResult + "</div>";
-        html += scoreBannerHTML(r.sc, wc.userResult);
-        html += statsSummaryHTML(wc.userStats);
-        html += '<h3 class="sec">Full knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
-      }
+      if (!r.saved) { r.saved = true; addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: "wc", ts: Date.now() }); }
+      html += '<div class="champion big">' + wc.userResult + "</div>";
+      html += scoreBannerHTML(r.sc, wc.userResult);
+      html += statsSummaryHTML(wc.userStats);
+      html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
+      html += '<h3 class="sec">Groups</h3><p class="legend">Final standings — match scores hidden.</p>' + renderGroups(wc.groups);
     }
     elResultsBody.innerHTML = html;
-    var b1 = document.getElementById("toKO");
-    if (b1) b1.addEventListener("click", function () { reveal.stage = "ko"; reveal.roundsRevealed = 1; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); });
-    var b2 = document.getElementById("revealNext");
-    if (b2) b2.addEventListener("click", function () { reveal.roundsRevealed++; renderWCStage(); });
-    var done = (r.exitRoundIdx < 0) || (r.roundsRevealed > r.exitRoundIdx);
-    if (r.stage === "ko" && done && !r.saved) {
-      r.saved = true;
-      addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: "wc", ts: Date.now() });
-    }
+    bindReveal(reveal, renderWCStage);
+    scheduleReveal(reveal, renderWCStage);
   }
 
   function leagueVerdict(actual, expected) {
@@ -856,18 +853,15 @@
     return "💀 A campaign to forget.";
   }
 
-  // League shown in two parts: game-by-game season, then the final standing + verdict.
   function renderLeagueStage() {
     var r = lReveal, lg = r.lg, html = '<h2 class="res-title">' + r.label + "</h2>";
-    if (r.stage === "games") {
-      html += '<div class="stage-badge">Part 1 · Your season, game by game</div>';
-      html += '<p class="legend">' + lg.userMatches.length + " of your games shown · the other " +
-        (lg.totalMatches - lg.userMatches.length) + " played in the background.</p>";
-      html += '<div class="journey">' + lg.userMatches.map(function (m) { return matchCardHTML(m, lg.teamName); }).join("") + "</div>";
-      html += '<button class="start-btn" id="toResult">See your final standing →</button>';
+    if (r.stage === "reveal") {
+      html += '<div class="stage-badge">Your season · game by game</div>';
+      html += revealHeaderHTML(r, "See your final standing →");
+      html += revealListHTML(r, lg.teamName);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
-      html += '<div class="stage-badge">Part 2 · Final standing</div>';
+      if (!r.saved) { r.saved = true; addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: "league", ts: Date.now() }); }
       html += scoreBannerHTML(r.sc, result);
       html += '<div class="verdict-card"><div class="vc-row">' +
         '<div class="vc-cell"><div class="vc-k">Finished</div><div class="vc-v">' + ordinal(lg.userPos) + "</div></div>" +
@@ -879,17 +873,8 @@
       html += '<h3 class="sec">Final 48-team table</h3>' + leagueTableHTML(lg);
     }
     elResultsBody.innerHTML = html;
-    var b = document.getElementById("toResult");
-    if (b) b.addEventListener("click", function () {
-      lReveal.stage = "result";
-      if (!lReveal.saved) {
-        lReveal.saved = true;
-        addScore({ name: lReveal.userTeam.name, score: lReveal.sc.score, result: ordinal(lg.userPos) + " of " + lg.table.length, mode: "league", ts: Date.now() });
-      }
-      if (window.scrollTo) window.scrollTo(0, 0);
-      renderLeagueStage();
-    });
-    wireResults();
+    bindReveal(lReveal, renderLeagueStage);
+    scheduleReveal(lReveal, renderLeagueStage);
   }
 
   // ================= WIRING =================
