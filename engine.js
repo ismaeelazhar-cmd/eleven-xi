@@ -1,6 +1,13 @@
-/* Match + competition engine: simulates matches, group stage, knockouts and a 48-team league. */
+/* Match + competition engine.
+ * Simulates matches (with goal scorers/assisters + clean sheets for the user team),
+ * a 48-team World Cup (groups → knockouts) and a 48-team league, and tracks the
+ * user's game-by-game journey and tournament stats. The user is deliberately taxed
+ * (DIFFICULTY) so winning is hard. */
 window.ENGINE = (function () {
   "use strict";
+
+  var DIFFICULTY = 8;        // points shaved off the user's attack & defence (harder)
+  var ASSIST_CHANCE = 0.66;  // chance a goal has an assist
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function shuffle(a) {
@@ -10,101 +17,140 @@ window.ENGINE = (function () {
     }
     return a;
   }
-
-  // Knuth's Poisson sampler
   function poisson(lambda) {
     var L = Math.exp(-lambda), k = 0, p = 1;
     do { k++; p *= Math.random(); } while (p > L);
     return k - 1;
   }
 
-  // Derive a strength rating for the user's drafted XI from its balance.
-  function teamRatingFromXI(squad) {
-    if (!squad || !squad.length) return 80;
-    var g = 0, d = 0, m = 0, f = 0;
-    squad.forEach(function (s) {
-      if (s.p === "GK") g++; else if (s.p === "DEF") d++;
-      else if (s.p === "MID") m++; else f++;
-    });
-    var rating = 82;
-    if (g >= 1) rating += 2;            // has a keeper
-    if (d >= 3) rating += 2;            // a back line
-    if (m >= 3) rating += 2;            // a midfield
-    if (f >= 1) rating += 1;            // an attacker
-    if (g === 0) rating -= 6;           // no keeper hurts
-    if (squad.length >= 11) rating += 1;
-    return clamp(rating, 70, 92);
-  }
-
-  // Attack / defence ratings (formations set these; nations default to overall rating).
   function atkOf(t) { return t.atk != null ? t.atk : t.rating; }
   function defOf(t) { return t.def != null ? t.def : t.rating; }
   function overall(t) { return (atkOf(t) + defOf(t)) / 2; }
 
-  // A manager's "cup specialist" bonus only applies in knockout matches.
   function koTeam(t) {
     if (!t.koBonus) return t;
     return {
       name: t.name, flag: t.flag, rating: t.rating,
       atk: atkOf(t) + t.koBonus, def: defOf(t) + t.koBonus,
-      isUser: t.isUser, koBonus: t.koBonus
+      isUser: t.isUser, koBonus: t.koBonus, players: t.players
     };
   }
 
-  // Simulate one match. allowDraw=false forces a winner (penalties).
-  // A team's goals come from ITS attack vs the OPPONENT's defence, so attacking
-  // formations score more but concede more, and vice-versa.
+  // ---- goal attribution (only the user team carries .players) ----
+  var SCORE_W  = { GK: 0.02, DEF: 0.5, MID: 1.6, FWD: 4.0 };
+  var ASSIST_W = { GK: 0.02, DEF: 0.8, MID: 2.5, FWD: 1.6 };
+
+  function weightedPick(players, wKey, excludeName) {
+    var total = 0, pool = [];
+    for (var i = 0; i < players.length; i++) {
+      var p = players[i];
+      if (excludeName && p.n === excludeName) continue;
+      var w = (wKey[p.p] || 0.1) * ((p.r || 80) / 80);
+      if (w > 0) { pool.push([p, w]); total += w; }
+    }
+    if (!total) return null;
+    var r = Math.random() * total;
+    for (var j = 0; j < pool.length; j++) { r -= pool[j][1]; if (r <= 0) return pool[j][0]; }
+    return pool[pool.length - 1][0];
+  }
+
+  function makeEvents(players, n) {
+    if (!players || !players.length || !n) return [];
+    var ev = [];
+    for (var i = 0; i < n; i++) {
+      var scorer = weightedPick(players, SCORE_W, null);
+      var assist = Math.random() < ASSIST_CHANCE ? weightedPick(players, ASSIST_W, scorer ? scorer.n : null) : null;
+      ev.push({ scorer: scorer ? scorer.n : "—", assist: assist ? assist.n : null });
+    }
+    return ev;
+  }
+
+  // ---- single match ----
   function simulateMatch(A, B, allowDraw) {
     var base = 1.3, scale = 24;
-    var la = clamp(base * Math.exp((atkOf(A) - defOf(B)) / scale), 0.16, 5.5);
-    var lb = clamp(base * Math.exp((atkOf(B) - defOf(A)) / scale), 0.16, 5.5);
+    var aAtk = atkOf(A) - (A.isUser ? DIFFICULTY : 0), aDef = defOf(A) - (A.isUser ? DIFFICULTY : 0);
+    var bAtk = atkOf(B) - (B.isUser ? DIFFICULTY : 0), bDef = defOf(B) - (B.isUser ? DIFFICULTY : 0);
+    var la = clamp(base * Math.exp((aAtk - bDef) / scale), 0.16, 5.5);
+    var lb = clamp(base * Math.exp((bAtk - aDef) / scale), 0.16, 5.5);
     var ga = poisson(la), gb = poisson(lb);
     var res = { a: ga, b: gb, pens: null, winner: null };
+    res.eventsA = A.players ? makeEvents(A.players, ga) : null;
+    res.eventsB = B.players ? makeEvents(B.players, gb) : null;
     if (ga > gb) res.winner = "A";
     else if (gb > ga) res.winner = "B";
     else if (!allowDraw) {
-      // penalty shootout, slightly weighted by overall strength
-      var pA = 0.5 + (overall(A) - overall(B)) / 220;
-      if (Math.random() < pA) { res.winner = "A"; res.pens = [ga + 1, gb]; }
-      else { res.winner = "B"; res.pens = [ga, gb + 1]; }
-      res.pensWinner = res.winner;
+      var ovA = overall(A) - (A.isUser ? DIFFICULTY : 0), ovB = overall(B) - (B.isUser ? DIFFICULTY : 0);
+      var pA = 0.5 + (ovA - ovB) / 220;
+      if (Math.random() < pA) { res.winner = "A"; res.pens = [ga + 1, gb]; res.pensWinner = "A"; }
+      else { res.winner = "B"; res.pens = [ga, gb + 1]; res.pensWinner = "B"; }
     }
     return res;
   }
 
-  // Build the 48-team field. If userTeam given, it takes a slot (drop weakest nation).
+  function recordUserMatch(list, round, A, B, res) {
+    var userIsA = A.isUser;
+    var opp = userIsA ? B : A;
+    var gf = userIsA ? res.a : res.b, ga = userIsA ? res.b : res.a;
+    var events = (userIsA ? res.eventsA : res.eventsB) || [];
+    var result;
+    if (gf > ga) result = "W";
+    else if (gf < ga) result = "L";
+    else if (res.pens) result = (res.pensWinner === (userIsA ? "A" : "B")) ? "W" : "L";
+    else result = "D";
+    list.push({ round: round, opp: { name: opp.name, flag: opp.flag }, gf: gf, ga: ga,
+      events: events, cleanSheet: ga === 0, pens: res.pens, result: result });
+  }
+
   function buildField(userTeam) {
     var nations = window.NATIONS.map(function (n) {
       return { name: n.name, flag: n.flag, rating: n.rating, atk: n.rating, def: n.rating, isUser: false };
     });
     nations.sort(function (a, b) { return b.rating - a.rating; });
-    if (userTeam) {
-      nations = nations.slice(0, 47); // drop the lowest-rated nation
-      nations.push(userTeam);
-    }
+    if (userTeam) { nations = nations.slice(0, 47); nations.push(userTeam); }
     return nations;
   }
 
-  function blankRow(team) {
-    return { team: team, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 };
-  }
-  function applyResult(rowA, rowB, ga, gb) {
-    rowA.P++; rowB.P++;
-    rowA.GF += ga; rowA.GA += gb; rowB.GF += gb; rowB.GA += ga;
-    rowA.GD = rowA.GF - rowA.GA; rowB.GD = rowB.GF - rowB.GA;
-    if (ga > gb) { rowA.W++; rowB.L++; rowA.Pts += 3; }
-    else if (gb > ga) { rowB.W++; rowA.L++; rowB.Pts += 3; }
-    else { rowA.D++; rowB.D++; rowA.Pts++; rowB.Pts++; }
+  function blankRow(team) { return { team: team, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 }; }
+  function applyResult(rA, rB, ga, gb) {
+    rA.P++; rB.P++;
+    rA.GF += ga; rA.GA += gb; rB.GF += gb; rB.GA += ga;
+    rA.GD = rA.GF - rA.GA; rB.GD = rB.GF - rB.GA;
+    if (ga > gb) { rA.W++; rB.L++; rA.Pts += 3; }
+    else if (gb > ga) { rB.W++; rA.L++; rB.Pts += 3; }
+    else { rA.D++; rB.D++; rA.Pts++; rB.Pts++; }
   }
   function sortTable(rows) {
     rows.sort(function (x, y) {
-      return (y.Pts - x.Pts) || (y.GD - x.GD) || (y.GF - x.GF) ||
-             (y.team.rating - x.team.rating);
+      return (y.Pts - x.Pts) || (y.GD - x.GD) || (y.GF - x.GF) || (y.team.rating - x.team.rating);
     });
     return rows;
   }
 
-  // ---- World Cup: 12 groups of 4, then knockouts ----
+  // ---- aggregate the user's tournament stats from their matches ----
+  function aggregateStats(userMatches, userTeam) {
+    var map = {}, posOf = {};
+    (userTeam.players || []).forEach(function (p) { posOf[p.n] = p.p; });
+    function ensure(n) { if (!map[n]) map[n] = { n: n, p: posOf[n] || "", g: 0, a: 0 }; return map[n]; }
+    var cs = 0, gf = 0, ga = 0, w = 0, d = 0, l = 0;
+    userMatches.forEach(function (m) {
+      if (m.cleanSheet) cs++;
+      gf += m.gf; ga += m.ga;
+      if (m.result === "W") w++; else if (m.result === "L") l++; else d++;
+      m.events.forEach(function (e) {
+        if (e.scorer && e.scorer !== "—") ensure(e.scorer).g++;
+        if (e.assist) ensure(e.assist).a++;
+      });
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; });
+    var scorers = arr.filter(function (x) { return x.g > 0; }).sort(function (a, b) { return b.g - a.g || b.a - a.a; });
+    var assisters = arr.filter(function (x) { return x.a > 0; }).sort(function (a, b) { return b.a - a.a || b.g - a.g; });
+    var gk = null;
+    (userTeam.players || []).forEach(function (p) { if (p.p === "GK" && (!gk || p.r > gk.r)) gk = p; });
+    return { scorers: scorers, assisters: assisters, cleanSheets: cs, keeper: gk,
+      gf: gf, ga: ga, w: w, d: d, l: l, games: userMatches.length };
+  }
+
+  // ---- World Cup ----
   function seedGroups(teams) {
     var sorted = teams.slice().sort(function (a, b) { return b.rating - a.rating; });
     var pots = [[], [], [], []];
@@ -116,17 +162,15 @@ window.ENGINE = (function () {
     }
     return groups;
   }
-
-  function playGroup(group) {
-    var rows = group.teams.map(blankRow);
-    var idx = {};
-    group.teams.forEach(function (t, i) { idx[t.name] = i; });
-    var matches = [];
+  function playGroup(group, userMatches) {
+    var rows = group.teams.map(blankRow), matches = [];
     for (var i = 0; i < group.teams.length; i++) {
       for (var j = i + 1; j < group.teams.length; j++) {
-        var r = simulateMatch(group.teams[i], group.teams[j], true);
+        var A = group.teams[i], B = group.teams[j];
+        var r = simulateMatch(A, B, true);
         applyResult(rows[i], rows[j], r.a, r.b);
-        matches.push({ a: group.teams[i], b: group.teams[j], ga: r.a, gb: r.b });
+        matches.push({ a: A, b: B, ga: r.a, gb: r.b });
+        if (userMatches && (A.isUser || B.isUser)) recordUserMatch(userMatches, "Group " + group.name, A, B, r);
       }
     }
     sortTable(rows);
@@ -135,86 +179,93 @@ window.ENGINE = (function () {
 
   function runWorldCup(userTeam) {
     var field = buildField(userTeam);
-    var groups = seedGroups(field).map(playGroup);
+    var userMatches = userTeam ? [] : null;
+    var groups = seedGroups(field).map(function (g) { return playGroup(g, userMatches); });
 
-    var qualified = [];
-    var thirds = [];
+    var qualified = [], thirds = [];
     groups.forEach(function (grp) {
-      qualified.push(grp.table[0]); // winner
-      qualified.push(grp.table[1]); // runner-up
-      thirds.push(grp.table[2]);    // third
+      qualified.push(grp.table[0]); qualified.push(grp.table[1]); thirds.push(grp.table[2]);
     });
     sortTable(thirds);
-    var bestThirds = thirds.slice(0, 8);
-    qualified = qualified.concat(bestThirds);
-
-    // Seed the 32 qualifiers (winners > runners-up > thirds, then by points/GD)
+    qualified = qualified.concat(thirds.slice(0, 8));
     qualified.sort(function (x, y) {
-      return (y.Pts - x.Pts) || (y.GD - x.GD) || (y.GF - x.GF) ||
-             (y.team.rating - x.team.rating);
+      return (y.Pts - x.Pts) || (y.GD - x.GD) || (y.GF - x.GF) || (y.team.rating - x.team.rating);
     });
     var seeds = qualified.map(function (r) { return r.team; });
 
-    // Standard bracket pairing: 1v32, 2v31 ... for round of 32
     var roundTeams = [];
     for (var k = 0; k < 16; k++) { roundTeams.push(seeds[k]); roundTeams.push(seeds[31 - k]); }
-
     var roundNames = ["Round of 32", "Round of 16", "Quarter-finals", "Semi-finals", "Final"];
-    var rounds = [];
-    var rIdx = 0;
+    var rounds = [], rIdx = 0;
     while (roundTeams.length > 1) {
-      var ties = [];
-      var next = [];
+      var ties = [], next = [], rname = roundNames[rIdx] || ("Round of " + roundTeams.length);
       for (var m = 0; m < roundTeams.length; m += 2) {
         var A = roundTeams[m], B = roundTeams[m + 1];
-        var res = simulateMatch(koTeam(A), koTeam(B), false); // cup-specialist bonus applies here
+        var res = simulateMatch(koTeam(A), koTeam(B), false);
         var winner = res.winner === "A" ? A : B;
         ties.push({ a: A, b: B, res: res, winner: winner });
         next.push(winner);
+        if (userMatches && (A.isUser || B.isUser)) recordUserMatch(userMatches, rname, A, B, res);
       }
-      rounds.push({ name: roundNames[rIdx] || ("Round of " + roundTeams.length), ties: ties });
-      roundTeams = next;
-      rIdx++;
+      rounds.push({ name: rname, ties: ties });
+      roundTeams = next; rIdx++;
     }
-    return { groups: groups, qualified: qualified, rounds: rounds, champion: roundTeams[0] };
+    var champion = roundTeams[0];
+
+    var out = { groups: groups, qualified: qualified, rounds: rounds, champion: champion };
+    if (userTeam) {
+      out.userMatches = userMatches;
+      out.userStats = aggregateStats(userMatches, userTeam);
+      out.teamName = userTeam.name;
+      if (champion && champion.isUser) out.userResult = "🏆 Champions!";
+      else {
+        var ko = userMatches.filter(function (mm) { return mm.round.indexOf("Group") !== 0; });
+        if (!ko.length) out.userResult = "Eliminated in the Group stage";
+        else {
+          var lastR = ko[ko.length - 1].round;
+          if (lastR === "Final") out.userResult = "🥈 Runners-up";
+          else if (lastR === "Semi-finals") out.userResult = "Semi-finalists";
+          else out.userResult = "Out in the " + lastR;
+        }
+      }
+    }
+    return out;
   }
 
-  // ---- League: all 48 play each other once ----
-  // Every match is simulated (the "background" games count toward the table),
-  // but the user's own fixtures are recorded separately for a focused view.
+  // ---- League ----
   function runLeague(userTeam) {
     var field = buildField(userTeam);
-    var rows = field.map(blankRow);
-    var total = 0;
-    var userMatches = [];
+    var rows = field.map(blankRow), total = 0, userMatches = [];
     for (var i = 0; i < field.length; i++) {
       for (var j = i + 1; j < field.length; j++) {
         var A = field[i], B = field[j];
         var r = simulateMatch(A, B, true);
         applyResult(rows[i], rows[j], r.a, r.b);
-        if (userTeam && (A.isUser || B.isUser)) {
-          var opp = A.isUser ? B : A;
-          var gf = A.isUser ? r.a : r.b;
-          var ga = A.isUser ? r.b : r.a;
-          userMatches.push({ opp: opp, gf: gf, ga: ga, result: gf > ga ? "W" : (gf < ga ? "L" : "D") });
-        }
+        if (userTeam && (A.isUser || B.isUser)) recordUserMatch(userMatches, "Matchday", A, B, r);
         total++;
       }
     }
     sortTable(rows);
     var userRow = null, userPos = -1;
     if (userTeam) {
-      for (var k = 0; k < rows.length; k++) {
-        if (rows[k].team.isUser) { userRow = rows[k]; userPos = k + 1; break; }
-      }
+      for (var k = 0; k < rows.length; k++) if (rows[k].team.isUser) { userRow = rows[k]; userPos = k + 1; break; }
     }
-    return { table: rows, totalMatches: total, userMatches: userMatches, userRow: userRow, userPos: userPos };
+    var out = { table: rows, totalMatches: total, userMatches: userMatches, userRow: userRow, userPos: userPos };
+    if (userTeam) { out.userStats = aggregateStats(userMatches, userTeam); out.teamName = userTeam.name; }
+    return out;
+  }
+
+  function teamRatingFromXI(squad) {
+    if (!squad || !squad.length) return 80;
+    var sum = 0; squad.forEach(function (s) { sum += (s.r || 80); });
+    return Math.round(sum / squad.length);
   }
 
   return {
     teamRatingFromXI: teamRatingFromXI,
     simulateMatch: simulateMatch,
     runWorldCup: runWorldCup,
-    runLeague: runLeague
+    runLeague: runLeague,
+    DIFFICULTY: DIFFICULTY
   };
 })();

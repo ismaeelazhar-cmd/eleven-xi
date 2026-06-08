@@ -32,8 +32,25 @@
     { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
   ];
 
+  // Versatile players can be drafted into more than one position (incl. their primary).
+  var VERSATILE = {
+    "Philipp Lahm": ["DEF", "MID"], "Gianluca Zambrotta": ["DEF", "MID"], "Javier Mascherano": ["MID", "DEF"],
+    "Dani Alves": ["DEF", "MID"], "Marcelo": ["DEF", "MID"], "Cafu": ["DEF", "MID"], "Roberto Carlos": ["DEF", "MID"],
+    "Lothar Matthäus": ["MID", "DEF"], "Arie Haan": ["DEF", "MID"], "Aurélien Tchouaméni": ["MID", "DEF"],
+    "Javi Martínez": ["MID", "DEF"], "John Heitinga": ["DEF", "MID"], "Zé Roberto": ["MID", "DEF"],
+    "Bixente Lizarazu": ["DEF", "MID"], "Antoine Griezmann": ["FWD", "MID"], "Thomas Müller": ["FWD", "MID"],
+    "Mesut Özil": ["MID", "FWD"], "Dirk Kuyt": ["FWD", "MID"], "Ángel Di María": ["MID", "FWD"],
+    "Ivan Perišić": ["FWD", "MID"], "David Silva": ["MID", "FWD"], "Bruno Conti": ["MID", "FWD"],
+    "Johnny Rep": ["FWD", "MID"], "Rivaldo": ["FWD", "MID"], "Ronaldinho": ["MID", "FWD"],
+    "Kingsley Coman": ["FWD", "MID"], "Florian Thauvin": ["FWD", "MID"], "Raheem Sterling": ["FWD", "MID"],
+    "Marcus Rashford": ["FWD", "MID"], "Pedro": ["FWD", "MID"], "Jesús Navas": ["FWD", "MID"],
+    "Maxi Rodríguez": ["MID", "FWD"], "Simão Sabrosa": ["FWD", "MID"], "Bernard": ["FWD", "MID"]
+  };
+  function eligOf(pl) { return VERSATILE[pl.n] || [pl.p]; }
+
   // ---- state ----
   var squad = [];
+  var pendingPick = null; // {name, positions:[...]} while user chooses a slot
   var current = null;
   var spinning = false;
   var awaitingPick = false;
@@ -242,6 +259,10 @@
     return showRatings ? '<span class="rate-badge">' + p.r + "</span>" : "";
   }
 
+  function openSlots(pl) {
+    return eligOf(pl).filter(function (pos) { return !groupFull(pos); });
+  }
+
   function renderSquadPicker() {
     if (!current) return;
     var c = current.country, y = current.year;
@@ -250,45 +271,67 @@
 
     var draftable = 0;
     var html = '<h2><span class="flag">' + DATA[c].flag + "</span>" + c + " &middot; " + y + " squad</h2>";
-    html += '<div class="sub">Pick a player for your ' + formation + ".</div>";
+    html += '<div class="sub">Pick a player and choose where they play.</div>';
+
+    if (pendingPick) {
+      html += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + '</b> play? ' +
+        pendingPick.positions.map(function (pos) {
+          return '<button class="choose-pos ' + pos + '" data-name="' + esc(pendingPick.name) + '" data-pos="' + pos + '">' + POS_LABEL[pos] + "</button>";
+        }).join("") + '<button class="choose-cancel">cancel</button></div>';
+    }
+
     html += '<div class="players">';
     players.forEach(function (pl) {
       var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
-      var noSlot = groupFull(pl.p);
+      var open = openSlots(pl);
+      var noSlot = open.length === 0;
       if (!isTaken && !noSlot) draftable++;
+      var elig = eligOf(pl);
+      var posTag = elig.length > 1 ? elig.join("/") : pl.p;
       var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
       html += '<div class="' + cls + '" data-name="' + esc(pl.n) + '" data-pos="' + pl.p + '">' +
-        '<span class="pos ' + pl.p + '">' + pl.p + '</span><span class="pname">' + pl.n + "</span>" +
+        '<span class="pos ' + pl.p + '">' + posTag + '</span><span class="pname">' + pl.n + "</span>" +
         (noSlot && !isTaken ? '<span class="slot-tag">full</span>' : ratingBadge(pl)) + "</div>";
     });
     html += "</div>";
     elSquadPanel.innerHTML = html;
     elSquadPanel.style.display = "block";
+
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".player"), function (n) {
       n.addEventListener("click", function () {
         if (n.classList.contains("taken") || n.classList.contains("noslot")) return;
-        pickPlayer(n.getAttribute("data-name"), n.getAttribute("data-pos"));
+        var name = n.getAttribute("data-name");
+        var pl = playerByName(name);
+        var open = openSlots(pl);
+        if (open.length <= 1) { pickPlayer(name, open[0]); }
+        else { pendingPick = { name: name, positions: open }; renderSquadPicker(); }
       });
     });
+    Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".choose-pos"), function (b) {
+      b.addEventListener("click", function () { pickPlayer(b.getAttribute("data-name"), b.getAttribute("data-pos")); });
+    });
+    var cancel = elSquadPanel.querySelector(".choose-cancel");
+    if (cancel) cancel.addEventListener("click", function () { pendingPick = null; renderSquadPicker(); });
 
-    if (draftable === 0) {
-      awaitingPick = false;
-      elHint.textContent = "No open slots for this squad — spin again (free).";
-    } else {
-      awaitingPick = true;
-    }
+    if (draftable === 0) { awaitingPick = false; elHint.textContent = "No open slots for this squad — spin again (free)."; }
+    else { awaitingPick = true; }
     updateControls();
   }
 
+  function playerByName(name) {
+    var list = DATA[current.country].years[current.year];
+    for (var i = 0; i < list.length; i++) if (list[i].n === name) return list[i];
+    return null;
+  }
+
   function pickPlayer(name, pos) {
-    if (squad.length >= XI_SIZE || groupFull(pos) || !current) return;
-    var pl = null, list = DATA[current.country].years[current.year];
-    for (var i = 0; i < list.length; i++) if (list[i].n === name) { pl = list[i]; break; }
+    if (squad.length >= XI_SIZE || !current || !pos || groupFull(pos)) return;
+    var pl = playerByName(name);
     squad.push({ n: name, p: pos, r: pl ? pl.r : 80, country: current.country, year: current.year });
-    current = null; awaitingPick = false;
+    current = null; awaitingPick = false; pendingPick = null;
     elSquadPanel.style.display = "none";
     renderXI(); paintPitches(); updateControls();
-    elHint.textContent = squad.length < XI_SIZE ? (name + " drafted! Spin for your next pick." ) : "";
+    elHint.textContent = squad.length < XI_SIZE ? (name + " drafted! Spin for your next pick.") : "";
   }
   function removePlayer(i) { squad.splice(i, 1); renderXI(); paintPitches(); updateControls(); }
 
@@ -350,7 +393,8 @@
     return {
       name: teamDisplayName(), flag: "⭐", rating: rating,
       atk: rating + atkTilt + mgr.atk, def: rating + defTilt + mgr.def,
-      koBonus: mgr.ko, isUser: true, formation: formation, manager: mgr.name
+      koBonus: mgr.ko, isUser: true, formation: formation, manager: mgr.name,
+      players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; })
     };
   }
 
@@ -369,7 +413,7 @@
   }
 
   function clearAll() {
-    squad = []; current = null; awaitingPick = false; rerollsLeft = REROLLS;
+    squad = []; current = null; awaitingPick = false; pendingPick = null; rerollsLeft = REROLLS;
     elSquadPanel.style.display = "none"; elHint.textContent = "";
     renderXI(); paintPitches(); updateControls();
   }
@@ -443,33 +487,79 @@
             esc(result.table[0].team.name) + "</b> · " + result.totalMatches + " matches played</div>";
     return html + leagueTableHTML(result);
   }
+  // ---- match cards + stats (user runs) ----
+  function scorerLines(events) {
+    if (!events || !events.length) return "";
+    return '<div class="mscorers">' + events.map(function (e) {
+      return '<span class="goal">⚽ ' + esc(e.scorer) + (e.assist ? ' <span class="assist">↳ ' + esc(e.assist) + "</span>" : "") + "</span>";
+    }).join("") + "</div>";
+  }
+  function matchCardHTML(m, teamName) {
+    var pens = m.pens ? ' <span class="pens">(pens ' + m.pens[0] + "–" + m.pens[1] + ")</span>" : "";
+    return '<div class="mcard ' + m.result + '">' +
+      '<div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
+      '<span class="pill ' + m.result + '">' + m.result + "</span></div>" +
+      '<div class="mscore"><span class="me">⭐ ' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
+      '<span class="oppname">' + m.opp.flag + " " + esc(m.opp.name) + "</span>" + pens + "</div>" +
+      scorerLines(m.events) +
+      (m.cleanSheet ? '<div class="mclean">🧤 Clean sheet</div>' : "") + "</div>";
+  }
+  function statRows(list, key, max) {
+    if (!list.length) return '<div class="stat-empty">—</div>';
+    return list.slice(0, max).map(function (x) {
+      return '<div class="stat-row"><span class="sp ' + (x.p || "") + '">' + (x.p || "") + "</span>" +
+        '<span class="sn">' + esc(x.n) + "</span><span class=\"sv\">" + x[key] + "</span></div>";
+    }).join("");
+  }
+  function statsSummaryHTML(s) {
+    return '<div class="stats-summary"><h3 class="sec">📊 Summary</h3>' +
+      '<div class="stat-grid">' +
+        '<div class="stat-pill">Played <b>' + s.games + "</b></div>" +
+        '<div class="stat-pill">Record <b>' + s.w + "-" + s.d + "-" + s.l + "</b></div>" +
+        '<div class="stat-pill">Goals <b>' + s.gf + "</b></div>" +
+        '<div class="stat-pill">Conceded <b>' + s.ga + "</b></div>" +
+        '<div class="stat-pill">🧤 Clean sheets <b>' + s.cleanSheets + "</b></div>" +
+      "</div>" +
+      '<div class="stat-cols">' +
+        '<div class="stat-col"><div class="stat-h">⚽ Top scorers</div>' + statRows(s.scorers, "g", 5) + "</div>" +
+        '<div class="stat-col"><div class="stat-h">🅰️ Top assists</div>' + statRows(s.assisters, "a", 5) + "</div>" +
+      "</div></div>";
+  }
+
+  function renderWorldCupUser(result, label) {
+    var html = '<h2 class="res-title">' + label + "</h2>";
+    html += '<div class="champion big">' + result.userResult + "</div>";
+    html += statsSummaryHTML(result.userStats);
+    html += '<h3 class="sec">Your road</h3>';
+    html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+    html += '<button class="btn-ghost" id="toggleTable" data-show="Show full bracket &amp; groups">Show full bracket &amp; groups</button>';
+    html += '<div id="fullTableWrap" style="display:none; margin-top:14px;">' +
+      '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds) +
+      '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups) + "</div>";
+    return html;
+  }
+
   function renderLeagueUser(result, label) {
     var ur = result.userRow;
     var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">⭐ ' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " +
-            result.table.length + " &middot; " + ur.W + "W " + ur.D + "D " + ur.L + "L &middot; " +
-            ur.GF + "–" + ur.GA + " &middot; <b>" + ur.Pts + " pts</b></div>";
-    html += '<h3 class="sec">Your fixtures <span class="legend-note">(' + result.userMatches.length +
-            " games · other " + (result.totalMatches - result.userMatches.length) + " played in the background)</span></h3>";
-    html += '<div class="fixtures">';
-    result.userMatches.forEach(function (m, i) {
-      html += '<div class="fixture ' + m.result + '"><span class="fnum">' + (i + 1) + "</span>" +
-        '<span class="pill ' + m.result + '">' + m.result + "</span>" +
-        '<span class="opp">vs ' + m.opp.flag + " " + esc(m.opp.name) + "</span>" +
-        '<span class="fscore">' + m.gf + "–" + m.ga + "</span></div>";
-    });
-    html += "</div>";
-    html += '<button class="btn-ghost" id="toggleTable">Show full 48-team table</button>';
+    html += '<div class="champion big">⭐ ' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " +
+            result.table.length + " &middot; " + ur.Pts + " pts</div>";
+    html += statsSummaryHTML(result.userStats);
+    html += '<h3 class="sec">Your games <span class="legend-note">(' + result.userMatches.length +
+            " shown · other " + (result.totalMatches - result.userMatches.length) + " simulated in the background)</span></h3>";
+    html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+    html += '<button class="btn-ghost" id="toggleTable" data-show="Show full 48-team table">Show full 48-team table</button>';
     html += '<div id="fullTableWrap" style="display:none; margin-top:14px;">' + leagueTableHTML(result) + "</div>";
     return html;
   }
+
   function wireResults() {
     var tg = document.getElementById("toggleTable");
     if (tg) tg.addEventListener("click", function () {
       var w = document.getElementById("fullTableWrap");
       var shown = w.style.display !== "none";
       w.style.display = shown ? "none" : "block";
-      tg.textContent = shown ? "Show full 48-team table" : "Hide full table";
+      tg.innerHTML = shown ? tg.getAttribute("data-show") : "Hide";
     });
   }
 
@@ -482,7 +572,8 @@
         ? (userTeam.name + " · " + userTeam.formation + (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : ""))
         : "48 Nations";
       if (type === "wc") {
-        elResultsBody.innerHTML = renderWorldCup(window.ENGINE.runWorldCup(userTeam), who + " · World Cup");
+        var wc = window.ENGINE.runWorldCup(userTeam);
+        elResultsBody.innerHTML = userTeam ? renderWorldCupUser(wc, who + " · World Cup") : renderWorldCup(wc, who + " · World Cup");
       } else {
         var res = window.ENGINE.runLeague(userTeam);
         elResultsBody.innerHTML = userTeam ? renderLeagueUser(res, who + " · League") : renderLeague(res, who + " · League");
