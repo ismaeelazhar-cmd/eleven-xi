@@ -791,6 +791,16 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 
 .locked-note { color: var(--muted); font-size: 13px; font-weight: 700; }
 
+/* position badge in the picker fits granular labels (e.g. LW/LM) */
+.player .pos { width: auto; min-width: 34px; padding: 0 7px; }
+
+/* highlight the user's ties in the knockout bracket */
+.tie.user-tie {
+  border-color: var(--gold);
+  background: rgba(249, 156, 0, 0.12);
+  box-shadow: 0 0 0 1px rgba(249,156,0,0.35), 0 6px 16px rgba(249,156,0,0.15);
+}
+
 /* neater setup spacing */
 .setup { gap: 16px; padding: 18px; }
 .setup-pitch-wrap { background: rgba(0,0,0,0.18); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }

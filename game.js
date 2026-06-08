@@ -20,25 +20,35 @@
     CM: "Centre mid", CAM: "Attacking mid", LM: "Left mid", RM: "Right mid",
     LW: "Left wing", RW: "Right wing", ST: "Striker"
   };
-  // Which granular positions a player of a given broad role can fill.
+  // Which granular positions a player of a given broad role can fill (fallback when
+  // a player has no exact position listed).
   var BROAD_ELIG = {
     GK: ["GK"],
     DEF: ["CB", "RB", "LB", "RWB", "LWB"],
     MID: ["CDM", "CM", "CAM", "LM", "RM", "RWB", "LWB"],
     FWD: ["ST", "LW", "RW", "CAM"]
   };
+  // For a player's EXACT position, which formation slots they may fill (tight adjacency).
+  var SLOT_FILL = {
+    GK: ["GK"], CB: ["CB"], RB: ["RB", "RWB"], LB: ["LB", "LWB"], RWB: ["RWB", "RB"], LWB: ["LWB", "LB"],
+    CDM: ["CDM", "CM"], CM: ["CM", "CDM", "CAM"], CAM: ["CAM", "CM"],
+    RM: ["RM", "RW"], LM: ["LM", "LW"], RW: ["RW", "RM"], LW: ["LW", "LM"], ST: ["ST"]
+  };
+  var PLAYER_POS = window.PLAYER_POSITIONS || {};
+  function gpOf(pl) { var g = PLAYER_POS[pl.n]; return g ? g.split(",") : null; }
 
   // Formations as lines of granular slots, defence → attack (GK implicit).
+  // Each line is ordered LEFT → RIGHT, so L* roles render on the left and R* on the right.
   var FORMATIONS = {
-    "4-3-3":   { lines: [["RB", "CB", "CB", "LB"], ["CDM", "CM", "CM"], ["LW", "ST", "RW"]] },
-    "4-4-2":   { lines: [["RB", "CB", "CB", "LB"], ["RM", "CM", "CM", "LM"], ["ST", "ST"]] },
-    "4-2-3-1": { lines: [["RB", "CB", "CB", "LB"], ["CDM", "CDM"], ["RM", "CAM", "LM"], ["ST"]] },
-    "3-5-2":   { lines: [["CB", "CB", "CB"], ["RM", "CM", "CDM", "CM", "LM"], ["ST", "ST"]] },
-    "3-4-1-2": { lines: [["CB", "CB", "CB"], ["RM", "CM", "CM", "LM"], ["CAM"], ["ST", "ST"]] },
-    "3-4-3":   { lines: [["CB", "CB", "CB"], ["RM", "CM", "CM", "LM"], ["LW", "ST", "RW"]] },
-    "5-3-2":   { lines: [["RWB", "CB", "CB", "CB", "LWB"], ["CDM", "CM", "CM"], ["ST", "ST"]] },
-    "4-5-1":   { lines: [["RB", "CB", "CB", "LB"], ["RM", "CM", "CDM", "CM", "LM"], ["ST"]] },
-    "5-4-1":   { lines: [["RWB", "CB", "CB", "CB", "LWB"], ["RM", "CM", "CM", "LM"], ["ST"]] }
+    "4-3-3":   { lines: [["LB", "CB", "CB", "RB"], ["CM", "CDM", "CM"], ["LW", "ST", "RW"]] },
+    "4-4-2":   { lines: [["LB", "CB", "CB", "RB"], ["LM", "CM", "CM", "RM"], ["ST", "ST"]] },
+    "4-2-3-1": { lines: [["LB", "CB", "CB", "RB"], ["CDM", "CDM"], ["LM", "CAM", "RM"], ["ST"]] },
+    "3-5-2":   { lines: [["CB", "CB", "CB"], ["LM", "CM", "CDM", "CM", "RM"], ["ST", "ST"]] },
+    "3-4-1-2": { lines: [["CB", "CB", "CB"], ["LM", "CM", "CM", "RM"], ["CAM"], ["ST", "ST"]] },
+    "3-4-3":   { lines: [["CB", "CB", "CB"], ["LM", "CM", "CM", "RM"], ["LW", "ST", "RW"]] },
+    "5-3-2":   { lines: [["LWB", "CB", "CB", "CB", "RWB"], ["CM", "CDM", "CM"], ["ST", "ST"]] },
+    "4-5-1":   { lines: [["LB", "CB", "CB", "RB"], ["LM", "CM", "CDM", "CM", "RM"], ["ST"]] },
+    "5-4-1":   { lines: [["LWB", "CB", "CB", "CB", "RWB"], ["LM", "CM", "CM", "RM"], ["ST"]] }
   };
   var FORMATION_KEYS = Object.keys(FORMATIONS);
 
@@ -142,8 +152,13 @@
   }
   function broadPositions(pl) { return VERSATILE[pl.n] || [pl.p]; }
   function eligGranular(pl) {
-    var set = {};
-    broadPositions(pl).forEach(function (bp) { (BROAD_ELIG[bp] || [bp]).forEach(function (g) { set[g] = 1; }); });
+    var set = {}, gps = gpOf(pl);
+    if (gps) {
+      // exact positions only — a left-back can't be slotted at right-back, etc.
+      gps.forEach(function (p) { (SLOT_FILL[p] || [p]).forEach(function (s) { set[s] = 1; }); });
+    } else {
+      broadPositions(pl).forEach(function (bp) { (BROAD_ELIG[bp] || [bp]).forEach(function (g) { set[g] = 1; }); });
+    }
     return Object.keys(set);
   }
   function openEligiblePositions(pl) {
@@ -338,7 +353,8 @@
       var noSlot = open.length === 0;
       if (!isTaken && !noSlot) draftable++;
       var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
-      html += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + pl.p + '">' + pl.p + "</span>" +
+      var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
+      html += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
         '<span class="pname">' + pl.n + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
     });
     html += "</div>";
@@ -519,8 +535,9 @@
       html += '<div class="round"><div class="round-name">' + rd.name + "</div>";
       rd.ties.forEach(function (t) {
         var aw = t.winner === t.a, bw = t.winner === t.b;
+        var userTie = (t.a.isUser || t.b.isUser) ? " user-tie" : "";
         var pens = t.res.pens ? ' <span class="pens">(pens ' + t.res.pens[0] + "–" + t.res.pens[1] + ")</span>" : "";
-        html += '<div class="tie"><div class="side ' + (aw ? "win" : "") + '">' + teamCell(t.a) + "<b>" + t.res.a + "</b></div>" +
+        html += '<div class="tie' + userTie + '"><div class="side ' + (aw ? "win" : "") + '">' + teamCell(t.a) + "<b>" + t.res.a + "</b></div>" +
           '<div class="side ' + (bw ? "win" : "") + '">' + teamCell(t.b) + "<b>" + t.res.b + "</b></div>" + pens + "</div>";
       });
       html += "</div>";
@@ -581,10 +598,10 @@
   }
   function renderWorldCupUser(result, label) {
     var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">' + result.userResult + "</div>";
-    html += statsSummaryHTML(result.userStats) + '<h3 class="sec">Your road</h3>';
-    html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
-    html += '<button class="btn-ghost" id="toggleTable" data-show="Show full bracket &amp; groups">Show full bracket &amp; groups</button>';
-    html += '<div id="fullTableWrap" style="display:none;margin-top:14px;"><h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds) + '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups) + "</div>";
+    html += statsSummaryHTML(result.userStats);
+    html += '<h3 class="sec">Your road</h3><div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+    html += '<h3 class="sec">Knockout bracket</h3><p class="legend">All knockout results — your team highlighted in gold.</p>' + renderBracket(result.rounds);
+    html += '<h3 class="sec">Groups</h3><p class="legend">Final group standings — individual match scores hidden.</p>' + renderGroups(result.groups);
     return html;
   }
   function renderLeagueUser(result, label) {

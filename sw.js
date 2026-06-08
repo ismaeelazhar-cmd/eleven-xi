@@ -1,9 +1,9 @@
 /* Service worker: network-first so the latest build always loads when online,
  * falling back to cache when offline (the app still installs + works offline). */
-const CACHE = "wcxi-v10";
+const CACHE = "wcxi-v11";
 const ASSETS = [
   "./", "./index.html", "./style.css",
-  "./data.js", "./data_extra.js", "./nations.js", "./engine.js", "./game.js",
+  "./data.js", "./data_extra.js", "./positions.js", "./nations.js", "./engine.js", "./game.js",
   "./manifest.webmanifest",
   "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png"
 ];
