@@ -138,7 +138,7 @@
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
   var elXiList = $("xiList"), elXiCount = $("xiCount"), elFormation = $("formation");
   var elDone = $("doneBanner"), elRatingNote = $("ratingNote"), elResultsBody = $("resultsBody");
-  var elManagerStrip = $("managerStrip"), elManagerSpin = $("managerSpin"), elManagerDesc = $("managerDesc"), elTeamName = $("teamName");
+  var elManagerStrip = $("managerStrip"), elManagerSpin = $("managerSpin"), elManagerDesc = $("managerDesc"), elManagerStyles = $("managerStyles"), elTeamName = $("teamName");
   var elFormationBar = $("formationBar"), elSetupPitch = $("setupPitch"), elDraftPitch = $("draftPitch");
   var elPitchTitle = $("pitchTitle"), elDraftTeam = $("draftTeam"), elDraftMeta = $("draftMeta");
   var elRatingsToggle = $("ratingsToggle"), elRatingsDesc = $("ratingsDesc");
@@ -255,13 +255,30 @@
     return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) +
       '</span><span class="mgr-style-tag">' + st.emoji + " " + st.name + "</span></div>";
   }
+  function renderManagerStyles() {
+    elManagerStyles.innerHTML = MANAGERS.map(function (m) {
+      return '<button class="formation-opt' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
+        '">' + m.emoji + " " + m.name + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".formation-opt"), function (b) {
+      b.addEventListener("click", function () {
+        managerId = b.getAttribute("data-style"); managerName = "";
+        renderManagerStyles(); renderManager(); paintPitches(); renderXI();
+      });
+    });
+  }
   function renderManager() {
     if (managerId === "none") {
-      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager yet</span><span class="mgr-style-tag">🎡 spin to appoint one</span></div>';
-      elManagerDesc.textContent = "Spin the wheel to appoint a manager — each brings a tactical bonus.";
+      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span><span class="mgr-style-tag">pick a style or 🎡 spin</span></div>';
+      elManagerDesc.textContent = "Pick a tactical style above, or spin the wheel for a famous manager.";
     } else {
-      elManagerStrip.innerHTML = managerItemHTML(managerName, managerId);
       var st = currentManager();
+      if (managerName) {
+        elManagerStrip.innerHTML = managerItemHTML(managerName, managerId);
+      } else {
+        elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">' + st.emoji + " " + st.name +
+          '</span><span class="mgr-style-tag">tactical style</span></div>';
+      }
       elManagerDesc.textContent = st.emoji + " " + st.name + " — " + st.desc;
     }
   }
@@ -272,7 +289,7 @@
     spinReel(elManagerStrip, function () { var m = rand(MANAGERS_DB); return managerItemHTML(m.n, m.s); },
       managerItemHTML(pick.n, pick.s), 1700).then(function () {
         managerName = pick.n; managerId = pick.s; managerSpinning = false; elManagerSpin.disabled = false;
-        renderManager(); paintPitches(); renderXI();
+        renderManager(); renderManagerStyles(); paintPitches(); renderXI();
       });
   }
   function renderFormationBar() {
@@ -554,7 +571,7 @@
     return {
       name: teamDisplayName(), flag: "⭐", rating: rating,
       atk: rating + tilt.atk + mgr.atk, def: rating + tilt.def + mgr.def,
-      koBonus: mgr.ko, isUser: true, formation: formation, manager: (managerId === "none" ? "No manager" : managerName + " (" + mgr.name + ")"),
+      koBonus: mgr.ko, isUser: true, formation: formation, manager: (managerId === "none" ? "No manager" : (managerName ? managerName + " (" + mgr.name + ")" : mgr.name)),
       players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; })
     };
   }
@@ -586,7 +603,7 @@
     minIdx = 0; maxIdx = ALL_YEARS.length - 1;
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
-    renderManager(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
+    renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
     paintPitches(); renderXI(); updateControls(); showView("home");
   }
 
@@ -952,6 +969,6 @@
   if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 
   // ---- init ----
-  renderManager(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
+  renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
 })();
