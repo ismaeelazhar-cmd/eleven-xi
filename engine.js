@@ -7,7 +7,7 @@ window.ENGINE = (function () {
   "use strict";
 
   var DIFFICULTY = 11;       // World Cup tax — points shaved off the user's attack & defence
-  var LEAGUE_DIFFICULTY = 1; // League tax — gentler, so 1st is achievable (but 47-0 stays brutal)
+  var LEAGUE_DIFFICULTY = -2; // League tax — gentler, so 1st is achievable (but 47-0 stays brutal)
   var activeTax = DIFFICULTY; // set per competition
   // Extra penalty applied to the user each knockout round — the deeper you go, the tougher
   // it gets (on top of the fact that only strong teams survive to face you). Index = round.
