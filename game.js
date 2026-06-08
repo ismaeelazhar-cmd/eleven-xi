@@ -176,8 +176,9 @@
   function renderPitchInto(el) {
     var a = assignByLines();
     function cell(c) {
-      if (c.pick) return '<div class="pdot filled ' + c.line + '"><span class="dot-init">' +
-        esc(initials(c.pick.n)) + '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
+      if (c.pick) return '<div class="pdot filled ' + c.line + '"><span class="dot-postag">' + c.pos +
+        '</span><span class="dot-init">' + esc(initials(c.pick.n)) +
+        '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
       return '<div class="pdot ' + c.line + '"><span class="dot-pos">' + c.pos + "</span></div>";
     }
     var html = '<div class="pitch">';

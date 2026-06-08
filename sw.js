@@ -1,5 +1,6 @@
-/* Service worker: cache-first so the app installs and runs offline. */
-const CACHE = "wcxi-v8";
+/* Service worker: network-first so the latest build always loads when online,
+ * falling back to cache when offline (the app still installs + works offline). */
+const CACHE = "wcxi-v9";
 const ASSETS = [
   "./", "./index.html", "./style.css",
   "./data.js", "./data_extra.js", "./nations.js", "./engine.js", "./game.js",
@@ -26,12 +27,12 @@ self.addEventListener("activate", function (e) {
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then(function (cached) {
-      return cached || fetch(e.request).then(function (resp) {
-        var copy = resp.clone();
-        caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
-        return resp;
-      }).catch(function () { return caches.match("./index.html"); });
+    fetch(e.request).then(function (resp) {
+      var copy = resp.clone();
+      caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+      return resp;
+    }).catch(function () {
+      return caches.match(e.request).then(function (cached) { return cached || caches.match("./index.html"); });
     })
   );
 });
