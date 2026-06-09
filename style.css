@@ -62,9 +62,12 @@ body.light .pitch {
 body.light .pdot { background: radial-gradient(circle at 50% 32%, #ffffff, #eef1ea); box-shadow: 0 0 0 2px rgba(0,0,0,0.08), 0 3px 8px rgba(0,0,0,0.12); }
 body.light .pdot .dot-pos { color: var(--muted); }
 body.light .pdot .dot-name { color: var(--text); text-shadow: none; }
-body.light .spin, body.light .start-btn, body.light .btn-primary, body.light .home-play { color: #fff; }
 body.light .tname.me, body.light .mscore .me { color: var(--gold); }
 body.light header h1 { filter: drop-shadow(0 1px 0 rgba(0,0,0,0.04)); }
+body.light .setup-pitch-wrap { background: rgba(0,0,0,0.03); }
+body.light .reel-box { box-shadow: inset 0 0 0 1px rgba(200,134,10,0.12); }
+body.light .theme-toggle { box-shadow: 0 4px 12px rgba(120,90,20,0.12); }
+/* keep gold buttons' dark text in both themes (no override needed) */
 
 * { box-sizing: border-box; }
 
@@ -475,7 +478,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .team-name-input {
   flex: 1 1 auto;
   min-width: 180px;
-  background: #0a0a0f;
+  background: var(--reel);
   border: 1px solid var(--line);
   border-radius: 10px;
   color: var(--text);
@@ -753,7 +756,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
   border: 1px solid rgba(249, 156, 0, 0.22);
   box-shadow: 0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.reel-box { background: #07070b; border-color: rgba(255,255,255,0.06); }
+.reel-box { background: var(--reelbox); border-color: rgba(255,255,255,0.06); }
 .reel {
   background:
     linear-gradient(180deg, rgba(0,0,0,0.75), transparent 26%, transparent 74%, rgba(0,0,0,0.75)),
@@ -1068,4 +1071,12 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
   display: block; margin-top: 10px; margin-bottom: 2px;
   font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--muted); font-weight: 800;
+}
+
+/* ===== Draft locked note ===== */
+.draft-locked {
+  display: inline-block; margin-bottom: 14px;
+  background: rgba(249,156,0,0.1); border: 1px solid var(--line);
+  color: var(--muted); border-radius: 999px; padding: 7px 14px;
+  font-size: 12px; font-weight: 700;
 }
