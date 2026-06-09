@@ -1058,3 +1058,10 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ===== Sub-label (e.g. Continent under the era slider) ===== */
+.setup-sublabel {
+  display: block; margin-top: 10px; margin-bottom: 2px;
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); font-weight: 800;
+}
