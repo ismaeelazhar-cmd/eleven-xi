@@ -995,6 +995,14 @@
 
   // ================= WIRING =================
   elTeamName.addEventListener("input", function () { teamName = elTeamName.value; paintPitches(); renderXI(); });
+  var elThemeToggle = $("themeToggle");
+  function applyTheme(light) {
+    if (light) document.body.classList.add("light"); else document.body.classList.remove("light");
+    if (elThemeToggle) elThemeToggle.textContent = light ? "🌙 Dark" : "☀ Light";
+    try { localStorage.setItem("wcxi_theme", light ? "light" : "dark"); } catch (e) {}
+  }
+  if (elThemeToggle) elThemeToggle.addEventListener("click", function () { applyTheme(!document.body.classList.contains("light")); });
+  (function () { var t = null; try { t = localStorage.getItem("wcxi_theme"); } catch (e) {} applyTheme(t === "light"); })();
   $("homePlay").addEventListener("click", function () { showView("setup"); });
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("setupBack").addEventListener("click", function () { showView("home"); });
