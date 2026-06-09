@@ -243,9 +243,8 @@ window.ENGINE = (function () {
   }
 
   // ---- League ----
-  function runLeague(userTeam) {
-    activeTax = LEAGUE_DIFFICULTY;
-    var field = buildField(userTeam);
+  // Full round-robin league on a given field (each pair once).
+  function leagueOn(field, userTeam) {
     var rows = field.map(blankRow), total = 0, userMatches = [];
     for (var i = 0; i < field.length; i++) {
       for (var j = i + 1; j < field.length; j++) {
@@ -258,17 +257,136 @@ window.ENGINE = (function () {
     }
     sortTable(rows);
     var userRow = null, userPos = -1;
-    if (userTeam) {
-      for (var k = 0; k < rows.length; k++) if (rows[k].team.isUser) { userRow = rows[k]; userPos = k + 1; break; }
-    }
+    if (userTeam) for (var k = 0; k < rows.length; k++) if (rows[k].team.isUser) { userRow = rows[k]; userPos = k + 1; break; }
     var out = { table: rows, totalMatches: total, userMatches: userMatches, userRow: userRow, userPos: userPos };
     if (userTeam) {
       out.userStats = aggregateStats(userMatches, userTeam);
       out.teamName = userTeam.name;
-      // expected position = strength rank of the user's XI among the field
       var uo = overall(userTeam), better = 0;
       field.forEach(function (t) { if (!t.isUser && overall(t) > uo) better++; });
       out.expectedPos = better + 1;
+      out.squadRating = Math.round(userTeam.rating);
+    }
+    return out;
+  }
+  function runLeague(userTeam) { activeTax = LEAGUE_DIFFICULTY; return leagueOn(buildField(userTeam), userTeam); }
+
+  // ===================== Champions League =====================
+  function buildFieldFrom(list, userTeam, size) {
+    var teams = list.map(function (n) { return { name: n.name, flag: n.flag, rating: n.rating, atk: n.rating, def: n.rating, isUser: false }; });
+    teams.sort(function (a, b) { return b.rating - a.rating; });
+    if (userTeam) { teams = teams.slice(0, size - 1); teams.push(userTeam); } else teams = teams.slice(0, size);
+    return teams;
+  }
+  function roundRobinRounds(n) { // returns first n-1 rounds of pairings (indices)
+    var t = []; for (var i = 0; i < n; i++) t.push(i);
+    var rounds = [];
+    for (var r = 0; r < n - 1; r++) {
+      var round = [];
+      for (var k = 0; k < n / 2; k++) round.push([t[k], t[n - 1 - k]]);
+      rounds.push(round);
+      t.splice(1, 0, t.pop());
+    }
+    return rounds;
+  }
+  function oneRound(roundTeams, rname, userMatches, pen) {
+    var ties = [], next = [];
+    for (var m = 0; m < roundTeams.length; m += 2) {
+      var A = roundTeams[m], B = roundTeams[m + 1];
+      var res = simulateMatch(koTeam(A, pen || 0), koTeam(B, pen || 0), false);
+      var winner = res.winner === "A" ? A : B;
+      ties.push({ a: A, b: B, res: res, winner: winner }); next.push(winner);
+      if (userMatches && (A.isUser || B.isUser)) recordUserMatch(userMatches, rname, A, B, res);
+    }
+    return { round: { name: rname, ties: ties }, winners: next };
+  }
+  function knockoutRounds(roundTeams, roundNames, userMatches, esc) {
+    esc = esc || []; var rounds = [], rIdx = 0;
+    while (roundTeams.length > 1) {
+      var rname = roundNames[rIdx] || ("Round of " + roundTeams.length);
+      var rr = oneRound(roundTeams, rname, userMatches, esc[rIdx] || 0);
+      rounds.push(rr.round); roundTeams = rr.winners; rIdx++;
+    }
+    return { rounds: rounds, champion: roundTeams[0] };
+  }
+  function seedBracket(teams) { // 1v(n), 2v(n-1)...
+    var out = []; for (var k = 0; k < teams.length / 2; k++) { out.push(teams[k]); out.push(teams[teams.length - 1 - k]); } return out;
+  }
+  function userKOResult(userTeam, champion, userMatches, groupTag, phaseLabel) {
+    if (!userTeam) return null;
+    if (champion && champion.isUser) return "🏆 Champions of Europe!";
+    var ko = userMatches.filter(function (m) { return m.round.indexOf(groupTag) !== 0 && m.round !== "Matchday"; });
+    if (!ko.length) return "Out in the " + (phaseLabel || "league phase");
+    var last = ko[ko.length - 1].round;
+    if (last === "Final") return "🥈 Runners-up";
+    if (last === "Semi-finals") return "Semi-finalists";
+    return "Out in the " + last;
+  }
+
+  // 36-team single league (each plays each once)
+  function runCLLeague(userTeam) { activeTax = LEAGUE_DIFFICULTY; return leagueOn(buildFieldFrom(window.CL_CLUBS, userTeam, 36), userTeam); }
+
+  // Old format: 8 groups of 4, home & away, top 2 → Round of 16 knockouts
+  function runCLGroups(userTeam) {
+    activeTax = DIFFICULTY;
+    var field = buildFieldFrom(window.CL_CLUBS, userTeam, 32);
+    var userMatches = userTeam ? [] : null;
+    var sorted = field.slice().sort(function (a, b) { return b.rating - a.rating; });
+    var pots = [[], [], [], []];
+    for (var i = 0; i < sorted.length; i++) pots[Math.floor(i / 8)].push(sorted[i]);
+    pots.forEach(shuffle);
+    var groups = [];
+    for (var g = 0; g < 8; g++) {
+      var gteams = [pots[0][g], pots[1][g], pots[2][g], pots[3][g]];
+      var rows = gteams.map(blankRow);
+      for (var a = 0; a < 4; a++) for (var b = a + 1; b < 4; b++) {
+        var r1 = simulateMatch(gteams[a], gteams[b], true);
+        applyResult(rows[a], rows[b], r1.a, r1.b);
+        if (userMatches && (gteams[a].isUser || gteams[b].isUser)) recordUserMatch(userMatches, "Group " + String.fromCharCode(65 + g), gteams[a], gteams[b], r1);
+        var r2 = simulateMatch(gteams[b], gteams[a], true);
+        applyResult(rows[b], rows[a], r2.a, r2.b);
+        if (userMatches && (gteams[a].isUser || gteams[b].isUser)) recordUserMatch(userMatches, "Group " + String.fromCharCode(65 + g), gteams[b], gteams[a], r2);
+      }
+      sortTable(rows);
+      groups.push({ name: String.fromCharCode(65 + g), table: rows, teams: gteams });
+    }
+    var quals = [];
+    groups.forEach(function (grp) { quals.push(grp.table[0]); quals.push(grp.table[1]); });
+    quals.sort(function (x, y) { return (y.Pts - x.Pts) || (y.GD - x.GD) || (y.GF - x.GF) || (y.team.rating - x.team.rating); });
+    var seeds = seedBracket(quals.map(function (q) { return q.team; }));
+    var ko = knockoutRounds(seeds, ["Round of 16", "Quarter-finals", "Semi-finals", "Final"], userMatches, [0, 2, 4, 6]);
+    var out = { groups: groups, rounds: ko.rounds, champion: ko.champion };
+    if (userTeam) { out.userMatches = userMatches; out.userStats = aggregateStats(userMatches, userTeam); out.teamName = userTeam.name; out.userResult = userKOResult(userTeam, ko.champion, userMatches, "Group", "group stage"); }
+    return out;
+  }
+
+  // New (Swiss) format: 36-team league phase (8 games), top 8 → R16, 9-24 → playoff, then knockouts
+  function runCLSwiss(userTeam) {
+    activeTax = LEAGUE_DIFFICULTY;
+    var field = buildFieldFrom(window.CL_CLUBS, userTeam, 36);
+    var rows = field.map(blankRow), userMatches = userTeam ? [] : null, total = 0;
+    var rr = roundRobinRounds(36);
+    for (var r = 0; r < 8; r++) rr[r].forEach(function (pair) {
+      var A = field[pair[0]], B = field[pair[1]];
+      var res = simulateMatch(A, B, true);
+      applyResult(rows[pair[0]], rows[pair[1]], res.a, res.b);
+      if (userMatches && (A.isUser || B.isUser)) recordUserMatch(userMatches, "League phase", A, B, res);
+      total++;
+    });
+    sortTable(rows);
+    activeTax = DIFFICULTY; // knockouts are hard
+    var teamsByRank = rows.map(function (x) { return x.team; });
+    var top8 = teamsByRank.slice(0, 8);
+    var playoffTeams = teamsByRank.slice(8, 24);
+    var po = oneRound(seedBracket(playoffTeams), "Knockout playoff", userMatches, 0);
+    var r16Teams = seedBracket(top8.concat(po.winners));
+    var ko = knockoutRounds(r16Teams, ["Round of 16", "Quarter-finals", "Semi-finals", "Final"], userMatches, [0, 2, 4, 6]);
+    var userRow = null, userPos = -1;
+    if (userTeam) for (var k = 0; k < rows.length; k++) if (rows[k].team.isUser) { userRow = rows[k]; userPos = k + 1; break; }
+    var out = { table: rows, totalMatches: total, rounds: [po.round].concat(ko.rounds), champion: ko.champion, leaguePhase: true, userRow: userRow, userPos: userPos };
+    if (userTeam) {
+      out.userMatches = userMatches; out.userStats = aggregateStats(userMatches, userTeam); out.teamName = userTeam.name;
+      out.userResult = userKOResult(userTeam, ko.champion, userMatches, "League phase", "league phase");
       out.squadRating = Math.round(userTeam.rating);
     }
     return out;
@@ -285,6 +403,9 @@ window.ENGINE = (function () {
     simulateMatch: simulateMatch,
     runWorldCup: runWorldCup,
     runLeague: runLeague,
+    runCLLeague: runCLLeague,
+    runCLGroups: runCLGroups,
+    runCLSwiss: runCLSwiss,
     DIFFICULTY: DIFFICULTY
   };
 })();
