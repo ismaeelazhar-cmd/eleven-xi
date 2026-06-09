@@ -315,7 +315,7 @@
     managerSpinning = true; elManagerSpin.disabled = true;
     var pick = rand(MANAGERS_DB);
     spinReel(elManagerStrip, function () { var m = rand(MANAGERS_DB); return managerItemHTML(m.n, m.s); },
-      managerItemHTML(pick.n, pick.s), 1700).then(function () {
+      managerItemHTML(pick.n, pick.s), 500).then(function () {
         managerName = pick.n; managerId = pick.s; managerSpinning = false; managerSpun = true;
         elManagerSpin.disabled = true; elManagerSpin.textContent = "Manager appointed";
         renderManager(); renderManagerStyles(); paintPitches(); renderXI();
@@ -425,12 +425,12 @@
   function yearItemHTML(y) { return '<div class="reel-item"><span class="year">' + y + "</span></div>"; }
   function spinReel(stripEl, randomItem, finalHTML, duration) {
     return new Promise(function (resolve) {
-      var BLUR = 30, html = "";
+      var BLUR = 10, html = "";
       for (var i = 0; i < BLUR; i++) html += randomItem();
       html += finalHTML;
       stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)";
       stripEl.innerHTML = html; void stripEl.offsetHeight;
-      stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.12,0.7,0.18,1)";
+      stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.25,0.1,0.15,1)";
       stripEl.style.transform = "translateY(" + (-(BLUR * ITEM_H)) + "px)";
       var done = false;
       function finish() { if (done) return; done = true; stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)"; stripEl.innerHTML = finalHTML; resolve(); }
@@ -456,8 +456,8 @@
     var pairs = poolPairs(), pick = rand(pairs);
     current = { country: pick.c, year: pick.y };
     var pc = pairs.map(function (p) { return p.c; }), py = pairs.map(function (p) { return p.y; });
-    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 2100);
-    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 2600);
+    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 380);
+    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 420);
     Promise.all([p1, p2]).then(function () { spinning = false; elHint.textContent = ""; renderSquadPicker(); });
   }
 
