@@ -998,10 +998,14 @@
   var elThemeToggle = $("themeToggle");
   function applyTheme(light) {
     if (light) document.body.classList.add("light"); else document.body.classList.remove("light");
-    if (elThemeToggle) elThemeToggle.textContent = light ? "🌙 Dark" : "☀ Light";
+    if (elThemeToggle) Array.prototype.forEach.call(elThemeToggle.querySelectorAll("button"), function (b) {
+      b.className = (b.getAttribute("data-theme") === (light ? "light" : "dark")) ? "active" : "";
+    });
     try { localStorage.setItem("wcxi_theme", light ? "light" : "dark"); } catch (e) {}
   }
-  if (elThemeToggle) elThemeToggle.addEventListener("click", function () { applyTheme(!document.body.classList.contains("light")); });
+  if (elThemeToggle) Array.prototype.forEach.call(elThemeToggle.querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { applyTheme(b.getAttribute("data-theme") === "light"); });
+  });
   (function () { var t = null; try { t = localStorage.getItem("wcxi_theme"); } catch (e) {} applyTheme(t === "light"); })();
   $("homePlay").addEventListener("click", function () { showView("setup"); });
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });

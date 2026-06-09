@@ -1050,14 +1050,18 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 .diff-sub { font-size: 11px; color: var(--muted); }
 .diff-btn.active .diff-sub { color: var(--gold); }
 
-/* ===== Theme toggle button ===== */
+/* ===== Theme toggle (Light = cream, Dark = dark) ===== */
 .theme-toggle {
   position: fixed; top: 12px; right: 12px; z-index: 20;
-  background: var(--card); border: 1px solid var(--line); color: var(--muted);
-  border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 800; cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex; gap: 2px; padding: 3px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
-.theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+.theme-toggle button {
+  background: transparent; border: none; color: var(--muted);
+  border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 800; cursor: pointer;
+}
+.theme-toggle button.active { background: var(--gold); color: #1a1206; }
 
 /* ===== Sub-label (e.g. Continent under the era slider) ===== */
 .setup-sublabel {

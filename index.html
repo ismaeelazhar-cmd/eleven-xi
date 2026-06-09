@@ -20,7 +20,10 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <button class="theme-toggle" id="themeToggle" aria-label="Toggle light/dark">☀ Light</button>
+  <div class="theme-toggle" id="themeToggle" role="group" aria-label="Theme">
+    <button data-theme="light">☀ Light</button>
+    <button data-theme="dark">🌙 Dark</button>
+  </div>
   <div class="wrap">
     <header>
       <h1>WORLD CUP XI</h1>
