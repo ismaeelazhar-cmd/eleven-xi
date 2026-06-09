@@ -417,6 +417,9 @@
 
   // ---- slot machine ----
   function countryItemHTML(c) {
+    if (mode === "wc") {
+      return '<div class="reel-item"><span class="flag">' + DATA[c].flag + '</span><span class="name">' + c + "</span></div>";
+    }
     return '<div class="reel-item"><span class="name">' + c + "</span></div>";
   }
   function yearItemHTML(y) { return '<div class="reel-item"><span class="year">' + y + "</span></div>"; }
@@ -470,7 +473,7 @@
     var c = current.country, y = current.year, players = DATA[c].years[y];
     var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
     var draftable = 0;
-    var html = '<h2>' + c + " &middot; " + y + " squad</h2>";
+    var html = '<h2>' + (mode === "wc" ? '<span class="flag">' + DATA[c].flag + "</span>" : "") + c + " &middot; " + y + " squad</h2>";
     html += '<div class="sub">Pick a player, then choose where they play.</div>';
     if (pendingPick) {
       html += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + "</b> play? " +
@@ -574,7 +577,7 @@
         if (c.pick) {
           html += '<div class="xi-row"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
             '<span class="info"><span class="pn">' + c.pick.n + (showRatings ? ' <span class="xi-rate">' + c.pick.r + "</span>" : "") +
-            '</span><span class="meta">' + c.pick.country + " &middot; " + c.pick.year +
+            '</span><span class="meta">' + (mode === "wc" ? DATA[c.pick.country].flag + " " : "") + c.pick.country + " &middot; " + c.pick.year +
             '</span></span><button class="remove" data-id="' + c.pick.id + '">remove</button></div>';
         } else {
           html += '<div class="xi-row empty"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
@@ -644,6 +647,7 @@
   }
   function setMode(m) {
     mode = m;
+    document.body.classList.toggle("mode-cl", m === "cl");
     DATA = (m === "cl") ? window.CL_DATA : window.WORLD_CUP_DATA;
     COUNTRIES = Object.keys(DATA);
     ALL_YEARS = (function () { var s = {}; COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { s[y] = 1; }); }); return Object.keys(s).sort(); })();

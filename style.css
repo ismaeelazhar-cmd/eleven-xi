@@ -1633,19 +1633,19 @@ body.light .btn-ghost:hover:not(:disabled) {
 /* ─── hide old home elements that are now replaced ─── */
 .home-play, .home-secondary, .home-tag-old { display: none !important; }
 
-/* ─── Flag-free reels — compact height now flags are removed ─── */
-.reel,
-.reel-item            { height: 56px; }
-.reel::after          { height: 56px; }
-.reel-item            { gap: 0; flex-direction: row; }
-.reel-item .flag      { display: none; }          /* safety: hide any leftover flag span */
-.reel-item .name {
+/* ─── CL mode: flag-free compact reels ─── */
+body.mode-cl .reel,
+body.mode-cl .reel-item          { height: 56px; }
+body.mode-cl .reel::after        { height: 56px; }
+body.mode-cl .reel-item          { gap: 0; flex-direction: row; }
+body.mode-cl .reel-item .flag    { display: none; }
+body.mode-cl .reel-item .name {
   font-size: 17px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
-.reel-item .year      { font-size: 30px; }
-.mgr-reel,
-.reel-item.mgr-item   { height: 64px; }
-.reel-item.mgr-item   { flex-direction: column; gap: 4px; }
+body.mode-cl .reel-item .year    { font-size: 30px; }
+body.mode-cl .mgr-reel,
+body.mode-cl .reel-item.mgr-item { height: 64px; }
+body.mode-cl .reel-item.mgr-item { flex-direction: column; gap: 4px; }
