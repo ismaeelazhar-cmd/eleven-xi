@@ -111,6 +111,7 @@
   var managerId = "none";
   var managerName = "";
   var managerSpinning = false;
+  var managerSpun = false;
   var showRatings = true;
   var pool = "all";
   var DIFFICULTIES = [{ id: "Rookie", rr: 3 }, { id: "Pro", rr: 1 }, { id: "Legend", rr: 0 }];
@@ -275,13 +276,12 @@
     return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) +
       '</span><span class="mgr-style-tag">' + st.emoji + " " + st.name + "</span></div>";
   }
-  var STYLE_SHORT = { none: "None", attack: "Attack", defence: "Defence", press: "Press", cup: "Cup", motivator: "Motivate", counter: "Counter" };
   function renderManagerStyles() {
     elManagerStyles.innerHTML = MANAGERS.map(function (m) {
-      return '<button class="mgr-style-btn' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
-        '" title="' + esc(m.desc) + '">' + m.emoji + " " + (STYLE_SHORT[m.id] || m.name) + "</button>";
+      return '<button class="manager-opt' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
+        '" title="' + esc(m.desc) + '"><span class="mgr-emoji">' + m.emoji + '</span><span class="mgr-name">' + m.name + "</span></button>";
     }).join("");
-    Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".formation-opt"), function (b) {
+    Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".manager-opt"), function (b) {
       b.addEventListener("click", function () {
         managerId = b.getAttribute("data-style"); managerName = "";
         renderManagerStyles(); renderManager(); paintPitches(); renderXI();
@@ -290,7 +290,7 @@
   }
   function renderManager() {
     if (managerId === "none") {
-      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span><span class="mgr-style-tag">pick a style or 🎡 spin</span></div>';
+      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span><span class="mgr-style-tag">pick a style or spin</span></div>';
       elManagerDesc.textContent = "Pick a tactical style above, or spin the wheel for a famous manager.";
     } else {
       var st = currentManager();
@@ -304,12 +304,13 @@
     }
   }
   function spinManager() {
-    if (managerSpinning) return;
+    if (managerSpinning || managerSpun) return; // one spin only
     managerSpinning = true; elManagerSpin.disabled = true;
     var pick = rand(MANAGERS_DB);
     spinReel(elManagerStrip, function () { var m = rand(MANAGERS_DB); return managerItemHTML(m.n, m.s); },
       managerItemHTML(pick.n, pick.s), 1700).then(function () {
-        managerName = pick.n; managerId = pick.s; managerSpinning = false; elManagerSpin.disabled = false;
+        managerName = pick.n; managerId = pick.s; managerSpinning = false; managerSpun = true;
+        elManagerSpin.disabled = true; elManagerSpin.textContent = "Manager appointed";
         renderManager(); renderManagerStyles(); paintPitches(); renderXI();
       });
   }
@@ -371,18 +372,17 @@
   }
 
   function renderDifficultyBar() {
-    var html = "";
-    DIFFICULTIES.forEach(function (d) {
-      html += '<button class="formation-opt' + (d.id === difficulty ? " active" : "") +
-        '" data-diff="' + d.id + '">' + d.id + " <span class=\"diff-rr\">" + d.rr + " 🎲</span></button>";
-    });
-    elDiffBar.innerHTML = html;
-    Array.prototype.forEach.call(elDiffBar.querySelectorAll(".formation-opt"), function (b) {
+    elDiffBar.innerHTML = DIFFICULTIES.map(function (d) {
+      var sub = d.rr === 0 ? "No rerolls" : d.rr + " reroll" + (d.rr === 1 ? "" : "s");
+      return '<button class="diff-btn' + (d.id === difficulty ? " active" : "") + '" data-diff="' + d.id +
+        '"><span class="diff-name">' + d.id + '</span><span class="diff-sub">' + sub + "</span></button>";
+    }).join("");
+    Array.prototype.forEach.call(elDiffBar.querySelectorAll(".diff-btn"), function (b) {
       b.addEventListener("click", function () { difficulty = b.getAttribute("data-diff"); renderDifficultyBar(); });
     });
     var rr = diffRerolls();
     elDiffDesc.textContent = rr === 0
-      ? difficulty + " — no rerolls. You take whatever you spin."
+      ? "Legend — no rerolls. You take whatever you spin."
       : difficulty + " — " + rr + " reroll" + (rr === 1 ? "" : "s") + " during the draft.";
   }
 
@@ -399,7 +399,7 @@
     return pairs;
   }
   function renderContinent() {
-    var opts = [["all", "🌐 Everywhere"], ["EU", "🇪🇺 Europe"], ["AF", "🌍 Africa"], ["SA", "🌎 South America"]];
+    var opts = [["all", "Everywhere"], ["EU", "Europe"], ["AF", "Africa"], ["SA", "South America"]];
     elContinentBar.innerHTML = opts.map(function (o) {
       return '<button class="formation-opt' + (o[0] === continent ? " active" : "") + '" data-cont="' + o[0] + '">' + o[1] + "</button>";
     }).join("");
@@ -634,7 +634,8 @@
   function newGame() {
     clearTimeout(revealTimer);
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
-    teamName = ""; managerId = "none"; managerName = ""; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
+    teamName = ""; managerId = "none"; managerName = ""; managerSpun = false; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
+    elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin manager";
     minIdx = 0; maxIdx = ALL_YEARS.length - 1; continent = "all";
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";
@@ -800,7 +801,7 @@
       return '<div class="sb-row"><span>' + esc(p.label) + '</span><span class="' + (p.value < 0 ? "neg" : "pos") + '">' +
         (p.value >= 0 ? "+" : "") + p.value + "</span></div>";
     }).join("");
-    return '<div class="score-banner"><div class="sb-top">🎯 Total score <b>' + sc.score + "</b> <span>· " + esc(result) +
+    return '<div class="score-banner"><div class="sb-top">Total score <b>' + sc.score + "</b> <span>· " + esc(result) +
       " · saved to leaderboard</span></div><div class=\"sb-break\"><div class=\"sb-break-h\">How it was scored</div>" + rows + "</div></div>";
   }
   function loadBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); } catch (e) { return []; } }
@@ -869,10 +870,10 @@
   }
 
   // ---- shared game-by-game auto-reveal ----
-  function scheduleRevealN(total, state, rerender) {
+  function scheduleRevealN(total, state, rerender, totalMs) {
     clearTimeout(revealTimer);
     if (state.shown < total) {
-      var delay = Math.max(90, Math.min(420, Math.round(6000 / total)));
+      var delay = Math.max(180, Math.min(650, Math.round((totalMs || 7000) / total)));
       revealTimer = setTimeout(function () { state.shown++; rerender(); }, delay);
     }
   }
@@ -883,7 +884,7 @@
   }
   function skipBarHTML(shown, total) {
     return '<div class="reveal-bar"><span class="reveal-count">' + shown + " / " + total +
-      ' games</span><button class="btn-ghost" id="skipReveal">Skip ▶▶</button></div>';
+      ' games</span><button class="btn-ghost" id="skipReveal">Skip</button></div>';
   }
   function roundOthersHTML(wc, roundName) {
     var rd = null;
@@ -949,8 +950,8 @@
     var tr = document.getElementById("toResult");
     if (tr) tr.onclick = function () { clearTimeout(revealTimer); reveal.stage = "result"; if (window.scrollTo) window.scrollTo(0, 0); renderWCStage(); };
     wireResults();
-    if (reveal.stage === "groups") scheduleRevealN(reveal.groupMatches.length, reveal, renderWCStage);
-    else if (reveal.stage === "ko") scheduleRevealN(reveal.koMatches.length, reveal, renderWCStage);
+    if (reveal.stage === "groups") scheduleRevealN(reveal.groupMatches.length, reveal, renderWCStage, 6000);
+    else if (reveal.stage === "ko") scheduleRevealN(reveal.koMatches.length, reveal, renderWCStage, 6000);
   }
 
   function leagueVerdict(actual, expected) {
@@ -989,7 +990,7 @@
     var tr = document.getElementById("toResult");
     if (tr) tr.onclick = function () { clearTimeout(revealTimer); lReveal.stage = "result"; if (window.scrollTo) window.scrollTo(0, 0); renderLeagueStage(); };
     wireResults();
-    if (lReveal.stage === "reveal") scheduleRevealN(gm.length, lReveal, renderLeagueStage);
+    if (lReveal.stage === "reveal") scheduleRevealN(gm.length, lReveal, renderLeagueStage, 22000);
   }
 
   // ================= WIRING =================
@@ -998,7 +999,6 @@
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("setupBack").addEventListener("click", function () { showView("home"); });
   $("startBtn").addEventListener("click", startDraft);
-  $("draftBack").addEventListener("click", function () { paintPitches(); showView("setup"); });
   Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("home"); }); });
 
   elManagerSpin.addEventListener("click", spinManager);

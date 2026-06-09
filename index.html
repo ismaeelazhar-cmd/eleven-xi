@@ -24,15 +24,15 @@
     <header>
       <h1>WORLD CUP XI</h1>
       <p>Set up your side, then spin to draft an all-time XI from real World Cup squads and chase glory.</p>
-      <button class="install-btn" id="installBtn" hidden>⬇ Install app</button>
+      <button class="install-btn" id="installBtn" hidden>Install app</button>
     </header>
 
     <!-- ===== HOME (first page) ===== -->
     <section id="homeView">
       <div class="home-hero">
         <p class="home-tag">Draft an all-time XI from every World Cup, pick a manager and formation, then chase glory.</p>
-        <button class="start-btn home-play" id="homePlay">▶ Play</button>
-        <button class="home-secondary" id="homeBoard">🏆 Leaderboards</button>
+        <button class="start-btn home-play" id="homePlay">Play</button>
+        <button class="home-secondary" id="homeBoard">Leaderboards</button>
       </div>
     </section>
 
@@ -47,10 +47,10 @@
 
         <div class="setup-row setup-row-col">
           <span class="setup-label">Manager — pick a style or spin for one</span>
-          <div class="mgr-style-row" id="managerStyles"></div>
+          <div class="manager-options" id="managerStyles"></div>
           <div class="mgr-wheel">
             <div class="reel mgr-reel"><div class="reel-strip" id="managerStrip"></div></div>
-            <button class="btn-accent" id="managerSpin">🎡 Spin manager</button>
+            <button class="btn-accent" id="managerSpin">Spin manager</button>
           </div>
           <div class="manager-desc" id="managerDesc"></div>
         </div>
@@ -66,7 +66,7 @@
         </div>
 
         <div class="setup-row setup-row-col">
-          <span class="setup-label">Player pool — which World Cups</span>
+          <span class="setup-label">Player pool — World Cup eras</span>
           <div class="era-wrap">
             <div class="era-slider" id="eraSlider">
               <div class="era-track"><div class="era-fill" id="eraFill"></div></div>
@@ -85,7 +85,7 @@
 
         <div class="setup-row setup-row-col">
           <span class="setup-label">Difficulty</span>
-          <div class="formation-options" id="difficultyBar"></div>
+          <div class="diff-row" id="difficultyBar"></div>
           <div class="seg-desc" id="difficultyDesc"></div>
         </div>
 
@@ -104,7 +104,7 @@
 
     <!-- ===== DRAFT (second part) ===== -->
     <section id="draftView" style="display:none;">
-      <button class="back" id="draftBack">← Setup</button>
+      <div class="draft-locked">🔒 Squad locked — build your XI</div>
 
       <div class="draft-head">
         <div class="draft-head-info">
@@ -127,8 +127,8 @@
         </div>
         <div class="controls">
           <button class="spin" id="spinBtn">SPIN</button>
-          <button class="reroll" id="rerollBtn" hidden>🎲 Reroll (<span id="rerollCount">3</span>)</button>
-          <button class="autopick" id="autoPickBtn" hidden>⚡ Auto-pick</button>
+          <button class="reroll" id="rerollBtn" hidden>Reroll (<span id="rerollCount">3</span>)</button>
+          <button class="autopick" id="autoPickBtn" hidden>Auto-pick</button>
         </div>
         <div class="hint" id="hint"></div>
       </div>
@@ -146,9 +146,9 @@
         <div class="xi-list" id="xiList"></div>
         <div class="done-banner" id="doneBanner" style="display:none;"></div>
         <div class="xi-actions">
-          <button class="btn-accent" id="autoFillBtn">🤖 Auto-fill XI</button>
-          <button class="btn-primary" id="goWorldCup" disabled>🏆 World Cup with my XI</button>
-          <button class="btn-primary" id="goLeague" disabled>📋 League with my XI</button>
+          <button class="btn-accent" id="autoFillBtn">Auto-fill XI</button>
+          <button class="btn-primary" id="goWorldCup" disabled>World Cup with my XI</button>
+          <button class="btn-primary" id="goLeague" disabled>League with my XI</button>
           <button class="btn-ghost" id="shareBtn" disabled>Copy XI</button>
           <button class="btn-ghost" id="clearBtn">New game</button>
         </div>
@@ -161,8 +161,8 @@
       <div class="results-head">
         <span class="locked-note">🔒 Run complete — no going back</span>
         <div class="results-head-right">
-          <button class="btn-ghost" id="boardBtn">🏆 Leaderboards</button>
-          <button class="btn-primary" id="newGameBtn">🔄 New Game</button>
+          <button class="btn-ghost" id="boardBtn">Leaderboards</button>
+          <button class="btn-primary" id="newGameBtn">New Game</button>
         </div>
       </div>
       <div id="resultsBody"></div>
@@ -174,7 +174,7 @@
         <button class="back" id="boardBack">← Back</button>
         <button class="btn-ghost" id="clearBoardBtn">Clear scores</button>
       </div>
-      <h2 class="res-title">🏆 Leaderboards</h2>
+      <h2 class="res-title">Leaderboards</h2>
       <div class="seg board-tabs" id="boardTabs">
         <button class="seg-opt active" data-board="daily">Daily</button>
         <button class="seg-opt" data-board="weekly">Weekly</button>
@@ -185,7 +185,7 @@
 
     <footer>
       <div class="footer-actions">
-        <a class="foot-btn" id="feedbackBtn" href="#" target="_blank" rel="noopener">✉ Feedback &amp; bugs</a>
+        <a class="foot-btn" id="feedbackBtn" href="#" target="_blank" rel="noopener">Feedback &amp; bugs</a>
         <a class="foot-btn coffee" id="coffeeBtn" href="#" target="_blank" rel="noopener">☕ Enjoying the game?</a>
       </div>
       <p class="foot-credit">A World Cup spin-slot draft &amp; simulator, inspired by <a href="https://38-0.app" target="_blank" rel="noopener">38-0</a>.</p>
