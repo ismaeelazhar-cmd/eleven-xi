@@ -21,23 +21,32 @@
 </head>
 <body>
   <div class="theme-toggle" id="themeToggle" role="group" aria-label="Theme">
-    <button data-theme="light">☀ Light</button>
-    <button data-theme="dark">🌙 Dark</button>
+    <button data-theme="light">☀</button>
+    <button data-theme="dark">🌙</button>
   </div>
   <div class="wrap">
     <header>
       <h1>WORLD CUP XI</h1>
-      <p>Set up your side, then spin to draft an all-time XI from real World Cup squads and chase glory.</p>
       <button class="install-btn" id="installBtn" hidden>Install app</button>
     </header>
 
     <!-- ===== HOME (first page) ===== -->
     <section id="homeView">
       <div class="home-hero">
-        <p class="home-tag">Draft an all-time XI, pick a manager and formation, then chase glory.</p>
-        <button class="start-btn home-play" id="homeWC">World Cup</button>
-        <button class="home-secondary" id="homeCL">Champions League</button>
-        <button class="home-secondary" id="homeBoard">Leaderboards</button>
+        <p class="home-tag">Spin to draft an all-time XI from real squads. Pick a formation and manager. Chase glory.</p>
+        <div class="home-modes">
+          <button class="home-mode-card home-mode-wc" id="homeWC">
+            <span class="mode-icon">🏆</span>
+            <span class="mode-name">World Cup</span>
+            <span class="mode-hint">86 nations · 313 squads</span>
+          </button>
+          <button class="home-mode-card home-mode-cl" id="homeCL">
+            <span class="mode-icon">⭐</span>
+            <span class="mode-name">Champions League</span>
+            <span class="mode-hint">153 clubs · 768 seasons</span>
+          </button>
+        </div>
+        <button class="home-board-link" id="homeBoard">Leaderboards</button>
       </div>
     </section>
 
@@ -57,7 +66,7 @@
         </div>
 
         <div class="setup-row setup-row-col">
-          <span class="setup-label">Manager — pick a style or spin for one</span>
+          <span class="setup-label">Manager</span>
           <div class="manager-options" id="managerStyles"></div>
           <div class="mgr-wheel">
             <div class="reel mgr-reel"><div class="reel-strip" id="managerStrip"></div></div>
@@ -118,8 +127,6 @@
 
     <!-- ===== DRAFT (second part) ===== -->
     <section id="draftView" style="display:none;">
-      <div class="draft-locked">🔒 Squad locked — build your XI</div>
-
       <div class="draft-head">
         <div class="draft-head-info">
           <div class="draft-team" id="draftTeam">My XI</div>
@@ -174,7 +181,6 @@
     <!-- ===== RESULTS ===== -->
     <section id="resultsView" style="display:none;">
       <div class="results-head">
-        <span class="locked-note">🔒 Run complete — no going back</span>
         <div class="results-head-right">
           <button class="btn-ghost" id="boardBtn">Leaderboards</button>
           <button class="btn-primary" id="newGameBtn">New Game</button>
