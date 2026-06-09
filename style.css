@@ -68,7 +68,6 @@ body.light .tname.me, body.light .mscore .me { color: var(--gold); }
 body.light header h1 { filter: drop-shadow(0 1px 0 rgba(0,0,0,0.04)); }
 body.light .setup-pitch-wrap { background: rgba(0,0,0,0.03); }
 body.light .reel-box { box-shadow: inset 0 0 0 1px rgba(200,134,10,0.12); }
-body.light .theme-toggle { box-shadow: 0 4px 12px rgba(120,90,20,0.12); }
 /* keep gold buttons' dark text in both themes (no override needed) */
 
 * { box-sizing: border-box; }
@@ -1055,18 +1054,59 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 .diff-sub { font-size: 11px; color: var(--muted); }
 .diff-btn.active .diff-sub { color: var(--gold); }
 
-/* ===== Theme toggle (Light = cream, Dark = dark) ===== */
+/* ===== Theme toggle — animated sliding pill ===== */
 .theme-toggle {
-  position: fixed; top: 12px; right: 12px; z-index: 20;
-  display: flex; gap: 2px; padding: 3px;
-  background: var(--card); border: 1px solid var(--line);
-  border-radius: 999px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  position: fixed; top: 16px; right: 16px; z-index: 100;
+  display: flex; gap: 0; padding: 4px;
+  background: rgba(8,8,16,0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
 }
+/* sliding pill indicator */
+.theme-pill {
+  position: absolute;
+  top: 4px; left: 4px;
+  width: 34px; height: 34px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  transition: transform 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  pointer-events: none;
+}
+/* dark mode (default) — pill sits over 🌙 (2nd button) */
+body:not(.light) .theme-pill { transform: translateX(34px); }
+/* light mode — pill sits over ☀ (1st button) */
+body.light .theme-pill { transform: translateX(0); }
+
 .theme-toggle button {
-  background: transparent; border: none; color: var(--muted);
-  border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 800; cursor: pointer;
+  position: relative; z-index: 1;
+  background: transparent; border: none;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 15px; cursor: pointer;
+  color: rgba(255,255,255,0.28);
+  transition: color 0.22s;
+  padding: 0;
 }
-.theme-toggle button.active { background: var(--gold); color: #1a1206; }
+.theme-toggle button.active { color: rgba(255,255,255,0.92); background: transparent; }
+
+/* light mode */
+body.light .theme-toggle {
+  background: rgba(255,252,243,0.9);
+  border-color: rgba(200,134,10,0.18);
+  box-shadow: 0 2px 20px rgba(120,90,20,0.1), inset 0 1px 0 rgba(255,255,255,0.85);
+}
+body.light .theme-pill {
+  background: rgba(200,134,10,0.12);
+  border-color: rgba(200,134,10,0.28);
+  box-shadow: 0 1px 6px rgba(120,90,20,0.15);
+}
+body.light .theme-toggle button { color: rgba(42,38,32,0.28); }
+body.light .theme-toggle button.active { color: rgba(42,38,32,0.88); }
 
 /* ===== Sub-label (e.g. Continent under the era slider) ===== */
 .setup-sublabel {
@@ -1108,24 +1148,7 @@ header h1 {
   letter-spacing: 2px;
 }
 
-/* ── Theme toggle — icon-only, tighter ── */
-.theme-toggle {
-  top: 14px; right: 14px;
-  padding: 4px;
-  gap: 2px;
-  background: rgba(12,12,20,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-color: rgba(255,255,255,0.1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}
-body.light .theme-toggle {
-  background: rgba(250,246,236,0.9);
-}
-.theme-toggle button {
-  padding: 7px 11px;
-  font-size: 14px;
-}
+/* theme toggle fully defined above — no overrides needed */
 
 /* ═══════════════════════════════════════
    HOME PAGE — two mode cards
