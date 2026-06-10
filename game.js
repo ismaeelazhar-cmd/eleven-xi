@@ -104,6 +104,9 @@
     { n: "Luiz Felipe Scolari", s: "motivator" }, { n: "Bora Milutinović", s: "motivator" }, { n: "Otto Rehhagel", s: "motivator" },
     { n: "Claudio Ranieri", s: "counter" }, { n: "Roberto Di Matteo", s: "counter" }, { n: "Sven-Göran Eriksson", s: "counter" }, { n: "Guus Hiddink", s: "counter" }
   ];
+  /* Expose for other modules (league, multiplayer) */
+  window.WCXI_MANAGERS    = MANAGERS;
+  window.WCXI_MANAGERS_DB = MANAGERS_DB;
 
   // ---- state ----
   var squad = [];        // [{id,n,p(broad),r,slot(granular),country,year}]
@@ -291,6 +294,7 @@
     Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".manager-opt"), function (b) {
       b.addEventListener("click", function () {
         managerId = b.getAttribute("data-style"); managerName = "";
+        saveManagerPref();
         renderManagerStyles(); renderManager(); paintPitches(); renderXI();
       });
     });
@@ -310,6 +314,17 @@
       elManagerDesc.textContent = st.emoji + " " + st.name + " — " + st.desc;
     }
   }
+  function saveManagerPref(){
+    try{ localStorage.setItem("wcxi_manager", JSON.stringify({id:managerId,name:managerName})); }catch(e){}
+  }
+  function loadManagerPref(){
+    try{
+      var s=localStorage.getItem("wcxi_manager"); if(!s) return;
+      var o=JSON.parse(s);
+      if(o.id) managerId=o.id;
+      if(o.name) managerName=o.name;
+    }catch(e){}
+  }
   function spinManager() {
     if (managerSpinning || managerSpun) return; // one spin only
     managerSpinning = true; elManagerSpin.disabled = true;
@@ -318,6 +333,7 @@
       managerItemHTML(pick.n, pick.s), 500).then(function () {
         managerName = pick.n; managerId = pick.s; managerSpinning = false; managerSpun = true;
         elManagerSpin.disabled = true; elManagerSpin.textContent = "Manager appointed";
+        saveManagerPref();
         renderManager(); renderManagerStyles(); paintPitches(); renderXI();
       });
   }
@@ -433,9 +449,17 @@
       stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.25,0.1,0.15,1)";
       stripEl.style.transform = "translateY(" + (-(BLUR * ITEM_H)) + "px)";
       var done = false;
-      function finish() { if (done) return; done = true; stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)"; stripEl.innerHTML = finalHTML; resolve(); }
+      function finish(e) {
+        /* Only fire on the strip's own transform transition, not bubbled child events */
+        if (e && e.propertyName && e.propertyName !== "transform") return;
+        if (done) return; done = true;
+        stripEl.style.transition = "none";
+        stripEl.style.transform = "translateY(0)";
+        stripEl.innerHTML = finalHTML;
+        resolve();
+      }
       stripEl.addEventListener("transitionend", finish, { once: true });
-      setTimeout(finish, duration + 120);
+      setTimeout(function(){ finish(null); }, duration + 120);
     });
   }
 
@@ -647,6 +671,7 @@
   }
   function setMode(m) {
     mode = m;
+    loadManagerPref();   /* restore last manager across modes */
     document.body.classList.toggle("mode-cl", m === "cl");
     DATA = (m === "cl") ? window.CL_DATA : window.WORLD_CUP_DATA;
     COUNTRIES = Object.keys(DATA);

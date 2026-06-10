@@ -46,6 +46,16 @@
             <span class="mode-name">Champions League</span>
             <span class="mode-hint">153 clubs · 768 seasons</span>
           </button>
+          <button class="home-mode-card home-mode-mp" id="homeMP">
+            <span class="mode-icon">🎮</span>
+            <span class="mode-name">Multiplayer</span>
+            <span class="mode-hint">2–8 players · draft &amp; tournament</span>
+          </button>
+          <button class="home-mode-card home-mode-league" id="homeLeague">
+            <span class="mode-icon">⚽</span>
+            <span class="mode-name">League</span>
+            <span class="mode-hint">La Liga · Serie A · Bundesliga · Ligue 1</span>
+          </button>
         </div>
         <button class="home-board-link" id="homeBoard">Leaderboards</button>
       </div>
@@ -190,6 +200,12 @@
       <div id="resultsBody"></div>
     </section>
 
+    <!-- ===== MULTIPLAYER ===== -->
+    <section id="mpView" style="display:none;"></section>
+
+    <!-- ===== LEAGUE MODE ===== -->
+    <section id="leagueView" style="display:none;"></section>
+
     <!-- ===== LEADERBOARDS ===== -->
     <section id="boardView" style="display:none;">
       <div class="results-head">
@@ -233,7 +249,12 @@
   <script src="data_patches.js"></script>
   <script src="ratings_overrides.js"></script>
   <script src="nations.js"></script>
+  <script src="data_mp.js"></script>
+  <script src="data_history.js"></script>
+  <script src="data_league.js"></script>
   <script src="engine.js"></script>
   <script src="game.js"></script>
+  <script src="multiplayer.js"></script>
+  <script src="league.js"></script>
 </body>
 </html>
