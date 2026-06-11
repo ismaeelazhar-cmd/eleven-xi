@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 7–10 complete. All session tasks done. To push to GitHub: `git remote add origin <url> && git push -u origin main`._
+_Last checkpoint: NEW SESSION — T1 complete (resumed, GitHub confirmed up to date at cd61c01, game open). Next: T2 (shareable HTTPS link)._
 
 ---
 
@@ -63,7 +63,21 @@ _Last checkpoint: Tasks 7–10 complete. All session tasks done. To push to GitH
 - Built the JS app (viable + valuable; trade-off: no SW from file://, not needed).
 - Did NOT rush Ratings War unattended (hidden-ratings must be airtight; flagged as #1).
 
-## 6. MASTER TASK STATUS (current session)
+## 6. NEW SESSION TASK STATUS
+- ✅ T1 Resume — GitHub confirmed current (cd61c01), game open at localhost:8777
+- ⏳ T2 Shareable HTTPS link for playtesting
+- ⏳ T3 Security audit
+- ⏳ T4 Harsh bug review
+- ⏳ T5 Squad list cleanup (remove list below wheel, keep pop-out)
+- ⏳ T6 Spin wheel size reduction
+- ⏳ T7 Rating colour system (90+ gold, 85-89 green, etc.)
+- ⏳ T8 Visual overhaul (reduce purple, 3D + animation)
+- ⏳ T9 Game difficulty tuning
+- ⏳ T10 Mid-game events (manager sacked/resigned, transfer clause)
+- ⏳ T11 Ratings War power-ups (steal, remove+respin)
+- ⏳ T12 Ideas and suggestions
+
+## 6b. PREVIOUS SESSION TASK STATUS (all ✅)
 - ✅ T1 Resume from checkpoint
 - ✅ T2 SETUP.md terminal instructions
 - ✅ T3 Manager card size — compact chips
