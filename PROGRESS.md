@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: T8 Full game makeover pass ✅ done. Cache wcxi-v101. floodlights.css v90, game.js v82, ratingswar.js v93. Next: T9 Deploy + shareable permanent HTTPS link._
+_Last checkpoint: T9 Deploy ✅ done. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/ (GitHub Pages, main branch, permanent). Next: T10 Full playthrough bug hunt._
 
 ---
 
@@ -115,7 +115,7 @@ _Last checkpoint: T8 Full game makeover pass ✅ done. Cache wcxi-v101. floodlig
 - ✅ **T6** Duels rules screen — `showRWRules()` glassmorphism modal with 5-step rules + strategy tip. "How to play" button on intro screen + inline on pool select header. Backdrop dismiss + close button. ratingswar.js v91, floodlights.css v88. Cache wcxi-v99.
 - ✅ **T7** Duels tournament structure — intro screen player count picker (2/3/4, coral active state). 2-player: 1v1 unchanged. 3-player: round robin 3 matches, points table (3/1/0). 4-player: knockout bracket (semis + 3rd place play-off + final, dynamically added after semis). All builds generalized: handoff loops for N players, lock label adapts. `renderMatchNext()` transition screen. `renderTournResult()` final standings. ratingswar.js v92, floodlights.css v89. Cache wcxi-v100.
 - ✅ **T8** Full game makeover pass — rating tier coloured badges in squad list (`xi-rate.r-gold/elite/great/good`) and Duels reveal (`rw-rev-rating` with glow). Spin wheel restyle: cyan radial gradient + fl-rise animation, cyan `reel::after` selection line + `reel-label`. `ratingTierClass()` utility added to ratingswar.js. game.js v82, ratingswar.js v93, floodlights.css v90. Cache wcxi-v101.
-- ⏳ **T9** Deploy + shareable permanent HTTPS link
+- ✅ **T9** Deploy + shareable permanent HTTPS link — GitHub Pages enabled from `main` branch root. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/ (permanent, auto-updates on every push to main).
 - ⏳ **T10** Full playthrough bug hunt (every mode end-to-end)
 - ⏳ **T11** Review, improvements list, Duels feature suggestions
 

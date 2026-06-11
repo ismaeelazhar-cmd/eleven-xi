@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: T8 full game makeover pass done. Cache wcxi-v101. floodlights.css v90, game.js v82, ratingswar.js v93. Next: T9 deploy + permanent HTTPS link._
+_Living document — update after every significant change. Last updated: T9 deploy done. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/. Next: T10 full playthrough bug hunt._
 
 ---
 
@@ -65,7 +65,7 @@ _Living document — update after every significant change. Last updated: T8 ful
 - **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
 
 ## 6. Features in progress
-- None mid-edit. Last completed: T8 full game makeover pass.
+- None mid-edit. Last completed: T9 deploy (GitHub Pages, permanent HTTPS).
 
 ## 7. Features outstanding (master task list order)
 - **T10** Final PROGRESS.md + HANDOVER.md + GitHub push (in progress).
@@ -95,9 +95,8 @@ _Living document — update after every significant change. Last updated: T8 ful
 - **NOT yet individually audited for era accuracy** — that's **Task 8** (full database pass: legends must stand out; correct over/under-rated; positional fairness; bands world-class 88+/elite 83–87/very good 77–82/good 70–76/avg 60–69; era-relative).
 
 ## 11. Shareable link & hosting
-- **Live (temporary tunnel):** https://investments-classifieds-aka-traditions.trycloudflare.com (serves project dir; `eleven-xi.html` for the offline build).
-- Restart tunnel: `/tmp/cloudflared tunnel --url http://localhost:8777` (binary already downloaded; URL changes each run).
-- **Permanent hosting needs owner's one-time login** (GitHub Pages / Netlify / Cloudflare Pages) — outstanding.
+- **Live (permanent):** https://ismaeelazhar-cmd.github.io/eleven-xi/ — GitHub Pages, `main` branch root. Auto-deploys on every push to main. No action needed.
+- Old tunnel approach retired — GitHub Pages is the canonical deployment.
 
 ## 12. How to continue
 1. Read **this file**, then **PROGRESS.md** (last checkpoint + exact next step).
