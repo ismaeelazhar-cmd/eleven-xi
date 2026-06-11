@@ -485,3 +485,33 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .mp-ms-card.mp-ms-soon:hover { transform: none; box-shadow: var(--sh-1); }
 .rw-input-static { display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-weight: 700; }
 .rw-you { color: var(--positive); font-weight: 700; font-size: .85em; }
+
+/* ════════════════════════════════════════════════════════════════
+   DUELS — POOL SELECT
+   ============================================================ */
+.rw-pool-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3);
+  max-width: 680px; margin: var(--sp-4) auto 0;
+  animation: fl-rise var(--dur-3) var(--ease-out);
+}
+@media (max-width: 600px) { .rw-pool-grid { grid-template-columns: 1fr 1fr; max-width: 440px; } }
+@media (max-width: 380px) { .rw-pool-grid { grid-template-columns: 1fr; max-width: 360px; } }
+.rw-pool-card {
+  position: relative; overflow: hidden; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-3); color: var(--text);
+  box-shadow: var(--sh-1);
+  transition: transform var(--dur-2) var(--ease-spring), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+}
+.rw-pool-card::after {
+  content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(120% 90% at 100% 0%, var(--positive), transparent 60%);
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+.rw-pool-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--positive) 50%, var(--line)); box-shadow: var(--sh-2); }
+.rw-pool-card:hover::after { opacity: .12; }
+.rw-pool-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rw-pool-disabled { opacity: .42; cursor: not-allowed; pointer-events: none; }
+.rw-pool-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-body); line-height: 1.2; }
+.rw-pool-hint { color: var(--text-mute); font-size: var(--t-2xs); line-height: 1.4; }

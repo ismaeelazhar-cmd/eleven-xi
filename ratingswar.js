@@ -154,14 +154,15 @@
 
   function render(){
     var v = view();
-    if (RW.phase === "intro")    return renderIntro(v);
-    if (RW.phase === "onintro")  return renderOnlineIntro(v);
-    if (RW.phase === "build")    return renderBuild(v);
-    if (RW.phase === "onbuild")  return renderBuild(v);
-    if (RW.phase === "waitopp")  return renderWaitOpp(v);
-    if (RW.phase === "handoff")  return renderHandoff(v);
-    if (RW.phase === "reveal")   return renderReveal(v);
-    if (RW.phase === "result")   return renderResult(v);
+    if (RW.phase === "intro")      return renderIntro(v);
+    if (RW.phase === "onintro")    return renderOnlineIntro(v);
+    if (RW.phase === "poolselect") return renderPoolSelect(v);
+    if (RW.phase === "build")      return renderBuild(v);
+    if (RW.phase === "onbuild")    return renderBuild(v);
+    if (RW.phase === "waitopp")    return renderWaitOpp(v);
+    if (RW.phase === "handoff")    return renderHandoff(v);
+    if (RW.phase === "reveal")     return renderReveal(v);
+    if (RW.phase === "result")     return renderResult(v);
   }
 
   /* ---------- online: name yourself, then build ---------- */
@@ -223,8 +224,55 @@
     document.getElementById("rwStart").onclick = function(){
       RW.players[0].name = (document.getElementById("rwN1").value.trim()||"Player 1");
       RW.players[1].name = (document.getElementById("rwN2").value.trim()||"Player 2");
-      RW.cur = 0; RW.phase = "build"; render();
+      RW.players[0].name = (document.getElementById("rwN1").value.trim()||"Player 1");
+      RW.players[1].name = (document.getElementById("rwN2").value.trim()||"Player 2");
+      RW.cur = 0; RW.phase = "poolselect"; render();
     };
+  }
+
+  /* ── Available data pools for Duels ── */
+  var RW_POOLS = [
+    { key:"wc",         label:"World Cup",      hint:"93 nations · 1950–2026",  dataKey:"WORLD_CUP_DATA",   national:true  },
+    { key:"euro",       label:"Euros",          hint:"Euros 1980–2024",         dataKey:"EURO_DATA",        national:true  },
+    { key:"pl",         label:"Premier League", hint:"PL clubs · 1992–2025",    dataKey:"PL_DATA",          national:false },
+    { key:"laliga",     label:"La Liga",        hint:"La Liga · 1987–2024",     dataKey:"LALIGA_DATA",      national:false },
+    { key:"seriea",     label:"Serie A",        hint:"Serie A · 1987–2024",     dataKey:"SERIEA_DATA",      national:false },
+    { key:"bundesliga", label:"Bundesliga",     hint:"Bundesliga · 1990–2024",  dataKey:"BUNDESLIGA_DATA",  national:false }
+  ];
+
+  /* ── Pool select: each player picks their data source before spinning ── */
+  function renderPoolSelect(v){
+    var P = RW.players[RW.cur];
+    var html = "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
+      "<div class='rw-build-head'>"+
+        "<div class='rw-turn'>"+esc(P.name)+" — pick your squad pool</div>"+
+        "<div class='rw-prog-row'><span class='rw-blind'>● ratings hidden during build</span></div>"+
+      "</div>"+
+      "<div class='rw-pool-grid'>";
+    RW_POOLS.forEach(function(pool){
+      var data = W[pool.dataKey];
+      var ok = data && Object.keys(data).length > 0;
+      html += '<button class="rw-pool-card'+(ok?"":" rw-pool-disabled")+'" data-rwpool="'+pool.key+'">'+
+        '<span class="rw-pool-name">'+esc(pool.label)+'</span>'+
+        '<span class="rw-pool-hint">'+esc(pool.hint)+'</span>'+
+      '</button>';
+    });
+    html += "</div></div>";
+    v.innerHTML = html;
+    document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Duels?")) goHome(); };
+    v.querySelectorAll(".rw-pool-card:not(.rw-pool-disabled)").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var key = btn.getAttribute("data-rwpool");
+        var pool = null;
+        for (var i=0;i<RW_POOLS.length;i++){ if(RW_POOLS[i].key===key){ pool=RW_POOLS[i]; break; } }
+        if (!pool) return;
+        RW.poolDataCur = W[pool.dataKey] || {};
+        RW.poolNationalCur = pool.national;
+        RW.poolLabelCur = pool.label;
+        RW.currentSpin = null; RW.pendingRWPick = null;
+        RW.phase = "build"; render();
+      });
+    });
   }
 
   /* ── Position eligibility helpers for RW slot assignment ── */
@@ -262,7 +310,7 @@
       yStrip.style.cssText = "transform:translateY(0);transition:none";
       return;
     }
-    var DATA = W.WORLD_CUP_DATA || {}; var countries = Object.keys(DATA);
+    var DATA = RW.poolDataCur || W.WORLD_CUP_DATA || {}; var countries = Object.keys(DATA);
     var BLUR = 10;
     var ci = [], yi = [];
     for (var k=0; k<BLUR*2+1; k++){
@@ -277,7 +325,7 @@
     if (RW._spinning) return;
     var isRespin = !!RW.currentSpin;
     if (isRespin && (P.rerollsUsed||0) >= 3) return;
-    var DATA = W.WORLD_CUP_DATA || {};
+    var DATA = RW.poolDataCur || W.WORLD_CUP_DATA || {};
     var countries = Object.keys(DATA);
     if (!countries.length) return;
 
@@ -342,7 +390,7 @@
 
     var html = '<div class="mp-sq-head">'+
       '<span class="mp-sq-title">'+esc(spin.country)+' &middot; '+spin.year+'</span>'+
-      '<span class="mp-sq-hint">Pick a player — ratings hidden</span>'+
+      '<span class="mp-sq-hint">'+(RW.poolNationalCur?"Nation":"Club")+" · Pick a player — ratings hidden"+'</span>'+
     '</div>';
 
     /* Position chooser if a player has been tapped */
@@ -438,7 +486,7 @@
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
       "<div class='rw-build-head'>"+
-        "<div class='rw-turn'>"+esc(P.name)+" — building <span class='rw-blind'>● ratings hidden</span></div>"+
+        "<div class='rw-turn'>"+esc(P.name)+" — "+esc(RW.poolLabelCur||"World Cup")+" <span class='rw-blind'>● ratings hidden</span></div>"+
         "<div class='rw-prog-row'>"+
           "<span class='rw-prog'><span id='rwCount'>"+filled+"</span>/11</span>"+
           "<span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+
@@ -448,7 +496,7 @@
       "</div>"+
       "<div class='machine'>"+
         "<div class='reels'>"+
-          "<div class='reel-box'><div class='reel-label'>Club / Nation</div>"+
+          "<div class='reel-box'><div class='reel-label'>"+(RW.poolNationalCur?"Nation":"Club")+"</div>"+
             "<div class='reel'><div class='reel-strip' id='rwCS'></div></div></div>"+
           "<div class='reel-box'><div class='reel-label'>Year</div>"+
             "<div class='reel'><div class='reel-strip' id='rwYS'></div></div></div>"+
@@ -509,7 +557,7 @@
         esc(RW.players[0].name)+"'s XI is hidden. Ratings stay secret until the reveal.</p>"+
         "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(RW.players[1].name)+" — build my XI →</button>"+
       "</div></div>";
-    document.getElementById("rwGo").onclick = function(){ RW.phase="build"; render(); };
+    document.getElementById("rwGo").onclick = function(){ RW.phase="poolselect"; render(); };
   }
 
   /* ---------- result computation ---------- */

@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: T4 formation view redesign ✅ done. Cache wcxi-v97. Next: T5 Duels game setup (mirror normal flow: league select → spin → squad → position-by-position picking, ratings hidden)._
+_Last checkpoint: T5 Duels pool select ✅ done. Cache wcxi-v98. Versions: floodlights.css v87, ratingswar.js v90. Next: T6 Duels rules screen._
 
 ---
 
@@ -111,7 +111,7 @@ _Last checkpoint: T4 formation view redesign ✅ done. Cache wcxi-v97. Next: T5 
 - ✅ **T2** Emoji flag removal — removed from all modes (game.js ×6, league.js ×4, multiplayer.js ×2, ratingswar.js ×1). Kept ONLY in WC spin wheel (`countryItemHTML` in game.js) and Euro spin wheel. `sw.js` → wcxi-v95, versions bumped.
 - ✅ **T3** Rename Ratings War → Duels — all user-visible strings, function names (`startRatingsWar`→`startDuels`, `startRatingsWarOnline`→`startDuelsOnline`), mode card label in multiplayer.js, online kicker, quit dialog, comments. Filename `ratingswar.js` unchanged (internal only). docs + eleven-xi.html updated.
 - ✅ **T4** Formation view redesign — SVG pitch markings (both penalty boxes, halfway line, centre circle, centre spot, GK area) baked into `--pitch-bg` token. Glassy frosted position circles with position-colour ring (coral FWD/violet MID/teal DEF/gold GK). `dotPopIn` spring animation on fill. Rating tier text colours (r-gold ≥90, r-elite 85-89, r-great 80-84, r-good 75-79). style.css v77, tokens.css v73, floodlights.css v86, game.js v81. Cache wcxi-v97.
-- ⏳ **T5** Duels game setup (mirror normal flow: league select → spin → squad panel → position-by-position picking, ratings hidden throughout)
+- ✅ **T5** Duels game setup — pool select step inserted between intro and build phases. Player picks from 6 data sources (WC, Euros, PL, La Liga, Serie A, Bundesliga) via `renderPoolSelect()`. Pool cards in 3×2 responsive grid. Each player independently picks pool before their build turn (handoff phase also routes to poolselect). `RW.poolDataCur/poolNationalCur/poolLabelCur` track current pick. Build header shows chosen pool. Reel label adapts Nation/Club. Ratings never in DOM throughout. ratingswar.js v90, floodlights.css v87. Cache wcxi-v98.
 - ⏳ **T6** Duels rules screen (rules pop-out accessible during setup)
 - ⏳ **T7** Duels tournament structure (2-player, 3-player round robin, 4-player free-for-all/bracket)
 - ⏳ **T8** Full game makeover pass (visual consistency, rating colour system, animations, spin wheel polish)
