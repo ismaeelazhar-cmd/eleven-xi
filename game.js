@@ -500,15 +500,22 @@
     var c = current.country, y = current.year, players = DATA[c].years[y];
     var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
     var draftable = 0;
-    var html = '<h2>' + (mode === "wc" ? '<span class="flag">' + DATA[c].flag + "</span>" : "") + c + " &middot; " + y + " squad</h2>";
-    html += '<div class="sub">Pick a player, then choose where they play.</div>';
+
+    // Modal card header
+    var headFlag = mode === "wc" ? '<span class="flag">' + DATA[c].flag + "</span>" : "";
+    var inner = '<div class="squad-card">';
+    inner += '<div class="squad-head"><h2>' + headFlag + esc(c) + " &middot; " + y + '</h2>' +
+      '<button class="squad-close" aria-label="Close">✕</button></div>';
+    inner += '<div class="sub">Pick a player, then choose where they play.</div>';
+
     if (pendingPick) {
-      html += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + "</b> play? " +
+      inner += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + "</b> play? " +
         pendingPick.positions.map(function (pos) {
           return '<button class="choose-pos ' + LINE_OF[pos] + '" data-name="' + esc(pendingPick.name) + '" data-pos="' + pos + '">' + POS_FULL[pos] + " (" + pos + ")</button>";
         }).join("") + '<button class="choose-cancel">cancel</button></div>';
     }
-    html += '<div class="players">';
+
+    inner += '<div class="players">';
     players.forEach(function (pl) {
       var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
       var open = openEligiblePositions(pl);
@@ -516,18 +523,27 @@
       if (!isTaken && !noSlot) draftable++;
       var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
       var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
-      html += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
-        '<span class="pname">' + pl.n + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
+      inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
+        '<span class="pname">' + esc(pl.n) + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
     });
-    html += "</div>";
-    elSquadPanel.innerHTML = html;
-    elSquadPanel.style.display = "block";
+    inner += "</div></div>"; // close .players + .squad-card
+
+    elSquadPanel.innerHTML = inner;
+    elSquadPanel.style.display = "flex";
+
+    // Close button — dismisses without picking
+    var closeBtn = elSquadPanel.querySelector(".squad-close");
+    if (closeBtn) closeBtn.addEventListener("click", function () { current = null; awaitingPick = false; pendingPick = null; elSquadPanel.style.display = "none"; updateControls(); elHint.textContent = "Spin for another squad."; });
+
+    // Backdrop click closes
+    elSquadPanel.addEventListener("click", function (e) { if (e.target === elSquadPanel) closeBtn && closeBtn.click(); });
+
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".player"), function (n) {
       n.addEventListener("click", function () {
         if (n.classList.contains("taken") || n.classList.contains("noslot")) return;
         var name = n.getAttribute("data-name"), pl = playerByName(name), open = openEligiblePositions(pl);
         if (!open.length) return;
-        pendingPick = { name: name, positions: open }; renderSquadPicker(); // always choose, even one slot
+        pendingPick = { name: name, positions: open }; renderSquadPicker();
       });
     });
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".choose-pos"), function (b) {

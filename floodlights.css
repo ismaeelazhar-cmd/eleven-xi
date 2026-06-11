@@ -181,7 +181,7 @@ body.light {
 }
 
 /* panels & surfaces pick up token elevation/border consistently */
-.setup, .machine, .squad, .xi, .board-list, .lg-modal, .verdict-card,
+.setup, .machine, .squad-card, .xi, .board-list, .lg-modal, .verdict-card,
 .score-banner, .lgr2-card, .lgr2-narr, .lgr2-xi, .lgr2-break, .lgr2-ptable,
 .draft-head, .group-card, .stats-summary, .mcard, .lg-card, .home-mode-card {
   border-radius: var(--r-lg);
