@@ -152,6 +152,35 @@
     }
   }
 
+  /* ── Duels rules modal ── */
+  function showRWRules(){
+    var el = document.getElementById("rwRulesModal");
+    if (el) { el.style.display = ""; return; }
+    el = document.createElement("div");
+    el.id = "rwRulesModal";
+    el.className = "rw-rules-overlay";
+    el.innerHTML =
+      "<div class='rw-rules-card'>"+
+        "<button class='rw-rules-close' id='rwRulesClose' aria-label='Close'>✕</button>"+
+        "<div class='rw-rules-kicker'>How to play</div>"+
+        "<h3 class='rw-rules-title'>Duels</h3>"+
+        "<ol class='rw-rules-list'>"+
+          "<li><strong>Pick a pool</strong> — each player independently chooses their squad source (World Cup, Euros, Premier League, La Liga, Serie A, or Bundesliga).</li>"+
+          "<li><strong>Build blind</strong> — spin a reel to get a nation or club, then pick a player from that squad. Ratings are hidden the entire time. 3 rerolls each.</li>"+
+          "<li><strong>Complete your XI</strong> — fill all 11 positions. The screen locks after each pick so the other player can't peek.</li>"+
+          "<li><strong>Head-to-head reveal</strong> — position by position, both ratings are revealed. Higher rated player wins the slot.</li>"+
+          "<li><strong>Most slots wins.</strong> Best of 11. Ties stay tied.</li>"+
+        "</ol>"+
+        "<div class='rw-rules-note'>Strategy tip: mix high-ceiling nations with depth. A 94-rated GK beats anything — but you don't know what you're getting until the reveal.</div>"+
+        "<button class='fl-btn rw-rules-ok' id='rwRulesOk'>Got it</button>"+
+      "</div>";
+    document.querySelector(".wrap") ? document.querySelector(".wrap").appendChild(el) : document.body.appendChild(el);
+    function close(){ el.style.display = "none"; }
+    document.getElementById("rwRulesClose").onclick = close;
+    document.getElementById("rwRulesOk").onclick = close;
+    el.addEventListener("click", function(e){ if (e.target === el) close(); });
+  }
+
   function render(){
     var v = view();
     if (RW.phase === "intro")      return renderIntro(v);
@@ -219,8 +248,10 @@
         "<label class='rw-name-field'><span>Player 2</span><input id='rwN2' class='rw-input' maxlength='14' placeholder='Player 2' value='"+esc(RW.players[1].name)+"'></label>"+
       "</div>"+
       "<button class='fl-btn rw-start' id='rwStart'>Player 1 — build your XI →</button>"+
+      "<button class='rw-rules-link' id='rwHowToPlay'>How to play</button>"+
       "</div></div>";
     document.getElementById("rwBack").onclick = goHome;
+    document.getElementById("rwHowToPlay").onclick = showRWRules;
     document.getElementById("rwStart").onclick = function(){
       RW.players[0].name = (document.getElementById("rwN1").value.trim()||"Player 1");
       RW.players[1].name = (document.getElementById("rwN2").value.trim()||"Player 2");
@@ -246,7 +277,7 @@
     var html = "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
       "<div class='rw-build-head'>"+
         "<div class='rw-turn'>"+esc(P.name)+" — pick your squad pool</div>"+
-        "<div class='rw-prog-row'><span class='rw-blind'>● ratings hidden during build</span></div>"+
+        "<div class='rw-prog-row'><span class='rw-blind'>● ratings hidden during build</span><button class='rw-rules-link rw-rules-inline' id='rwHTP2'>How to play</button></div>"+
       "</div>"+
       "<div class='rw-pool-grid'>";
     RW_POOLS.forEach(function(pool){
@@ -260,6 +291,7 @@
     html += "</div></div>";
     v.innerHTML = html;
     document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Duels?")) goHome(); };
+    var htp2 = document.getElementById("rwHTP2"); if(htp2) htp2.onclick = showRWRules;
     v.querySelectorAll(".rw-pool-card:not(.rw-pool-disabled)").forEach(function(btn){
       btn.addEventListener("click", function(){
         var key = btn.getAttribute("data-rwpool");

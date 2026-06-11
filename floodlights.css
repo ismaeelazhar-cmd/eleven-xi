@@ -515,3 +515,51 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .rw-pool-disabled { opacity: .42; cursor: not-allowed; pointer-events: none; }
 .rw-pool-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-body); line-height: 1.2; }
 .rw-pool-hint { color: var(--text-mute); font-size: var(--t-2xs); line-height: 1.4; }
+
+/* ════════════════════════════════════════════════════════════════
+   DUELS — RULES MODAL
+   ============================================================ */
+.rw-rules-link {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-mute); font-size: var(--t-xs); font-weight: 600;
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-pill);
+  transition: color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent;
+}
+.rw-rules-link:hover { color: var(--text); text-decoration-color: currentColor; }
+.rw-rules-inline { margin-left: var(--sp-3); }
+.rw-rules-overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  background: rgba(11,16,32,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-4);
+  animation: fl-rise var(--dur-2) var(--ease-out);
+}
+.rw-rules-card {
+  position: relative; background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl); padding: var(--sp-6) var(--sp-5); max-width: 480px; width: 100%;
+  box-shadow: var(--sh-2), 0 0 0 1px rgba(0,0,0,.4);
+  animation: fl-rise var(--dur-3) var(--ease-spring);
+}
+.rw-rules-close {
+  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  background: var(--surface-3); border: 1px solid var(--line); border-radius: var(--r-pill);
+  color: var(--text-mute); font-size: 14px; width: 32px; height: 32px;
+  cursor: pointer; display: grid; place-items: center;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.rw-rules-close:hover { background: var(--surface-2); color: var(--text); }
+.rw-rules-kicker { font-size: var(--t-2xs); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--warning); margin-bottom: var(--sp-1); }
+.rw-rules-title { font-family: var(--font-display); font-weight: 800; font-size: var(--t-h2); color: var(--text); margin: 0 0 var(--sp-4); }
+.rw-rules-list {
+  margin: 0 0 var(--sp-4); padding-left: var(--sp-5);
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  color: var(--text-dim); font-size: var(--t-sm); line-height: 1.55;
+}
+.rw-rules-list li strong { color: var(--text); }
+.rw-rules-note {
+  background: color-mix(in srgb, var(--positive) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--positive) 28%, transparent);
+  border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4);
+  color: var(--text-dim); font-size: var(--t-xs); line-height: 1.5; margin-bottom: var(--sp-5);
+}
+.rw-rules-ok { width: 100%; }

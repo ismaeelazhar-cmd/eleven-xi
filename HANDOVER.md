@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: T5 Duels pool select done. Cache wcxi-v98. floodlights.css v87, ratingswar.js v90. Next: T6 Duels rules screen._
+_Living document — update after every significant change. Last updated: T6 Duels rules screen done. Cache wcxi-v99. floodlights.css v88, ratingswar.js v91. Next: T7 Duels tournament structure._
 
 ---
 
