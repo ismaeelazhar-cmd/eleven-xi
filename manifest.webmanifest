@@ -1,7 +1,7 @@
 {
-  "name": "World Cup XI",
-  "short_name": "WC XI",
-  "description": "Spin to draft your all-time World Cup XI, pick a formation, then simulate a 48-team World Cup or a full league.",
+  "name": "Eleven XI",
+  "short_name": "Eleven XI",
+  "description": "Spin to draft an all-time XI from real squads, pick a formation and manager, then simulate the World Cup, Champions League or a full domestic league.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

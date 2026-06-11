@@ -38,7 +38,7 @@
     laliga:     { label:"La Liga",    flag:"🇪🇸", games:38, getData:function(){ return W.LALIGA_DATA; } },
     seriea:     { label:"Serie A",    flag:"🇮🇹", games:38, getData:function(){ return W.SERIEA_DATA; } },
     bundesliga: { label:"Bundesliga", flag:"🇩🇪", games:34, getData:function(){ return W.BUNDESLIGA_DATA; } },
-    ligue1:     { label:"Ligue 1",    flag:"🇫🇷", games:38, getData:function(){ return W.LIGUE1_DATA; } }
+    ligue1:     { label:"Ligue 1",    flag:"🇫🇷", games:34, getData:function(){ return W.LIGUE1_DATA; } }
   };
 
   /* ── Formations ── */
@@ -381,62 +381,162 @@
   }
 
   /* ════════════════════════════════════════
-     STEP 3 — Spin & Draft
+     STEP 3 — Spin & Draft (WC-style layout)
   ════════════════════════════════════════ */
   var _lgSpinning=false;
   var LG_IH=56;
 
+  /* Reel item — no flag emoji in League mode (flags are kept only in World Cup mode) */
+  function lgClubItemHTML(c){
+    return '<div class="reel-item reel-item-noflag"><span class="name">'+esc(c)+'</span></div>';
+  }
+  function lgYearItemHTML(y){
+    return '<div class="reel-item"><span class="year">'+seasonLabel(y)+'</span></div>';
+  }
+
+  /* WC-style pitch: .pitch > .pitch-row > .pdot */
+  function buildPitch(){
+    var rows=(FM_ROWS[LS.formation]||FM_ROWS["4-3-3"]).slice().reverse();
+    var pool={};
+    LS.xi.forEach(function(pk){
+      if(!pk) return;
+      var s=pk.slot||pk.gp||pk.p||"MID";
+      if(!pool[s]) pool[s]=[];
+      pool[s].push(pk);
+    });
+    var draw={};
+    Object.keys(pool).forEach(function(k){ draw[k]=pool[k].slice(); });
+
+    var h='<div class="pitch">';
+    rows.forEach(function(row){
+      h+='<div class="pitch-row">';
+      row.forEach(function(slot){
+        var arr=draw[slot]||[], pk=arr.length?arr.shift():null;
+        var lc=LINE_OF[slot]||"MID";
+        if(pk){
+          var sn=shortName(pk.n);
+          h+='<div class="pdot filled '+lc+'">'+
+            '<span class="dot-pos">'+slot+'</span>'+
+            '<span class="dot-name">'+esc(sn)+'</span>'+
+            '</div>';
+        } else {
+          h+='<div class="pdot '+lc+'"><span class="dot-pos">'+slot+'</span></div>';
+        }
+      });
+      h+='</div>';
+    });
+    return h+'</div>';
+  }
+
+  /* XI list grouped by line */
+  function renderLgXiList(el){
+    if(!el) return;
+    var fmRows=FM_ROWS[LS.formation]||FM_ROWS["4-3-3"];
+    var bySlot={};
+    LS.xi.forEach(function(pk){
+      var s=pk.slot||pk.gp||pk.p||"MID";
+      if(!bySlot[s]) bySlot[s]=[];
+      bySlot[s].push(pk);
+    });
+    function pop(s){ var a=bySlot[s]; return a&&a.length?a.shift():null; }
+
+    var allLines=[["GK"]].concat(fmRows.slice(1));
+    var lineNames=["Goalkeeper","Defence","Midfield","Attack"];
+    while(lineNames.length<allLines.length) lineNames.push("Attack");
+
+    var html="";
+    allLines.forEach(function(row,li){
+      html+='<div class="line-label">'+(lineNames[li]||"")+'</div>';
+      row.forEach(function(slot){
+        var lc=LINE_OF[slot]||"MID";
+        var pk=pop(slot);
+        if(pk){
+          html+='<div class="xi-row"><span class="pos '+lc+'">'+slot+'</span>'+
+            '<span class="info"><span class="pn">'+esc(pk.n)+'</span>'+
+            '<span class="meta">'+esc(pk.club||"")+(pk.year?' &middot; '+seasonLabel(pk.year):'')+'</span></span></div>';
+        } else {
+          html+='<div class="xi-row empty"><span class="pos '+lc+'">'+slot+'</span>'+
+            '<span class="info"><span class="pn slot-empty">'+slot+' — empty</span></span></div>';
+        }
+      });
+    });
+    el.innerHTML=html;
+  }
+
+  /* Position full names for chooser */
+  var LG_POS_FULL={
+    GK:"Goalkeeper",CB:"Centre Back",RB:"Right Back",LB:"Left Back",
+    RWB:"Right Wing-Back",LWB:"Left Wing-Back",CDM:"Defensive Mid",
+    CM:"Central Mid",CAM:"Attacking Mid",RM:"Right Mid",LM:"Left Mid",
+    RW:"Right Wing",LW:"Left Wing",ST:"Striker"
+  };
+
   function renderDraftScreen(){
     LS.xi=[]; LS.currentSpin=null; LS.pendingPick=null; _lgSpinning=false;
+    LS.rerolls=5;   /* reroll budget for the whole draft */
+    LS.scoreSaved=false;
     var v=lgView(), lc=LEAGUES[LS.league];
 
     v.innerHTML=
-      "<div class='lg-draft-page'>"+
-        "<div class='lg-draft-hd'>"+
-          "<button class='back' id='lgBackSetup'>← Setup</button>"+
-          "<div class='lg-draft-info'>"+
-            "<div class='lg-draft-team'>"+esc(LS.teamName)+"</div>"+
-            "<div class='lg-draft-meta'>"+esc(LS.formation)+
-              (LS.manager?" &middot; "+LS.manager.emoji+" "+LS.manager.name:"")+
-              " &middot; <span id='lgPickCount'>0</span>/11</div>"+
-          "</div>"+
-        "</div>"+
-
-        "<div class='lg-draft-cols'>"+
-
-          "<div class='lg-draft-pitch-col'>"+
-            "<div class='lg-pitch-label'>"+esc(LS.formation)+"</div>"+
-            "<div id='lgPitchWrap'></div>"+
-            "<div class='lg-pitch-btns'>"+
-              "<button class='btn-accent' id='lgAutoFill'>Auto-fill XI</button>"+
-              "<button class='btn-primary' id='lgSimulate' disabled>Simulate Season →</button>"+
+      "<button class='back' id='lgBackSetup'>← Setup</button>"+
+      "<div class='wrap'>"+
+        /* WC-style draft-head: team info left, pitch right */
+        "<div class='draft-head'>"+
+          "<div class='draft-head-info'>"+
+            "<div class='draft-team'>"+esc(LS.teamName)+"</div>"+
+            "<div class='draft-meta'>"+
+              esc(LS.formation)+
+              (LS.manager?" &middot; "+LS.manager.emoji+" "+esc(LS.manager.name):"")+
+              " &middot; <span id='lgPickCount'>0</span>/11"+
             "</div>"+
           "</div>"+
-
-          "<div class='lg-draft-spin-col'>"+
-            "<div class='lg-machine'>"+
-              "<div class='lg-spin-reels'>"+
-                "<div class='lg-spin-reel-box'>"+
-                  "<div class='lg-spin-label'>Club</div>"+
-                  "<div class='mp-reel'><div class='mp-reel-strip' id='lgClubStrip'></div></div>"+
-                "</div>"+
-                "<div class='lg-spin-reel-box'>"+
-                  "<div class='lg-spin-label'>Season</div>"+
-                  "<div class='mp-reel'><div class='mp-reel-strip' id='lgYearStrip'></div></div>"+
-                "</div>"+
-              "</div>"+
-              "<button class='mp-spin-btn big' id='lgSpinBtn'>SPIN</button>"+
-            "</div>"+
-            "<div id='lgSquadPanel' style='display:none'></div>"+
-          "</div>"+
-
+          "<div class='draft-pitch-wrap' id='lgPitchWrap'></div>"+
         "</div>"+
+        /* WC-style machine */
+        "<div class='machine' aria-label='Slot machine'>"+
+          "<div class='reels'>"+
+            "<div class='reel-box'>"+
+              "<div class='reel-label'>Club</div>"+
+              "<div class='reel'><div class='reel-strip' id='lgCS'></div></div>"+
+            "</div>"+
+            "<div class='reel-box'>"+
+              "<div class='reel-label'>Season</div>"+
+              "<div class='reel'><div class='reel-strip' id='lgYS'></div></div>"+
+            "</div>"+
+          "</div>"+
+          "<div class='controls'>"+
+            "<button class='spin' id='lgSpinBtn'>SPIN</button>"+
+            "<button class='reroll' id='lgReroll' hidden>Reroll (<span id='lgRerollCount'>"+LS.rerolls+"</span>)</button>"+
+          "</div>"+
+        "</div>"+
+        /* Squad panel */
+        "<section class='squad' id='lgSquadPanel' style='display:none'></section>"+
+        /* XI section */
+        "<section class='xi'>"+
+          "<div class='xi-head'>"+
+            "<h2>Your XI</h2>"+
+            "<div><span class='count' id='lgXiCount'>0/11</span>"+
+            " <span class='formation'>· "+esc(LS.formation)+"</span></div>"+
+          "</div>"+
+          "<div class='xi-list' id='lgXiList'></div>"+
+          "<div class='xi-actions' style='margin-top:.8rem'>"+
+            "<button class='btn-accent' id='lgAutoFill'>Auto-fill XI</button>"+
+            "<button class='btn-primary' id='lgSimulate' disabled>Simulate Season →</button>"+
+          "</div>"+
+        "</section>"+
       "</div>";
 
     eid("lgBackSetup").addEventListener("click",renderSetup);
     initLgStrips(null);
     updatePitch();
+    renderLgXiList(eid("lgXiList"));
     eid("lgSpinBtn").addEventListener("click",function(){ LS.pendingPick=null; doLgSpin(); });
+    eid("lgReroll").addEventListener("click",function(){
+      if(LS.rerolls<=0 || _lgSpinning) return;
+      LS.rerolls--;
+      var rc=eid("lgRerollCount"); if(rc) rc.textContent=LS.rerolls;
+      LS.pendingPick=null; doLgSpin();
+    });
     eid("lgAutoFill").addEventListener("click",autoFillXI);
     eid("lgSimulate").addEventListener("click",function(){
       if(LS.xi.filter(Boolean).length>=11) simulateSeason();
@@ -444,11 +544,11 @@
   }
 
   function initLgStrips(currentSpin){
-    var cStrip=eid("lgClubStrip"), yStrip=eid("lgYearStrip");
+    var cStrip=eid("lgCS"), yStrip=eid("lgYS");
     if(!cStrip||!yStrip) return;
     if(currentSpin){
-      cStrip.innerHTML='<div class="mp-reel-item landed"><span>'+esc(currentSpin.club)+'</span></div>';
-      yStrip.innerHTML='<div class="mp-reel-item landed"><span>'+esc(seasonLabel(currentSpin.year))+'</span></div>';
+      cStrip.innerHTML=lgClubItemHTML(currentSpin.club);
+      yStrip.innerHTML=lgYearItemHTML(currentSpin.year);
       cStrip.style.cssText="transform:translateY(0);transition:none";
       yStrip.style.cssText="transform:translateY(0);transition:none";
       return;
@@ -456,8 +556,8 @@
     var pool=getPool(), ci=[], yi=[];
     for(var i=0;i<20;i++){
       var e=pool[i%Math.max(pool.length,1)];
-      ci.push('<div class="mp-reel-item"><span>'+esc(e.club)+'</span></div>');
-      yi.push('<div class="mp-reel-item"><span>'+esc(seasonLabel(e.year))+'</span></div>');
+      ci.push(lgClubItemHTML(e.club));
+      yi.push(lgYearItemHTML(e.year));
     }
     cStrip.innerHTML=ci.join(""); cStrip.style.cssText="transform:translateY(0);transition:none";
     yStrip.innerHTML=yi.join(""); yStrip.style.cssText="transform:translateY(0);transition:none";
@@ -465,14 +565,14 @@
 
   function doLgSpin(){
     if(_lgSpinning) return;
-    var cStrip=eid("lgClubStrip"),yStrip=eid("lgYearStrip"),spinBtn=eid("lgSpinBtn");
+    var cStrip=eid("lgCS"),yStrip=eid("lgYS"),spinBtn=eid("lgSpinBtn");
     if(!cStrip) return;
     _lgSpinning=true; spinBtn.disabled=true; spinBtn.textContent="SPINNING…";
+    var rrBtn=eid("lgReroll"); if(rrBtn) rrBtn.hidden=true;
     eid("lgSquadPanel").style.display="none"; LS.currentSpin=null;
 
     var pool=getPool(); if(!pool.length){ _lgSpinning=false; return; }
 
-    /* Try to pick a squad that has players fitting open slots */
     var pick, tries=0;
     do {
       pick=pool[Math.floor(Math.random()*pool.length)];
@@ -485,9 +585,12 @@
     var BLUR=10, ci=[], yi=[];
     for(var i=0;i<BLUR;i++){
       var e=pool[i%pool.length];
-      ci.push('<div class="mp-reel-item"><span>'+esc(e.club)+'</span></div>');
-      yi.push('<div class="mp-reel-item"><span>'+esc(seasonLabel(e.year))+'</span></div>');
+      ci.push(lgClubItemHTML(e.club));
+      yi.push(lgYearItemHTML(e.year));
     }
+    ci.push(lgClubItemHTML(pick.club));
+    yi.push(lgYearItemHTML(pick.year));
+
     cStrip.innerHTML=ci.join(""); yStrip.innerHTML=yi.join("");
     cStrip.style.cssText="transform:translateY(0);transition:none";
     yStrip.style.cssText="transform:translateY(0);transition:none";
@@ -501,19 +604,29 @@
         yStrip.style.transform="translateY(-"+(BLUR*LG_IH)+"px)";
 
         setTimeout(function(){
-          /* Snap to result — max 1 spin: button stays disabled until pick/skip */
           cStrip.style.transition="none"; cStrip.style.transform="translateY(0)";
-          cStrip.innerHTML='<div class="mp-reel-item landed"><span>'+esc(pick.club)+'</span></div>';
+          cStrip.innerHTML=lgClubItemHTML(pick.club);
           yStrip.style.transition="none"; yStrip.style.transform="translateY(0)";
-          yStrip.innerHTML='<div class="mp-reel-item landed"><span>'+esc(seasonLabel(pick.year))+'</span></div>';
+          yStrip.innerHTML=lgYearItemHTML(pick.year);
           _lgSpinning=false; spinBtn.disabled=true; spinBtn.textContent="Pick a player";
           LS.currentSpin=pick;
+          var rb=eid("lgReroll");
+          if(rb){ rb.hidden=(LS.rerolls<=0); var rc=eid("lgRerollCount"); if(rc) rc.textContent=LS.rerolls; }
           showLgSquadPanel(pick);
         }, dur+80);
       });
     });
   }
 
+  function closeLgModal(){
+    var panel=eid("lgSquadPanel");
+    if(panel){ panel.style.display="none"; panel.className="squad"; }
+    LS.pendingPick=null;
+    var sb=eid("lgSpinBtn"); if(sb&&LS.xi.length<11){ sb.disabled=false; sb.textContent="SPIN"; }
+    var rb=eid("lgReroll"); if(rb) rb.hidden=(LS.rerolls<=0||LS.xi.length>=11);
+  }
+
+  /* Scrollable modal squad selector — full names always readable (38-0 style) */
   function showLgSquadPanel(spin){
     var panel=eid("lgSquadPanel"); if(!panel) return;
     var lineOrd={GK:0,DEF:1,MID:2,FWD:3};
@@ -521,78 +634,87 @@
       var la=lineOrd[LINE_OF[a.gp||a.p]]||2, lb=lineOrd[LINE_OF[b.gp||b.p]]||2;
       return la!==lb?la-lb:(b.r||0)-(a.r||0);
     });
+    var pp=(LS.pendingPick&&LS.pendingPick.spin===spin)?LS.pendingPick.player:null;
 
-    var html='<div class="mp-sq-head">'+
-      '<span class="mp-sq-title">'+esc(spin.club)+'</span>'+
-      '<span class="mp-sq-hint">'+seasonLabel(spin.year)+'</span>'+
+    var html='<div class="lg-modal">';
+    html+='<div class="lg-modal-head">'+
+      '<div class="lg-modal-title">'+esc(spin.club)+' <span class="lg-modal-yr">'+seasonLabel(spin.year)+'</span></div>'+
+      '<button class="lg-modal-close" id="lgModalClose" aria-label="Close">✕</button>'+
       '</div>';
 
-    /* Position chooser */
-    if(LS.pendingPick&&LS.pendingPick.spin===spin){
-      var pp=LS.pendingPick.player, slots=eligibleSlots(pp);
-      html+='<div class="mp-chooser">'+
-        '<span class="mp-chooser-q">Where does <strong>'+esc(pp.n)+'</strong> play?</span>'+
-        '<div class="mp-chooser-btns">';
+    if(pp){
+      var slots=eligibleSlots(pp);
+      html+='<div class="lg-modal-chooser"><div class="lg-mc-q">Where does <strong>'+esc(pp.n)+'</strong> play?</div><div class="lg-mc-btns">';
       slots.forEach(function(slot){
         var lc=LINE_OF[slot]||"MID";
-        html+='<button class="mp-choose-pos pos '+lc+'" data-slot="'+slot+'">'+slot+'</button>';
+        html+='<button class="mp-choose-pos pos '+lc+'" data-slot="'+slot+'">'+(LG_POS_FULL[slot]||slot)+' <span>('+slot+')</span></button>';
       });
-      html+='</div><button class="mp-chooser-cancel">Cancel</button></div>';
+      html+='</div><button class="lg-mc-cancel" id="lgMcCancel">Cancel</button></div>';
+    } else {
+      html+='<div class="lg-modal-hint">Scroll and tap a player to place them</div>';
     }
 
-    html+='<div class="players mp-players-grid">';
+    html+='<div class="lg-modal-list">';
     sorted.forEach(function(pl){
       var picked=LS.xi.some(function(x){ return x&&x.n===pl.n; });
       var slots=eligibleSlots(pl), noSlot=!picked&&!slots.length;
-      var isPending=LS.pendingPick&&LS.pendingPick.spin===spin&&LS.pendingPick.player.n===pl.n;
+      var isPending=pp&&pp.n===pl.n;
       var pos=pl.gp||pl.p||"MID", lc=LINE_OF[pos]||"MID";
-      var cls="player"+(picked?" taken":"")+(noSlot?" noslot":"")+(isPending?" mp-player-pending":"");
+      var cls="lg-msel-row"+(picked?" taken":"")+(noSlot?" noslot":"")+(isPending?" pending":"");
       html+='<div class="'+cls+'" data-pn="'+esc(pl.n)+'">'+
         '<span class="pos '+lc+'">'+esc(pos)+'</span>'+
-        '<span class="pname">'+esc(pl.n)+'</span>'+
-        (picked?'<span class="mp-locked-badge">✓</span>':
-         noSlot?'<span class="slot-tag">no slot</span>':
-         '<span class="mp-r-badge">'+pl.r+'</span>')+
+        '<span class="lg-msel-name">'+esc(pl.n)+'</span>'+
+        (picked?'<span class="lg-msel-tag done">✓ picked</span>':
+         noSlot?'<span class="lg-msel-tag">no slot</span>':
+         (LS.showRatings?'<span class="lg-msel-rat">'+pl.r+'</span>':''))+
         '</div>';
     });
-    html+='</div>'+
-      '<button class="lg-skip-btn" id="lgSkipSquad">Skip this squad →</button>';
+    html+='</div>';
 
-    panel.innerHTML=html; panel.style.display="";
+    html+='<div class="lg-modal-foot">'+
+      (LS.rerolls>0?'<button class="btn-ghost lg-modal-reroll" id="lgModalReroll">🎲 Reroll ('+LS.rerolls+')</button>':'')+
+      '<button class="btn-ghost" id="lgModalSkip">Skip squad →</button>'+
+      '</div>';
+    html+='</div>'; /* .lg-modal */
+
+    panel.innerHTML=html;
+    panel.className="lg-modal-overlay";
+    panel.style.display="";
 
     /* Chooser handlers */
-    if(LS.pendingPick&&LS.pendingPick.spin===spin){
+    if(pp){
       panel.querySelectorAll(".mp-choose-pos").forEach(function(btn){
         btn.addEventListener("click",function(){
-          var slot=btn.getAttribute("data-slot"), pp=LS.pendingPick;
-          LS.pendingPick=null; draftPlayer(pp.player,pp.spin,slot);
+          var slot=btn.getAttribute("data-slot"), p=LS.pendingPick;
+          LS.pendingPick=null; draftPlayer(p.player,p.spin,slot);
         });
       });
-      var cancel=panel.querySelector(".mp-chooser-cancel");
-      if(cancel) cancel.addEventListener("click",function(){
-        LS.pendingPick=null; showLgSquadPanel(spin);
-      });
+      var cancel=eid("lgMcCancel");
+      if(cancel) cancel.addEventListener("click",function(){ LS.pendingPick=null; updatePitch(); showLgSquadPanel(spin); });
     }
 
-    /* Player tap */
-    panel.querySelectorAll(".player:not(.taken):not(.noslot)").forEach(function(el){
+    /* Row tap → show chooser */
+    panel.querySelectorAll(".lg-msel-row:not(.taken):not(.noslot)").forEach(function(el){
       el.addEventListener("click",function(){
         var name=el.getAttribute("data-pn");
         var pl=spin.squad.filter(function(p){ return p.n===name; })[0];
-        if(!pl) return;
-        var slots=eligibleSlots(pl);
-        if(!slots.length) return;
-        if(slots.length===1){ LS.pendingPick=null; draftPlayer(pl,spin,slots[0]); }
-        else { LS.pendingPick={player:pl,spin:spin}; updatePitch(); showLgSquadPanel(spin); }
+        if(!pl || !eligibleSlots(pl).length) return;
+        LS.pendingPick={player:pl,spin:spin};
+        updatePitch();
+        showLgSquadPanel(spin);
+        var list=panel.querySelector(".lg-modal-list"); if(list) list.scrollTop=0;
       });
     });
 
-    /* Skip squad — re-enable SPIN without drafting */
-    var skipBtn=eid("lgSkipSquad");
-    if(skipBtn) skipBtn.addEventListener("click",function(){
-      LS.pendingPick=null; panel.style.display="none";
-      var sb=eid("lgSpinBtn"); if(sb){ sb.disabled=false; sb.textContent="SPIN"; }
+    var closeB=eid("lgModalClose"); if(closeB) closeB.addEventListener("click",closeLgModal);
+    var skipB=eid("lgModalSkip");   if(skipB) skipB.addEventListener("click",closeLgModal);
+    var rrB=eid("lgModalReroll");
+    if(rrB) rrB.addEventListener("click",function(){
+      if(LS.rerolls<=0||_lgSpinning) return;
+      LS.rerolls--; LS.pendingPick=null; closeLgModal(); doLgSpin();
     });
+    /* tap backdrop to close */
+    panel.addEventListener("click",function(e){ if(e.target===panel) closeLgModal(); });
   }
 
   function draftPlayer(pl, spin, slot){
@@ -600,12 +722,13 @@
     LS.xi.push({n:pl.n,p:pl.p||"MID",r:pl.r||75,gp:pl.gp||pl.p||"MID",slot:slot,club:spin.club,year:spin.year});
     updatePitch();
     var cnt=eid("lgPickCount"); if(cnt) cnt.textContent=LS.xi.length;
+    var cntXi=eid("lgXiCount"); if(cntXi) cntXi.textContent=LS.xi.length+"/11";
+    renderLgXiList(eid("lgXiList"));
     if(LS.xi.length>=11){
       var sim=eid("lgSimulate"); if(sim) sim.disabled=false;
       var sb=eid("lgSpinBtn"); if(sb){ sb.disabled=true; sb.textContent="XI Complete ✓"; }
       var panel=eid("lgSquadPanel"); if(panel) panel.style.display="none";
     } else {
-      /* Re-enable SPIN for the next pick */
       var sb2=eid("lgSpinBtn"); if(sb2){ sb2.disabled=false; sb2.textContent="SPIN"; }
       var panel2=eid("lgSquadPanel"); if(panel2) panel2.style.display="none";
     }
@@ -616,43 +739,11 @@
     wrap.innerHTML=buildPitch();
   }
 
-  function buildPitch(){
-    var rows=(FM_ROWS[LS.formation]||FM_ROWS["4-3-3"]).slice().reverse(); /* FWD→top */
-    /* Map picks to slot pools */
-    var pool={};
-    LS.xi.forEach(function(pk){
-      if(!pk) return;
-      var s=pk.slot||pk.gp||pk.p||"MID";
-      if(!pool[s]) pool[s]=[];
-      pool[s].push(pk);
-    });
-    var draw={};
-    Object.keys(pool).forEach(function(k){ draw[k]=pool[k].slice(); });
-
-    var h='<div class="mp-pitch-visual">';
-    rows.forEach(function(row){
-      h+='<div class="mp-pv-row">';
-      row.forEach(function(slot){
-        var arr=draw[slot]||[], pk=arr.length?arr.shift():null;
-        var lc=LINE_OF[slot]||"MID";
-        h+='<div class="mp-pv-slot mp-pv-'+lc+(pk?" mp-pv-filled":"")+'">'+
-          '<span class="mp-pv-pos">'+slot+'</span>';
-        if(pk) h+='<span class="mp-pv-name">'+esc(shortName(pk.n))+'</span>'+
-                   '<span class="mp-pv-rat">'+pk.r+'</span>';
-        h+='</div>';
-      });
-      h+='</div>';
-    });
-    return h+'</div>';
-  }
-
   function autoFillXI(){
     var data=LEAGUES[LS.league].getData(); if(!data) return;
     var pickedNames=LS.xi.map(function(x){ return x&&x.n; });
-    /* Collect best players from all squads */
     var all=[];
     Object.keys(data).forEach(function(club){
-      /* Use most recent season only per club to avoid duplicates */
       var years=Object.keys(data[club].years).sort(function(a,b){ return b-a; });
       var yr=years[0]; if(!yr) return;
       (data[club].years[yr]||[]).forEach(function(pl){
@@ -677,6 +768,8 @@
 
     updatePitch();
     var cnt=eid("lgPickCount"); if(cnt) cnt.textContent=LS.xi.filter(Boolean).length;
+    var cntXi=eid("lgXiCount"); if(cntXi) cntXi.textContent=LS.xi.filter(Boolean).length+"/11";
+    renderLgXiList(eid("lgXiList"));
     if(LS.xi.filter(Boolean).length>=11){
       var sim=eid("lgSimulate"); if(sim) sim.disabled=false;
       var sb=eid("lgSpinBtn"); if(sb){ sb.disabled=true; sb.textContent="XI Complete ✓"; }
@@ -687,36 +780,51 @@
   /* ════════════════════════════════════════
      STEP 4 — Simulate season
   ════════════════════════════════════════ */
+  /* Realistic Poisson (~1.4 goals/game avg). Makes a perfect record very rare. */
+  function simMatch(homeStr, awayStr){
+    var BASE=80;
+    var hPow=Math.pow(Math.max(homeStr,40)/BASE, 2.2);
+    var aPow=Math.pow(Math.max(awayStr,40)/BASE, 2.2);
+    var ha=Math.max(0.25, 1.4*hPow + 0.25); /* home advantage */
+    var aa=Math.max(0.25, 1.2*aPow);
+    return { h:poisson(ha), a:poisson(aa) };
+  }
+
   function simulateSeason(){
     var lc=LEAGUES[LS.league];
     var strengths=(W.LEAGUE_TEAM_STRENGTHS&&W.LEAGUE_TEAM_STRENGTHS[LS.league])||[];
-    var teams=strengths.map(function(t){ return {name:t.n,str:t.s}; });
+    /* Season is a double round-robin: total games = 2 × opponents.
+       Trim opponents so the user plays exactly lc.games (e.g. 38 → 19 opponents + user = 20 teams). */
+    var oppCount=Math.round(lc.games/2);
+    var teams=strengths.slice(0,oppCount).map(function(t){ return {name:t.n,str:t.s}; });
 
     var xiRatings=LS.xi.filter(Boolean).map(function(p){ return p.r||75; });
     var userStr=xiRatings.length
       ? Math.round(xiRatings.reduce(function(a,b){ return a+b; },0)/xiRatings.length)
       : 78;
-    userStr+=(LS.mgrBonus.attack||0);
+    /* Cap manager bonus contribution to avoid trivial dominance */
+    userStr = Math.min(92, userStr + Math.round((LS.mgrBonus.attack||0)*0.6));
 
     teams.push({name:LS.teamName,str:userStr});
     var userIdx=teams.length-1, n=teams.length;
 
-    LS.table=teams.map(function(t){ return {name:t.name,P:0,W:0,D:0,L:0,GF:0,GA:0,GD:0,Pts:0}; });
+    LS.userStr=userStr;          /* mutable — surprise events recompute remaining games from this */
+    LS.fixtures=[];              /* per user game: {opp, home, oppStr} */
+    LS.eventsLeft=3;             /* max surprise events per season */
+    LS.table=teams.map(function(t){ return {name:t.name,P:0,W:0,D:0,L:0,GF:0,GA:0,GD:0,Pts:0,str:t.str}; });
     LS.userResults=[];
 
     for(var i=0;i<n;i++){
       for(var j=0;j<n;j++){
         if(i===j) continue;
-        var isUH=(i===userIdx), isUA=(j===userIdx);
-        var mAtk=isUH?(LS.mgrBonus.attack||0):0;
-        var res=simMatch(teams[i].str,teams[j].str,mAtk);
+        var res=simMatch(teams[i].str, teams[j].str);
         LS.table[i].P++; LS.table[i].GF+=res.h; LS.table[i].GA+=res.a; LS.table[i].GD+=res.h-res.a;
         LS.table[j].P++; LS.table[j].GF+=res.a; LS.table[j].GA+=res.h; LS.table[j].GD+=res.a-res.h;
         if(res.h>res.a){ LS.table[i].W++; LS.table[i].Pts+=3; LS.table[j].L++; }
         else if(res.h<res.a){ LS.table[j].W++; LS.table[j].Pts+=3; LS.table[i].L++; }
         else { LS.table[i].D++; LS.table[i].Pts++; LS.table[j].D++; LS.table[j].Pts++; }
-        if(isUH) LS.userResults.push({home:true, opp:teams[j].name,gf:res.h,ga:res.a});
-        else if(isUA) LS.userResults.push({home:false,opp:teams[i].name,gf:res.a,ga:res.h});
+        if(i===userIdx){ LS.userResults.push({home:true, opp:teams[j].name,gf:res.h,ga:res.a}); LS.fixtures.push({opp:teams[j].name,home:true,oppStr:teams[j].str}); }
+        else if(j===userIdx){ LS.userResults.push({home:false,opp:teams[i].name,gf:res.a,ga:res.h}); LS.fixtures.push({opp:teams[i].name,home:false,oppStr:teams[i].str}); }
       }
     }
 
@@ -725,12 +833,380 @@
       if(b.GD!==a.GD)  return b.GD-a.GD;
       return b.GF-a.GF;
     });
-    renderResults();
+
+    /* Expected position: rank user strength vs all teams */
+    var allStr=teams.map(function(t){ return t.str; }).sort(function(a,b){ return b-a; });
+    LS.expectedPos=allStr.indexOf(userStr)+1;
+    LS.squadRating=userStr;
+
+    /* Build per-player season stats, scorers per match, clean sheets, streak */
+    _lgBuildSeasonStats();
+
+    /* Begin game-by-game reveal (WC-style) */
+    LS.reveal={ shown:0, stage:"reveal" };
+    renderSeasonReveal();
+  }
+
+  function _lgLineOf(p){ return LINE_OF[p.slot||p.gp||p.p]||"MID"; }
+
+  /* Generate goalscorers/assists for ONE match using the current XI */
+  function _lgGenMatchScorers(m){
+    var xi=LS.xi.filter(Boolean);
+    function pick(weightFn){
+      var tot=0, ws=xi.map(function(p){ var w=weightFn(_lgLineOf(p)); tot+=w; return w; });
+      if(tot<=0) return xi[0];
+      var r=Math.random()*tot, acc=0;
+      for(var i=0;i<xi.length;i++){ acc+=ws[i]; if(r<=acc) return xi[i]; }
+      return xi[xi.length-1];
+    }
+    var goalW  =function(l){ return l==="FWD"?10:l==="MID"?5:l==="DEF"?1.4:0.05; };
+    var assistW=function(l){ return l==="MID"?6:l==="FWD"?4:l==="DEF"?2:0.2; };
+    m.scorers=[];
+    for(var g=0; g<m.gf; g++){
+      var sc=pick(goalW), mn=1+Math.floor(Math.random()*90), as=null, tries=0;
+      if(Math.random()<0.6){ do{ as=pick(assistW); tries++; }while(as&&as.n===sc.n&&tries<5); if(!(as&&as.n!==sc.n)) as=null; }
+      m.scorers.push({ n:sc.n, min:mn, assist:as?as.n:null });
+    }
+    m.scorers.sort(function(a,b){ return a.min-b.min; });
+  }
+
+  /* Tally season player stats + totals from whatever scorers exist on each match */
+  function _lgTallyStats(){
+    var xi=LS.xi.filter(Boolean);
+    LS.playerStats={};
+    xi.forEach(function(p){ LS.playerStats[p.n]={ n:p.n, gp:(p.slot||p.gp||p.p), line:_lgLineOf(p), r:p.r||75, club:p.club, year:p.year, G:0, A:0, CS:0 }; });
+    var best=0,cur=0,cs=0;
+    LS.userResults.forEach(function(m){
+      (m.scorers||[]).forEach(function(s){
+        if(LS.playerStats[s.n]) LS.playerStats[s.n].G++;
+        if(s.assist&&LS.playerStats[s.assist]) LS.playerStats[s.assist].A++;
+      });
+      if(m.ga===0){ cs++; xi.forEach(function(p){ var l=_lgLineOf(p); if(l==="GK"||l==="DEF") LS.playerStats[p.n].CS++; }); }
+      if(m.gf>m.ga){ cur++; if(cur>best) best=cur; } else cur=0;
+    });
+    LS.totalCleanSheets=cs; LS.longestStreak=best;
+  }
+
+  function _lgBuildSeasonStats(){
+    LS.userResults.forEach(function(m){ _lgGenMatchScorers(m); });
+    _lgTallyStats();
+  }
+
+  /* Recompute the user's strength from the current XI + manager (after a swap) */
+  function _lgRecomputeUserStr(){
+    var rs=LS.xi.filter(Boolean).map(function(p){ return p.r||75; });
+    var base=rs.length?Math.round(rs.reduce(function(a,b){ return a+b; },0)/rs.length):78;
+    LS.userStr=Math.min(92, base + Math.round((LS.mgrBonus.attack||0)*0.6));
+  }
+
+  /* Re-simulate the user's games from startIdx with the (possibly changed) XI/manager */
+  function _lgResimFrom(startIdx){
+    function row(name){ for(var i=0;i<LS.table.length;i++) if(LS.table[i].name===name) return LS.table[i]; return null; }
+    function applyGame(u,o,ug,og,sign){
+      if(!u||!o) return;
+      u.GF+=sign*ug; u.GA+=sign*og; u.GD+=sign*(ug-og);
+      o.GF+=sign*og; o.GA+=sign*ug; o.GD+=sign*(og-ug);
+      if(ug>og){ u.W+=sign; u.Pts+=sign*3; o.L+=sign; }
+      else if(ug<og){ o.W+=sign; o.Pts+=sign*3; u.L+=sign; }
+      else { u.D+=sign; u.Pts+=sign; o.D+=sign; o.Pts+=sign; }
+    }
+    var uRow=row(LS.teamName);
+    for(var k=startIdx;k<LS.userResults.length;k++){
+      var fx=LS.fixtures[k]; if(!fx) continue;
+      var old=LS.userResults[k], oRow=row(fx.opp);
+      applyGame(uRow,oRow,old.gf,old.ga,-1);
+      var nr=fx.home?simMatch(LS.userStr,fx.oppStr):simMatch(fx.oppStr,LS.userStr);
+      var ug=fx.home?nr.h:nr.a, og=fx.home?nr.a:nr.h;
+      applyGame(uRow,oRow,ug,og,1);
+      LS.userResults[k]={home:fx.home,opp:fx.opp,gf:ug,ga:og};
+      _lgGenMatchScorers(LS.userResults[k]);
+    }
+    LS.table.sort(function(a,b){ if(b.Pts!==a.Pts) return b.Pts-a.Pts; if(b.GD!==a.GD) return b.GD-a.GD; return b.GF-a.GF; });
+    _lgTallyStats();
+  }
+
+  /* ════════════════════════════════════════
+     STEP 4b — Game-by-game reveal (WC-style)
+  ════════════════════════════════════════ */
+  var _lgRevealTimer=null;
+
+  function lgMatchCardHTML(r, gw){
+    var cls=r.gf>r.ga?"W":r.gf===r.ga?"D":"L";
+    var scorers="";
+    if(r.scorers&&r.scorers.length){
+      scorers="<div class='mscorers'>"+r.scorers.map(function(s){
+        return "<span class='goal'>⚽ "+esc(shortName(s.n))+" "+s.min+"'</span>";
+      }).join("")+"</div>";
+    }
+    return "<div class='mcard "+cls+"'>"+
+      "<div class='mcard-top'>"+
+        "<span class='mround'>GW"+gw+" · "+(r.home?"Home":"Away")+"</span>"+
+        "<span class='pill "+cls+"'>"+cls+"</span>"+
+      "</div>"+
+      "<div class='mscore'>"+
+        "<span class='me'>⭐ "+esc(LS.teamName)+"</span> "+
+        "<b>"+r.gf+"–"+r.ga+"</b> "+
+        "<span class='oppname'>"+esc(r.opp)+"</span>"+
+      "</div>"+
+      scorers+
+    "</div>";
+  }
+
+  /* Running W-D-L-Pts tally up to a given number of games */
+  function lgTallyTo(n){
+    var W2=0,D=0,L=0,GF=0,GA=0,Pts=0;
+    for(var i=0;i<n&&i<LS.userResults.length;i++){
+      var r=LS.userResults[i];
+      GF+=r.gf; GA+=r.ga;
+      if(r.gf>r.ga){ W2++; Pts+=3; }
+      else if(r.gf===r.ga){ D++; Pts++; }
+      else L++;
+    }
+    return {W:W2,D:D,L:L,GF:GF,GA:GA,Pts:Pts};
+  }
+
+  function scheduleLgReveal(){
+    clearTimeout(_lgRevealTimer);
+    var rv=LS.reveal, total=LS.userResults.length;
+    if(rv.stage!=="reveal" || rv.shown>=total || rv.event) return;
+    var delay=Math.max(150, Math.min(420, Math.round(10000/total)));
+    _lgRevealTimer=setTimeout(function(){
+      LS.reveal.shown++;
+      /* Roll for a surprise event (after a few games, never on the last two) */
+      if(LS.eventsLeft>0 && LS.reveal.shown>=4 && LS.reveal.shown<=total-2 && Math.random()<(W.__LG_EVT_TEST?1:0.025)){
+        LS.eventsLeft--; LS.reveal.event=_lgMakeEvent();
+      }
+      renderSeasonReveal();
+    }, delay);
+  }
+
+  /* Build a random surprise event */
+  function _lgMakeEvent(){
+    if(Math.random()<0.4){
+      var reasons=["has been SACKED after a poor run","has SShockingly resigned","was sacked by the board","walked out for a rival club"];
+      return { type:"manager", reason: reasons[Math.floor(Math.random()*reasons.length)].replace("SS","s") };
+    }
+    var xi=LS.xi.filter(Boolean);
+    var victim=xi[Math.floor(Math.random()*xi.length)];
+    var rs=["has suffered a season-ending injury","has been SOLD on deadline day","has left — a release clause was triggered","is out injured for the rest of the run-in"];
+    return { type:"player", reason: rs[Math.floor(Math.random()*rs.length)], victim:victim, stage:"announce" };
+  }
+
+  function renderSeasonReveal(){
+    var v=lgView(), lc=LEAGUES[LS.league], rv=LS.reveal;
+    var total=LS.userResults.length;
+
+    if(rv.stage==="reveal"){
+      var t=lgTallyTo(rv.shown);
+      var done=rv.shown>=total;
+      var bar=done
+        ? "<div class='reveal-bar'><button class='start-btn' id='lgToResult'>See your result →</button></div>"
+        : "<div class='reveal-bar'><span class='reveal-count'>"+rv.shown+" / "+total+" games</span>"+
+          "<button class='btn-ghost' id='lgSkipReveal'>Skip</button></div>";
+
+      /* revealed cards, newest first */
+      var cards="";
+      for(var i=rv.shown-1;i>=0;i--) cards+=lgMatchCardHTML(LS.userResults[i], i+1);
+
+      v.innerHTML=
+        "<div class='wrap'>"+
+          "<button class='back' id='lgRevealBack'>← Quit season</button>"+
+          "<h2 class='lg-title' style='margin-top:.2rem'>"+lc.flag+" "+esc(LS.teamName)+" — "+lc.label+"</h2>"+
+          "<div class='stage-badge'>Your season · game by game</div>"+
+          "<div class='lg-live-tally'>"+
+            "<span class='lt-rec'>"+t.W+"-"+t.D+"-"+t.L+"</span>"+
+            "<span class='lt-pts'>"+t.Pts+" pts</span>"+
+            "<span class='lt-gd'>"+t.GF+"–"+t.GA+"</span>"+
+          "</div>"+
+          bar+
+          "<div class='journey'>"+cards+"</div>"+
+        "</div>";
+
+      eid("lgRevealBack").addEventListener("click",function(){ clearTimeout(_lgRevealTimer); goHome(); });
+      var sk=eid("lgSkipReveal");
+      if(sk) sk.addEventListener("click",function(){ clearTimeout(_lgRevealTimer); LS.reveal.shown=total; renderSeasonReveal(); });
+      var tr=eid("lgToResult");
+      if(tr) tr.addEventListener("click",function(){ clearTimeout(_lgRevealTimer); if(window.scrollTo) window.scrollTo(0,0); renderResults(); });
+
+      if(rv.event){ renderLgEventModal(); }
+      else if(!done){ scheduleLgReveal(); }
+      return;
+    }
+  }
+
+  /* Simple, background-safe spin (setInterval) that cycles options then settles */
+  function _lgSpinReel(stripEl, items, finalIdx, onDone){
+    if(!stripEl){ onDone&&onDone(); return; }
+    var i=0, ticks=0, totalTicks=18+Math.floor(Math.random()*6);
+    var timer=setInterval(function(){
+      stripEl.innerHTML=items[i%items.length];
+      i++; ticks++;
+      if(ticks>=totalTicks){ clearInterval(timer); stripEl.innerHTML=items[finalIdx]; onDone&&onDone(); }
+    }, 70);
+  }
+
+  function _lgResumeAfterEvent(){
+    var ov=document.getElementById("lgEventOverlay"); if(ov) ov.remove();
+    LS.reveal.event=null;
+    _lgRecomputeUserStr();
+    _lgResimFrom(LS.reveal.shown);   /* remaining games reflect the change */
+    renderSeasonReveal();
+  }
+
+  function _lgEventOverlay(){
+    var panel=document.getElementById("lgEventOverlay");
+    if(!panel){ panel=document.createElement("div"); panel.id="lgEventOverlay"; (lgView()||document.body).appendChild(panel); }
+    panel.className="lg-modal-overlay"; panel.style.display="";
+    return panel;
+  }
+
+  /* The surprise-event popup (manager replacement OR player replacement) */
+  function renderLgEventModal(){
+    var panel=_lgEventOverlay();
+    var ev=LS.reveal.event, MGRS=W.WCXI_MANAGERS||[], MGRS_DB=W.WCXI_MANAGERS_DB||[];
+
+    if(ev.type==="manager"){
+      var html="<div class='lg-modal lg-event'>"+
+        "<div class='lg-event-emoji'>😱</div>"+
+        "<div class='lg-event-title'>Manager out!</div>"+
+        "<div class='lg-event-body'><strong>"+esc(LS.mgrName||(LS.manager&&LS.manager.name)||"Your manager")+"</strong> "+esc(ev.reason)+". Spin to appoint a replacement.</div>"+
+        "<div class='reel mgr-reel lg-event-reel'><div class='reel-strip' id='lgEvtStrip'></div></div>"+
+        "<button class='start-btn' id='lgEvtSpin'>Spin for new manager</button>"+
+        "</div>";
+      panel.innerHTML=html; panel.className="lg-modal-overlay"; panel.style.display="";
+      var strip=eid("lgEvtStrip");
+      var pick=MGRS_DB[Math.floor(Math.random()*MGRS_DB.length)];
+      function mgrHTML(d){ var s=MGRS.filter(function(m){return m.id===d.s;})[0]||MGRS[0]||{emoji:"",name:""}; return "<div class='reel-item mgr-item'><span class='mgr-name-big'>"+esc(d.n)+"</span><span class='mgr-style-tag'>"+s.name+"</span></div>"; }
+      var items=MGRS_DB.slice(0,14).map(mgrHTML); items.push(mgrHTML(pick));
+      if(strip) strip.innerHTML=mgrHTML(MGRS_DB[0]);
+      eid("lgEvtSpin").addEventListener("click",function(){
+        var b=eid("lgEvtSpin"); b.disabled=true; b.textContent="Spinning…";
+        _lgSpinReel(strip, items, items.length-1, function(){
+          var s=MGRS.filter(function(m){return m.id===pick.s;})[0]||MGRS[0];
+          LS.manager=s; LS.mgrName=pick.n; LS.mgrBonus={attack:s.atk||0,defend:s.def||0};
+          try{ localStorage.setItem("wcxi_manager",JSON.stringify({id:s.id,name:pick.n})); }catch(e){}
+          b.outerHTML="<button class='start-btn' id='lgEvtDone'>✓ "+esc(pick.n)+" appointed — continue →</button>";
+          eid("lgEvtDone").addEventListener("click",_lgResumeAfterEvent);
+        });
+      });
+      return;
+    }
+
+    /* player event */
+    if(ev.stage==="announce"){
+      var v=ev.victim, pos=v.slot||v.gp||v.p||"MID", lc2=LINE_OF[pos]||"MID";
+      panel.innerHTML="<div class='lg-modal lg-event'>"+
+        "<div class='lg-event-emoji'>😱</div>"+
+        "<div class='lg-event-title'>Bad news</div>"+
+        "<div class='lg-event-body'><strong>"+esc(v.n)+"</strong> ("+esc(pos)+") "+esc(ev.reason)+". Spin a squad to sign a replacement for the <strong>"+esc(pos)+"</strong> slot.</div>"+
+        "<button class='start-btn' id='lgEvtPlayerSpin'>Spin for a replacement</button>"+
+        "</div>";
+      panel.className="lg-modal-overlay"; panel.style.display="";
+      eid("lgEvtPlayerSpin").addEventListener("click",function(){
+        ev.stage="pick"; ev.spin=_lgPickReplacementSquad(v.slot||v.gp||v.p||"MID"); renderLgEventModal();
+      });
+      return;
+    }
+
+    if(ev.stage==="pick"){
+      var slot=ev.victim.slot||ev.victim.gp||ev.victim.p||"MID";
+      var spin=ev.spin, compat=COMPAT[slot]||[slot];
+      var elig=spin.squad.filter(function(p){ return compat.indexOf(p.gp||p.p)!==-1 && !LS.xi.some(function(x){return x&&x.n===p.n;}); });
+      elig.sort(function(a,b){ return (b.r||0)-(a.r||0); });
+      var rows=elig.map(function(p){
+        var line=LINE_OF[p.gp||p.p]||"MID";
+        return "<div class='lg-msel-row' data-pn='"+esc(p.n)+"'><span class='pos "+line+"'>"+esc(p.gp||p.p)+"</span><span class='lg-msel-name'>"+esc(p.n)+"</span>"+(LS.showRatings?"<span class='lg-msel-rat'>"+(p.r||"")+"</span>":"")+"</div>";
+      }).join("");
+      panel.innerHTML="<div class='lg-modal'>"+
+        "<div class='lg-modal-head'><div class='lg-modal-title'>"+esc(spin.club)+" <span class='lg-modal-yr'>"+seasonLabel(spin.year)+"</span></div></div>"+
+        "<div class='lg-modal-hint'>Pick a "+esc(slot)+" to replace <strong>"+esc(ev.victim.n)+"</strong></div>"+
+        "<div class='lg-modal-list'>"+(rows||"<div class='lg-modal-hint' style='padding:1rem'>No eligible "+esc(slot)+" here — spin again.</div>")+"</div>"+
+        "<div class='lg-modal-foot'><button class='btn-ghost' id='lgEvtRespin'>🎲 Spin another squad</button></div>"+
+        "</div>";
+      panel.className="lg-modal-overlay"; panel.style.display="";
+      panel.querySelectorAll(".lg-msel-row").forEach(function(el){
+        el.addEventListener("click",function(){
+          var name=el.getAttribute("data-pn"), pl=spin.squad.filter(function(p){return p.n===name;})[0]; if(!pl) return;
+          /* swap: remove victim, add replacement in same slot */
+          LS.xi=LS.xi.filter(function(x){ return x&&x.n!==ev.victim.n; });
+          LS.xi.push({n:pl.n,p:pl.p||"MID",r:pl.r||75,gp:pl.gp||pl.p||"MID",slot:slot,club:spin.club,year:spin.year});
+          _lgResumeAfterEvent();
+        });
+      });
+      eid("lgEvtRespin").addEventListener("click",function(){ ev.spin=_lgPickReplacementSquad(slot); renderLgEventModal(); });
+      return;
+    }
+  }
+
+  /* Pick a random club-season that has at least one eligible player for the slot */
+  function _lgPickReplacementSquad(slot){
+    var pool=getPool(), compat=COMPAT[slot]||[slot], pick, tries=0;
+    do{
+      pick=pool[Math.floor(Math.random()*pool.length)];
+      var ok=pick.squad.some(function(p){ return compat.indexOf(p.gp||p.p)!==-1 && !LS.xi.some(function(x){return x&&x.n===p.n;}); });
+      tries++;
+    }while(!ok && tries<80);
+    return pick;
   }
 
   /* ════════════════════════════════════════
      STEP 5 — Results
   ════════════════════════════════════════ */
+  /* 3-letter club code for the Your-XI list */
+  function clubCode(c){
+    var M={"Manchester United":"MUN","Manchester City":"MCI","Real Madrid":"RMA","Atlético Madrid":"ATM",
+      "Real Sociedad":"RSO","Real Betis":"BET","Athletic Bilbao":"ATH","Bayern Munich":"BAY",
+      "Borussia Dortmund":"BVB","Bayer Leverkusen":"B04","RB Leipzig":"RBL","Inter Milan":"INT","AC Milan":"MIL",
+      "Paris Saint-Germain":"PSG","Sheffield Wed":"SHW","Sheffield Utd":"SHU","Nottm Forest":"NFO"};
+    if(M[c]) return M[c];
+    return (c||"").replace(/[^A-Za-z]/g,"").slice(0,3).toUpperCase();
+  }
+
+  /* Render a shareable season-summary image and share/download it */
+  function _lgShareImage(d, btn){
+    var CW=1080, CH=1350;
+    var c=document.createElement("canvas"); c.width=CW; c.height=CH;
+    var x=c.getContext("2d"); if(!x) return;
+    var FS="Helvetica, Arial, sans-serif";
+    var g=x.createLinearGradient(0,0,CW,CH);
+    g.addColorStop(0,"#0e2a1d"); g.addColorStop(1,"#0a0a12");
+    x.fillStyle=g; x.fillRect(0,0,CW,CH);
+    x.fillStyle="#22c97d"; x.fillRect(0,0,CW,16);
+    x.textAlign="center";
+    x.fillStyle="#9fb0c3"; x.font="600 36px "+FS; x.fillText("ELEVEN XI", CW/2, 120);
+    x.fillStyle="#f5b301"; x.font="800 44px "+FS; x.fillText(String(d.pill||"").toUpperCase(), CW/2, 210);
+    x.fillStyle="#ffffff"; x.font="900 210px "+FS; x.fillText(ordinal(d.pos), CW/2, 470);
+    x.fillStyle="#9fb0c3"; x.font="500 42px "+FS; x.fillText("of "+d.N+" · "+d.league, CW/2, 540);
+    x.fillStyle="#ffffff"; x.font="800 64px "+FS; x.fillText(d.team, CW/2, 680);
+    function stat(cx,y,val,label){
+      x.fillStyle="#ffffff"; x.font="900 66px "+FS; x.fillText(val,cx,y);
+      x.fillStyle="#9fb0c3"; x.font="600 28px "+FS; x.fillText(label,cx,y+46);
+    }
+    stat(CW*0.27, 820, d.W+"-"+d.D+"-"+d.L, "W-D-L");
+    stat(CW*0.5,  820, String(d.pts), "POINTS");
+    stat(CW*0.73, 820, d.score.toLocaleString(), "SCORE");
+    if(d.boot){
+      x.fillStyle="#22c97d"; x.font="700 40px "+FS; x.fillText("Golden Boot", CW/2, 980);
+      x.fillStyle="#ffffff"; x.font="800 52px "+FS; x.fillText(d.boot.n+" — "+d.boot.G+" goals", CW/2, 1044);
+    }
+    x.fillStyle="#6b7a90"; x.font="500 32px "+FS; x.fillText("Build your all-time XI", CW/2, CH-70);
+    c.toBlob(function(blob){
+      if(!blob) return;
+      var fname="eleven-xi-season.png";
+      try{
+        var file=new File([blob],fname,{type:"image/png"});
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+          navigator.share({files:[file], title:"My Eleven XI season", text:d.team+" finished "+ordinal(d.pos)+" in the "+d.league}).catch(function(){});
+          return;
+        }
+      }catch(e){}
+      var url=URL.createObjectURL(blob), a=document.createElement("a");
+      a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      if(btn){ btn.textContent="✓ Image saved"; setTimeout(function(){ btn.innerHTML="📸&nbsp;Share your season"; }, 1800); }
+    }, "image/png");
+  }
+
   function renderResults(){
     var v=lgView(), lc=LEAGUES[LS.league];
     var W2=0,D=0,L=0,GF=0,GA=0;
@@ -739,72 +1215,188 @@
       if(r.gf>r.ga) W2++; else if(r.gf===r.ga) D++; else L++;
     });
 
-    var pos=1;
+    var N=LS.table.length, pos=1;
     LS.table.forEach(function(row,i){ if(row.name===LS.teamName) pos=i+1; });
-
+    var expPos=LS.expectedPos||Math.ceil(N/2);
     var total=lc.games;
     var isPerfect=(W2===total&&D===0&&L===0);
-    var isChamp=(pos===1), isTop4=(pos<=4), isRel=(pos>LS.table.length-3);
+    var isChamp=(pos===1), isTop4=(pos<=4), isRel=(pos>N-3);
+    var posDiff=expPos-pos;                 /* +ve = better than expected */
+    var userRow=LS.table.filter(function(r){ return r.name===LS.teamName; })[0]||{Pts:0,GD:0};
+    var cs=LS.totalCleanSheets||0, streak=LS.longestStreak||0;
 
-    var titleEmoji=isPerfect?"🏆🎉🎉":isChamp?"🏆":isTop4?"⭐":isRel?"😬":"✅";
-    var titleText=isPerfect?"PERFECT SEASON — "+total+"-0-0!":
-                  isChamp?lc.label+" Champions!":
-                  isTop4?ordinal(pos)+" Place — "+lc.label:
-                  isRel?ordinal(pos)+" Place — Relegation Zone":
-                  ordinal(pos)+" Place";
+    /* ── Transparent score breakdown ── */
+    var breakdown=[
+      ["Finished "+ordinal(pos)+" of "+N, (N-pos+1)*40],
+      [userRow.Pts+" points", userRow.Pts*8],
+      ["Goal difference "+(userRow.GD>0?"+":"")+userRow.GD, userRow.GD*5],
+      [W2+" wins", W2*12],
+      [cs+" clean sheets", cs*15]
+    ];
+    if(posDiff>0)  breakdown.push(["Overperformed by "+posDiff+" place"+(posDiff>1?"s":""), posDiff*50]);
+    if(isChamp)    breakdown.push(["🏆 Champions bonus", 600]);
+    else if(isTop4) breakdown.push(["⭐ Top-four bonus", 250]);
+    if(isPerfect)  breakdown.push(["💎 Perfect season", 3000]);
+    var score=breakdown.reduce(function(a,b){ return a+b[1]; },0);
+    if(score<0) score=0;
 
-    var resHtml="";
-    LS.userResults.forEach(function(r,i){
-      var wdl=r.gf>r.ga?"W":r.gf===r.ga?"D":"L";
-      var cls="lgr-"+wdl.toLowerCase();
-      resHtml+="<div class='lg-res-row "+cls+"'>"+
-        "<span class='lgr-gw'>GW"+(i+1)+"</span>"+
-        "<span class='lgr-venue'>"+(r.home?"H":"A")+"</span>"+
-        "<span class='lgr-opp'>"+esc(r.opp)+"</span>"+
-        "<span class='lgr-score'>"+r.gf+"–"+r.ga+"</span>"+
-        "<span class='lgr-badge "+cls+"'>"+wdl+"</span>"+
-        "</div>";
+    /* Post to the shared per-mode leaderboard (once) */
+    if(!LS.scoreSaved && window.WCXI_addScore){
+      LS.scoreSaved=true;
+      window.WCXI_addScore({ name:LS.teamName, score:score, result:ordinal(pos)+" of "+N+" · "+lc.label, mode:"league", ts:Date.now() });
+    }
+
+    /* ── Placement pill + over/under verdict ── */
+    var pill=isChamp?"CHAMPIONS":isTop4?"TOP FOUR":isRel?"RELEGATED":pos<=N/2?"TOP HALF":"LOWER HALF";
+    var verdict=posDiff>=2?"OVERPERFORMED":posDiff<=-2?"UNDERPERFORMED":"AS EXPECTED";
+    var verdictCls=posDiff>=2?"good":posDiff<=-2?"bad":"neutral";
+
+    /* ── Narrative ── */
+    var narrTitle, narrBody;
+    if(isPerfect){ narrTitle="IMMORTAL"; }
+    else if(isChamp&&posDiff>=4){ narrTitle="AGAINST ALL ODDS"; }
+    else if(isChamp){ narrTitle="CHAMPIONS"; }
+    else if(posDiff>=4){ narrTitle="NOBODY SAW THAT COMING"; }
+    else if(posDiff>=1){ narrTitle="PUNCHED ABOVE THEIR WEIGHT"; }
+    else if(posDiff>=-1){ narrTitle="JOB DONE"; }
+    else if(isRel){ narrTitle="DOWN AND OUT"; }
+    else if(posDiff<=-4){ narrTitle="WHAT WENT WRONG?"; }
+    else { narrTitle="BELOW PAR"; }
+    narrBody=W2+" wins, "+userRow.Pts+" points, "+ordinal(pos)+". "+
+      "Projected to finish "+ordinal(expPos)+" — "+
+      (posDiff>=2?"and they smashed it.":posDiff<=-2?"and it never clicked.":"and that's about right.");
+
+    /* ── Player season stats / awards ── */
+    var ps=Object.keys(LS.playerStats||{}).map(function(k){ return LS.playerStats[k]; });
+    function topBy(fn,filt){ var a=ps.filter(filt||function(){return true;}).slice().sort(function(x,y){ return fn(y)-fn(x); }); return a[0]; }
+    var boot=topBy(function(p){return p.G;});
+    var play=topBy(function(p){return p.A;});
+    var glove=topBy(function(p){return p.CS;}, function(p){return p.line==="GK";});
+    var pots=topBy(function(p){return p.G*3+p.A*2+p.CS;});
+    var potsFlavour=pots?(pots.line==="FWD"?"was unplayable up top. Different gravy.":
+      pots.line==="MID"?"ran the show in the middle of the park. Different gravy.":
+      pots.line==="DEF"?"was a rock at the back all season.":
+      "was a wall in goal — unbeatable."):"";
+
+    /* ── Your XI (attack first) ── */
+    var lineRank={FWD:0,MID:1,DEF:2,GK:3};
+    var xiOrdered=LS.xi.filter(Boolean).slice().sort(function(a,b){
+      return (lineRank[LINE_OF[a.slot||a.gp||a.p]||"MID"])-(lineRank[LINE_OF[b.slot||b.gp||b.p]||"MID"]);
     });
+    var xiHtml=xiOrdered.map(function(p){
+      var slot=p.slot||p.gp||p.p, line=LINE_OF[slot]||"MID";
+      return "<div class='lgr2-xi-row'>"+
+        "<span class='pos "+line+"'>"+esc(slot)+"</span>"+
+        "<span class='lgr2-name'>"+esc(p.n)+"</span>"+
+        "<span class='lgr2-meta'>"+esc(clubCode(p.club))+" "+esc(String(p.year||""))+"</span>"+
+        (LS.showRatings?"<span class='lgr2-rat'>"+(p.r||"")+"</span>":"")+
+        "</div>";
+    }).join("");
 
+    /* ── Player stats table (sorted by G then A) ── */
+    var psSorted=ps.slice().sort(function(a,b){ return (b.G*3+b.A*2+b.CS)-(a.G*3+a.A*2+a.CS); });
+    var dot="<span class='lgr2-dot'>·</span>";
+    var pTable=psSorted.map(function(p){
+      var line=LINE_OF[p.gp]||"MID";
+      return "<div class='lgr2-pt-row'>"+
+        "<span class='pos "+line+"'>"+esc(p.gp)+"</span>"+
+        "<span class='lgr2-pt-name'>"+esc(p.n)+"</span>"+
+        "<span class='lgr2-pt-v g'>"+(p.G||dot)+"</span>"+
+        "<span class='lgr2-pt-v a'>"+(p.A||dot)+"</span>"+
+        "<span class='lgr2-pt-v cs'>"+(p.CS||dot)+"</span>"+
+        "</div>";
+    }).join("");
+
+    /* ── Score breakdown rows ── */
+    var bkHtml=breakdown.map(function(b){
+      var neg=b[1]<0;
+      return "<div class='lgr2-bk-row'><span class='lgr2-bk-k'>"+esc(b[0])+"</span>"+
+        "<span class='lgr2-bk-v"+(neg?" neg":"")+"'>"+(b[1]>=0?"+":"")+b[1]+"</span></div>";
+    }).join("");
+
+    /* ── Final table (compact, collapsible) ── */
     var tblHtml="<table class='lg-table'>"+
       "<thead><tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th>"+
       "<th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>";
     LS.table.forEach(function(row,i){
-      var isUser=(row.name===LS.teamName);
-      tblHtml+="<tr class='"+(isUser?"lg-tbl-user":"")+"'>"+
+      var isUser=(row.name===LS.teamName), relZone=i>=N-3;
+      tblHtml+="<tr class='"+(isUser?"lg-tbl-user":relZone?"lg-tbl-rel":"")+"'>"+
         "<td>"+(i+1)+"</td><td class='lg-tbl-club'>"+esc(row.name)+"</td>"+
         "<td>"+row.P+"</td><td>"+row.W+"</td><td>"+row.D+"</td><td>"+row.L+"</td>"+
-        "<td>"+row.GF+"</td><td>"+row.GA+"</td>"+
-        "<td>"+(row.GD>0?"+":"")+row.GD+"</td>"+
+        "<td>"+row.GF+"</td><td>"+row.GA+"</td><td>"+(row.GD>0?"+":"")+row.GD+"</td>"+
         "<td><strong>"+row.Pts+"</strong></td></tr>";
     });
     tblHtml+="</tbody></table>";
 
+    function awardCard(cls,icon,label,p,sub){
+      if(!p) return "";
+      return "<div class='lgr2-award "+cls+"'><div class='lgr2-aw-h'>"+icon+" "+label+"</div>"+
+        "<div class='lgr2-aw-name'>"+esc(p.n)+"</div><div class='lgr2-aw-sub'>"+sub+"</div></div>";
+    }
+
     v.innerHTML=
-      "<div class='lg-results-page'>"+
-        "<div class='lg-res-header'>"+
-          "<div class='lg-res-title'>"+titleEmoji+" "+titleText+"</div>"+
-          "<div class='lg-res-record'>"+
-            "<span class='lgr-club'>"+esc(LS.teamName)+"</span>"+
-            " &nbsp;·&nbsp; "+W2+"W "+D+"D "+L+"L"+
-            " &nbsp;·&nbsp; "+GF+" scored, "+GA+" conceded"+
-          "</div>"+
-          "<div class='lg-res-btns'>"+
-            "<button class='btn-primary' id='lgPlayAgain'>Play Again</button>"+
-            "<button class='btn-ghost' id='lgHomeBtn'>← Home</button>"+
-          "</div>"+
+      "<div class='lg-results-page'><div class='wrap'>"+
+        "<button class='back' id='lgResBack'>← Home</button>"+
+        "<div class='lgr2-pill'>"+pill+"</div>"+
+        "<div class='lgr2-cards'>"+
+          "<div class='lgr2-card'><div class='lgr2-k'>FINISHED</div><div class='lgr2-v'>"+ordinal(pos)+"</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-k'>PROJECTED</div><div class='lgr2-v dim'>"+ordinal(expPos)+"</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-verdict "+verdictCls+"'>"+verdict+"</div></div>"+
         "</div>"+
-        "<div class='lg-res-body'>"+
-          "<div class='lg-res-col'><h3 class='lg-col-hd'>Your Results</h3>"+
-            "<div class='lg-res-list'>"+resHtml+"</div></div>"+
-          "<div class='lg-tbl-col'><h3 class='lg-col-hd'>Final Table</h3>"+
-            tblHtml+"</div>"+
+        "<div class='lgr2-narr'><div class='lgr2-narr-h'>"+narrTitle+"</div>"+
+          "<div class='lgr2-narr-b'>"+esc(narrBody)+"</div>"+
+          (pots?"<div class='lgr2-narr-p'>"+esc(pots.n)+" "+esc(potsFlavour)+"</div>":"")+
         "</div>"+
-      "</div>";
+        "<div class='lgr2-xi'><div class='lgr2-sec'>YOUR XI</div>"+xiHtml+"</div>"+
+        "<div class='lgr2-stat3'>"+
+          "<div class='lgr2-card'><div class='lgr2-num good'>"+W2+"</div><div class='lgr2-k'>Wins</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-num warn'>"+D+"</div><div class='lgr2-k'>Draws</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-num bad'>"+L+"</div><div class='lgr2-k'>Losses</div></div>"+
+        "</div>"+
+        "<div class='lgr2-stat3'>"+
+          "<div class='lgr2-card'><div class='lgr2-num'>"+userRow.Pts+"</div><div class='lgr2-k'>Points</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-num good'>"+GF+"</div><div class='lgr2-k'>Goals For</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-num bad'>"+GA+"</div><div class='lgr2-k'>Goals Against</div></div>"+
+        "</div>"+
+        "<button class='lgr2-share' id='lgShare'>📸&nbsp;Share your season</button>"+
+        "<div class='lgr2-sec'>SEASON AWARDS</div>"+
+        "<div class='lgr2-awards'>"+
+          awardCard("","⚽","GOLDEN BOOT",boot,boot?boot.G+" goals":"")+
+          awardCard("","🎯","PLAYMAKER",play,play?play.A+" assists":"")+
+          awardCard("","🧤","GOLDEN GLOVE",glove,glove?glove.CS+" clean sheets":"")+
+          awardCard("gold","🏆","PLAYER OF THE SEASON",pots,pots?pots.G+"G · "+pots.A+"A":"")+
+        "</div>"+
+        "<div class='lgr2-ptable'>"+
+          "<div class='lgr2-pt-head'><span class='lgr2-pt-name'>PLAYER</span>"+
+            "<span class='lgr2-pt-v'>G</span><span class='lgr2-pt-v'>A</span><span class='lgr2-pt-v'>CS</span></div>"+
+          pTable+
+        "</div>"+
+        "<div class='lgr2-stat3 two'>"+
+          "<div class='lgr2-card'><div class='lgr2-num'>"+cs+"</div><div class='lgr2-k'>Clean Sheets</div></div>"+
+          "<div class='lgr2-card'><div class='lgr2-num'>"+streak+"</div><div class='lgr2-k'>Longest Win Streak</div></div>"+
+        "</div>"+
+        "<div class='lgr2-sec'>SCORE BREAKDOWN</div>"+
+        "<div class='lgr2-break'>"+bkHtml+
+          "<div class='lgr2-bk-row total'><span class='lgr2-bk-k'>Season score</span>"+
+          "<span class='lgr2-bk-v'>"+score.toLocaleString()+"</span></div>"+
+        "</div>"+
+        "<details class='lgr2-tbl-wrap'><summary>Final "+lc.label+" table</summary>"+
+          "<div class='lg-tbl-col'>"+tblHtml+"</div></details>"+
+        "<div class='lg-res-btns'>"+
+          "<button class='btn-primary' id='lgPlayAgain'>Play Again</button>"+
+          "<button class='btn-ghost' id='lgHomeBtn'>Home</button>"+
+        "</div>"+
+      "</div></div>";
 
     eid("lgPlayAgain").addEventListener("click",W.initLeagueMode);
     eid("lgHomeBtn").addEventListener("click",goHome);
-    if(isPerfect&&typeof W.triggerConfetti==="function") W.triggerConfetti();
+    eid("lgResBack").addEventListener("click",goHome);
+    var sh=eid("lgShare");
+    if(sh) sh.addEventListener("click",function(){
+      _lgShareImage({ team:LS.teamName, league:lc.label, pill:pill, pos:pos, N:N,
+        W:W2, D:D, L:L, pts:userRow.Pts, score:score, boot:boot }, sh);
+    });
+    if((isChamp||isPerfect)&&typeof W.triggerConfetti==="function") W.triggerConfetti();
   }
 
   function ordinal(n){

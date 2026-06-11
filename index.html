@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>World Cup XI — Spin, Draft, Simulate</title>
-  <meta name="description" content="Spin to draft your all-time World Cup XI, pick a formation and manager, then simulate a 48-team World Cup or a full league." />
+  <title>Eleven XI — Spin, Draft, Simulate</title>
+  <meta name="description" content="Spin to draft an all-time XI from real squads, pick a formation and manager, then simulate the World Cup, Champions League or a full domestic league." />
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -14,10 +14,15 @@
   <link rel="apple-touch-icon" href="icon-180.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="World Cup XI" />
+  <meta name="apple-mobile-web-app-title" content="Eleven XI" />
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="style.css?v=71" />
+  <link rel="stylesheet" href="tokens.css?v=72" />
+  <link rel="stylesheet" href="floodlights.css?v=84" />
 </head>
 <body>
   <div class="theme-toggle" id="themeToggle" aria-label="Theme">
@@ -27,38 +32,48 @@
   </div>
   <div class="wrap">
     <header>
-      <h1>WORLD CUP XI</h1>
+      <div class="brand">
+        <img class="brand-icon" src="icon.svg" alt="Eleven XI" width="44" height="44" />
+        <h1>Eleven XI</h1>
+      </div>
       <button class="install-btn" id="installBtn" hidden>Install app</button>
     </header>
 
     <!-- ===== HOME (first page) ===== -->
     <section id="homeView">
-      <div class="home-hero">
-        <p class="home-tag">Spin to draft an all-time XI from real squads. Pick a formation and manager. Chase glory.</p>
-        <div class="home-modes">
-          <button class="home-mode-card home-mode-wc" id="homeWC">
-            <span class="mode-icon">🏆</span>
-            <span class="mode-name">World Cup</span>
-            <span class="mode-hint">86 nations · 313 squads</span>
-          </button>
-          <button class="home-mode-card home-mode-cl" id="homeCL">
-            <span class="mode-icon">⭐</span>
-            <span class="mode-name">Champions League</span>
-            <span class="mode-hint">153 clubs · 768 seasons</span>
-          </button>
-          <button class="home-mode-card home-mode-mp" id="homeMP">
-            <span class="mode-icon">🎮</span>
-            <span class="mode-name">Multiplayer</span>
-            <span class="mode-hint">2–8 players · draft &amp; tournament</span>
-          </button>
-          <button class="home-mode-card home-mode-league" id="homeLeague">
-            <span class="mode-icon">⚽</span>
-            <span class="mode-name">League</span>
-            <span class="mode-hint">La Liga · Serie A · Bundesliga · Ligue 1</span>
-          </button>
-        </div>
-        <button class="home-board-link" id="homeBoard">Leaderboards</button>
+      <div class="fl-hero">
+        <h2 class="fl-hero-title">Build your <span class="accent">all-time XI</span>.</h2>
+        <p class="fl-hero-sub">Spin real squads from 1950 to today. Pick a formation and manager. Simulate, and dominate.</p>
       </div>
+      <div class="fl-modes">
+        <button class="fl-mode m-wc" id="homeWC">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>
+          <span class="fl-mode-name">World Cup</span>
+          <span class="fl-mode-hint">93 nations · every tournament 1950–2026</span>
+        </button>
+        <button class="fl-mode m-cl" id="homeCL">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
+          <span class="fl-mode-name">Champions League</span>
+          <span class="fl-mode-hint">153 clubs · 768 seasons</span>
+        </button>
+        <button class="fl-mode m-lg" id="homeLeague">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/><path d="M12 3v4M12 14.5V21M4.5 9l3.5 1M19.5 9L16 10M6 18l2.5-3.5M18 18l-2.5-3.5"/></svg></span>
+          <span class="fl-mode-name">League</span>
+          <span class="fl-mode-hint">La Liga · Serie A · Bundesliga · Ligue 1</span>
+        </button>
+        <button class="fl-mode m-mp" id="homeMP">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19a6 6 0 0 1 12 0M14.5 19a5 5 0 0 1 6.5-4.8"/></svg></span>
+          <span class="fl-mode-name">Multiplayer</span>
+          <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
+        </button>
+        <button class="fl-mode m-rw" id="homeRatingsWar">
+          <span class="fl-mode-badge">New</span>
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3l6 6-3 3-6-6z"/><path d="M11.5 6L3 14.5 6 18l8.5-8.5"/><path d="M3 21l3-1M16 13l5 5-2 2-5-5"/></svg></span>
+          <span class="fl-mode-name">Ratings War</span>
+          <span class="fl-mode-hint">Build blind · reveal head-to-head</span>
+        </button>
+      </div>
+      <button class="home-board-link" id="homeBoard">Leaderboards</button>
     </section>
 
     <!-- ===== SETUP ===== -->
@@ -213,6 +228,13 @@
         <button class="btn-ghost" id="clearBoardBtn">Clear scores</button>
       </div>
       <h2 class="res-title">Leaderboards</h2>
+      <div class="seg board-tabs" id="boardModes">
+        <button class="seg-opt active" data-mode="all">All</button>
+        <button class="seg-opt" data-mode="wc">World Cup</button>
+        <button class="seg-opt" data-mode="cl">Champions League</button>
+        <button class="seg-opt" data-mode="league">League</button>
+        <button class="seg-opt" data-mode="mp">Multiplayer</button>
+      </div>
       <div class="seg board-tabs" id="boardTabs">
         <button class="seg-opt active" data-board="daily">Daily</button>
         <button class="seg-opt" data-board="weekly">Weekly</button>
@@ -223,12 +245,12 @@
 
     <footer>
       <div class="footer-actions">
-        <a class="foot-btn" id="feedbackBtn" href="#" target="_blank" rel="noopener">Feedback &amp; bugs</a>
-        <a class="foot-btn coffee" id="coffeeBtn" href="#" target="_blank" rel="noopener">☕ Enjoying the game?</a>
+        <a class="foot-btn" id="feedbackBtn" href="#" onclick="return false">Feedback &amp; bugs</a>
+        <a class="foot-btn coffee" id="coffeeBtn" href="#" onclick="return false">☕ Enjoying the game?</a>
       </div>
-      <p class="foot-credit">A World Cup spin-slot draft &amp; simulator, inspired by <a href="https://38-0.app" target="_blank" rel="noopener">38-0</a>.</p>
+      <p class="foot-credit">An all-time-XI spin-slot draft &amp; simulator, inspired by <a href="https://38-0.app" target="_blank" rel="noopener">38-0</a>.</p>
       <p class="foot-disclaimer">
-        World Cup XI is an independent, fan-made game. It is not affiliated with, endorsed by, sponsored by, or
+        Eleven XI is an independent, fan-made game. It is not affiliated with, endorsed by, sponsored by, or
         associated with FIFA, any national football association, competition, governing body, or organisation, or with
         any other game, publisher, or ratings provider. All country names, player names, manager names, ratings, and
         squad data are used for informational and descriptive purposes only, and all trademarks, logos, and other
@@ -237,24 +259,36 @@
     </footer>
   </div>
 
-  <script src="data.js"></script>
-  <script src="data_extra.js"></script>
-  <script src="data_full.js"></script>
-  <script src="data_legacy.js"></script>
-  <script src="data_full2.js"></script>
-  <script src="positions.js"></script>
-  <script src="cl_clubs.js"></script>
-  <script src="cl_data.js"></script>
-  <script src="cl_data2.js"></script>
-  <script src="data_patches.js"></script>
-  <script src="ratings_overrides.js"></script>
-  <script src="nations.js"></script>
-  <script src="data_mp.js"></script>
-  <script src="data_history.js"></script>
-  <script src="data_league.js"></script>
-  <script src="engine.js"></script>
-  <script src="game.js"></script>
-  <script src="multiplayer.js"></script>
-  <script src="league.js"></script>
+  <script src="data.js?v=71"></script>
+  <script src="data_extra.js?v=71"></script>
+  <script src="data_full.js?v=71"></script>
+  <script src="data_legacy.js?v=71"></script>
+  <script src="data_full2.js?v=71"></script>
+  <script src="data_wc_history.js?v=71"></script>
+  <script src="positions.js?v=71"></script>
+  <script src="data_fixups.js?v=71"></script>
+  <script src="cl_clubs.js?v=71"></script>
+  <script src="cl_data.js?v=71"></script>
+  <script src="cl_data2.js?v=71"></script>
+  <script src="data_patches.js?v=71"></script>
+  <script src="ratings_overrides.js?v=71"></script>
+  <script src="nations.js?v=71"></script>
+  <script src="data_mp.js?v=71"></script>
+  <script src="data_pl_history.js?v=71"></script>
+  <script src="data_euro_history.js?v=71"></script>
+  <script src="data_history.js?v=71"></script>
+  <script src="data_league.js?v=71"></script>
+  <script src="data_laliga_history.js?v=71"></script>
+  <script src="data_seriea_history.js?v=71"></script>
+  <script src="data_bundesliga_history.js?v=71"></script>
+  <script src="data_ligue1_history.js?v=71"></script>
+  <script src="data_championship_history.js?v=71"></script>
+  <script src="engine.js?v=71"></script>
+  <script src="game.js?v=71"></script>
+  <script src="net.js?v=84"></script>
+  <script src="multiplayer.js?v=84"></script>
+  <script src="league.js?v=71"></script>
+  <script src="floodlights.js?v=81" defer></script>
+  <script src="ratingswar.js?v=85" defer></script>
 </body>
 </html>

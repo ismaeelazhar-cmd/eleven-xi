@@ -58,7 +58,7 @@
     cl:           { label:"⭐ Champions League",  get: function(){ return window.CL_DATA; } },
     pl:           { label:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League",   get: function(){ return window.PL_DATA; } },
     championship: { label:"🔵 Championship",      get: function(){ return window.CHAMPIONSHIP_DATA; } },
-    euro:         { label:"🇪🇺 Euro 2024",         get: function(){ return window.EURO_DATA; } },
+    euro:         { label:"🇪🇺 Euros (1980–2024)", get: function(){ return window.EURO_DATA; } },
     laliga:       { label:"🇪🇸 La Liga",           get: function(){ return window.LALIGA_DATA; } },
     seriea:       { label:"🇮🇹 Serie A",           get: function(){ return window.SERIEA_DATA; } },
     bundesliga:   { label:"🇩🇪 Bundesliga",        get: function(){ return window.BUNDESLIGA_DATA; } }
@@ -143,21 +143,34 @@
 
   /* ── State ── */
   var st = {
-    phase: "idle",        // idle | setup | player_setup | handoff_setup | draft | handoff_draft | tournament
+    phase: "idle",        // idle | setup | player_setup | handoff_setup | draft | tournament
     mpMode: "wc",
     numPlayers: 2,
-    spinsPerPick: 3,      // 0 = unlimited, otherwise max spins before must pick
-    tournamentFormat: "auto", // auto | h2h | group | full
-    spinCount: 0,         // spins used in current pick turn
-    players: [],          // [{name, formation, manager, picks:[{n,p,r,gp,slot,country,year}]}]
-    setupIdx: 0,          // which player is currently doing formation/manager setup
-    handoffFrom: 0,       // index of player who just drafted (for handoff screen)
-    cur: 0,               // whose turn it is to draft
-    lockedNames: {},      // playerName → playerIdx
-    usedFormations: {},   // formationKey → playerIdx
-    currentSpin: null,    // {country, year, squad:[]}
-    mgrSpinResult: null,  // last manager spin result (per-player setup)
-    pendingPick: null     // {squadPlayer, spin} — waiting for slot choice
+    spinsPerPick: 3,
+    tournamentFormat: "auto",
+    spinCount: 0,
+    players: [],
+    setupIdx: 0,
+    handoffFrom: 0,
+    cur: 0,
+    lockedNames: {},
+    usedFormations: {},
+    currentSpin: null,
+    mgrSpinResult: null,
+    pendingPick: null,
+    pendingHandoff: null, // {from, to, lastPick} — show pass screen after picking
+    simData: null,        // pre-computed tournament data
+    simStep: -1,          // which match to reveal next
+    // ── online session ──
+    online: false,        // true when playing over the network
+    netRole: null,        // "host" | "guest"
+    netCode: null,        // shareable game code (host)
+    hostStatus: null,     // loading | waiting | connected | error
+    hostMsg: null,
+    joinCode: "",
+    joinStatus: null,     // idle | loading | joining | connected
+    joinError: null,
+    _netOnData: null      // per-mode network message handler
   };
 
   /* ── Formation slot helpers ── */
@@ -247,7 +260,7 @@
       var v = eid(id); if(v) v.style.display = "none";
     });
     root.style.display = "";
-    st.phase = "setup";
+    st.phase = "mp_connect";
     _render();
   }
 
@@ -255,6 +268,9 @@
     root.style.display = "none";
     var h = eid("homeView"); if(h) h.style.display = "";
     st.phase = "idle";
+    // Drop any live online session when leaving Multiplayer entirely.
+    if (window.ElxiNet && window.ElxiNet.isOnline()) window.ElxiNet.close();
+    st.online = false; st.netRole = null;
   }
 
   /* ════════════════════════════════════════════════════
@@ -268,13 +284,272 @@
     root.appendChild(back);
 
     switch(st.phase){
+      case "mp_connect":      renderConnectChoice();break;
+      case "mp_lobby":        renderLobby();        break;
+      case "mp_host":         renderHostWait();     break;
+      case "mp_join":         renderJoin();         break;
+      case "mp_modeselect":   renderMpModeSelect(); break;
       case "setup":           renderSetup();        break;
       case "player_setup":    renderPlayerSetup();  break;
       case "handoff_setup":   renderHandoffSetup(); break;
       case "draft":           renderDraft();        break;
-      case "handoff_draft":   renderHandoffDraft(); break;
       case "tournament":      renderTournament();   break;
     }
+  }
+
+  /* ════════════════════════════════════════════════════
+     PHASE -1 — ONLINE vs OFFLINE, then the online lobby
+  ════════════════════════════════════════════════════ */
+  function renderConnectChoice(){
+    var wrap = mk("div","mp-wrap");
+    wrap.innerHTML = '<h2 class="mp-title">Multiplayer</h2><p class="mp-sub">Play on one device, or connect with a friend anywhere.</p>';
+    var grid = mk("div","mp-modeselect");
+
+    var off = mk("button","mp-ms-card m-local");
+    off.innerHTML = '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>'+
+      '<span class="mp-ms-name">Local</span><span class="mp-ms-hint">Pass-and-play on this one device — no internet needed.</span>';
+    off.addEventListener("click", function(){ st.online=false; st.netRole=null; st.phase="mp_modeselect"; _render(); });
+    grid.appendChild(off);
+
+    var on = mk("button","mp-ms-card m-online");
+    on.innerHTML = '<span class="mp-ms-badge">New</span>'+
+      '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21M12 3C9.5 5.5 8.2 8.7 8.2 12S9.5 18.5 12 21"/></svg></span>'+
+      '<span class="mp-ms-name">Online</span><span class="mp-ms-hint">Create a game and share a code, or join a friend’s game.</span>';
+    on.addEventListener("click", function(){ st.phase="mp_lobby"; _render(); });
+    grid.appendChild(on);
+
+    wrap.appendChild(grid);
+    root.appendChild(wrap);
+  }
+
+  function renderLobby(){
+    var wrap = mk("div","mp-wrap");
+    wrap.innerHTML = '<h2 class="mp-title">Play Online</h2><p class="mp-sub">One of you creates the game; the other joins with the code.</p>';
+    var grid = mk("div","mp-modeselect");
+
+    var create = mk("button","mp-ms-card m-create");
+    create.innerHTML = '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>'+
+      '<span class="mp-ms-name">Create Game</span><span class="mp-ms-hint">Generate a code and wait for your friend to join.</span>';
+    create.addEventListener("click", startHost);
+    grid.appendChild(create);
+
+    var join = mk("button","mp-ms-card m-join");
+    join.innerHTML = '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg></span>'+
+      '<span class="mp-ms-name">Join Game</span><span class="mp-ms-hint">Enter the code your friend shares with you.</span>';
+    join.addEventListener("click", function(){ st.phase="mp_join"; st.joinError=null; _render(); });
+    grid.appendChild(join);
+
+    wrap.appendChild(grid);
+
+    var back = mk("button","mp-ghost-btn","← Back");
+    back.addEventListener("click", function(){ st.phase="mp_connect"; _render(); });
+    wrap.appendChild(back);
+
+    root.appendChild(wrap);
+  }
+
+  /* ── Host: create game, show code, wait ── */
+  function startHost(){
+    st.online = true; st.netRole = "host"; st.hostStatus = "loading"; st.hostMsg = null;
+    st.phase = "mp_host"; _render();
+    bindNetForLobby();
+    window.ElxiNet.host().then(function(code){
+      st.netCode = code;
+      if (st.phase === "mp_host") _render();   // show the code once the broker assigns it
+    }).catch(function(){ /* onStatus reports the error */ });
+  }
+
+  function renderHostWait(){
+    var wrap = mk("div","mp-wrap mp-lobby");
+    wrap.innerHTML = '<h2 class="mp-title">Your Game</h2>';
+
+    var status = st.hostStatus || "loading";
+    if (status === "error"){
+      wrap.appendChild(mk("p","mp-sub mp-net-err", esc(st.hostMsg || "Something went wrong.")));
+      var retry = mk("button","mp-start-btn","Try again");
+      retry.addEventListener("click", startHost);
+      wrap.appendChild(retry);
+      var b = mk("button","mp-ghost-btn","← Back"); b.addEventListener("click", leaveLobby);
+      wrap.appendChild(b);
+      root.appendChild(wrap); return;
+    }
+
+    if (status === "connected"){
+      wrap.appendChild(mk("p","mp-sub","Connected! Choose what to play."));
+      var go = mk("button","mp-start-btn","Continue →");
+      go.addEventListener("click", function(){ st.phase="mp_modeselect"; _render(); });
+      wrap.appendChild(go);
+      root.appendChild(wrap); return;
+    }
+
+    // loading / waiting
+    var card = mk("div","mp-code-card");
+    if (st.netCode){
+      card.innerHTML = '<div class="mp-code-label">Share this code</div>'+
+        '<div class="mp-code" id="mpCodeVal">'+esc(st.netCode)+'</div>';
+      var copy = mk("button","mp-copy-btn","Copy code");
+      copy.addEventListener("click", function(){
+        try{ navigator.clipboard.writeText(st.netCode); }catch(e){}
+        copy.textContent = "Copied ✓";
+        setTimeout(function(){ copy.textContent="Copy code"; }, 1600);
+      });
+      card.appendChild(copy);
+    } else {
+      card.innerHTML = '<div class="mp-code-label">Creating your game…</div><div class="mp-code mp-code-dim">····</div>';
+    }
+    wrap.appendChild(card);
+
+    var wait = mk("div","mp-wait");
+    wait.innerHTML = '<span class="mp-spinner"></span><span>Waiting for your friend to join…</span>';
+    wrap.appendChild(wait);
+
+    var cancel = mk("button","mp-ghost-btn","Cancel");
+    cancel.addEventListener("click", leaveLobby);
+    wrap.appendChild(cancel);
+
+    root.appendChild(wrap);
+  }
+
+  /* ── Guest: enter code, connect ── */
+  function renderJoin(){
+    var wrap = mk("div","mp-wrap mp-lobby");
+    wrap.innerHTML = '<h2 class="mp-title">Join a Game</h2><p class="mp-sub">Type the code your friend gave you.</p>';
+
+    var status = st.joinStatus || "idle";
+    var inputRow = mk("div","mp-join-row");
+    var input = mk("input","mp-code-input");
+    input.setAttribute("type","text");
+    input.setAttribute("maxlength","4");
+    input.setAttribute("autocapitalize","characters");
+    input.setAttribute("autocomplete","off");
+    input.setAttribute("placeholder","CODE");
+    input.value = st.joinCode || "";
+    input.addEventListener("input", function(){
+      input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
+      st.joinCode = input.value;
+    });
+    input.addEventListener("keydown", function(e){ if(e.key==="Enter") doJoin(); });
+    inputRow.appendChild(input);
+    wrap.appendChild(inputRow);
+
+    if (status === "joining" || status === "loading"){
+      var w = mk("div","mp-wait"); w.innerHTML = '<span class="mp-spinner"></span><span>Connecting…</span>';
+      wrap.appendChild(w);
+    } else if (status === "connected"){
+      wrap.appendChild(mk("p","mp-sub","Connected! Choose what to play."));
+      var go = mk("button","mp-start-btn","Continue →");
+      go.addEventListener("click", function(){ st.phase="mp_modeselect"; _render(); });
+      wrap.appendChild(go);
+      root.appendChild(wrap); return;
+    } else {
+      var connect = mk("button","mp-start-btn","Connect →");
+      connect.addEventListener("click", doJoin);
+      wrap.appendChild(connect);
+    }
+
+    if (st.joinError) wrap.appendChild(mk("p","mp-net-err", esc(st.joinError)));
+
+    var back = mk("button","mp-ghost-btn","← Back");
+    back.addEventListener("click", leaveLobby);
+    wrap.appendChild(back);
+
+    root.appendChild(wrap);
+    setTimeout(function(){ if(input && status==="idle") input.focus(); }, 30);
+  }
+
+  function doJoin(){
+    var code = (st.joinCode || "").trim();
+    if (code.length !== 4){ st.joinError = "Enter the 4-character code."; _render(); return; }
+    st.online = true; st.netRole = "guest"; st.joinStatus = "loading"; st.joinError = null;
+    _render();
+    bindNetForLobby();
+    window.ElxiNet.join(code).then(function(){
+      // onStatus -> connected handles render
+    }).catch(function(){ /* onStatus reports the error */ });
+  }
+
+  function leaveLobby(){
+    if (window.ElxiNet) window.ElxiNet.close();
+    st.online = false; st.netRole = null;
+    st.hostStatus = null; st.joinStatus = null; st.netCode = null;
+    st.phase = "mp_lobby"; _render();
+  }
+
+  /* ── Lobby-phase net wiring (status + disconnect) ── */
+  function bindNetForLobby(){
+    var Net = window.ElxiNet; if(!Net) return;
+    Net.onStatus = function(state, info){
+      if (st.netRole === "host"){
+        if (state === "waiting" || state === "loading") { st.hostStatus = state; if (info && info.code) st.netCode = info.code; }
+        else if (state === "connected") st.hostStatus = "connected";
+        else if (state === "error"){ st.hostStatus = "error"; st.hostMsg = (info&&info.message)||"Something went wrong."; }
+      } else if (st.netRole === "guest"){
+        if (state === "loading" || state === "joining") st.joinStatus = state;
+        else if (state === "connected") st.joinStatus = "connected";
+        else if (state === "error"){ st.joinStatus = "idle"; st.joinError = (info&&info.message)||"Couldn't connect."; }
+      }
+      // Only re-render if we're still inside a lobby screen.
+      if (st.phase === "mp_host" || st.phase === "mp_join") _render();
+    };
+    Net.onPeerLeave = function(){
+      if (typeof window.flToast === "function") window.flToast("Your friend disconnected.");
+      // Return to the lobby so a new game can be formed.
+      st.online = false; st.netRole = null; st.hostStatus = null; st.joinStatus = null;
+      st.phase = "mp_lobby";
+      if (root && root.style.display !== "none") _render();
+    };
+    // Game-message handling is attached per-mode when a synced game starts.
+    Net.onData = function(msg){ if (typeof st._netOnData === "function") st._netOnData(msg); };
+  }
+
+  /* ════════════════════════════════════════════════════
+     PHASE 0 — MULTIPLAYER MODE SELECT (Tournament vs Ratings War)
+  ════════════════════════════════════════════════════ */
+  function renderMpModeSelect(){
+    var wrap = mk("div","mp-wrap");
+    var sub = st.online ? "You're connected — pick a head-to-head game." : "Choose how you and your mates want to play.";
+    wrap.innerHTML = '<h2 class="mp-title">Multiplayer</h2><p class="mp-sub">'+sub+'</p>';
+    if (st.online){
+      wrap.appendChild(mk("div","mp-online-tag", "Online · code " + esc(st.netCode || (window.ElxiNet&&window.ElxiNet.code) || "")));
+    }
+    var grid = mk("div","mp-modeselect");
+
+    var t = mk("button","mp-ms-card m-mp");
+    t.innerHTML = '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>'+
+      '<span class="mp-ms-name">Draft Tournament</span><span class="mp-ms-hint">2–8 players each draft an all-time XI, then a knockout bracket decides the champion.</span>';
+    if (st.online){
+      // Online draft (shared live pool sync) isn't built yet — be honest and steer to the local flow.
+      t.classList.add("mp-ms-soon");
+      t.addEventListener("click", function(){
+        if (typeof window.flToast === "function")
+          window.flToast("Draft Tournament is local-only for now — try Ratings War online, or switch to Local.");
+      });
+    } else {
+      t.addEventListener("click", function(){ st.phase = "setup"; _render(); });
+    }
+    grid.appendChild(t);
+
+    var r = mk("button","mp-ms-card m-rw");
+    r.innerHTML = '<span class="mp-ms-badge">'+(st.online?"Online":"Head to head")+'</span>'+
+      '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3l6 6-3 3-6-6z"/><path d="M11.5 6L3 14.5 6 18l8.5-8.5"/><path d="M3 21l3-1M16 13l5 5-2 2-5-5"/></svg></span>'+
+      '<span class="mp-ms-name">Ratings War</span><span class="mp-ms-hint">'+
+      (st.online ? "Each of you builds blind on your own device, then the reveal decides it slot by slot."
+                 : "Two managers build blind — ratings hidden — then a position-by-position reveal decides each slot.")+'</span>';
+    r.addEventListener("click", function(){
+      if (st.online && window.startRatingsWarOnline){ st.phase = "idle"; window.startRatingsWarOnline(st.netRole); }
+      else if (window.startRatingsWar){ st.phase = "idle"; window.startRatingsWar(); }
+    });
+    grid.appendChild(r);
+
+    wrap.appendChild(grid);
+
+    if (st.online){
+      var back = mk("button","mp-ghost-btn","← Leave game");
+      back.addEventListener("click", function(){ if(window.ElxiNet) window.ElxiNet.close(); st.online=false; st.netRole=null; st.phase="mp_connect"; _render(); });
+      wrap.appendChild(back);
+    }
+
+    root.appendChild(wrap);
   }
 
   /* ════════════════════════════════════════════════════
@@ -388,7 +663,7 @@
     st.players = [];
     for (var i=0;i<st.numPlayers;i++){
       var raw = inputs[i] ? inputs[i].value.trim() : "";
-      st.players.push({ name: raw||("Player "+(i+1)), formation:"", manager:null, picks:[] });
+      st.players.push({ name: raw||("Player "+(i+1)), formation:"", manager:null, mgrSpun:false, picks:[] });
     }
     st.setupIdx = 0;
     st.handoffFrom = 0;
@@ -396,6 +671,9 @@
     st.lockedNames = {};
     st.currentSpin = null;
     st.pendingPick = null;
+    st.pendingHandoff = null;
+    st.simData = null;
+    st.simStep = -1;
     st.cur = 0;
     st.spinCount = 0;
     st.mgrSpinResult = null;
@@ -425,6 +703,19 @@
     /* ── Formation ── */
     var fSec = mk("div","mp-section");
     fSec.innerHTML = '<div class="mp-label">Formation <span class="mp-label-note">(each can only be chosen once)</span></div>';
+
+    /* Pitch preview — updates live when formation changes */
+    var pitchPreviewWrap = mk("div","setup-pitch-wrap mp-setup-pitch-wrap");
+    var pitchPreviewTitle = mk("div","pitch-title");
+    pitchPreviewTitle.id = "mpSetupPitchTitle";
+    pitchPreviewTitle.textContent = p.formation || "Choose a formation";
+    var pitchPreviewEl = mk("div");
+    pitchPreviewEl.id = "mpSetupPitch";
+    if(p.formation) pitchPreviewEl.innerHTML = buildWCPitch(p);
+    pitchPreviewWrap.appendChild(pitchPreviewTitle);
+    pitchPreviewWrap.appendChild(pitchPreviewEl);
+    fSec.appendChild(pitchPreviewWrap);
+
     var fGrid = mk("div","mp-formation-grid");
     Object.keys(MP_FORMATIONS).forEach(function(f){
       var takenBy = st.usedFormations.hasOwnProperty(f) ? st.usedFormations[f] : -1;
@@ -439,6 +730,12 @@
           if (p.formation && st.usedFormations[p.formation]===st.setupIdx) delete st.usedFormations[p.formation];
           p.formation = f;
           st.usedFormations[f] = st.setupIdx;
+          /* Update pitch preview inline without full re-render */
+          var pt=eid("mpSetupPitchTitle"); if(pt) pt.textContent=f;
+          var pe=eid("mpSetupPitch"); if(pe) pe.innerHTML=buildWCPitch(p);
+          fGrid.querySelectorAll(".mp-f-btn").forEach(function(x){ x.classList.remove("selected"); });
+          b.classList.add("selected");
+          /* Still need re-render to enable Confirm button */
           _render();
         });
       } else {
@@ -477,8 +774,9 @@
     stripEl.id = "mpMgrStrip";
     reelEl.appendChild(stripEl);
     spinWrap.appendChild(reelEl);
-    var spinBtn = mk("button","mp-spin-btn","🎰 Spin for manager");
+    var spinBtn = mk("button","mp-spin-btn"+(p.mgrSpun?" disabled":""),"🎰 "+(p.mgrSpun?"Manager appointed":"Spin for manager"));
     spinBtn.id = "mpMgrSpinBtn";
+    if(p.mgrSpun) spinBtn.disabled = true;
     spinWrap.appendChild(spinBtn);
     mSec.appendChild(spinWrap);
 
@@ -504,13 +802,22 @@
     root.appendChild(wrap);
 
     /* Wire up manager reel after DOM insert */
-    initMgrStrip(eid("mpMgrStrip"));
+    initMgrStrip(eid("mpMgrStrip"), p);
     eid("mpMgrSpinBtn").addEventListener("click", function(){
       doMgrSpin(eid("mpMgrStrip"), eid("mpMgrSpinBtn"), p);
     });
   }
 
-  function initMgrStrip(stripEl){
+  function initMgrStrip(stripEl, player){
+    if(!stripEl) return;
+    /* If this player already spun, lock the reel on the result */
+    if(player && player.mgrSpun && player.manager){
+      var s = styleById(player.manager.id);
+      stripEl.innerHTML = '<div class="mp-mgr-item highlight">'+s.emoji+' <span>'+esc(player.manager.name)+'</span></div>';
+      stripEl.style.transform = "translateY(0)";
+      stripEl.style.transition = "none";
+      return;
+    }
     var db = getMgrDbForMode(st.mpMode);
     var items = [];
     for (var i=0;i<24;i++){
@@ -552,6 +859,7 @@
         setTimeout(function(){
           _mgrSpinning = false;
           player.manager = { id:picked.s, emoji:style.emoji, name:picked.n, atk:style.atk, def:style.def, ko:style.ko, desc:style.desc };
+          player.mgrSpun = true;   /* lock — max 1 spin per person */
           try{ localStorage.setItem("wcxi_manager", JSON.stringify({id:picked.s, name:picked.n})); }catch(e){}
           _render();
         }, 560);
@@ -605,67 +913,105 @@
   var _draftSpinning = false;
 
   function renderDraft(){
+    /* ── Pass screen: show after a pick so player can manually hand over ── */
+    if (st.pendingHandoff) {
+      var fromP = st.players[st.pendingHandoff.from];
+      var toP   = st.players[st.pendingHandoff.to];
+      var lp    = st.pendingHandoff.lastPick;
+
+      var pw = mk("div","mp-wrap");
+      var passScreen = mk("div","mp-pass-screen");
+      /* Updated pitch */
+      var pitchDiv = mk("div","draft-pitch-wrap");
+      pitchDiv.style.width = "260px";
+      pitchDiv.innerHTML = buildWCPitch(fromP);
+      passScreen.appendChild(pitchDiv);
+      /* Confirmation */
+      var msg = mk("div","mp-pass-picked");
+      msg.innerHTML = '✓ <strong>'+esc(lp?lp.n:"Player")+'</strong> added as '+
+        (lp?'<strong>'+esc(lp.slot||lp.gp||lp.p)+'</strong>':'a pick')+
+        ' ('+fromP.picks.length+'/11)';
+      passScreen.appendChild(msg);
+      /* Pass button */
+      var passBtn = mk("button","mp-start-btn mp-pass-btn","🤝 Pass to "+esc(toP.name)+" →");
+      passBtn.addEventListener("click", function(){
+        st.cur = st.pendingHandoff.to;
+        st.pendingHandoff = null;
+        _render();
+      });
+      passScreen.appendChild(passBtn);
+      pw.appendChild(passScreen);
+      root.appendChild(pw);
+      return;
+    }
+
     var p = st.players[st.cur];
     var pickNum = p.picks.length + 1;
     var draftRound = Math.min.apply(null, st.players.map(function(pl){return pl.picks.length;})) + 1;
 
     var wrap = mk("div","mp-wrap mp-draft-wrap");
 
-    /* ── Header ── */
-    var head = mk("div","mp-draft-head");
-    head.innerHTML =
-      '<div class="mp-draft-player-name">'+esc(p.name)+'</div>'+
-      '<div class="mp-draft-meta">'+
+    /* ── WC-style header: name/meta left + small pitch right ── */
+    var head = mk("div","draft-head");
+    var headInfo = mk("div","draft-head-info");
+    headInfo.innerHTML =
+      '<div class="draft-team">'+esc(p.name)+'</div>'+
+      '<div class="draft-meta">'+
         'Pick <strong>'+pickNum+'</strong>/11 · Round '+draftRound+' · '+
         esc(p.formation)+' · '+(p.manager?p.manager.emoji+' '+esc(p.manager.name):'No manager')+
       '</div>';
+    head.appendChild(headInfo);
+    var pitchWrapHead = mk("div","draft-pitch-wrap");
+    pitchWrapHead.id = "mpPitchWrap";
+    pitchWrapHead.innerHTML = buildWCPitch(p);
+    head.appendChild(pitchWrapHead);
     wrap.appendChild(head);
 
-    /* ── Two-column layout: pitch | spin+squad ── */
-    var cols = mk("div","mp-draft-cols");
+    /* ── Spin machine (WC-style .machine) ── */
+    var machine = mk("div","machine");
+    var reels = mk("div","reels");
 
-    /* LEFT: formation pitch */
-    var pitchCol = mk("div","mp-draft-pitch-col");
-    pitchCol.innerHTML = '<div class="mp-pitch-title">'+esc(p.formation)+'</div>';
-    var pitchEl = mk("div","mp-pitch-visual-wrap");
-    pitchEl.id = "mpPitchWrap";
-    pitchEl.innerHTML = buildPitch(p);
-    pitchCol.appendChild(pitchEl);
-    cols.appendChild(pitchCol);
-
-    /* RIGHT: spin machine + squad panel */
-    var spinCol = mk("div","mp-draft-spin-col");
-
-    var machine = mk("div","mp-machine");
-    var reels = mk("div","mp-reels");
-
-    var cBox = mk("div","mp-reel-box");
-    cBox.innerHTML = '<div class="mp-reel-label">Club / Nation</div>';
-    var cReel = mk("div","mp-reel"); var cStrip = mk("div","mp-reel-strip"); cStrip.id="mpCS";
+    var cBox = mk("div","reel-box");
+    cBox.innerHTML = '<div class="reel-label">Club / Nation</div>';
+    var cReel = mk("div","reel"); var cStrip = mk("div","reel-strip"); cStrip.id="mpCS";
     cReel.appendChild(cStrip); cBox.appendChild(cReel); reels.appendChild(cBox);
 
-    var yBox = mk("div","mp-reel-box");
-    yBox.innerHTML = '<div class="mp-reel-label">Year</div>';
-    var yReel = mk("div","mp-reel"); var yStrip = mk("div","mp-reel-strip"); yStrip.id="mpYS";
+    var yBox = mk("div","reel-box");
+    yBox.innerHTML = '<div class="reel-label">Year</div>';
+    var yReel = mk("div","reel"); var yStrip = mk("div","reel-strip"); yStrip.id="mpYS";
     yReel.appendChild(yStrip); yBox.appendChild(yReel); reels.appendChild(yBox);
 
     machine.appendChild(reels);
-    var spinBtn = mk("button","mp-spin-btn big","SPIN");
+    var controls = mk("div","controls");
+    var spinBtn = mk("button","spin","SPIN");
     spinBtn.id = "mpDraftSpin";
-    machine.appendChild(spinBtn);
-    spinCol.appendChild(machine);
+    controls.appendChild(spinBtn);
+    machine.appendChild(controls);
+    wrap.appendChild(machine);
 
-    /* Squad panel (hidden until spin lands) */
-    var squadPanel = mk("div","mp-squad-panel");
+    /* ── Squad panel (hidden until spin lands) ── */
+    var squadPanel = mk("section","squad mp-squad-panel");
     squadPanel.id = "mpSquadPanel";
     squadPanel.style.display = "none";
-    spinCol.appendChild(squadPanel);
+    wrap.appendChild(squadPanel);
 
-    cols.appendChild(spinCol);
-    wrap.appendChild(cols);
+    /* ── XI list (WC-style .xi) ── */
+    var xiSec = mk("section","xi");
+    xiSec.innerHTML =
+      '<div class="xi-head"><h2>Your XI</h2>'+
+        '<div><span class="count" id="mpXiCount">'+p.picks.length+'/11</span>'+
+        ' <span class="formation">· '+esc(p.formation)+'</span></div>'+
+      '</div>';
+    var xiList = mk("div","xi-list"); xiList.id="mpXiList";
+    xiSec.appendChild(xiList);
+    wrap.appendChild(xiSec);
+
     root.appendChild(wrap);
 
-    /* Wire up after DOM insert */
+    /* Render XI list */
+    renderMPXiList(p, eid("mpXiList"));
+
+    /* Wire up strips and spin */
     initDraftStrips(eid("mpCS"), eid("mpYS"), st.currentSpin);
 
     eid("mpDraftSpin").addEventListener("click", function(){
@@ -681,11 +1027,53 @@
     }
   }
 
+  /* Build WC-style XI list grouped by line */
+  function renderMPXiList(player, el){
+    if(!el) return;
+    var f = MP_FORMATIONS[player.formation]; if(!f) return;
+    var bySlot = {};
+    (player.picks||[]).forEach(function(pk){
+      var s = pk.slot||pk.gp||pk.p||"MID";
+      if(!bySlot[s]) bySlot[s] = [];
+      bySlot[s].push(pk);
+    });
+    function pop(s){ var a=bySlot[s]; return a&&a.length?a.shift():null; }
+
+    var allLines = [["GK"]].concat(f.lines);
+    var lineNames = ["Goalkeeper","Defence","Midfield","Attack"];
+    /* For formations with more than 4 line groups */
+    while(lineNames.length < allLines.length) lineNames.push("Attack");
+
+    var html = "";
+    allLines.forEach(function(row, li){
+      html += '<div class="line-label">'+(lineNames[li]||"")+'</div>';
+      row.forEach(function(slot){
+        var lc = MP_LINE_OF[slot]||"MID";
+        var pk = pop(slot);
+        if(pk){
+          html += '<div class="xi-row"><span class="pos '+lc+'">'+slot+'</span>'+
+            '<span class="info"><span class="pn">'+esc(pk.n)+'</span>'+
+            '<span class="meta">'+esc(pk.country||"")+(pk.year?' &middot; '+pk.year:'')+'</span></span></div>';
+        } else {
+          html += '<div class="xi-row empty"><span class="pos '+lc+'">'+slot+'</span>'+
+            '<span class="info"><span class="pn slot-empty">'+slot+' — empty</span></span></div>';
+        }
+      });
+    });
+    el.innerHTML = html;
+  }
+
+  /* Reel item HTML — no flag emoji (flags are kept only in World Cup mode) */
+  function cItemHTML(c){
+    return '<div class="reel-item reel-item-noflag"><span class="name">'+esc(c)+'</span></div>';
+  }
+  function yItemHTML(y){ return '<div class="reel-item"><span class="year">'+y+'</span></div>'; }
+
   function initDraftStrips(cStrip, yStrip, currentSpin){
     /* If there's already a spin result, show it locked on the strips */
     if(currentSpin){
-      cStrip.innerHTML = '<div class="mp-reel-item landed"><span>'+esc(currentSpin.country)+'</span></div>';
-      yStrip.innerHTML = '<div class="mp-reel-item landed"><span>'+esc(currentSpin.year)+'</span></div>';
+      cStrip.innerHTML = cItemHTML(currentSpin.country);
+      yStrip.innerHTML = yItemHTML(currentSpin.year);
       cStrip.style.cssText = "transform:translateY(0);transition:none";
       yStrip.style.cssText = "transform:translateY(0);transition:none";
       return;
@@ -693,12 +1081,12 @@
     /* No spin yet — show placeholder idle items */
     var DATA = getData();
     var countries = Object.keys(DATA);
-    var BLUR = 10, IH = 56;
+    var BLUR = 10;
     var citems = [], yitems = [];
     for (var i=0;i<BLUR*2+1;i++){
       var c = countries[i%Math.max(countries.length,1)];
-      citems.push('<div class="mp-reel-item"><span>'+esc(c)+'</span></div>');
-      yitems.push('<div class="mp-reel-item"><span>'+(2024-((i*2)%30))+'</span></div>');
+      citems.push(cItemHTML(c));
+      yitems.push(yItemHTML(2024-((i*2)%30)));
     }
     cStrip.innerHTML = citems.join(""); cStrip.style.cssText = "transform:translateY(0);transition:none";
     yStrip.innerHTML = yitems.join(""); yStrip.style.cssText = "transform:translateY(0);transition:none";
@@ -751,11 +1139,11 @@
     var BLUR=10, IH=56;
     var citems=[], yitems=[];
     for (var i=0;i<BLUR;i++){
-      citems.push('<div class="mp-reel-item"><span>'+esc(countries[i%countries.length])+'</span></div>');
-      yitems.push('<div class="mp-reel-item"><span>'+(2024-i*2)+'</span></div>');
+      citems.push(cItemHTML(countries[i%countries.length]));
+      yitems.push(yItemHTML(2024-i*2));
     }
-    citems.push('<div class="mp-reel-item landed"><span>'+esc(pC)+'</span></div>');
-    yitems.push('<div class="mp-reel-item landed"><span>'+pY+'</span></div>');
+    citems.push(cItemHTML(pC));
+    yitems.push(yItemHTML(pY));
 
     cStrip.innerHTML = citems.join("");
     yStrip.innerHTML = yitems.join("");
@@ -775,10 +1163,10 @@
         function finishSpin(){
           cStrip.style.transition = "none";
           cStrip.style.transform = "translateY(0)";
-          cStrip.innerHTML = '<div class="mp-reel-item landed"><span>'+esc(pC)+'</span></div>';
+          cStrip.innerHTML = cItemHTML(pC);
           yStrip.style.transition = "none";
           yStrip.style.transform = "translateY(0)";
-          yStrip.innerHTML = '<div class="mp-reel-item landed"><span>'+esc(pY)+'</span></div>';
+          yStrip.innerHTML = yItemHTML(pY);
           _draftSpinning = false;
           st.currentSpin = { country:pC, year:pY, squad:pS };
           updateSpinBtn(spinBtn);
@@ -874,7 +1262,7 @@
       });
     }
 
-    /* Player tap → show chooser (or auto-assign if only one slot) */
+    /* Player tap → always show chooser so user explicitly confirms placement */
     panel.querySelectorAll(".player:not(.taken):not(.noslot)").forEach(function(el){
       el.addEventListener("click",function(){
         var name = el.getAttribute("data-pl-n");
@@ -882,18 +1270,10 @@
         if(!pl) return;
         var slots = eligibleSlots(pl, player);
         if(!slots.length) return;
-        if(slots.length===1){
-          /* Auto-assign — no chooser needed */
-          st.pendingPick = null;
-          draftPlayer(pl, spin, player, slots[0]);
-        } else {
-          /* Show chooser */
-          st.pendingPick = { squadPlayer:pl, spin:spin };
-          /* Update pitch + squad panel without re-spinning */
-          var pitchWrap = eid("mpPitchWrap");
-          if(pitchWrap) pitchWrap.innerHTML = buildPitch(player);
-          showSquadPanel(panel, spin, player);
-        }
+        st.pendingPick = { squadPlayer:pl, spin:spin };
+        var pitchWrap = eid("mpPitchWrap");
+        if(pitchWrap) pitchWrap.innerHTML = buildWCPitch(player);
+        showSquadPanel(panel, spin, player);
       });
     });
   }
@@ -916,51 +1296,60 @@
     var allDone = st.players.every(function(p){ return p.picks.length >= 11; });
     if (allDone){ st.phase = "tournament"; _render(); return; }
 
-    /* Find next player who still needs picks, cycling round-robin */
+    /* Find next player who still needs picks */
     var next = (st.cur + 1) % st.numPlayers;
     var loops = 0;
     while (st.players[next].picks.length >= 11 && loops < st.numPlayers){
       next = (next+1) % st.numPlayers;
       loops++;
     }
-
-    /* MUST set handoffFrom BEFORE _render() so renderHandoffDraft can read it */
-    st.handoffFrom = st.cur;
-    st.cur = next;
+    var lastPick = st.players[st.cur].picks[st.players[st.cur].picks.length-1];
+    /* Show pass screen — user must manually hand to next player */
+    st.pendingHandoff = { from: st.cur, to: next, lastPick: lastPick };
     st.currentSpin = null;
     st.pendingPick = null;
-    st.spinCount = 0;   /* reset spin counter for new player */
-    st.phase = "handoff_draft";
-    _render();
+    st.spinCount = 0;
+    _render(); /* stays in "draft" phase — renderDraft handles pendingHandoff */
   }
 
-  /* ════════════════════════════════════════════════════
-     PHASE 3b — HANDOFF between draft turns
-  ════════════════════════════════════════════════════ */
-  function renderHandoffDraft(){
-    var fromIdx = st.handoffFrom;
-    var fromPlayer = st.players[fromIdx] || st.players[0];
-    var toPlayer = st.players[st.cur];
-    var wrap = mk("div","mp-handoff-wrap");
-    wrap.innerHTML =
-      '<div class="mp-handoff-card">'+
-        '<div class="mp-handoff-done">✓ '+esc(fromPlayer.name)+' picked</div>'+
-        '<div class="mp-handoff-picks">'+fromPlayer.picks.length+'/11 players drafted</div>'+
-        '<div class="mp-handoff-arrow">↓</div>'+
-        '<div class="mp-handoff-next">Hand to</div>'+
-        '<div class="mp-handoff-name">'+esc(toPlayer.name)+'</div>'+
-        '<button class="mp-handoff-btn" id="mpDraftHandoffGo">I\'m ready →</button>'+
-      '</div>';
-    root.appendChild(wrap);
-    eid("mpDraftHandoffGo").addEventListener("click",function(){
-      st.phase = "draft";
-      _render();
-    });
-  }
+  /* renderHandoffDraft removed — pass handled inline in renderDraft */
 
   /* ════════════════════════════════════════════════════
      FORMATION PITCH (replaces old buildMiniPitch)
   ════════════════════════════════════════════════════ */
+  /* WC-style pitch using .pitch / .pdot CSS — same look as single-player mode */
+  function buildWCPitch(player){
+    var f = MP_FORMATIONS[player.formation];
+    if(!f) return "";
+    var bySlot = {};
+    (player.picks||[]).forEach(function(pk){
+      var s = pk.slot||pk.gp||pk.p||"MID";
+      if(!bySlot[s]) bySlot[s] = [];
+      bySlot[s].push(pk);
+    });
+    function pop(slot){ var a = bySlot[slot]; return a&&a.length ? a.shift() : null; }
+    var rows = f.lines.slice().reverse().concat([["GK"]]);
+    var html = '<div class="pitch">';
+    rows.forEach(function(row){
+      html += '<div class="pitch-row">';
+      row.forEach(function(slot){
+        var lineCls = MP_LINE_OF[slot]||"MID";
+        var pk = pop(slot);
+        if(pk){
+          var sn = pk.n.split(" ").pop();
+          html += '<div class="pdot filled '+lineCls+'">'+
+            '<span class="dot-pos">'+slot+'</span>'+
+            '<span class="dot-name">'+esc(sn)+'</span>'+
+            '</div>';
+        } else {
+          html += '<div class="pdot '+lineCls+'"><span class="dot-pos">'+slot+'</span></div>';
+        }
+      });
+      html += '</div>';
+    });
+    return html + '</div>';
+  }
+
   function buildPitch(player){
     var f = MP_FORMATIONS[player.formation];
     if(!f) return "";
@@ -1003,137 +1392,189 @@
   }
 
   /* ════════════════════════════════════════════════════
-     PHASE 4 — TOURNAMENT
+     PHASE 4 — TOURNAMENT (step-by-step simulation)
   ════════════════════════════════════════════════════ */
   function renderTournament(){
+    if (!st.simData) _buildSimData();
+    var sd = st.simData;
+    var gTotal = sd.groupMatches.length;
+    var kTotal = sd.knockouts.length;
+    /* simStep: -1=pregame, 0..gTotal-1=reveal group match N, gTotal=standings,
+       gTotal+1..gTotal+kTotal=reveal KO match N, gTotal+kTotal+1=champion */
+    var maxStep = gTotal + kTotal + 1;
+
     var wrap = mk("div","mp-wrap");
-    wrap.innerHTML = '<h2 class="mp-title">🏆 Tournament Results</h2>';
+    wrap.innerHTML = '<h2 class="mp-title">🏆 Tournament</h2>';
 
+    /* ── PRE-GAME: show teams ── */
+    if (st.simStep < 0) {
+      var prevSec = mk("div","mp-section");
+      prevSec.innerHTML = '<div class="mp-label">The Teams</div>';
+      st.players.forEach(function(p){
+        var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+pk.r;},0)/p.picks.length) : 0;
+        var d = mk("div","mp-team-preview");
+        d.innerHTML = '<span style="font-weight:700">'+esc(p.name)+'</span>'+
+          '<span style="color:var(--txt-dim);font-size:.82rem">'+esc(p.formation)+'</span>'+
+          (p.manager?'<span>'+p.manager.emoji+'</span>':'')+
+          '<span class="mp-tc-avg">Avg '+avg+'</span>';
+        prevSec.appendChild(d);
+      });
+      wrap.appendChild(prevSec);
+      var beginBtn = mk("button","mp-start-btn","🎬 Begin Simulation →");
+      beginBtn.addEventListener("click",function(){ st.simStep=0; _render(); });
+      wrap.appendChild(beginBtn);
+      root.appendChild(wrap); return;
+    }
+
+    /* ── GROUP STAGE: reveal matches one by one ── */
+    var revealed = Math.min(st.simStep, gTotal);
+    if (revealed > 0) {
+      var gSec = mk("div","mp-section");
+      gSec.innerHTML = '<div class="mp-label">Group Stage</div>';
+      sd.groupMatches.slice(0, revealed).forEach(function(m){
+        var mc = mk("div","mp-sim-match");
+        mc.innerHTML =
+          '<span class="mp-sim-ta'+(m.goalsA>m.goalsB?" win":"")+'">'+esc(m.nameA)+'</span>'+
+          '<span class="mp-sim-score">'+m.goalsA+' – '+m.goalsB+'</span>'+
+          '<span class="mp-sim-tb'+(m.goalsB>m.goalsA?" win":"")+'">'+esc(m.nameB)+'</span>';
+        gSec.appendChild(mc);
+      });
+      wrap.appendChild(gSec);
+    }
+
+    /* ── STANDINGS: show once all group matches revealed ── */
+    if (st.simStep >= gTotal) {
+      var stSec = mk("div","mp-section");
+      stSec.innerHTML = '<div class="mp-label">Standings</div>';
+      var advCount = sd.format==="h2h"?0: sd.format==="group_final"?2:4;
+      var th = '<table class="mp-table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
+      sd.standings.forEach(function(row,i){
+        th += '<tr class="'+(i<advCount?"mp-row-adv":"")+'">'+
+          '<td>'+(i+1)+'</td><td>'+esc(row.name)+'</td>'+
+          '<td>'+row.played+'</td><td>'+row.w+'</td><td>'+row.d+'</td><td>'+row.l+'</td>'+
+          '<td>'+row.gf+'</td><td>'+row.ga+'</td><td>'+(row.gf-row.ga>0?"+":"")+(row.gf-row.ga)+'</td>'+
+          '<td><b>'+row.pts+'</b></td></tr>';
+      });
+      stSec.innerHTML += th + '</tbody></table>';
+      wrap.appendChild(stSec);
+    }
+
+    /* ── KNOCKOUTS: reveal one match at a time ── */
+    if (st.simStep > gTotal && kTotal > 0) {
+      var koRevealed = Math.min(st.simStep - gTotal - 1, kTotal);
+      if (koRevealed > 0) {
+        var curStage = null, koSec = null;
+        sd.knockouts.slice(0, koRevealed).forEach(function(ko){
+          if (ko.stage !== curStage) {
+            curStage = ko.stage;
+            koSec = mk("div","mp-section");
+            koSec.innerHTML = '<div class="mp-label">'+esc(ko.stage)+'</div>';
+            wrap.appendChild(koSec);
+          }
+          koSec.appendChild(matchCard(ko.nameA, ko.nameB, ko.result));
+        });
+      }
+    }
+
+    /* ── CHAMPION banner ── */
+    if (st.simStep >= maxStep) {
+      var banner = mk("div","mp-champion");
+      banner.innerHTML = '🏆<br><span class="mp-champ-name">'+esc(sd.champion)+'</span><br><span class="mp-champ-sub">Champion!</span>';
+      wrap.appendChild(banner);
+
+      /* Team summaries */
+      var summSec = mk("div","mp-section");
+      summSec.innerHTML = '<div class="mp-label">All Teams</div>';
+      st.players.forEach(function(p){
+        var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+pk.r;},0)/p.picks.length):0;
+        var card = mk("div","mp-team-card");
+        card.innerHTML = '<div class="mp-tc-head"><span class="mp-tc-name">'+esc(p.name)+'</span>'+
+          '<span class="mp-tc-info">'+esc(p.formation)+' · '+(p.manager?p.manager.emoji+" "+esc(p.manager.name):"")+'</span>'+
+          '<span class="mp-tc-avg">Avg '+avg+'</span></div>';
+        var ul = mk("ul","mp-tc-ul");
+        p.picks.forEach(function(pk){
+          var li = mk("li","mp-tc-player");
+          li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
+            '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
+            '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
+            '<span class="mp-tc-r">'+pk.r+'</span>';
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+        summSec.appendChild(card);
+      });
+      wrap.appendChild(summSec);
+
+      var again = mk("button","mp-start-btn","← Back to Home");
+      again.addEventListener("click", goHome);
+      wrap.appendChild(again);
+    }
+
+    /* ── Navigation buttons ── */
+    if (st.simStep < maxStep) {
+      var navDiv = mk("div","mp-sim-nav");
+
+      var label = st.simStep < gTotal ? "Next Match →" :
+                  st.simStep === gTotal ? (kTotal>0 ? "Knockouts →" : "See Champion →") :
+                  st.simStep < gTotal+kTotal ? "Next Match →" : "See Champion →";
+      var nextBtn = mk("button","mp-start-btn",label);
+      nextBtn.addEventListener("click",function(){ st.simStep++; _render(); });
+      navDiv.appendChild(nextBtn);
+
+      if (st.simStep < maxStep - 1) {
+        var skipBtn = mk("button","btn-ghost","Skip to End →");
+        skipBtn.addEventListener("click",function(){ st.simStep=maxStep; _render(); });
+        navDiv.appendChild(skipBtn);
+      }
+      wrap.appendChild(navDiv);
+    }
+
+    root.appendChild(wrap);
+  }
+
+  /* Pre-compute all tournament results once */
+  function _buildSimData(){
     var n = st.players.length;
-    /* Respect user-chosen tournament format; "auto" picks by player count */
     var format;
-    if(st.tournamentFormat==="h2h")        format = "h2h";
-    else if(st.tournamentFormat==="group") format = "group_final";
-    else if(st.tournamentFormat==="full")  format = "group_semis";
-    else /* auto */                        format = n===2 ? "h2h" : n<=5 ? "group_final" : "group_semis";
+    if(st.tournamentFormat==="h2h")        format="h2h";
+    else if(st.tournamentFormat==="group") format="group_final";
+    else if(st.tournamentFormat==="full")  format="group_semis";
+    else format = n===2?"h2h":n<=5?"group_final":"group_semis";
 
-    /* ── Group Stage ── */
     var gs = runGroupStage();
     var sorted = gs.standings.slice().sort(function(a,b){
       return b.pts-a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf-a.gf;
     });
 
-    /* Match results */
-    var matchSec = mk("div","mp-section");
-    matchSec.innerHTML = '<div class="mp-label">Group Stage</div>';
-    gs.matches.forEach(function(m){
-      var mc = mk("div","mp-match-row");
-      mc.innerHTML =
-        '<span class="mp-mr-a'+(m.goalsA>m.goalsB?" win":m.goalsA<m.goalsB?" loss":"")+'">'+esc(m.nameA)+'</span>'+
-        '<span class="mp-mr-score">'+m.goalsA+' – '+m.goalsB+'</span>'+
-        '<span class="mp-mr-b'+(m.goalsB>m.goalsA?" win":m.goalsB<m.goalsA?" loss":"")+'">'+esc(m.nameB)+'</span>';
-      matchSec.appendChild(mc);
-    });
-    wrap.appendChild(matchSec);
-
-    /* Standings table */
-    var tableSec = mk("div","mp-section");
-    tableSec.innerHTML = '<div class="mp-label">Standings</div>';
-    var advCount = format==="h2h" ? 0 : format==="group_final" ? 2 : 4;
-    var th = '<table class="mp-table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
-    sorted.forEach(function(row,i){
-      var adv = i < advCount;
-      th += '<tr class="'+(adv?"mp-row-adv":"")+'">'+
-        '<td>'+(i+1)+'</td><td>'+esc(row.name)+'</td>'+
-        '<td>'+row.played+'</td><td>'+row.w+'</td><td>'+row.d+'</td><td>'+row.l+'</td>'+
-        '<td>'+row.gf+'</td><td>'+row.ga+'</td><td>'+(row.gf-row.ga>0?"+":"")+(row.gf-row.ga)+'</td>'+
-        '<td><b>'+row.pts+'</b></td></tr>';
-    });
-    th += '</tbody></table>';
-    tableSec.innerHTML += th;
-    wrap.appendChild(tableSec);
-
-    /* ── Knockouts ── */
-    var champion;
-
-    if (format === "h2h"){
-      /* Head-to-head: aggregate across both legs */
-      var agg = {};
+    var knockouts = [], champion;
+    if (format==="h2h"){
+      var agg={};
       st.players.forEach(function(p){ agg[p.name]={gf:0,ga:0}; });
       gs.matches.forEach(function(m){
-        agg[m.nameA].gf += m.goalsA; agg[m.nameA].ga += m.goalsB;
-        agg[m.nameB].gf += m.goalsB; agg[m.nameB].ga += m.goalsA;
+        agg[m.nameA].gf+=m.goalsA; agg[m.nameA].ga+=m.goalsB;
+        agg[m.nameB].gf+=m.goalsB; agg[m.nameB].ga+=m.goalsA;
       });
-      var p1 = sorted[0], p2 = sorted[1];
-      if (agg[p1.name].gf !== agg[p2.name].gf) {
-        champion = agg[p1.name].gf > agg[p2.name].gf ? p1.name : p2.name;
-      } else {
-        champion = Math.random()<0.5 ? p1.name : p2.name;
-      }
-
-    } else if (format === "group_final"){
-      var finRes = simKO(sorted[0], sorted[1]);
-      var koSec = mk("div","mp-section");
-      koSec.innerHTML = '<div class="mp-label">🏆 Final</div>';
-      koSec.appendChild(matchCard(sorted[0].name, sorted[1].name, finRes));
-      wrap.appendChild(koSec);
-      champion = finRes.winner;
-
+      var p1=sorted[0],p2=sorted[1];
+      champion = agg[p1.name].gf>agg[p2.name].gf ? p1.name :
+                 agg[p2.name].gf>agg[p1.name].gf ? p2.name :
+                 (Math.random()<0.5?p1.name:p2.name);
+    } else if (format==="group_final"){
+      var fin=simKO(sorted[0],sorted[1]);
+      knockouts.push({stage:"🏆 Final",nameA:sorted[0].name,nameB:sorted[1].name,result:fin});
+      champion=fin.winner;
     } else {
-      /* Semi-finals: 1v4, 2v3 */
-      var sf1 = simKO(sorted[0], sorted[3]);
-      var sf2 = simKO(sorted[1], sorted[2]);
-      var sfSec = mk("div","mp-section");
-      sfSec.innerHTML = '<div class="mp-label">Semi-Finals</div>';
-      sfSec.appendChild(matchCard(sorted[0].name, sorted[3].name, sf1));
-      sfSec.appendChild(matchCard(sorted[1].name, sorted[2].name, sf2));
-      wrap.appendChild(sfSec);
-
-      var finA = sf1.winner===sorted[0].name ? sorted[0] : sorted[3];
-      var finB = sf2.winner===sorted[1].name ? sorted[1] : sorted[2];
-      var final = simKO(finA, finB);
-      var finSec2 = mk("div","mp-section");
-      finSec2.innerHTML = '<div class="mp-label">🏆 Final</div>';
-      finSec2.appendChild(matchCard(finA.name, finB.name, final));
-      wrap.appendChild(finSec2);
-      champion = final.winner;
+      var sf1=simKO(sorted[0],sorted[3]);
+      var sf2=simKO(sorted[1],sorted[2]);
+      knockouts.push({stage:"Semi-Final",nameA:sorted[0].name,nameB:sorted[3].name,result:sf1});
+      knockouts.push({stage:"Semi-Final",nameA:sorted[1].name,nameB:sorted[2].name,result:sf2});
+      var finA=sf1.winner===sorted[0].name?sorted[0]:sorted[3];
+      var finB=sf2.winner===sorted[1].name?sorted[1]:sorted[2];
+      var finM=simKO(finA,finB);
+      knockouts.push({stage:"🏆 Final",nameA:finA.name,nameB:finB.name,result:finM});
+      champion=finM.winner;
     }
-
-    /* ── Champion banner ── */
-    var banner = mk("div","mp-champion");
-    banner.innerHTML = '🏆<br><span class="mp-champ-name">'+esc(champion)+'</span><br><span class="mp-champ-sub">Champion!</span>';
-    wrap.appendChild(banner);
-
-    /* ── Team summaries ── */
-    var summSec = mk("div","mp-section");
-    summSec.innerHTML = '<div class="mp-label">All Teams</div>';
-    st.players.forEach(function(p){
-      var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+pk.r;},0)/p.picks.length) : 0;
-      var card = mk("div","mp-team-card");
-      card.innerHTML =
-        '<div class="mp-tc-head"><span class="mp-tc-name">'+esc(p.name)+'</span>'+
-        '<span class="mp-tc-info">'+esc(p.formation)+' · '+(p.manager?p.manager.emoji+" "+esc(p.manager.name):"")+'</span>'+
-        '<span class="mp-tc-avg">Avg '+avg+'</span></div>';
-      var ul = mk("ul","mp-tc-ul");
-      p.picks.forEach(function(pk){
-        var li = mk("li","mp-tc-player");
-        li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
-          '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
-          '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
-          '<span class="mp-tc-r">'+pk.r+'</span>';
-        ul.appendChild(li);
-      });
-      card.appendChild(ul);
-      summSec.appendChild(card);
-    });
-    wrap.appendChild(summSec);
-
-    /* ── Play again ── */
-    var again = mk("button","mp-start-btn","← Back to Home");
-    again.addEventListener("click", goHome);
-    wrap.appendChild(again);
-
-    root.appendChild(wrap);
+    st.simData = {format:format, groupMatches:gs.matches, standings:sorted, knockouts:knockouts, champion:champion};
+    st.simStep = -1;
   }
 
   /* ── Group stage engine ── */

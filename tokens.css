@@ -1,0 +1,158 @@
+/* ============================================================
+   ELEVEN XI — FLOODLIGHTS DESIGN TOKENS
+   Three layers: primitive → semantic → component.
+   Components must only ever reference semantic/component tokens,
+   never raw primitives or hex. This keeps light/dark consistent.
+   ============================================================ */
+
+/* ---------- 1. PRIMITIVES (raw values, never used directly in components) ---------- */
+:root {
+  /* colour ramp */
+  --p-midnight:   #0B1020;
+  --p-midnight-2: #0E1530;
+  --p-slate-900:  #131A30;
+  --p-slate-800:  #19223E;
+  --p-slate-700:  #222C4D;
+  --p-slate-600:  #2C3A63;
+
+  --p-violet-300: #B9A8FF;
+  --p-violet-400: #9A82FF;
+  --p-violet-500: #7C5CFC;
+  --p-violet-600: #6A47ED;
+
+  --p-cyan-300:   #5BF0DC;
+  --p-cyan-400:   #22E0C8;
+  --p-cyan-500:   #12C3AD;
+
+  --p-coral-400:  #FF7A59;
+  --p-coral-500:  #F15E3A;
+
+  --p-gold-400:   #F5B43C;
+
+  --p-white:      #ECF1FF;
+  --p-mist:       #AEB7D6;
+  --p-mute:       #828DAD;
+
+  --p-paper:      #F2F4FB;
+  --p-card-light: #FFFFFF;
+  --p-ink:        #0E1426;
+  --p-ink-dim:    #46506B;
+  --p-ink-mute:   #6A7592;
+
+  /* spacing — 4 / 8 rhythm */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
+
+  /* radii */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-pill: 999px;
+
+  /* fluid type scale (1.25 modular, clamped) */
+  --t-display: clamp(36px, 7vw, 60px);
+  --t-h1:      clamp(26px, 4.4vw, 40px);
+  --t-h2:      clamp(20px, 3vw, 27px);
+  --t-h3:      clamp(17px, 2.2vw, 20px);
+  --t-body:    16px;
+  --t-sm:      14px;
+  --t-xs:      12.5px;
+  --t-2xs:     11px;
+
+  /* fonts */
+  --font-display: "Bricolage Grotesque", "Inter", system-ui, -apple-system, sans-serif;
+  --font-body:    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* motion */
+  --ease-out:    cubic-bezier(.22,.7,.2,1);
+  --ease-spring: cubic-bezier(.34,1.4,.5,1);
+  --dur-1: 140ms; --dur-2: 220ms; --dur-3: 340ms;
+
+  /* elevation */
+  --sh-1: 0 2px 12px rgba(2,4,12,.35);
+  --sh-2: 0 16px 40px rgba(2,4,12,.5);
+  --sh-glow-primary: 0 10px 30px rgba(124,92,252,.38);
+  --sh-glow-cyan:    0 10px 30px rgba(34,224,200,.28);
+
+  /* z-scale */
+  --z-base: 0; --z-raised: 10; --z-sticky: 40; --z-dock: 80; --z-modal: 1000; --z-toast: 1200;
+}
+
+/* ---------- 2. SEMANTIC (purpose aliases) — DARK is default ---------- */
+:root {
+  --bg:           var(--p-midnight);
+  --bg-gradient:  radial-gradient(125% 85% at 82% -8%, rgba(124,92,252,.16), transparent 55%),
+                  radial-gradient(95% 75% at -5% 108%, rgba(34,224,200,.10), transparent 55%),
+                  var(--p-midnight);
+  --surface:      var(--p-slate-900);
+  --surface-2:    var(--p-slate-800);
+  --surface-3:    var(--p-slate-700);
+
+  --text:         var(--p-white);
+  --text-dim:     var(--p-mist);
+  --text-mute:    var(--p-mute);
+
+  --line:         rgba(255,255,255,.09);
+  --line-strong:  rgba(255,255,255,.16);
+
+  --primary:      var(--p-violet-500);
+  --primary-hi:   var(--p-violet-400);
+  --primary-lo:   var(--p-violet-600);
+  --on-primary:   #0A0A1A;
+
+  --positive:     var(--p-cyan-400);
+  --on-positive:  #04201B;
+  --warning:      var(--p-coral-400);
+  --on-warning:   #1E0A04;
+  --champion:     var(--p-gold-400);
+  --on-champion:  #231603;
+
+  --focus-ring:   var(--p-violet-400);
+}
+
+/* light theme overrides */
+body.light {
+  --bg:           var(--p-paper);
+  --bg-gradient:  radial-gradient(125% 85% at 82% -8%, rgba(124,92,252,.10), transparent 55%),
+                  radial-gradient(95% 75% at -5% 108%, rgba(18,195,173,.08), transparent 55%),
+                  var(--p-paper);
+  --surface:      var(--p-card-light);
+  --surface-2:    #EEF1FA;
+  --surface-3:    #E4E9F6;
+
+  --text:         var(--p-ink);
+  --text-dim:     var(--p-ink-dim);
+  --text-mute:    var(--p-ink-mute);
+
+  --line:         rgba(14,20,38,.10);
+  --line-strong:  rgba(14,20,38,.18);
+
+  --primary:      var(--p-violet-600);
+  --primary-hi:   var(--p-violet-500);
+  --primary-lo:   #5736d6;
+  --on-primary:   #FFFFFF;
+
+  --positive:     var(--p-cyan-500);
+  --on-positive:  #FFFFFF;
+  --warning:      var(--p-coral-500);
+  --on-warning:   #FFFFFF;
+  --champion:     #C98A12;
+
+  --sh-1: 0 2px 12px rgba(14,20,38,.10);
+  --sh-2: 0 16px 40px rgba(14,20,38,.14);
+  --focus-ring:   var(--p-violet-600);
+}
+
+/* ---------- 3. COMPONENT TOKENS ---------- */
+:root {
+  --btn-primary-bg:   linear-gradient(180deg, var(--primary-hi), var(--primary));
+  --btn-primary-fg:   var(--on-primary);
+  --card-bg:          linear-gradient(180deg, var(--surface), var(--surface-2));
+  --card-border:      1px solid var(--line);
+  --chip-bg:          rgba(124,92,252,.14);
+  --pitch-bg:         linear-gradient(180deg, #0C1426, #0A1120);
+  --pitch-line:       rgba(34,224,200,.22);
+}
+body.light :root, body.light {
+  --card-bg:    linear-gradient(180deg, #FFFFFF, #F4F6FC);
+  --pitch-bg:   linear-gradient(180deg, #EAF6F3, #E2EEF8);
+  --pitch-line: rgba(18,160,140,.35);
+  --chip-bg:    rgba(106,71,237,.10);
+}

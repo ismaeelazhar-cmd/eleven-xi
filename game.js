@@ -107,6 +107,8 @@
   /* Expose for other modules (league, multiplayer) */
   window.WCXI_MANAGERS    = MANAGERS;
   window.WCXI_MANAGERS_DB = MANAGERS_DB;
+  /* Shared leaderboard API so League / Multiplayer can post per-mode scores */
+  window.WCXI_addScore = function (e) { try { addScore(e); } catch (err) {} };
 
   // ---- state ----
   var squad = [];        // [{id,n,p(broad),r,slot(granular),country,year}]
@@ -128,6 +130,7 @@
   var difficulty = "Pro";
   function diffRerolls() { for (var i = 0; i < DIFFICULTIES.length; i++) if (DIFFICULTIES[i].id === difficulty) return DIFFICULTIES[i].rr; return 3; }
   var boardTab = "daily";
+  var boardMode = "all";
   var lastSim = null;
   var reveal = null;  // staged World Cup reveal state
   var lReveal = null; // staged League reveal state
@@ -876,22 +879,31 @@
   function saveBoard(a) { try { localStorage.setItem(LB_KEY, JSON.stringify(a)); } catch (e) {} }
   function addScore(e) { var a = loadBoard(); a.push(e); saveBoard(a); }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
+  function modeLabel(m) {
+    return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" : "League";
+  }
   function renderBoard() {
     Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
       b.className = "seg-opt" + (b.getAttribute("data-board") === boardTab ? " active" : "");
     });
+    var modeTabs = document.getElementById("boardModes");
+    if (modeTabs) Array.prototype.forEach.call(modeTabs.querySelectorAll(".seg-opt"), function (b) {
+      b.className = "seg-opt" + (b.getAttribute("data-mode") === boardMode ? " active" : "");
+    });
     var all = loadBoard(), now = Date.now();
     var filtered = all.filter(function (e) {
+      if (boardMode !== "all" && (e.mode || "league") !== boardMode) return false;
       if (boardTab === "daily") return sameDay(e.ts, now);
       if (boardTab === "weekly") return (now - e.ts) <= 7 * 86400000;
       return true;
     });
     filtered.sort(function (a, b) { return b.score - a.score; });
     var top = filtered.slice(0, 25);
-    if (!top.length) { elBoardBody.innerHTML = '<div class="empty-note">No scores yet — finish a game to set one!</div>'; return; }
+    if (!top.length) { elBoardBody.innerHTML = '<div class="empty-note">No scores yet — finish a game in this mode to set one!</div>'; return; }
+    var showModeCol = (boardMode === "all");
     var html = '<div class="board-list">';
     top.forEach(function (e, i) {
-      html += '<div class="board-row' + (i < 3 ? " top3" : "") + '"><span class="brank">' + (i + 1) + "</span><span class=\"bname\">" + esc(e.name) + "</span><span class=\"bres\">" + esc(e.result || "") + " · " + (e.mode === "wc" ? "WC" : e.mode === "cl" ? "CL" : "League") + "</span><span class=\"bscore\">" + e.score + "</span></div>";
+      html += '<div class="board-row' + (i < 3 ? " top3" : "") + '"><span class="brank">' + (i + 1) + "</span><span class=\"bname\">" + esc(e.name) + "</span><span class=\"bres\">" + esc(e.result || "") + (showModeCol ? " · " + modeLabel(e.mode) : "") + "</span><span class=\"bscore\">" + e.score + "</span></div>";
     });
     elBoardBody.innerHTML = html + "</div>";
   }
@@ -1130,6 +1142,10 @@
   $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
   Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
     b.addEventListener("click", function () { boardTab = b.getAttribute("data-board"); renderBoard(); });
+  });
+  var _bm = document.getElementById("boardModes");
+  if (_bm) Array.prototype.forEach.call(_bm.querySelectorAll(".seg-opt"), function (b) {
+    b.addEventListener("click", function () { boardMode = b.getAttribute("data-mode"); renderBoard(); });
   });
 
   // ---- PWA ----
