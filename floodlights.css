@@ -188,12 +188,9 @@ body.light {
 }
 /* slot-machine reel + pitch on the token language */
 .reel { border-radius: var(--r-md); }
-.pitch, .draft-pitch-wrap .pitch { background: var(--pitch-bg); border:1px solid var(--pitch-line); }
+.pitch, .draft-pitch-wrap .pitch { background: var(--pitch-bg); border:1px solid var(--pitch-line); box-shadow: 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.5); }
+/* glassy dots — filled per-position colour handled by premium styles in style.css */
 .pdot { border-color: var(--pitch-line); }
-.pdot.filled.GK  { background: var(--champion); color: var(--on-champion); }
-.pdot.filled.DEF { background: var(--positive); color: var(--on-positive); }
-.pdot.filled.MID { background: var(--primary);  color: var(--on-primary); }
-.pdot.filled.FWD { background: var(--warning);  color: var(--on-warning); }
 /* active chips/segments → violet */
 .formation-opt.active, .manager-opt.active, .seg-opt.active, .tg-opt.active, .diff-opt.active, .lg-card:hover {
   border-color: var(--primary) !important; color: var(--text) !important;

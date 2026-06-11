@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: New master task list. T2 (emoji flag removal) ✅ done. T3 (Ratings War → Duels rename) ✅ done. Cache wcxi-v95, ratingswar.js v89, multiplayer.js v88. Next: T4 formation view redesign._
+_Last checkpoint: T4 formation view redesign ✅ done. Cache wcxi-v97. Next: T5 Duels game setup (mirror normal flow: league select → spin → squad → position-by-position picking, ratings hidden)._
 
 ---
 
@@ -110,7 +110,7 @@ _Last checkpoint: New master task list. T2 (emoji flag removal) ✅ done. T3 (Ra
 - ✅ **T1** Resumed; read HANDOVER.md + PROGRESS.md.
 - ✅ **T2** Emoji flag removal — removed from all modes (game.js ×6, league.js ×4, multiplayer.js ×2, ratingswar.js ×1). Kept ONLY in WC spin wheel (`countryItemHTML` in game.js) and Euro spin wheel. `sw.js` → wcxi-v95, versions bumped.
 - ✅ **T3** Rename Ratings War → Duels — all user-visible strings, function names (`startRatingsWar`→`startDuels`, `startRatingsWarOnline`→`startDuelsOnline`), mode card label in multiplayer.js, online kicker, quit dialog, comments. Filename `ratingswar.js` unchanged (internal only). docs + eleven-xi.html updated.
-- ⏳ **T4** Formation view redesign (premium pitch, glassy position circles, player-into-position animations, rating colours). ← NEXT
+- ✅ **T4** Formation view redesign — SVG pitch markings (both penalty boxes, halfway line, centre circle, centre spot, GK area) baked into `--pitch-bg` token. Glassy frosted position circles with position-colour ring (coral FWD/violet MID/teal DEF/gold GK). `dotPopIn` spring animation on fill. Rating tier text colours (r-gold ≥90, r-elite 85-89, r-great 80-84, r-good 75-79). style.css v77, tokens.css v73, floodlights.css v86, game.js v81. Cache wcxi-v97.
 - ⏳ **T5** Duels game setup (mirror normal flow: league select → spin → squad panel → position-by-position picking, ratings hidden throughout)
 - ⏳ **T6** Duels rules screen (rules pop-out accessible during setup)
 - ⏳ **T7** Duels tournament structure (2-player, 3-player round robin, 4-player free-for-all/bracket)

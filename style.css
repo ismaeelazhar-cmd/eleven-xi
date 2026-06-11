@@ -1060,23 +1060,79 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 /* ===== Remove slot-machine centre payline ===== */
 .reel::after { display: none !important; }
 
-/* ===== Cleaner formation pitch (less tacky) ===== */
+/* ===== Premium formation pitch ===== */
+@keyframes dotPopIn {
+  from { transform: scale(0.35); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+@keyframes dotGlow {
+  0%,100% { box-shadow: var(--pdot-shadow), 0 0 8px var(--pdot-color); }
+  50%      { box-shadow: var(--pdot-shadow), 0 0 18px var(--pdot-color); }
+}
 .pitch {
-  background: linear-gradient(180deg, #121821, #0b0f15);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+  background:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%2322E0C8' stroke-opacity='0.14' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%2322E0C8' stroke-opacity='0.12' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='1.2' fill='%2322E0C8' fill-opacity='0.15'/%3E%3Crect x='25' y='3' width='50' height='16' fill='none' stroke='%2322E0C8' stroke-opacity='0.10' stroke-width='0.35'/%3E%3Crect x='36' y='3' width='28' height='7' fill='none' stroke='%2322E0C8' stroke-opacity='0.07' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='14' r='0.9' fill='%2322E0C8' fill-opacity='0.12'/%3E%3Crect x='25' y='81' width='50' height='16' fill='none' stroke='%2322E0C8' stroke-opacity='0.10' stroke-width='0.35'/%3E%3Crect x='36' y='90' width='28' height='7' fill='none' stroke='%2322E0C8' stroke-opacity='0.07' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='86' r='0.9' fill='%2322E0C8' fill-opacity='0.12'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #101820 0%, #090f18 100%);
+  border: 1px solid rgba(34, 224, 200, 0.14);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.6), 0 8px 32px rgba(0,0,0,0.5);
   position: relative;
 }
-.pitch::before {
-  content: ""; position: absolute; left: 12%; right: 12%; top: 50%;
-  height: 1px; background: rgba(255, 255, 255, 0.05); pointer-events: none;
-}
-.pitch::after {
-  content: ""; position: absolute; left: 50%; top: 50%;
-  width: 68px; height: 68px; transform: translate(-50%, -50%);
-  border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 50%; pointer-events: none;
-}
+.pitch::before, .pitch::after { display: none; }
 .pitch-row { position: relative; z-index: 1; }
+/* Glassy empty dot */
+.pdot {
+  background: rgba(11, 16, 32, 0.65) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px dashed rgba(34, 224, 200, 0.28) !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+/* Filled dots: glass tint per position with pop-in */
+.pdot.filled {
+  border-style: solid !important;
+  animation: dotPopIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.pdot.filled.GK  {
+  --pdot-color: #F5B43C; --pdot-shadow: 0 0 0 2px rgba(245,180,60,0.45), 0 4px 14px rgba(0,0,0,0.5);
+  background: rgba(245,180,60,0.22) !important;
+  border-color: rgba(245,180,60,0.55) !important;
+  box-shadow: var(--pdot-shadow) !important;
+}
+.pdot.filled.DEF {
+  --pdot-color: #22E0C8; --pdot-shadow: 0 0 0 2px rgba(34,224,200,0.4), 0 4px 14px rgba(0,0,0,0.5);
+  background: rgba(34,224,200,0.18) !important;
+  border-color: rgba(34,224,200,0.5) !important;
+  box-shadow: var(--pdot-shadow) !important;
+}
+.pdot.filled.MID {
+  --pdot-color: #7C5CFC; --pdot-shadow: 0 0 0 2px rgba(124,92,252,0.45), 0 4px 14px rgba(0,0,0,0.5);
+  background: rgba(124,92,252,0.22) !important;
+  border-color: rgba(124,92,252,0.55) !important;
+  box-shadow: var(--pdot-shadow) !important;
+}
+.pdot.filled.FWD {
+  --pdot-color: #FF7A59; --pdot-shadow: 0 0 0 2px rgba(255,122,89,0.45), 0 4px 14px rgba(0,0,0,0.5);
+  background: rgba(255,122,89,0.22) !important;
+  border-color: rgba(255,122,89,0.55) !important;
+  box-shadow: var(--pdot-shadow) !important;
+}
+/* Rating tier colours for dot-init text */
+.pdot.filled .dot-init      { color: #e8eeff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+.pdot.filled.r-gold  .dot-init { color: #F5B43C; text-shadow: 0 0 8px rgba(245,180,60,0.7); }
+.pdot.filled.r-elite .dot-init { color: #22E0C8; text-shadow: 0 0 8px rgba(34,224,200,0.6); }
+.pdot.filled.r-great .dot-init { color: #b09fff; text-shadow: 0 0 8px rgba(124,92,252,0.6); }
+.pdot.filled.r-good  .dot-init { color: #FF7A59; text-shadow: 0 0 6px rgba(255,122,89,0.5); }
+/* Light mode overrides */
+body.light .pdot { background: rgba(240,245,255,0.75) !important; border-color: rgba(100,130,200,0.4) !important; }
+body.light .pdot.filled.GK  { background: rgba(245,180,60,0.18) !important; border-color: rgba(245,180,60,0.5) !important; }
+body.light .pdot.filled.DEF { background: rgba(34,224,200,0.15) !important; border-color: rgba(34,224,200,0.45) !important; }
+body.light .pdot.filled.MID { background: rgba(124,92,252,0.18) !important; border-color: rgba(124,92,252,0.5) !important; }
+body.light .pdot.filled.FWD { background: rgba(255,122,89,0.18) !important; border-color: rgba(255,122,89,0.5) !important; }
+body.light .pdot.filled .dot-init { color: #0B1020; text-shadow: none; }
+body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%230B7C6E' stroke-opacity='0.18' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%230B7C6E' stroke-opacity='0.16' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='1.2' fill='%230B7C6E' fill-opacity='0.18'/%3E%3Crect x='25' y='3' width='50' height='16' fill='none' stroke='%230B7C6E' stroke-opacity='0.13' stroke-width='0.35'/%3E%3Crect x='36' y='3' width='28' height='7' fill='none' stroke='%230B7C6E' stroke-opacity='0.09' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='14' r='0.9' fill='%230B7C6E' fill-opacity='0.15'/%3E%3Crect x='25' y='81' width='50' height='16' fill='none' stroke='%230B7C6E' stroke-opacity='0.13' stroke-width='0.35'/%3E%3Crect x='36' y='90' width='28' height='7' fill='none' stroke='%230B7C6E' stroke-opacity='0.09' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='86' r='0.9' fill='%230B7C6E' fill-opacity='0.15'/%3E%3C/svg%3E"), linear-gradient(180deg, #e8f0f8 0%, #d6e2f0 100%) !important; border-color: rgba(11,124,110,0.22) !important; }
+@media (prefers-reduced-motion: reduce) {
+  .pdot.filled { animation: none; }
+}
 
 /* ===== Game-by-game reveal bar ===== */
 .reveal-bar { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 12px 0 16px; flex-wrap: wrap; }
