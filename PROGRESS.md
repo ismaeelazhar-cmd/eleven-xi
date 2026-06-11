@@ -66,7 +66,14 @@ _Last checkpoint: NEW SESSION — T1 complete (resumed, GitHub confirmed up to d
 ## 6. NEW SESSION TASK STATUS
 - ✅ T1 Resume — GitHub confirmed current (cd61c01), game open at localhost:8777
 - ✅ T2 Shareable HTTPS link: https://influenced-contents-facility-hoped.trycloudflare.com (Cloudflare tunnel, live while Mac is on)
-- ⏳ T3 Security audit
+- ✅ T3 Security audit complete:
+  - FIXED: XSS in whoLabel() — userTeam.name and manager now wrapped in esc()
+  - FIXED: c.pick.n in squad list now esc()-wrapped (defence in depth)
+  - CLEAN: leaderboard (esc), match cards (esc), RW player names (esc), MP names (esc)
+  - CLEAN: no API keys/secrets anywhere, no outbound calls except SW + lazy PeerJS CDN
+  - CLEAN: directory listing — root serves index.html, no .env or credential files
+  - INFO: PeerJS CDN (versioned unpkg URL) only loads on Online MP click — acceptable
+  - game.js → v76, sw cache → wcxi-v88
 - ⏳ T4 Harsh bug review
 - ⏳ T5 Squad list cleanup (remove list below wheel, keep pop-out)
 - ⏳ T6 Spin wheel size reduction

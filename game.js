@@ -622,7 +622,7 @@
       g.cells.forEach(function (c) {
         if (c.pick) {
           html += '<div class="xi-row"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
-            '<span class="info"><span class="pn">' + c.pick.n + (showRatings ? ' <span class="xi-rate">' + c.pick.r + "</span>" : "") +
+            '<span class="info"><span class="pn">' + esc(c.pick.n) + (showRatings ? ' <span class="xi-rate">' + c.pick.r + "</span>" : "") +
             '</span><span class="meta">' + (mode === "wc" ? DATA[c.pick.country].flag + " " : "") + c.pick.country + " &middot; " + c.pick.year +
             '</span></span><button class="remove" data-id="' + c.pick.id + '">remove</button></div>';
         } else {
@@ -932,8 +932,8 @@
   }
 
   function whoLabel(userTeam, comp) {
-    return userTeam.name + " · " + userTeam.formation +
-      (userTeam.manager && userTeam.manager !== "No manager" ? " · " + userTeam.manager : "") + " · " + comp;
+    return esc(userTeam.name) + " · " + esc(userTeam.formation) +
+      (userTeam.manager && userTeam.manager !== "No manager" ? " · " + esc(userTeam.manager) : "") + " · " + esc(comp);
   }
 
   function runSim(type, userTeam) {
