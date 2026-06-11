@@ -12,6 +12,19 @@
     toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
   };
 
+  /* Universal "go home" — hides every known view, shows homeView.
+     Each module's own goHome handles cleanup; this covers the logo tap
+     from any screen without needing per-module hooks. */
+  W.flGoHome = function () {
+    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView"];
+    ALL.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = "none"; });
+    var home = document.getElementById("homeView");
+    if (home) home.style.display = "";
+    if (W.scrollTo) W.scrollTo(0, 0);
+    // Let online transport close cleanly if it was active
+    try { if (W.ElxiNet && W.ElxiNet.isOnline && W.ElxiNet.isOnline()) W.ElxiNet.close(); } catch (e) {}
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
     var rw = document.getElementById("homeRatingsWar");
     if (rw && !rw._wired) {
@@ -20,6 +33,20 @@
         if (W.startRatingsWar) { W.startRatingsWar(); }
         else { W.flToast("Ratings War — building this next ⚔️"); }
       });
+    }
+
+    // Logo click → home from any screen
+    var brand = document.getElementById("brandLogo");
+    if (brand && !brand._wired) {
+      brand._wired = true;
+      function handleLogoNav() {
+        var home = document.getElementById("homeView");
+        if (!home) return;
+        if (home.style.display !== "none") return; // already on home page
+        W.flGoHome();
+      }
+      brand.addEventListener("click", handleLogoNav);
+      brand.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleLogoNav(); } });
     }
   });
 
