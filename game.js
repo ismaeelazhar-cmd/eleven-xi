@@ -387,7 +387,11 @@
     elEraLo.textContent = ALL_YEARS[minIdx]; elEraHi.textContent = ALL_YEARS[maxIdx];
     var cnt = maxIdx - minIdx + 1;
     var contName = { all: "all continents", EU: "Europe", AF: "Africa", SA: "South America" }[continent];
-    elPoolDesc.textContent = cnt + " World Cup" + (cnt === 1 ? "" : "s") + " · " + contName + " · " + poolPairs().length + " squads in the draw.";
+    if (mode === "cl") {
+      elPoolDesc.textContent = ALL_YEARS[minIdx] + "–" + ALL_YEARS[maxIdx] + " · " + poolPairs().length + " squads in the draw.";
+    } else {
+      elPoolDesc.textContent = cnt + " World Cup" + (cnt === 1 ? "" : "s") + " · " + contName + " · " + poolPairs().length + " squads in the draw.";
+    }
   }
   function renderEra() {
     elEraMin.oninput = function () { minIdx = Math.min(parseInt(this.value, 10), maxIdx); eraApply(); };
@@ -706,6 +710,7 @@
     $("clFormatRow").style.display = cl ? "block" : "none";
     var cw = $("continentWrap"); if (cw) cw.style.display = cl ? "none" : "block";
     var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Player pool — Champions League seasons" : "Player pool — World Cup eras";
+    var cl2 = $("countryLabel"); if (cl2) cl2.textContent = cl ? "Club" : "Country";
     $("goWorldCup").hidden = cl; $("goLeague").hidden = cl; $("goCL").hidden = !cl;
     renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra();
     renderContinent(); renderDifficultyBar(); renderClFormat();
@@ -1062,8 +1067,9 @@
       }
     } else if (r.stage === "ko") {
       var km = r.koMatches;
+      if (!km.length) { r.stage = "result"; renderWCStage(); return; }
       html += '<div class="stage-badge">Part 2 · Knockouts</div>';
-      if (km.length && r.shown < km.length) {
+      if (r.shown < km.length) {
         html += skipBarHTML(r.shown, km.length) + koRevealListHTML(wc, km, r.shown);
       } else {
         html += koRevealListHTML(wc, km, km.length);
@@ -1075,7 +1081,6 @@
       html += scoreBannerHTML(r.sc, wc.userResult);
       html += statsSummaryHTML(wc.userStats);
       html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
-      html += '<h3 class="sec">' + (wc.groups ? "Groups" : "League phase") + '</h3>' + standingsHTML(wc);
       html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
     }
     elResultsBody.innerHTML = html;
@@ -1118,7 +1123,7 @@
         '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
       html += statsSummaryHTML(lg.userStats);
-      html += '<h3 class="sec">Final 48-team table</h3>' + leagueTableHTML(lg);
+      html += '<h3 class="sec">Final ' + lg.table.length + '-team table</h3>' + leagueTableHTML(lg);
       html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
     }
     elResultsBody.innerHTML = html;
