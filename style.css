@@ -880,6 +880,8 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 /* ===== Results header buttons ===== */
 .results-head-right { display: flex; gap: 8px; }
 
+.result-bottom-cta { display: flex; gap: 1rem; justify-content: center; margin-top: 2.5rem; padding-bottom: 3rem; }
+
 /* ===== Leaderboards ===== */
 .board-tabs { margin-bottom: 16px; }
 .board-list { display: grid; gap: 6px; }

@@ -857,6 +857,10 @@
       w.style.display = shown ? "none" : "block";
       tg.innerHTML = shown ? tg.getAttribute("data-show") : "Hide";
     });
+    var btmNew = document.getElementById("btmNewGame");
+    if (btmNew) btmNew.addEventListener("click", newGame);
+    var btmHome = document.getElementById("btmGoHome");
+    if (btmHome) btmHome.addEventListener("click", function () { window.flGoHome(); });
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
@@ -1072,6 +1076,7 @@
       html += statsSummaryHTML(wc.userStats);
       html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
       html += '<h3 class="sec">' + (wc.groups ? "Groups" : "League phase") + '</h3>' + standingsHTML(wc);
+      html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
     }
     elResultsBody.innerHTML = html;
     var skip = document.getElementById("skipReveal");
@@ -1114,6 +1119,7 @@
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
       html += statsSummaryHTML(lg.userStats);
       html += '<h3 class="sec">Final 48-team table</h3>' + leagueTableHTML(lg);
+      html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
     }
     elResultsBody.innerHTML = html;
     var skip = document.getElementById("skipReveal");

@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: Task 5 done (online multiplayer + synced online Ratings War, verified across two browsers). Cache v85._
+_Living document — update after every significant change. Last updated: Tasks 7–9 done (autofill fix, League overhaul + lgs-* summary redesign, summary audit + bottom CTAs on WC/CL). Cache wcxi-v87. Next: T10 final wrap._
 
 ---
 
@@ -42,7 +42,7 @@ _Living document — update after every significant change. Last updated: Task 5
 ## 4. Game modes
 1. **World Cup** — full-size spin wheel; draft XI from 93 nations (1950–2026); simulate a 48-team tournament (group → knockout) with staged reveal → results summary. Keeps the **full** reel.
 2. **Champions League** — `body.mode-cl`; club squads (153 clubs/768 seasons); Swiss/league/group formats; **compact** wheel.
-3. **League** — La Liga/Serie A/Bundesliga/Ligue 1; draft XI, simulate a full season game-by-game with surprise events (manager sacked, injuries), then the `lgr2-*` summary; **compact** wheel; scrollable squad modal.
+3. **League** — La Liga/Serie A/Bundesliga/Ligue 1; draft XI, simulate a full season game-by-game with surprise events (manager sacked, injuries), then the `lgs-*` premium summary (hero with huge position number, W-D-L strip, mini table highlighted with user, awards, player stats); **compact** wheel; scrollable squad modal. Distinct identity from the WC/CL summary. Widened layout: results 800px, setup 660px.
 4. **Multiplayer** — entry splits **Local** (pass-and-play; 2–8 draft then knockout) vs **Online** (create/join a game code, then play). **compact** wheel.
 5. **Ratings War** (`ratingswar.js`) — local (pass-and-play) **or online** (each builds blind on their own device, XIs synced over WebRTC, identical reveal both sides with a "(you)" perspective label + rematch handshake). Two players build an XI **blind** (ratings never in the DOM during build), pass-and-play handoff, then **head-to-head position-by-position reveal** (higher rating wins each slot) with sticky scorebar + winner arrows → verdict/rematch. Reachable from BOTH the home bento card AND a native **Multiplayer mode-select** (Draft Tournament vs Ratings War) — Task 3 done.
 - **Universal squad dock:** FAB ("Squad N/11") appears on every mode; opens a slide-in panel grouped GK/DEF/MID/FWD. Names now **wrap in full** (no ellipsis) and the dock **strips ratings** (RW-safe). Verified on all 5 modes — Task 4 done.
@@ -60,16 +60,17 @@ _Living document — update after every significant change. Last updated: Task 5
 - **T3:** Ratings War integrated into the Multiplayer section (game-type select: Draft Tournament vs Ratings War).
 - **T4:** Squad pop-out shows FULL untruncated names on every mode (WC/CL/League/MP/Ratings War all verified); dock also strips ratings so none leak.
 - **T5:** Online multiplayer with shareable game codes — Online/Offline split, Create/Join lobby (real WebRTC P2P, no backend), edge cases (invalid code, disconnect, no-opponent timeout), premium lobby, and a **fully-synced online Ratings War** (verified across two browsers: matching 6–5 result, perspective labels, rematch).
+- **T7:** Autofill genuinely random (Fisher-Yates shuffle across all years/clubs) — fixed the previous sequential bias.
+- **T8:** League mode overhaul — layout wider (results 800px, setup 660px), injury replacement spin verified (2.5%/game), complete new `lgs-*` summary design with hero position number + W-D-L strip + mini table + awards + player stats. Ligue 1 data audited (removed Metz + Clermont Foot, now exactly 18 teams for 34-game season).
+- **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
 
 ## 6. Features in progress
-- None mid-edit. Last completed: results unification (Task 1 confirmed + checkpointed).
+- None mid-edit. Last completed: T9 summary audit.
 
 ## 7. Features outstanding (master task list order)
+- **T10** Final PROGRESS.md + HANDOVER.md + GitHub push (in progress).
 - **T6** Animations & 3D pass (card flips/tilt, screen transitions, physics spin, count-ups, confetti, ambient depth).
-- **T7** Whole-game consistency audit (visual/language/interaction/concept/flow).
-- **T8** Player ratings audit (era-accurate, banded, positionally fair) — currently ratings are heuristic + tier-calibrated, NOT individually verified.
-- **T9** Squad accuracy audit (right players/positions/formations/era per season).
-- **Online Draft Tournament** — only Ratings War is synced online so far; the multi-player draft over a shared live pool is not yet networked (online mode-select steers users to Ratings War / Local). Future build.
+- **Online Draft Tournament** — only Ratings War is synced online so far; deferred.
 - Also: **permanent hosting** (needs owner login), lazy-load 5 MB data, automate cache versioning.
 
 ## 8. Decisions log (key — full in DECISIONS.md)
@@ -100,5 +101,6 @@ _Living document — update after every significant change. Last updated: Task 5
 
 ## 12. How to continue
 1. Read **this file**, then **PROGRESS.md** (last checkpoint + exact next step).
-2. **Exact next step right now: TASK 6** — Animations & 3D pass across the app (card flips/tilt, screen transitions, physics-feel spin, count-ups, confetti, ambient depth). Be bold but purposeful; respect reduced-motion. Touch home bento, mode transitions, spin reels, results, and the new online lobby (the spinner is in place).
+2. **Exact next step right now: TASK 10** — Finalize PROGRESS.md + HANDOVER.md (done) and push to GitHub. Owner must add a remote first: `git remote add origin <github-url> && git push -u origin main`.
 3. Work task by task; after each, rebuild `eleven-xi.html`, bump cache version, and update **both** PROGRESS.md and this HANDOVER.md.
+4. **Current next step:** T10 — finalize docs and push to GitHub. To push: `git remote add origin <url> && git push -u origin main`. The remote has not been configured; owner must supply the GitHub repo URL.

@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Task 8 complete — League mode overhaul. Next: Task 9 (summary audit across all modes)._
+_Last checkpoint: Task 9 complete — Summary page audit across all modes. Next: Task 10 (final PROGRESS.md + HANDOVER.md + GitHub push)._
 
 ---
 
@@ -13,7 +13,7 @@ _Last checkpoint: Task 8 complete — League mode overhaul. Next: Task 9 (summar
 - **Run locally:** `python3 -m http.server 8777` from project root → http://localhost:8777/index.html
 - **Standalone offline app:** `eleven-xi.html` (5.4 MB, self-contained, opens from file://). Rebuild: `python3` inline script.
 - **Cache version:** service worker `wcxi-v86`; `index.html` references `?v=` query strings — bump on asset change.
-- **Current versions:** style.css v75, league.js v74, data_league.js v74, game.js v74, floodlights.js v82, floodlights.css v85
+- **Current versions:** style.css v76, league.js v74, data_league.js v74, game.js v75, floodlights.js v82, floodlights.css v85, sw.js cache wcxi-v87
 
 ## 1. Design direction — LOCKED: "Floodlights" (Option 1)
 3 options were presented; owner picked **Option 1 — Floodlights**.
@@ -77,7 +77,12 @@ _Last checkpoint: Task 8 complete — League mode overhaul. Next: Task 9 (summar
   - (c) injury replacement spin ✅ (already coded at 2.5% per game — verified)
   - (d) summary redesign ✅ — hero with huge position, W-D-L strip, mini table shown by default, awards, player stats, score breakdown; completely distinct from 38-0
   - (e) league audit ✅ — removed Metz + Clermont Foot (not in 2024-25 Ligue 1)
-- ⏳ T9 Summary page audit across ALL game modes
+- ✅ T9 Summary page audit across ALL game modes:
+  - WC result ✅ — added Play Again + ← Home at bottom of long scroll
+  - CL result ✅ — same fix (both renderWCStage + renderLeagueStage)
+  - League result ✅ — already has lgPlayAgain + lgHomeBtn (T8 work)
+  - Multiplayer result ✅ — code-verified "← Back to Home" button present
+  - Ratings War result ✅ — code-verified Rematch + ← Home buttons present
 - ⏳ T10 Final PROGRESS.md + HANDOVER.md + GitHub push
 
 ## 6b. EXACTLY WHERE TO PICK UP
