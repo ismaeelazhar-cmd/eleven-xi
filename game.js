@@ -589,14 +589,17 @@
       guard++;
       var pairs = poolPairs(), pk = rand(pairs), list = DATA[pk.c].years[pk.y];
       var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
-      var cand = null, cpos = null;
-      for (var k = 0; k < list.length; k++) {
-        var pl = list[k];
-        if (taken.indexOf(pk.c + "|" + pk.y + "|" + pl.n) !== -1) continue;
+      // Collect ALL eligible players then pick one at random (avoids always selecting the first)
+      var eligible = [];
+      list.forEach(function (pl) {
+        if (taken.indexOf(pk.c + "|" + pk.y + "|" + pl.n) !== -1) return;
         var opts = openEligiblePositions(pl);
-        if (opts.length) { cand = pl; cpos = preferredSlot(pl, opts); break; }
+        if (opts.length) eligible.push({ pl: pl, pos: preferredSlot(pl, opts) });
+      });
+      if (eligible.length) {
+        var pick = eligible[Math.floor(Math.random() * eligible.length)];
+        squad.push({ id: nextId++, n: pick.pl.n, p: pick.pl.p, r: pick.pl.r, slot: pick.pos, country: pk.c, year: pk.y });
       }
-      if (cand) squad.push({ id: nextId++, n: cand.n, p: cand.p, r: cand.r, slot: cpos, country: pk.c, year: pk.y });
     }
     current = null; awaitingPick = false; pendingPick = null;
     elSquadPanel.style.display = "none";

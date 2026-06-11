@@ -743,15 +743,17 @@
     var data=LEAGUES[LS.league].getData(); if(!data) return;
     var pickedNames=LS.xi.map(function(x){ return x&&x.n; });
     var all=[];
+    // Include ALL years per club, not just the latest, for genuine variety
     Object.keys(data).forEach(function(club){
-      var years=Object.keys(data[club].years).sort(function(a,b){ return b-a; });
-      var yr=years[0]; if(!yr) return;
-      (data[club].years[yr]||[]).forEach(function(pl){
-        if(pickedNames.indexOf(pl.n)===-1)
-          all.push({n:pl.n,p:pl.p,gp:pl.gp,r:pl.r||75,slot:null,club:club,year:yr});
+      Object.keys(data[club].years).forEach(function(yr){
+        (data[club].years[yr]||[]).forEach(function(pl){
+          if(pickedNames.indexOf(pl.n)===-1)
+            all.push({n:pl.n,p:pl.p,gp:pl.gp,r:pl.r||75,slot:null,club:club,year:yr});
+        });
       });
     });
-    all.sort(function(a,b){ return (b.r||75)-(a.r||75); });
+    // Shuffle fully rather than sorting by rating so picks are spread across eras/clubs
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=all[i]; all[i]=all[j]; all[j]=tmp; }
 
     var counts=openSlotCounts();
     var open=[];
@@ -760,10 +762,10 @@
     open.forEach(function(slot){
       var compat=COMPAT[slot]||[slot];
       var used=LS.xi.map(function(x){ return x&&x.n; });
-      var best=all.filter(function(pl){
+      var pick=all.filter(function(pl){
         return compat.indexOf(pl.gp||pl.p||"MID")!==-1 && used.indexOf(pl.n)===-1;
       })[0];
-      if(best) LS.xi.push({n:best.n,p:best.p,gp:best.gp,r:best.r,slot:slot,club:best.club,year:best.year});
+      if(pick) LS.xi.push({n:pick.n,p:pick.p,gp:pick.gp,r:pick.r,slot:slot,club:pick.club,year:pick.year});
     });
 
     updatePitch();
