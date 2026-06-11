@@ -262,7 +262,7 @@
     var a = assignByLines();
     function cell(c) {
       if (c.pick) return '<div class="pdot filled ' + c.line + '">' +
-        '<span class="dot-init">' + esc(initials(c.pick.n)) +
+        '<span class="dot-init">' + (showRatings && c.pick.r ? c.pick.r : esc(initials(c.pick.n))) +
         '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
       return '<div class="pdot ' + c.line + '"><span class="dot-pos">' + c.pos + "</span></div>";
     }

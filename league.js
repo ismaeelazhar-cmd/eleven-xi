@@ -416,7 +416,7 @@
         if(pk){
           var sn=shortName(pk.n);
           h+='<div class="pdot filled '+lc+'">'+
-            '<span class="dot-pos">'+slot+'</span>'+
+            '<span class="dot-pos">'+(LS.showRatings && pk.r ? pk.r : slot)+'</span>'+
             '<span class="dot-name">'+esc(sn)+'</span>'+
             '</div>';
         } else {
