@@ -609,3 +609,49 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .rw-tourn-name { flex: 1; font-weight: 700; font-size: var(--t-sm); color: var(--text); }
 .rw-tourn-pts { font-weight: 700; font-size: var(--t-xs); color: var(--positive); font-variant-numeric: tabular-nums; }
 .rw-tourn-gd { font-weight: 600; font-size: var(--t-xs); color: var(--text-mute); font-variant-numeric: tabular-nums; min-width: 40px; text-align: right; }
+
+/* ════════════════════════════════════════════════════════════════
+   T8 MAKEOVER — RATING TIER COLORS EVERYWHERE + SPIN WHEEL POLISH
+   ============================================================ */
+
+/* Rating tier on xi-rate (squad list) and rw-rev-rating (Duels reveal) */
+.xi-rate { font-weight: 800; font-size: 13px; border-radius: 4px; padding: 1px 5px; }
+.xi-rate.r-gold  { color: var(--champion); background: color-mix(in srgb, var(--champion) 15%, transparent); }
+.xi-rate.r-elite { color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
+.xi-rate.r-great { color: var(--p-violet-300); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.xi-rate.r-good  { color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+/* default (below 75) keeps legacy gold from style.css */
+
+/* Duels reveal row rating — tier colors */
+.rw-rev-rating.r-gold  { color: var(--champion) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--champion) 55%, transparent); }
+.rw-rev-rating.r-elite { color: var(--positive) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--positive) 50%, transparent); }
+.rw-rev-rating.r-great { color: var(--p-violet-300) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 50%, transparent); }
+.rw-rev-rating.r-good  { color: var(--warning) !important; text-shadow: 0 0 6px color-mix(in srgb, var(--warning) 45%, transparent); }
+
+/* Spin wheel machine — remap legacy green glow to Floodlights cyan */
+.machine {
+  background:
+    radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--positive) 7%, transparent), transparent 60%),
+    var(--card-bg) !important;
+  border-color: var(--line) !important;
+  animation: fl-rise var(--dur-3) var(--ease-out);
+}
+/* Reel selection line: cyan glow instead of gold */
+.reel::after { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--positive) 35%, transparent) !important; }
+/* Reel label: use positive (cyan) consistent with Floodlights */
+.reel-label { color: var(--positive) !important; }
+
+/* Squad XI list — gentle rise animation */
+.xi { animation: fl-rise var(--dur-3) var(--ease-out); }
+
+/* Champion div — token-based Floodlights polish */
+.champion, .champion.big {
+  color: var(--champion); font-weight: 800;
+  text-shadow: 0 0 20px color-mix(in srgb, var(--champion) 40%, transparent);
+}
+
+/* Results score-banner — tighten up */
+.score-banner { border-radius: var(--r-lg); }
+
+/* Pitch container in draft view — gentle rise */
+.draft-pitch-wrap { animation: fl-rise var(--dur-3) var(--ease-out); }

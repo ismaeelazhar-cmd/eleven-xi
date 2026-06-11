@@ -632,7 +632,7 @@
       g.cells.forEach(function (c) {
         if (c.pick) {
           html += '<div class="xi-row"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
-            '<span class="info"><span class="pn">' + esc(c.pick.n) + (showRatings ? ' <span class="xi-rate">' + c.pick.r + "</span>" : "") +
+            '<span class="info"><span class="pn">' + esc(c.pick.n) + (showRatings ? ' <span class="xi-rate' + ratingTierClass(c.pick.r) + '">' + c.pick.r + "</span>" : "") +
             '</span><span class="meta">' + c.pick.country + " &middot; " + c.pick.year +
             '</span></span><button class="remove" data-id="' + c.pick.id + '">remove</button></div>';
         } else {

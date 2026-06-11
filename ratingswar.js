@@ -19,6 +19,7 @@
   function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
   function shortName(n){ var p=String(n).split(" "); return p.length>1?p[p.length-1]:n; }
+  function ratingTierClass(r){ if(!r) return ""; return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":""; }
 
   function buildPool(){
     if (POOL) return POOL;
@@ -696,11 +697,11 @@
       return "<div class='rw-rev-row "+(r.win===0?"draw":"")+"'>"+
         "<div class='rw-rev-side "+(aw?"win":"")+"'>"+
           "<span class='rw-rev-name'>"+esc(shortName(r.a?r.a.n:"—"))+"</span>"+
-          "<span class='rw-rev-rating'>"+(r.a?r.a.r:"–")+"</span></div>"+
+          "<span class='rw-rev-rating"+(r.a?ratingTierClass(r.a.r):"")+"'>"+(r.a?r.a.r:"–")+"</span></div>"+
         "<div class='rw-rev-mid'><span class='pos "+r.line+"'>"+esc(r.slot)+"</span>"+
           (aw?"<span class='rw-rev-arrow l'>◀</span>":bw?"<span class='rw-rev-arrow r'>▶</span>":"<span class='rw-rev-eq'>=</span>")+"</div>"+
         "<div class='rw-rev-side right "+(bw?"win":"")+"'>"+
-          "<span class='rw-rev-rating'>"+(r.b?r.b.r:"–")+"</span>"+
+          "<span class='rw-rev-rating"+(r.b?ratingTierClass(r.b.r):"")+"'>"+(r.b?r.b.r:"–")+"</span>"+
           "<span class='rw-rev-name'>"+esc(shortName(r.b?r.b.n:"—"))+"</span></div>"+
         "</div>";
     }).join("");
