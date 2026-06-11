@@ -1330,69 +1330,168 @@
     });
     tblHtml+="</tbody></table>";
 
-    function awardCard(cls,icon,label,p,sub){
-      if(!p) return "";
-      return "<div class='lgr2-award "+cls+"'><div class='lgr2-aw-h'>"+icon+" "+label+"</div>"+
-        "<div class='lgr2-aw-name'>"+esc(p.n)+"</div><div class='lgr2-aw-sub'>"+sub+"</div></div>";
+    /* ── Position suffix (e.g. "13" + "th") ── */
+    var posSuffix = ordinal(pos).replace(String(pos), "");
+
+    /* ── Pill colour class ── */
+    var pillCls = isChamp ? "champ" : isTop4 ? "top4" : isRel ? "rel" : "";
+
+    /* ── Mini league table snippet (user ±2, with context rows) ── */
+    var userIdx = pos - 1;
+    var showFrom = Math.max(0, userIdx - 2);
+    var showTo   = Math.min(N - 1, userIdx + 2);
+    /* always try to show 5 rows */
+    while (showTo - showFrom < 4) {
+      if (showFrom > 0) showFrom--;
+      else if (showTo < N - 1) showTo++;
+      else break;
+    }
+    var miniTblHtml = "<div class='lgs-mini-tbl'>";
+    miniTblHtml += "<div class='lgs-trow lgs-trow-head'>" +
+      "<span class='lgs-tp'>#</span><span class='lgs-tn'>CLUB</span>" +
+      "<span class='lgs-tv'>W</span><span class='lgs-tv'>D</span><span class='lgs-tv'>L</span>" +
+      "<span class='lgs-tv gd'>GD</span><span class='lgs-tv pts'>PTS</span></div>";
+    if (showFrom > 0) {
+      miniTblHtml += "<div class='lgs-trow-gap'>· · · " + showFrom + " club" + (showFrom > 1 ? "s" : "") + " above</div>";
+    }
+    for (var ti = showFrom; ti <= showTo; ti++) {
+      var tr = LS.table[ti];
+      var isUsr = tr.name === LS.teamName;
+      var isRelZone = ti >= N - 3;
+      var trCls = isUsr ? "user" : isRelZone ? "rel" : "";
+      miniTblHtml += "<div class='lgs-trow " + trCls + "'>" +
+        "<span class='lgs-tp'>" + (ti + 1) + "</span>" +
+        "<span class='lgs-tn'>" + esc(tr.name) + "</span>" +
+        "<span class='lgs-tv'>" + tr.W + "</span>" +
+        "<span class='lgs-tv'>" + tr.D + "</span>" +
+        "<span class='lgs-tv'>" + tr.L + "</span>" +
+        "<span class='lgs-tv gd'>" + (tr.GD >= 0 ? "+" : "") + tr.GD + "</span>" +
+        "<span class='lgs-tv pts'>" + tr.Pts + "</span>" +
+        "</div>";
+    }
+    if (showTo < N - 1) {
+      var below = N - 1 - showTo;
+      miniTblHtml += "<div class='lgs-trow-gap'>· · · " + below + " club" + (below > 1 ? "s" : "") + " below</div>";
+    }
+    miniTblHtml += "</div>";
+
+    /* ── Award card builder ── */
+    function lgsAward(cls, icon, label, p, sub) {
+      if (!p) return "";
+      return "<div class='lgs-award " + cls + "'>" +
+        "<div class='lgs-award-h'>" + icon + " " + label + "</div>" +
+        "<div class='lgs-award-name'>" + esc(p.n) + "</div>" +
+        "<div class='lgs-award-sub'>" + sub + "</div></div>";
     }
 
-    v.innerHTML=
-      "<div class='lg-results-page'><div class='wrap'>"+
-        "<button class='back' id='lgResBack'>← Home</button>"+
-        "<div class='lgr2-pill'>"+pill+"</div>"+
-        "<div class='lgr2-cards'>"+
-          "<div class='lgr2-card'><div class='lgr2-k'>FINISHED</div><div class='lgr2-v'>"+ordinal(pos)+"</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-k'>PROJECTED</div><div class='lgr2-v dim'>"+ordinal(expPos)+"</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-verdict "+verdictCls+"'>"+verdict+"</div></div>"+
-        "</div>"+
-        "<div class='lgr2-narr'><div class='lgr2-narr-h'>"+narrTitle+"</div>"+
-          "<div class='lgr2-narr-b'>"+esc(narrBody)+"</div>"+
-          (pots?"<div class='lgr2-narr-p'>"+esc(pots.n)+" "+esc(potsFlavour)+"</div>":"")+
-        "</div>"+
-        "<div class='lgr2-xi'><div class='lgr2-sec'>YOUR XI</div>"+xiHtml+"</div>"+
-        "<div class='lgr2-stat3'>"+
-          "<div class='lgr2-card'><div class='lgr2-num good'>"+W2+"</div><div class='lgr2-k'>Wins</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-num warn'>"+D+"</div><div class='lgr2-k'>Draws</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-num bad'>"+L+"</div><div class='lgr2-k'>Losses</div></div>"+
-        "</div>"+
-        "<div class='lgr2-stat3'>"+
-          "<div class='lgr2-card'><div class='lgr2-num'>"+userRow.Pts+"</div><div class='lgr2-k'>Points</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-num good'>"+GF+"</div><div class='lgr2-k'>Goals For</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-num bad'>"+GA+"</div><div class='lgr2-k'>Goals Against</div></div>"+
-        "</div>"+
-        "<button class='lgr2-share' id='lgShare'>📸&nbsp;Share your season</button>"+
-        "<div class='lgr2-sec'>SEASON AWARDS</div>"+
-        "<div class='lgr2-awards'>"+
-          awardCard("","⚽","GOLDEN BOOT",boot,boot?boot.G+" goals":"")+
-          awardCard("","🎯","PLAYMAKER",play,play?play.A+" assists":"")+
-          awardCard("","🧤","GOLDEN GLOVE",glove,glove?glove.CS+" clean sheets":"")+
-          awardCard("gold","🏆","PLAYER OF THE SEASON",pots,pots?pots.G+"G · "+pots.A+"A":"")+
-        "</div>"+
-        "<div class='lgr2-ptable'>"+
-          "<div class='lgr2-pt-head'><span class='lgr2-pt-name'>PLAYER</span>"+
-            "<span class='lgr2-pt-v'>G</span><span class='lgr2-pt-v'>A</span><span class='lgr2-pt-v'>CS</span></div>"+
-          pTable+
-        "</div>"+
-        "<div class='lgr2-stat3 two'>"+
-          "<div class='lgr2-card'><div class='lgr2-num'>"+cs+"</div><div class='lgr2-k'>Clean Sheets</div></div>"+
-          "<div class='lgr2-card'><div class='lgr2-num'>"+streak+"</div><div class='lgr2-k'>Longest Win Streak</div></div>"+
-        "</div>"+
-        "<div class='lgr2-sec'>SCORE BREAKDOWN</div>"+
-        "<div class='lgr2-break'>"+bkHtml+
-          "<div class='lgr2-bk-row total'><span class='lgr2-bk-k'>Season score</span>"+
-          "<span class='lgr2-bk-v'>"+score.toLocaleString()+"</span></div>"+
-        "</div>"+
-        "<details class='lgr2-tbl-wrap'><summary>Final "+lc.label+" table</summary>"+
-          "<div class='lg-tbl-col'>"+tblHtml+"</div></details>"+
-        "<div class='lg-res-btns'>"+
-          "<button class='btn-primary' id='lgPlayAgain'>Play Again</button>"+
-          "<button class='btn-ghost' id='lgHomeBtn'>Home</button>"+
-        "</div>"+
+    /* ── Player stats table (lgs-* classes) ── */
+    var dot2 = "<span class='lgs-pt-dot'>·</span>";
+    var pTable2 = psSorted.map(function(p) {
+      var line = LINE_OF[p.gp] || "MID";
+      return "<div class='lgs-pt-row'>" +
+        "<span class='pos " + line + "'>" + esc(p.gp) + "</span>" +
+        "<span class='lgs-pt-player'>" + esc(p.n) + "</span>" +
+        "<span class='lgs-pt-v g'>" + (p.G || dot2) + "</span>" +
+        "<span class='lgs-pt-v a'>" + (p.A || dot2) + "</span>" +
+        "<span class='lgs-pt-v'>" + (p.CS || dot2) + "</span>" +
+        "</div>";
+    }).join("");
+
+    /* ── Score breakdown rows (lgs-* classes) ── */
+    var bkHtml2 = breakdown.map(function(b) {
+      var neg = b[1] < 0;
+      return "<div class='lgs-bk-row'><span class='lgs-bk-k'>" + esc(b[0]) + "</span>" +
+        "<span class='lgs-bk-v" + (neg ? " neg" : "") + "'>" + (b[1] >= 0 ? "+" : "") + b[1] + "</span></div>";
+    }).join("");
+
+    v.innerHTML =
+      "<div class='lgs-page'><div class='wrap'>" +
+
+        /* ── Hero ── */
+        "<div class='lgs-hero'>" +
+          "<div class='lgs-league-label'>" + lc.flag + " " + esc(lc.label) + "</div>" +
+          "<div class='lgs-team-name'>" + esc(LS.teamName) + "</div>" +
+          "<div class='lgs-big-pos'>" + pos + "<sup class='lgs-pos-sfx'>" + posSuffix + "</sup></div>" +
+          "<div class='lgs-hero-sub'>of " + N + " clubs · " + userRow.Pts + " points</div>" +
+          "<div class='lgs-pill " + pillCls + "'>" + pill + "</div>" +
+        "</div>" +
+
+        /* ── W-D-L Record strip ── */
+        "<div class='lgs-strip'>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn win'>" + W2 + "</span><span class='lgs-sl'>WINS</span></div>" +
+          "<div class='lgs-strip-div'></div>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn draw'>" + D + "</span><span class='lgs-sl'>DRAWS</span></div>" +
+          "<div class='lgs-strip-div'></div>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn loss'>" + L + "</span><span class='lgs-sl'>LOSSES</span></div>" +
+          "<div class='lgs-strip-div wide'></div>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn'>" + GF + "</span><span class='lgs-sl'>GF</span></div>" +
+          "<div class='lgs-strip-div'></div>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn'>" + GA + "</span><span class='lgs-sl'>GA</span></div>" +
+          "<div class='lgs-strip-div wide'></div>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn'>" + ordinal(expPos) + "</span><span class='lgs-sl'>EXPECTED</span></div>" +
+          "<div class='lgs-strip-div'></div>" +
+          "<div class='lgs-strip-item'><span class='lgs-sn lgs-verdict-n " + verdictCls + "'>" + verdict + "</span><span class='lgs-sl'>VERDICT</span></div>" +
+        "</div>" +
+
+        /* ── Narrative ── */
+        "<div class='lgs-narr'>" +
+          "<div class='lgs-narr-title'>" + narrTitle + "</div>" +
+          "<div class='lgs-narr-body'>" + esc(narrBody) + "</div>" +
+          (pots ? "<div class='lgs-pots'>" + esc(pots.n) + " " + esc(potsFlavour) + "</div>" : "") +
+        "</div>" +
+
+        /* ── Final league table (mini + full) ── */
+        "<div class='lgs-sec'>FINAL TABLE</div>" +
+        miniTblHtml +
+        "<details class='lgs-full-tbl'><summary>View full " + esc(lc.label) + " table</summary>" +
+          "<div class='lg-tbl-col'>" + tblHtml + "</div></details>" +
+
+        /* ── Season Awards ── */
+        "<div class='lgs-sec'>SEASON AWARDS</div>" +
+        "<div class='lgs-awards'>" +
+          lgsAward("", "⚽", "GOLDEN BOOT", boot, boot ? boot.G + " goals" : "") +
+          lgsAward("", "🎯", "PLAYMAKER", play, play ? play.A + " assists" : "") +
+          lgsAward("", "🧤", "GOLDEN GLOVE", glove, glove ? glove.CS + " clean sheets" : "") +
+          lgsAward("gold", "🏆", "PLAYER OF THE SEASON", pots, pots ? pots.G + "G · " + pots.A + "A" : "") +
+        "</div>" +
+
+        /* ── Player stats ── */
+        "<div class='lgs-ptable'>" +
+          "<div class='lgs-pt-head'>" +
+            "<span class='lgs-pt-pos'></span>" +
+            "<span class='lgs-pt-player'>PLAYER</span>" +
+            "<span class='lgs-pt-v'>G</span>" +
+            "<span class='lgs-pt-v'>A</span>" +
+            "<span class='lgs-pt-v'>CS</span>" +
+          "</div>" +
+          pTable2 +
+        "</div>" +
+
+        /* ── More stats ── */
+        "<div class='lgs-morestat'>" +
+          "<div class='lgs-ms-item'><span class='lgs-msn'>" + cs + "</span><span class='lgs-msl'>CLEAN SHEETS</span></div>" +
+          "<div class='lgs-ms-item'><span class='lgs-msn'>" + streak + "</span><span class='lgs-msl'>LONGEST WIN STREAK</span></div>" +
+        "</div>" +
+
+        /* ── Share ── */
+        "<button class='lgs-share' id='lgShare'>📸&nbsp;Share your season</button>" +
+
+        /* ── Score breakdown ── */
+        "<div class='lgs-sec'>SCORE BREAKDOWN</div>" +
+        "<div class='lgs-break'>" + bkHtml2 +
+          "<div class='lgs-bk-total'><span>Season score</span><span class='lgs-bk-score'>" + score.toLocaleString() + "</span></div>" +
+        "</div>" +
+
+        /* ── Buttons ── */
+        "<div class='lgs-btns'>" +
+          "<button class='btn-primary' id='lgPlayAgain'>Play Again</button>" +
+          "<button class='btn-ghost' id='lgHomeBtn'>Home</button>" +
+        "</div>" +
+
       "</div></div>";
 
     eid("lgPlayAgain").addEventListener("click",W.initLeagueMode);
     eid("lgHomeBtn").addEventListener("click",goHome);
-    eid("lgResBack").addEventListener("click",goHome);
     var sh=eid("lgShare");
     if(sh) sh.addEventListener("click",function(){
       _lgShareImage({ team:LS.teamName, league:lc.label, pill:pill, pos:pos, N:N,

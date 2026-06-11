@@ -597,8 +597,6 @@ window.LEAGUE_TEAM_STRENGTHS = {
     { n:"Montpellier",                s:75 },
     { n:"Le Havre",                   s:74 },
     { n:"Saint-Étienne",              s:74 },
-    { n:"Angers",                     s:74 },
-    { n:"Metz",                       s:73 },
-    { n:"Clermont Foot",              s:72 }
+    { n:"Angers",                     s:74 }
   ]
 };
