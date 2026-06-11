@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Task 9 complete — Summary page audit across all modes. Next: Task 10 (final PROGRESS.md + HANDOVER.md + GitHub push)._
+_Last checkpoint: Tasks 7–10 complete. All session tasks done. To push to GitHub: `git remote add origin <url> && git push -u origin main`._
 
 ---
 
@@ -83,7 +83,7 @@ _Last checkpoint: Task 9 complete — Summary page audit across all modes. Next:
   - League result ✅ — already has lgPlayAgain + lgHomeBtn (T8 work)
   - Multiplayer result ✅ — code-verified "← Back to Home" button present
   - Ratings War result ✅ — code-verified Rematch + ← Home buttons present
-- ⏳ T10 Final PROGRESS.md + HANDOVER.md + GitHub push
+- ✅ T10 Final PROGRESS.md + HANDOVER.md updated. Committed (main 15fff9d). GitHub push pending — no remote configured. To push: `git remote add origin <url> && git push -u origin main`.
 
 ## 6b. EXACTLY WHERE TO PICK UP
 > **NEW TASK LIST received (master prompt).** Working order now:
