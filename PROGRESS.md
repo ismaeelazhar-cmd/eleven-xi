@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: NEW SESSION — T1 complete (resumed, GitHub confirmed up to date at cd61c01, game open). Next: T2 (shareable HTTPS link)._
+_Last checkpoint: T4 bug review complete. New T2 in progress: RW removed from home page, full emoji reduction done. Next: present RW name suggestions, then Spin Wheel T1._
 
 ---
 
@@ -12,8 +12,8 @@ _Last checkpoint: NEW SESSION — T1 complete (resumed, GitHub confirmed up to d
 - **Project root:** `/Users/ismaeelazhar/worldcup-xi`  (vanilla HTML/CSS/JS, no build step)
 - **Run locally:** `python3 -m http.server 8777` from project root → http://localhost:8777/index.html
 - **Standalone offline app:** `eleven-xi.html` (5.4 MB, self-contained, opens from file://). Rebuild: `python3` inline script.
-- **Cache version:** service worker `wcxi-v86`; `index.html` references `?v=` query strings — bump on asset change.
-- **Current versions:** style.css v76, league.js v74, data_league.js v74, game.js v75, floodlights.js v82, floodlights.css v85, sw.js cache wcxi-v87
+- **Cache version:** service worker `wcxi-v92`; `index.html` references `?v=` query strings — bump on asset change.
+- **Current versions:** style.css v76, league.js v76, data_league.js v74, game.js v79, floodlights.js v83, floodlights.css v85, multiplayer.js v85, ratingswar.js v86, sw.js cache wcxi-v92
 
 ## 1. Design direction — LOCKED: "Floodlights" (Option 1)
 3 options were presented; owner picked **Option 1 — Floodlights**.

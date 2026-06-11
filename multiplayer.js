@@ -54,10 +54,10 @@
   ];
 
   var MP_MODE_DATA = {
-    wc:           { label:"🏆 World Cup",        get: function(){ return window.WORLD_CUP_DATA; } },
-    cl:           { label:"⭐ Champions League",  get: function(){ return window.CL_DATA; } },
+    wc:           { label:"World Cup",            get: function(){ return window.WORLD_CUP_DATA; } },
+    cl:           { label:"Champions League",    get: function(){ return window.CL_DATA; } },
     pl:           { label:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League",   get: function(){ return window.PL_DATA; } },
-    championship: { label:"🔵 Championship",      get: function(){ return window.CHAMPIONSHIP_DATA; } },
+    championship: { label:"Championship",         get: function(){ return window.CHAMPIONSHIP_DATA; } },
     euro:         { label:"🇪🇺 Euros (1980–2024)", get: function(){ return window.EURO_DATA; } },
     laliga:       { label:"🇪🇸 La Liga",           get: function(){ return window.LALIGA_DATA; } },
     seriea:       { label:"🇮🇹 Serie A",           get: function(){ return window.SERIEA_DATA; } },
@@ -557,7 +557,7 @@
   ════════════════════════════════════════════════════ */
   function renderSetup(){
     var wrap = mk("div","mp-wrap");
-    wrap.innerHTML = '<h2 class="mp-title">⚽ Multiplayer Draft</h2><p class="mp-sub">Build your XI, one pick at a time. Beat your mates in the tournament.</p>';
+    wrap.innerHTML = '<h2 class="mp-title">Multiplayer Draft</h2><p class="mp-sub">Build your XI, one pick at a time. Beat your mates in the tournament.</p>';
 
     /* ── Number of players ── */
     var numWrap = mk("div","mp-section");
@@ -1404,7 +1404,7 @@
     var maxStep = gTotal + kTotal + 1;
 
     var wrap = mk("div","mp-wrap");
-    wrap.innerHTML = '<h2 class="mp-title">🏆 Tournament</h2>';
+    wrap.innerHTML = '<h2 class="mp-title">Tournament</h2>';
 
     /* ── PRE-GAME: show teams ── */
     if (st.simStep < 0) {

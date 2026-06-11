@@ -809,14 +809,14 @@
     }).join("");
   }
   function statsSummaryHTML(s) {
-    return '<div class="stats-summary"><h3 class="sec">📊 Summary</h3><div class="stat-grid">' +
+    return '<div class="stats-summary"><h3 class="sec">Summary</h3><div class="stat-grid">' +
       '<div class="stat-pill">Played <b>' + s.games + "</b></div>" +
       '<div class="stat-pill">Record <b>' + s.w + "-" + s.d + "-" + s.l + "</b></div>" +
       '<div class="stat-pill">Goals <b>' + s.gf + "</b></div>" +
       '<div class="stat-pill">Conceded <b>' + s.ga + "</b></div>" +
-      '<div class="stat-pill">🧤 Clean sheets <b>' + s.cleanSheets + "</b></div></div>" +
-      '<div class="stat-cols"><div class="stat-col"><div class="stat-h">⚽ Top scorers</div>' + statRows(s.scorers, "g", 5) + "</div>" +
-      '<div class="stat-col"><div class="stat-h">🅰️ Top assists</div>' + statRows(s.assisters, "a", 5) + "</div></div></div>";
+      '<div class="stat-pill">Clean sheets <b>' + s.cleanSheets + "</b></div></div>" +
+      '<div class="stat-cols"><div class="stat-col"><div class="stat-h">Top scorers</div>' + statRows(s.scorers, "g", 5) + "</div>" +
+      '<div class="stat-col"><div class="stat-h">Top assists</div>' + statRows(s.assisters, "a", 5) + "</div></div></div>";
   }
   function renderWorldCupUser(result, label) {
     var groupMatches = result.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; });
@@ -1096,13 +1096,13 @@
   }
 
   function leagueVerdict(actual, expected) {
-    if (actual === 1) return "🏆 Champions of the world's hardest league — the perfect campaign.";
+    if (actual === 1) return "Champions of the world's hardest league — the perfect campaign.";
     var d = expected - actual; // positive = better than expected
-    if (d >= 8) return "🚀 A sensational overachievement — nobody saw that coming.";
-    if (d >= 3) return "💪 Punched well above your weight.";
-    if (d >= -2) return "👍 Just about as expected for a side this strong.";
-    if (d >= -7) return "😕 A disappointing return for the talent on paper.";
-    return "💀 A campaign to forget.";
+    if (d >= 8) return "A sensational overachievement — nobody saw that coming.";
+    if (d >= 3) return "Punched well above your weight.";
+    if (d >= -2) return "Just about as expected for a side this strong.";
+    if (d >= -7) return "A disappointing return for the talent on paper.";
+    return "A campaign to forget.";
   }
 
   function renderLeagueStage() {

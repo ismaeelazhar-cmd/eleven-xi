@@ -66,12 +66,6 @@
           <span class="fl-mode-name">Multiplayer</span>
           <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
         </button>
-        <button class="fl-mode m-rw" id="homeRatingsWar">
-          <span class="fl-mode-badge">New</span>
-          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3l6 6-3 3-6-6z"/><path d="M11.5 6L3 14.5 6 18l8.5-8.5"/><path d="M3 21l3-1M16 13l5 5-2 2-5-5"/></svg></span>
-          <span class="fl-mode-name">Ratings War</span>
-          <span class="fl-mode-hint">Build blind · reveal head-to-head</span>
-        </button>
       </div>
       <button class="home-board-link" id="homeBoard">Leaderboards</button>
     </section>
@@ -141,8 +135,8 @@
         <div class="setup-row setup-row-col">
           <span class="setup-label">Player ratings</span>
           <div class="toggle2" id="ratingsToggle">
-            <button class="tg-opt active" data-ratings="show"><span class="tg-emoji">👁️</span><span class="tg-text">Show ratings</span></button>
-            <button class="tg-opt" data-ratings="hide"><span class="tg-emoji">🙈</span><span class="tg-text">Hide ratings</span></button>
+            <button class="tg-opt active" data-ratings="show"><span class="tg-text">Show ratings</span></button>
+            <button class="tg-opt" data-ratings="hide"><span class="tg-text">Hide ratings</span></button>
           </div>
           <div class="seg-desc" id="ratingsDesc"></div>
         </div>
@@ -246,7 +240,7 @@
     <footer>
       <div class="footer-actions">
         <a class="foot-btn" id="feedbackBtn" href="#" onclick="return false">Feedback &amp; bugs</a>
-        <a class="foot-btn coffee" id="coffeeBtn" href="#" onclick="return false">☕ Enjoying the game?</a>
+        <a class="foot-btn coffee" id="coffeeBtn" href="#" onclick="return false">Enjoying the game?</a>
       </div>
       <p class="foot-credit">An all-time-XI spin-slot draft &amp; simulator, inspired by <a href="https://38-0.app" target="_blank" rel="noopener">38-0</a>.</p>
       <p class="foot-disclaimer">
@@ -284,11 +278,11 @@
   <script src="data_ligue1_history.js?v=71"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=71"></script>
-  <script src="game.js?v=78"></script>
+  <script src="game.js?v=79"></script>
   <script src="net.js?v=84"></script>
-  <script src="multiplayer.js?v=84"></script>
-  <script src="league.js?v=75"></script>
-  <script src="floodlights.js?v=82" defer></script>
-  <script src="ratingswar.js?v=85" defer></script>
+  <script src="multiplayer.js?v=85"></script>
+  <script src="league.js?v=76"></script>
+  <script src="floodlights.js?v=83" defer></script>
+  <script src="ratingswar.js?v=86" defer></script>
 </body>
 </html>

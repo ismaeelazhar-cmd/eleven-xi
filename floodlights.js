@@ -26,15 +26,6 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    var rw = document.getElementById("homeRatingsWar");
-    if (rw && !rw._wired) {
-      rw._wired = true;
-      rw.addEventListener("click", function () {
-        if (W.startRatingsWar) { W.startRatingsWar(); }
-        else { W.flToast("Ratings War — building this next ⚔️"); }
-      });
-    }
-
     // Logo click → home from any screen
     var brand = document.getElementById("brandLogo");
     if (brand && !brand._wired) {

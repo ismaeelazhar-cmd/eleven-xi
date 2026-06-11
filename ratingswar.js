@@ -251,8 +251,8 @@
       "<div class='rw-rerolls'>Spins are free — keep re-spinning until you're happy. Pick blind: you can't see ratings.</div>"+
       "<div class='rw-slots'>"+rows+"</div>"+
       "<button class='fl-btn rw-lock' id='rwLock' "+(filled<11?"disabled":"")+">"+
-        (RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)+" ⚔️"
-                   : (RW.cur===0 ? "Lock XI — pass to "+esc(RW.players[1].name)+" →" : "Lock XI — reveal the war ⚔️"))+"</button>"+
+        (RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
+                   : (RW.cur===0 ? "Lock XI — pass to "+esc(RW.players[1].name)+" →" : "Lock XI — reveal"))+"</button>"+
       "</div>";
     document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Ratings War?")) goHome(); };
     v.querySelectorAll(".rw-spin,.rw-respin").forEach(function(b){
@@ -353,7 +353,7 @@
     if (winnerIdx === -1) title = "It's a stalemate";
     else if (RW.online) title = (winnerIdx===RW.myIdx ? "You win the war" : esc(RW.players[winnerIdx].name)+" wins the war");
     else title = esc(RW.players[winnerIdx].name)+" wins the war";
-    var emoji = winnerIdx>=0 ? "🏆" : "🤝";
+    var emoji = winnerIdx>=0 ? "🏆" : "";
     var best = RW.rows.slice().filter(function(r){return r.a&&r.b;}).sort(function(x,y){
       return (Math.max(y.a.r,y.b.r)) - (Math.max(x.a.r,x.b.r)); })[0];
     var rematchLabel = RW.online ? (RW.rematchMe ? "Waiting for rematch…" : "Rematch") : "Rematch";

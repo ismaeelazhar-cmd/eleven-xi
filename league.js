@@ -169,7 +169,7 @@
   function renderLeaguePicker(){
     var v=lgView();
     var html="<button class='back' id='lgBackHome'>← Home</button>"+
-      "<h2 class='lg-title'>⚽ League Mode</h2>"+
+      "<h2 class='lg-title'>League Mode</h2>"+
       "<p class='lg-sub'>Spin to build an XI from real squads — then simulate a full season.</p>"+
       "<div class='lg-card-grid'>";
     Object.keys(LEAGUES).forEach(function(k){
@@ -238,8 +238,8 @@
         "<div class='setup-row setup-row-col'>"+
           "<span class='setup-label'>Player ratings</span>"+
           "<div class='toggle2' id='lgRatingsToggle'>"+
-            "<button class='tg-opt"+(LS.showRatings?" active":"")+"' data-rat='show'><span class='tg-emoji'>👁️</span><span class='tg-text'>Show ratings</span></button>"+
-            "<button class='tg-opt"+(LS.showRatings?"":" active")+"' data-rat='hide'><span class='tg-emoji'>🙈</span><span class='tg-text'>Hide ratings</span></button>"+
+            "<button class='tg-opt"+(LS.showRatings?" active":"")+"' data-rat='show'><span class='tg-text'>Show ratings</span></button>"+
+            "<button class='tg-opt"+(LS.showRatings?"":" active")+"' data-rat='hide'><span class='tg-text'>Hide ratings</span></button>"+
           "</div>"+
         "</div>"+
         "<button class='start-btn' id='lgGoDraft'>Draft your XI →</button>"+
@@ -951,7 +951,7 @@
         "<span class='pill "+cls+"'>"+cls+"</span>"+
       "</div>"+
       "<div class='mscore'>"+
-        "<span class='me'>⭐ "+esc(LS.teamName)+"</span> "+
+        "<span class='me'>"+esc(LS.teamName)+"</span> "+
         "<b>"+r.gf+"–"+r.ga+"</b> "+
         "<span class='oppname'>"+esc(r.opp)+"</span>"+
       "</div>"+
@@ -1074,7 +1074,7 @@
 
     if(ev.type==="manager"){
       var html="<div class='lg-modal lg-event'>"+
-        "<div class='lg-event-emoji'>😱</div>"+
+        ""+
         "<div class='lg-event-title'>Manager out!</div>"+
         "<div class='lg-event-body'><strong>"+esc(LS.mgrName||(LS.manager&&LS.manager.name)||"Your manager")+"</strong> "+esc(ev.reason)+". Spin to appoint a replacement.</div>"+
         "<div class='reel mgr-reel lg-event-reel'><div class='reel-strip' id='lgEvtStrip'></div></div>"+
@@ -1092,7 +1092,7 @@
           var s=MGRS.filter(function(m){return m.id===pick.s;})[0]||MGRS[0];
           LS.manager=s; LS.mgrName=pick.n; LS.mgrBonus={attack:s.atk||0,defend:s.def||0};
           try{ localStorage.setItem("wcxi_manager",JSON.stringify({id:s.id,name:pick.n})); }catch(e){}
-          b.outerHTML="<button class='start-btn' id='lgEvtDone'>✓ "+esc(pick.n)+" appointed — continue →</button>";
+          b.outerHTML="<button class='start-btn' id='lgEvtDone'>"+esc(pick.n)+" appointed — continue →</button>";
           eid("lgEvtDone").addEventListener("click",_lgResumeAfterEvent);
         });
       });
@@ -1103,7 +1103,7 @@
     if(ev.stage==="announce"){
       var v=ev.victim, pos=v.slot||v.gp||v.p||"MID", lc2=LINE_OF[pos]||"MID";
       panel.innerHTML="<div class='lg-modal lg-event'>"+
-        "<div class='lg-event-emoji'>😱</div>"+
+        ""+
         "<div class='lg-event-title'>Bad news</div>"+
         "<div class='lg-event-body'><strong>"+esc(v.n)+"</strong> ("+esc(pos)+") "+esc(ev.reason)+". Spin a squad to sign a replacement for the <strong>"+esc(pos)+"</strong> slot.</div>"+
         "<button class='start-btn' id='lgEvtPlayerSpin'>Spin for a replacement</button>"+
@@ -1210,7 +1210,7 @@
       var url=URL.createObjectURL(blob), a=document.createElement("a");
       a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-      if(btn){ btn.textContent="✓ Image saved"; setTimeout(function(){ btn.innerHTML="📸&nbsp;Share your season"; }, 1800); }
+      if(btn){ btn.textContent="Image saved"; setTimeout(function(){ btn.innerHTML="Share your season"; }, 1800); }
     }, "image/png");
   }
 
@@ -1241,9 +1241,9 @@
       [cs+" clean sheets", cs*15]
     ];
     if(posDiff>0)  breakdown.push(["Overperformed by "+posDiff+" place"+(posDiff>1?"s":""), posDiff*50]);
-    if(isChamp)    breakdown.push(["🏆 Champions bonus", 600]);
-    else if(isTop4) breakdown.push(["⭐ Top-four bonus", 250]);
-    if(isPerfect)  breakdown.push(["💎 Perfect season", 3000]);
+    if(isChamp)    breakdown.push(["Champions bonus", 600]);
+    else if(isTop4) breakdown.push(["Top-four bonus", 250]);
+    if(isPerfect)  breakdown.push(["Perfect season", 3000]);
     var score=breakdown.reduce(function(a,b){ return a+b[1]; },0);
     if(score<0) score=0;
 
@@ -1384,7 +1384,7 @@
     function lgsAward(cls, icon, label, p, sub) {
       if (!p) return "";
       return "<div class='lgs-award " + cls + "'>" +
-        "<div class='lgs-award-h'>" + icon + " " + label + "</div>" +
+        "<div class='lgs-award-h'>" + (icon ? icon + " " : "") + label + "</div>" +
         "<div class='lgs-award-name'>" + esc(p.n) + "</div>" +
         "<div class='lgs-award-sub'>" + sub + "</div></div>";
     }
@@ -1454,10 +1454,10 @@
         /* ── Season Awards ── */
         "<div class='lgs-sec'>SEASON AWARDS</div>" +
         "<div class='lgs-awards'>" +
-          lgsAward("", "⚽", "GOLDEN BOOT", boot, boot ? boot.G + " goals" : "") +
-          lgsAward("", "🎯", "PLAYMAKER", play, play ? play.A + " assists" : "") +
-          lgsAward("", "🧤", "GOLDEN GLOVE", glove, glove ? glove.CS + " clean sheets" : "") +
-          lgsAward("gold", "🏆", "PLAYER OF THE SEASON", pots, pots ? pots.G + "G · " + pots.A + "A" : "") +
+          lgsAward("", "", "GOLDEN BOOT", boot, boot ? boot.G + " goals" : "") +
+          lgsAward("", "", "PLAYMAKER", play, play ? play.A + " assists" : "") +
+          lgsAward("", "", "GOLDEN GLOVE", glove, glove ? glove.CS + " clean sheets" : "") +
+          lgsAward("gold", "", "PLAYER OF THE SEASON", pots, pots ? pots.G + "G · " + pots.A + "A" : "") +
         "</div>" +
 
         /* ── Player stats ── */
@@ -1479,7 +1479,7 @@
         "</div>" +
 
         /* ── Share ── */
-        "<button class='lgs-share' id='lgShare'>📸&nbsp;Share your season</button>" +
+        "<button class='lgs-share' id='lgShare'>Share your season</button>" +
 
         /* ── Score breakdown ── */
         "<div class='lgs-sec'>SCORE BREAKDOWN</div>" +
