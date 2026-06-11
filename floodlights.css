@@ -563,3 +563,49 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
   color: var(--text-dim); font-size: var(--t-xs); line-height: 1.5; margin-bottom: var(--sp-5);
 }
 .rw-rules-ok { width: 100%; }
+
+/* ════════════════════════════════════════════════════════════════
+   DUELS — PLAYER COUNT PICKER + TOURNAMENT
+   ============================================================ */
+.rw-player-count {
+  display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+  margin: var(--sp-4) auto; justify-content: center;
+}
+.rw-pc-label { font-size: var(--t-xs); font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: .1em; }
+.rw-pc-btns { display: flex; gap: var(--sp-2); }
+.rw-pc-btn {
+  width: 44px; height: 44px; border-radius: var(--r-md);
+  background: var(--surface-2); border: 1.5px solid var(--line);
+  color: var(--text-dim); font-weight: 800; font-size: var(--t-body); cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.rw-pc-btn:hover { background: var(--surface-3); color: var(--text); border-color: var(--line-strong); }
+.rw-pc-btn.rw-pc-active {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
+  color: var(--warning);
+}
+.rw-pc-hint { font-size: var(--t-2xs); color: var(--text-mute); font-style: italic; }
+.rw-handoff-prog { font-size: var(--t-xs); font-weight: 700; color: var(--positive); letter-spacing: .06em; margin-bottom: var(--sp-3); }
+.rw-match-label { text-align: center; font-size: var(--t-2xs); font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--warning); margin-bottom: var(--sp-2); }
+.rw-result-matchlabel { font-size: var(--t-2xs); font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--warning); margin-bottom: var(--sp-2); }
+.rw-matchup { display: flex; align-items: center; gap: var(--sp-4); justify-content: center; margin: var(--sp-4) 0; }
+.rw-mu-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); color: var(--text); }
+.rw-mu-vs { font-size: var(--t-2xs); font-weight: 900; letter-spacing: .14em; color: var(--text-mute); }
+.rw-tourn-table { display: flex; flex-direction: column; gap: var(--sp-2); margin: var(--sp-4) 0; max-width: 340px; margin-left: auto; margin-right: auto; }
+.rw-tourn-row {
+  display: flex; align-items: center; gap: var(--sp-3);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-4);
+}
+.rw-tourn-row.rw-tourn-winner {
+  background: color-mix(in srgb, var(--champion) 14%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--champion) 40%, var(--line));
+}
+.rw-tourn-rank { font-size: var(--t-2xs); font-weight: 800; color: var(--text-mute); width: 28px; }
+.rw-tourn-winner .rw-tourn-rank { color: var(--champion); }
+.rw-tourn-name { flex: 1; font-weight: 700; font-size: var(--t-sm); color: var(--text); }
+.rw-tourn-pts { font-weight: 700; font-size: var(--t-xs); color: var(--positive); font-variant-numeric: tabular-nums; }
+.rw-tourn-gd { font-weight: 600; font-size: var(--t-xs); color: var(--text-mute); font-variant-numeric: tabular-nums; min-width: 40px; text-align: right; }

@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: T6 Duels rules screen ✅ done. Cache wcxi-v99. floodlights.css v88, ratingswar.js v91. Next: T7 Duels tournament structure._
+_Last checkpoint: T7 Duels tournament structure ✅ done. Cache wcxi-v100. floodlights.css v89, ratingswar.js v92. Next: T8 Full game makeover pass._
 
 ---
 
@@ -113,7 +113,7 @@ _Last checkpoint: T6 Duels rules screen ✅ done. Cache wcxi-v99. floodlights.cs
 - ✅ **T4** Formation view redesign — SVG pitch markings (both penalty boxes, halfway line, centre circle, centre spot, GK area) baked into `--pitch-bg` token. Glassy frosted position circles with position-colour ring (coral FWD/violet MID/teal DEF/gold GK). `dotPopIn` spring animation on fill. Rating tier text colours (r-gold ≥90, r-elite 85-89, r-great 80-84, r-good 75-79). style.css v77, tokens.css v73, floodlights.css v86, game.js v81. Cache wcxi-v97.
 - ✅ **T5** Duels game setup — pool select step inserted between intro and build phases. Player picks from 6 data sources (WC, Euros, PL, La Liga, Serie A, Bundesliga) via `renderPoolSelect()`. Pool cards in 3×2 responsive grid. Each player independently picks pool before their build turn (handoff phase also routes to poolselect). `RW.poolDataCur/poolNationalCur/poolLabelCur` track current pick. Build header shows chosen pool. Reel label adapts Nation/Club. Ratings never in DOM throughout. ratingswar.js v90, floodlights.css v87. Cache wcxi-v98.
 - ✅ **T6** Duels rules screen — `showRWRules()` glassmorphism modal with 5-step rules + strategy tip. "How to play" button on intro screen + inline on pool select header. Backdrop dismiss + close button. ratingswar.js v91, floodlights.css v88. Cache wcxi-v99.
-- ⏳ **T7** Duels tournament structure (2-player, 3-player round robin, 4-player free-for-all/bracket)
+- ✅ **T7** Duels tournament structure — intro screen player count picker (2/3/4, coral active state). 2-player: 1v1 unchanged. 3-player: round robin 3 matches, points table (3/1/0). 4-player: knockout bracket (semis + 3rd place play-off + final, dynamically added after semis). All builds generalized: handoff loops for N players, lock label adapts. `renderMatchNext()` transition screen. `renderTournResult()` final standings. ratingswar.js v92, floodlights.css v89. Cache wcxi-v100.
 - ⏳ **T8** Full game makeover pass (visual consistency, rating colour system, animations, spin wheel polish)
 - ⏳ **T9** Deploy + shareable permanent HTTPS link
 - ⏳ **T10** Full playthrough bug hunt (every mode end-to-end)

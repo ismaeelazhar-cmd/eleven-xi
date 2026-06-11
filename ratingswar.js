@@ -64,6 +64,8 @@
   W.startDuels = function(){
     RW = {
       phase:"intro", cur:0, revealStep:-1,
+      numPlayers:2, curA:0, curB:1,
+      matches:[], matchIdx:0, matchResults:[],
       currentSpin:null, pendingRWPick:null, _spinning:false,
       players:[ {name:"Player 1", picks:newPicks(), rerollsUsed:0}, {name:"Player 2", picks:newPicks(), rerollsUsed:0} ]
     };
@@ -71,6 +73,43 @@
     render();
   };
   function newPicks(){ return SLOTS.map(function(){ return null; }); }
+
+  /* ── Match schedule helpers ── */
+  function buildMatchSchedule(n){
+    if (n===2) return [{a:0,b:1}];
+    if (n===3) return [{a:0,b:1,label:"Match 1"},{a:0,b:2,label:"Match 2"},{a:1,b:2,label:"Match 3"}];
+    /* 4-player: only semis here; final+3rd added dynamically after semis */
+    return [{a:0,b:1,label:"Semi-final 1"},{a:2,b:3,label:"Semi-final 2"}];
+  }
+  function matchWinner(res){
+    /* returns player index of winner, or -1 for draw */
+    return res.score[0]>res.score[1] ? res.a : res.score[1]>res.score[0] ? res.b : -1;
+  }
+  function matchLoser(res){
+    var w = matchWinner(res); if (w===-1) return res.b; /* draw: arbitrary */
+    return w===res.a ? res.b : res.a;
+  }
+  function advanceMatch(){
+    /* Save current match result */
+    RW.matchResults.push({a:RW.curA, b:RW.curB, score:[RW.score[0],RW.score[1]]});
+    /* 4-player bracket: after both semis, inject final + 3rd */
+    if (RW.numPlayers===4 && RW.matchIdx===1 && RW.matchResults.length===2){
+      var w1=matchWinner(RW.matchResults[0]), w2=matchWinner(RW.matchResults[1]);
+      var l1=matchLoser(RW.matchResults[0]),  l2=matchLoser(RW.matchResults[1]);
+      if (w1===-1){ w1=RW.matchResults[0].a; l1=RW.matchResults[0].b; } /* treat draw as first player wins */
+      if (w2===-1){ w2=RW.matchResults[1].a; l2=RW.matchResults[1].b; }
+      RW.matches.push({a:l1,b:l2,label:"3rd place play-off"});
+      RW.matches.push({a:w1,b:w2,label:"Final"});
+    }
+    RW.matchIdx++;
+    if (RW.matchIdx < RW.matches.length){
+      RW.curA = RW.matches[RW.matchIdx].a;
+      RW.curB = RW.matches[RW.matchIdx].b;
+      RW.phase = "matchnext"; render();
+    } else {
+      RW.phase = "tournresult"; render();
+    }
+  }
 
   /* ════════════════════════════════════════════════════
      ONLINE Duels — each player builds on their own
@@ -191,6 +230,8 @@
     if (RW.phase === "waitopp")    return renderWaitOpp(v);
     if (RW.phase === "handoff")    return renderHandoff(v);
     if (RW.phase === "reveal")     return renderReveal(v);
+    if (RW.phase === "matchnext")  return renderMatchNext(v);
+    if (RW.phase === "tournresult") return renderTournResult(v);
     if (RW.phase === "result")     return renderResult(v);
   }
 
@@ -235,28 +276,55 @@
   }
 
   /* ---------- intro: name the two players ---------- */
+  function defaultName(i){ return "Player "+(i+1); }
   function renderIntro(v){
+    var n = RW.numPlayers;
+    var nameFields = "";
+    for (var i=0; i<n; i++){
+      nameFields += "<label class='rw-name-field'><span>"+defaultName(i)+"</span>"+
+        "<input id='rwN"+i+"' class='rw-input' maxlength='14' placeholder='"+defaultName(i)+"' value='"+esc(RW.players[i]?RW.players[i].name:defaultName(i))+"'></label>";
+      if (i < n-1 && n===2) nameFields += "<div class='rw-vs-badge'>VS</div>";
+    }
+    var formatHint = n===3 ? "Round robin · 3 matches" : n===4 ? "Bracket · semi-finals + final" : "Head-to-head · 1 match";
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Multiplayer</div>"+
       "<h2 class='rw-title'><span class='rw-accent'>Duels</span></h2>"+
-      "<p class='rw-sub'>Both managers build an XI <strong>blind</strong> — no ratings shown. "+
-      "Then it's a head-to-head: position by position, the higher-rated player wins the slot. Most slots wins.</p>"+
-      "<div class='rw-names'>"+
-        "<label class='rw-name-field'><span>Player 1</span><input id='rwN1' class='rw-input' maxlength='14' placeholder='Player 1' value='"+esc(RW.players[0].name)+"'></label>"+
-        "<div class='rw-vs-badge'>VS</div>"+
-        "<label class='rw-name-field'><span>Player 2</span><input id='rwN2' class='rw-input' maxlength='14' placeholder='Player 2' value='"+esc(RW.players[1].name)+"'></label>"+
+      "<p class='rw-sub'>Managers build an XI <strong>blind</strong> — no ratings shown. "+
+      "Then it's head-to-head: position by position, higher-rated player wins the slot.</p>"+
+      "<div class='rw-player-count'><span class='rw-pc-label'>Players</span>"+
+        "<div class='rw-pc-btns'>"+
+          '<button class="rw-pc-btn'+(n===2?' rw-pc-active':'')+'" data-pc="2">2</button>'+
+          '<button class="rw-pc-btn'+(n===3?' rw-pc-active':'')+'" data-pc="3">3</button>'+
+          '<button class="rw-pc-btn'+(n===4?' rw-pc-active':'')+'" data-pc="4">4</button>'+
+        "</div>"+
+        "<span class='rw-pc-hint'>"+esc(formatHint)+"</span>"+
       "</div>"+
-      "<button class='fl-btn rw-start' id='rwStart'>Player 1 — build your XI →</button>"+
+      "<div class='rw-names' id='rwNamesWrap'>"+nameFields+"</div>"+
+      "<button class='fl-btn rw-start' id='rwStart'>"+esc(RW.players[0]?RW.players[0].name:defaultName(0))+" — build your XI →</button>"+
       "<button class='rw-rules-link' id='rwHowToPlay'>How to play</button>"+
       "</div></div>";
     document.getElementById("rwBack").onclick = goHome;
     document.getElementById("rwHowToPlay").onclick = showRWRules;
+    v.querySelectorAll(".rw-pc-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var pc = parseInt(btn.getAttribute("data-pc"),10);
+        /* Rebuild players array to the new count, preserving existing names */
+        var newPlayers = [];
+        for (var i=0; i<pc; i++){
+          var inp = document.getElementById("rwN"+i);
+          var nm = inp ? (inp.value.trim()||defaultName(i)) : defaultName(i);
+          newPlayers.push({name:nm, picks:newPicks(), rerollsUsed:0});
+        }
+        RW.numPlayers = pc; RW.players = newPlayers;
+        render();
+      });
+    });
     document.getElementById("rwStart").onclick = function(){
-      RW.players[0].name = (document.getElementById("rwN1").value.trim()||"Player 1");
-      RW.players[1].name = (document.getElementById("rwN2").value.trim()||"Player 2");
-      RW.players[0].name = (document.getElementById("rwN1").value.trim()||"Player 1");
-      RW.players[1].name = (document.getElementById("rwN2").value.trim()||"Player 2");
+      for (var i=0; i<n; i++){
+        var inp = document.getElementById("rwN"+i);
+        RW.players[i].name = inp ? (inp.value.trim()||defaultName(i)) : defaultName(i);
+      }
       RW.cur = 0; RW.phase = "poolselect"; render();
     };
   }
@@ -544,7 +612,8 @@
       "<div class='xi-actions'>"+
         "<button class='btn-primary rw-lock-btn' id='rwLock' "+(filled<11?"disabled":"")+">"+
           (RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
-                     : (RW.cur===0 ? "Lock XI — pass to "+esc(RW.players[1].name)+" →" : "Lock XI — reveal"))+
+                     : (RW.cur < RW.numPlayers-1 ? "Lock XI — pass to "+esc(RW.players[RW.cur+1].name)+" →"
+                                                  : (RW.numPlayers>2 ? "Lock XI — start matches" : "Lock XI — reveal")))+
         "</button>"+
       "</div>"+
       "</div>";
@@ -574,29 +643,41 @@
         maybeStartReveal();
         return;
       }
-      if (RW.cur === 0){ RW.cur = 1; RW.phase = "handoff"; }
-      else { RW.phase = "reveal"; RW.revealStep = -1; computeResult(); }
+      if (RW.cur < RW.numPlayers - 1){
+        RW.cur++; RW.phase = "handoff";
+      } else {
+        /* All players built — schedule matches */
+        RW.matches = buildMatchSchedule(RW.numPlayers);
+        RW.matchIdx = 0;
+        RW.curA = RW.matches[0].a; RW.curB = RW.matches[0].b;
+        RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+      }
       render();
     };
   }
 
   /* ---------- handoff (privacy between players) ---------- */
   function renderHandoff(v){
+    var cur = RW.players[RW.cur], prev = RW.players[RW.cur-1];
+    var built = RW.cur, total = RW.numPlayers;
     v.innerHTML =
       "<div class='wrap'><div class='rw-handoff'>"+
         "<h2 class='rw-title'>Pass the device</h2>"+
-        "<p class='rw-sub'><strong>"+esc(RW.players[1].name)+"</strong>, it's your turn to build — "+
-        esc(RW.players[0].name)+"'s XI is hidden. Ratings stay secret until the reveal.</p>"+
-        "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(RW.players[1].name)+" — build my XI →</button>"+
+        "<div class='rw-handoff-prog'>"+built+"/"+total+" built</div>"+
+        "<p class='rw-sub'><strong>"+esc(cur.name)+"</strong>, it's your turn to build — "+
+        esc(prev.name)+"'s XI is locked and hidden. Ratings stay secret until the reveal.</p>"+
+        "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(cur.name)+" — build my XI →</button>"+
       "</div></div>";
     document.getElementById("rwGo").onclick = function(){ RW.phase="poolselect"; render(); };
   }
 
   /* ---------- result computation ---------- */
   function computeResult(){
+    var idxA = RW.curA!=null ? RW.curA : 0;
+    var idxB = RW.curB!=null ? RW.curB : 1;
     var s1=0, s2=0, rows=[];
     SLOTS.forEach(function(s,i){
-      var a=RW.players[0].picks[i], b=RW.players[1].picks[i];
+      var a=RW.players[idxA].picks[i], b=RW.players[idxB].picks[i];
       var ra=a?a.r:0, rb=b?b.r:0, win = ra>rb?1:(rb>ra?2:0);
       if(win===1) s1++; else if(win===2) s2++;
       rows.push({slot:s.k.trim(), line:s.line, a:a, b:b, win:win});
@@ -626,9 +707,10 @@
     v.innerHTML =
       "<div class='wrap'>"+
       "<div class='rw-scorebar'>"+
-        "<div class='rw-team a'><div class='rw-team-name'>"+esc(RW.players[0].name)+"</div><div class='rw-team-score' id='rwS1'>"+s1+"</div></div>"+
+        (RW.numPlayers>2 && RW.matches[RW.matchIdx] ? "<div class='rw-match-label'>"+esc(RW.matches[RW.matchIdx].label||"Match "+(RW.matchIdx+1))+"</div>" : "")+
+        "<div class='rw-team a'><div class='rw-team-name'>"+esc(RW.players[RW.curA!=null?RW.curA:0].name)+"</div><div class='rw-team-score' id='rwS1'>"+s1+"</div></div>"+
         "<div class='rw-scorebar-vs'>"+(done?"FULL TIME":"WAR")+"</div>"+
-        "<div class='rw-team b'><div class='rw-team-score' id='rwS2'>"+s2+"</div><div class='rw-team-name'>"+esc(RW.players[1].name)+"</div></div>"+
+        "<div class='rw-team b'><div class='rw-team-score' id='rwS2'>"+s2+"</div><div class='rw-team-name'>"+esc(RW.players[RW.curB!=null?RW.curB:1].name)+"</div></div>"+
       "</div>"+
       "<div class='rw-rev-list'>"+cards+"</div>"+
       "<div class='reveal-bar'>"+(done
@@ -644,40 +726,124 @@
 
   /* ---------- result ---------- */
   function renderResult(v){
+    var idxA = RW.curA!=null ? RW.curA : 0;
+    var idxB = RW.curB!=null ? RW.curB : 1;
     var s1=RW.score[0], s2=RW.score[1];
     function nm(i){ return esc(RW.players[i].name) + (RW.online && i===RW.myIdx ? " <span class='rw-you'>(you)</span>" : ""); }
-    var winnerIdx = s1>s2?0 : s2>s1?1 : -1;
+    var winnerIdx = s1>s2?idxA : s2>s1?idxB : -1;
+    var isTourn = RW.numPlayers > 2;
+    var matchLabel = isTourn && RW.matches[RW.matchIdx] ? RW.matches[RW.matchIdx].label : null;
     var title;
-    if (winnerIdx === -1) title = "It's a stalemate";
-    else if (RW.online) title = (winnerIdx===RW.myIdx ? "You win the war" : esc(RW.players[winnerIdx].name)+" wins the war");
-    else title = esc(RW.players[winnerIdx].name)+" wins the war";
+    if (winnerIdx === -1) title = matchLabel ? matchLabel+" — draw" : "It's a stalemate";
+    else if (RW.online) title = (winnerIdx===RW.myIdx ? "You win the duel" : esc(RW.players[winnerIdx].name)+" wins the duel");
+    else title = esc(RW.players[winnerIdx].name)+(isTourn ? " wins "+(matchLabel||"the match") : " wins the duel");
     var emoji = winnerIdx>=0 ? "🏆" : "";
     var best = RW.rows.slice().filter(function(r){return r.a&&r.b;}).sort(function(x,y){
       return (Math.max(y.a.r,y.b.r)) - (Math.max(x.a.r,x.b.r)); })[0];
+    var moreMatches = isTourn && (RW.matchIdx < RW.matches.length - 1 ||
+      (RW.numPlayers===4 && RW.matchIdx < 1)); /* 4-player: final/3rd added dynamically */
+    var nextMatch = isTourn ? RW.matches[RW.matchIdx+1] : null;
+    var nextLabel = nextMatch ? (nextMatch.label || "Match "+(RW.matchIdx+2)) : "";
     var rematchLabel = RW.online ? (RW.rematchMe ? "Waiting for rematch…" : "Rematch") : "Rematch";
+    var btns = isTourn
+      ? "<button class='fl-btn' id='rwNext'>"+esc(nextLabel ? nextLabel+" →" : "See standings →")+"</button>"+
+        "<button class='btn-ghost' id='rwHome'>Home</button>"
+      : "<button class='fl-btn' id='rwAgain' "+(RW.online&&RW.rematchMe?"disabled":"")+">"+rematchLabel+"</button>"+
+        "<button class='btn-ghost' id='rwHome'>Home</button>";
     v.innerHTML =
       "<div class='wrap'>"+
       "<div class='rw-result-card'>"+
+        (matchLabel ? "<div class='rw-result-matchlabel'>"+esc(matchLabel)+"</div>" : "")+
         "<div class='rw-result-emoji'>"+emoji+"</div>"+
         "<div class='rw-result-score'>"+s1+" <span>–</span> "+s2+"</div>"+
         "<h2 class='rw-title'>"+title+"</h2>"+
-        "<p class='rw-sub'>"+nm(0)+" "+s1+" · "+nm(1)+" "+s2+
+        "<p class='rw-sub'>"+nm(idxA)+" "+s1+" · "+nm(idxB)+" "+s2+
           (best?" &middot; star slot: "+esc(best.slot)+" ("+esc(shortName(best[best.a.r>=best.b.r?'a':'b'].n))+" "+Math.max(best.a.r,best.b.r)+")":"")+"</p>"+
-        "<div class='rw-result-btns'>"+
-          "<button class='fl-btn' id='rwAgain' "+(RW.online&&RW.rematchMe?"disabled":"")+">"+rematchLabel+"</button>"+
-          "<button class='btn-ghost' id='rwHome'>Home</button>"+
-        "</div>"+
+        "<div class='rw-result-btns'>"+btns+"</div>"+
       "</div></div>";
-    document.getElementById("rwAgain").onclick = function(){
+    var nxt=document.getElementById("rwNext");
+    if(nxt) nxt.onclick = function(){ advanceMatch(); };
+    var ag=document.getElementById("rwAgain");
+    if(ag) ag.onclick = function(){
       if (RW.online){
         RW.rematchMe = true; rwSend({ t:"rw_rematch" });
         if (typeof W.flToast === "function") W.flToast("Rematch requested…");
         maybeRematch(); render();
-      } else {
-        W.startDuels();
-      }
+      } else { W.startDuels(); }
     };
     document.getElementById("rwHome").onclick = goHome;
     if (winnerIdx>=0 && typeof W.triggerConfetti === "function") W.triggerConfetti();
+  }
+
+  /* ---------- match-next transition (tournament) ---------- */
+  function renderMatchNext(v){
+    var m = RW.matches[RW.matchIdx];
+    var pA = RW.players[m.a], pB = RW.players[m.b];
+    v.innerHTML =
+      "<div class='wrap'><div class='rw-handoff'>"+
+        "<div class='rw-kicker'>"+esc(m.label||"Next match")+"</div>"+
+        "<h2 class='rw-title'>Next up</h2>"+
+        "<div class='rw-matchup'>"+
+          "<span class='rw-mu-name'>"+esc(pA.name)+"</span>"+
+          "<span class='rw-mu-vs'>VS</span>"+
+          "<span class='rw-mu-name'>"+esc(pB.name)+"</span>"+
+        "</div>"+
+        "<button class='fl-btn rw-start' id='rwGoMatch'>Start match →</button>"+
+      "</div></div>";
+    document.getElementById("rwGoMatch").onclick = function(){
+      RW.curA = m.a; RW.curB = m.b;
+      RW.phase = "reveal"; RW.revealStep = -1; computeResult(); render();
+    };
+  }
+
+  /* ---------- tournament final standings ---------- */
+  function renderTournResult(v){
+    /* Compute standings from matchResults */
+    var pts = {}, gd = {}, gf = {};
+    RW.players.forEach(function(_,i){ pts[i]=0; gd[i]=0; gf[i]=0; });
+    RW.matchResults.forEach(function(r){
+      var sa=r.score[0], sb=r.score[1];
+      gf[r.a]+=sa; gf[r.b]+=sb; gd[r.a]+=(sa-sb); gd[r.b]+=(sb-sa);
+      if(sa>sb){ pts[r.a]+=3; }
+      else if(sb>sa){ pts[r.b]+=3; }
+      else { pts[r.a]+=1; pts[r.b]+=1; }
+    });
+    var order = Object.keys(pts).map(Number).sort(function(a,b){
+      return pts[b]-pts[a] || gd[b]-gd[a] || gf[b]-gf[a];
+    });
+    var places = ["1st","2nd","3rd","4th"];
+    /* For 4-player bracket, use matchResults to determine final order */
+    if (RW.numPlayers===4){
+      var finalRes = RW.matchResults[RW.matchResults.length-1]; /* Final */
+      var thirdRes = RW.matchResults[RW.matchResults.length-2]; /* 3rd place play-off */
+      var first = matchWinner(finalRes);  if(first===-1) first=finalRes.a;
+      var second = first===finalRes.a ? finalRes.b : finalRes.a;
+      var third = matchWinner(thirdRes);  if(third===-1) third=thirdRes.a;
+      var fourth = third===thirdRes.a ? thirdRes.b : thirdRes.a;
+      order = [first, second, third, fourth];
+    }
+    var rows = order.map(function(i, rank){
+      return "<div class='rw-tourn-row "+(rank===0?"rw-tourn-winner":"")+"'>"+
+        "<span class='rw-tourn-rank'>"+places[rank]+"</span>"+
+        "<span class='rw-tourn-name'>"+esc(RW.players[i].name)+"</span>"+
+        (RW.numPlayers===3 ? "<span class='rw-tourn-pts'>"+pts[i]+" pts</span><span class='rw-tourn-gd'>"+(gd[i]>0?"+":"")+gd[i]+" GD</span>" : "")+
+      "</div>";
+    }).join("");
+    var champ = RW.players[order[0]].name;
+    v.innerHTML =
+      "<div class='wrap'>"+
+      "<div class='rw-result-card'>"+
+        "<div class='rw-result-emoji'>🏆</div>"+
+        "<h2 class='rw-title'>"+esc(champ)+"</h2>"+
+        "<div class='rw-kicker'>"+(RW.numPlayers===3?"Round Robin Champion":"Tournament Champion")+"</div>"+
+        "<div class='rw-tourn-table'>"+rows+"</div>"+
+        "<div class='rw-result-btns'>"+
+          "<button class='fl-btn' id='rwAgain'>Play again</button>"+
+          "<button class='btn-ghost' id='rwHome'>Home</button>"+
+        "</div>"+
+      "</div></div>";
+    document.getElementById("rwAgain").onclick = function(){ W.startDuels(); };
+    document.getElementById("rwHome").onclick = goHome;
+    if (typeof W.triggerConfetti === "function") W.triggerConfetti();
   }
 })(window);
