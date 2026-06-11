@@ -227,13 +227,13 @@ window.ENGINE = (function () {
       out.userMatches = userMatches;
       out.userStats = aggregateStats(userMatches, userTeam);
       out.teamName = userTeam.name;
-      if (champion && champion.isUser) out.userResult = "🏆 Champions!";
+      if (champion && champion.isUser) out.userResult = "Champions!";
       else {
         var ko = userMatches.filter(function (mm) { return mm.round.indexOf("Group") !== 0; });
         if (!ko.length) out.userResult = "Eliminated in the Group stage";
         else {
           var lastR = ko[ko.length - 1].round;
-          if (lastR === "Final") out.userResult = "🥈 Runners-up";
+          if (lastR === "Final") out.userResult = "Runners-up";
           else if (lastR === "Semi-finals") out.userResult = "Semi-finalists";
           else out.userResult = "Out in the " + lastR;
         }
@@ -314,11 +314,11 @@ window.ENGINE = (function () {
   }
   function userKOResult(userTeam, champion, userMatches, groupTag, phaseLabel) {
     if (!userTeam) return null;
-    if (champion && champion.isUser) return "🏆 Champions of Europe!";
+    if (champion && champion.isUser) return "Champions of Europe!";
     var ko = userMatches.filter(function (m) { return m.round.indexOf(groupTag) !== 0 && m.round !== "Matchday"; });
     if (!ko.length) return "Out in the " + (phaseLabel || "league phase");
     var last = ko[ko.length - 1].round;
-    if (last === "Final") return "🥈 Runners-up";
+    if (last === "Final") return "Runners-up";
     if (last === "Semi-finals") return "Semi-finalists";
     return "Out in the " + last;
   }

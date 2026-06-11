@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: T9 deploy done. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/. Next: T10 full playthrough bug hunt._
+_Living document — update after every significant change. Last updated: T10 bug hunt done. Cache wcxi-v102. game.js v83, engine.js v72, floodlights.js v85. Next: T11 review + improvements list._
 
 ---
 
@@ -65,7 +65,7 @@ _Living document — update after every significant change. Last updated: T9 dep
 - **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
 
 ## 6. Features in progress
-- None mid-edit. Last completed: T9 deploy (GitHub Pages, permanent HTTPS).
+- None mid-edit. Last completed: T10 bug hunt + fixes.
 
 ## 7. Features outstanding (master task list order)
 - **T10** Final PROGRESS.md + HANDOVER.md + GitHub push (in progress).

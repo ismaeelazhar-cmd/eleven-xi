@@ -653,7 +653,7 @@
     $("shareBtn").disabled = squad.length < 1;
     $("autoFillBtn").disabled = full;
     elDone.style.display = full ? "block" : "none";
-    if (full) elDone.textContent = "✅ Full " + formation + " XI — choose a competition below.";
+    if (full) elDone.textContent = "Full " + formation + " XI — choose a competition below.";
 
     if (squad.length) {
       var t = userTeamFromSquad(), mgr = currentManager();
@@ -797,16 +797,16 @@
   function scorerLines(events) {
     if (!events || !events.length) return "";
     return '<div class="mscorers">' + events.map(function (e) {
-      return '<span class="goal">⚽ ' + esc(e.scorer) + (e.assist ? ' <span class="assist">↳ ' + esc(e.assist) + "</span>" : "") + "</span>";
+      return '<span class="goal">' + esc(e.scorer) + (e.assist ? ' <span class="assist">↳ ' + esc(e.assist) + "</span>" : "") + "</span>";
     }).join("") + "</div>";
   }
   function matchCardHTML(m, teamName) {
     var pens = m.pens ? ' <span class="pens">(pens ' + m.pens[0] + "–" + m.pens[1] + ")</span>" : "";
     return '<div class="mcard ' + m.result + '"><div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
       '<span class="pill ' + m.result + '">' + m.result + "</span></div>" +
-      '<div class="mscore"><span class="me">⭐ ' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
+      '<div class="mscore"><span class="me">' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
       '<span class="oppname">' + esc(m.opp.name) + "</span>" + pens + "</div>" +
-      scorerLines(m.events) + (m.cleanSheet ? '<div class="mclean">🧤 Clean sheet</div>' : "") + "</div>";
+      scorerLines(m.events) + (m.cleanSheet ? '<div class="mclean">Clean sheet</div>' : "") + "</div>";
   }
   function statRows(list, key, max) {
     if (!list.length) return '<div class="stat-empty">—</div>';
@@ -853,7 +853,7 @@
   }
   function renderLeagueUser(result, label) {
     var ur = result.userRow;
-    var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">⭐ ' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " + result.table.length + " &middot; " + ur.Pts + " pts</div>";
+    var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " + result.table.length + " &middot; " + ur.Pts + " pts</div>";
     html += statsSummaryHTML(result.userStats);
     html += '<h3 class="sec">Your games <span class="legend-note">(' + result.userMatches.length + " shown · other " + (result.totalMatches - result.userMatches.length) + " simulated in the background)</span></h3>";
     html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
@@ -881,8 +881,8 @@
   }
   function wcScore(wc) {
     var s = wc.userStats;
-    var base = { "Eliminated in the Group stage": 100, "Out in the Round of 32": 220, "Out in the Round of 16": 380, "Out in the Quarter-finals": 560, "Semi-finalists": 820, "🥈 Runners-up": 1100, "🏆 Champions!": 1600,
-      "Out in the league phase": 100, "Out in the group stage": 100, "Out in the Knockout playoff": 170, "🏆 Champions of Europe!": 1600 };
+    var base = { "Eliminated in the Group stage": 100, "Out in the Round of 32": 220, "Out in the Round of 16": 380, "Out in the Quarter-finals": 560, "Semi-finalists": 820, "Runners-up": 1100, "Champions!": 1600,
+      "Out in the league phase": 100, "Out in the group stage": 100, "Out in the Knockout playoff": 170, "Champions of Europe!": 1600 };
     return tallyScore([
       { label: wc.userResult, value: base[wc.userResult] || 100 },
       { label: s.gf + " goals × 10", value: s.gf * 10 },

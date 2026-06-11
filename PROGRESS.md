@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: T9 Deploy ✅ done. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/ (GitHub Pages, main branch, permanent). Next: T10 Full playthrough bug hunt._
+_Last checkpoint: T10 Full playthrough bug hunt ✅ done. Bugs found and fixed. Cache wcxi-v102. game.js v83, engine.js v72, floodlights.js v85. Next: T11 Review, improvements list, Duels feature suggestions._
 
 ---
 
@@ -116,7 +116,14 @@ _Last checkpoint: T9 Deploy ✅ done. Live at https://ismaeelazhar-cmd.github.io
 - ✅ **T7** Duels tournament structure — intro screen player count picker (2/3/4, coral active state). 2-player: 1v1 unchanged. 3-player: round robin 3 matches, points table (3/1/0). 4-player: knockout bracket (semis + 3rd place play-off + final, dynamically added after semis). All builds generalized: handoff loops for N players, lock label adapts. `renderMatchNext()` transition screen. `renderTournResult()` final standings. ratingswar.js v92, floodlights.css v89. Cache wcxi-v100.
 - ✅ **T8** Full game makeover pass — rating tier coloured badges in squad list (`xi-rate.r-gold/elite/great/good`) and Duels reveal (`rw-rev-rating` with glow). Spin wheel restyle: cyan radial gradient + fl-rise animation, cyan `reel::after` selection line + `reel-label`. `ratingTierClass()` utility added to ratingswar.js. game.js v82, ratingswar.js v93, floodlights.css v90. Cache wcxi-v101.
 - ✅ **T9** Deploy + shareable permanent HTTPS link — GitHub Pages enabled from `main` branch root. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/ (permanent, auto-updates on every push to main).
-- ⏳ **T10** Full playthrough bug hunt (every mode end-to-end)
+- ✅ **T10** Full playthrough bug hunt — WC/Multiplayer/Duels all verified end-to-end. Bugs found and fixed:
+  - Squad dock "Squad 12/11" count inflation (floodlights.js: filter `.xi-row` to visible elements only)
+  - ✅ emoji in done banner → removed (game.js)
+  - ⭐ emoji in match cards and league result heading → removed (game.js)
+  - ⚽ emoji in goal events → removed (game.js)
+  - 🧤 emoji in clean sheet → removed (game.js)
+  - 🥈/🏆 emojis in result strings → removed from engine.js + game.js (keys kept in sync)
+  - game.js v83, engine.js v72, floodlights.js v85. Cache wcxi-v102.
 - ⏳ **T11** Review, improvements list, Duels feature suggestions
 
 ## 6b. EXACTLY WHERE TO PICK UP

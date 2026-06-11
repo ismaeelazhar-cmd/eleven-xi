@@ -126,7 +126,7 @@
   function scrape(){
     var out=[], seen={};
     function push(pos,nameEl,metaEl){ var name=cleanName(nameEl,true); if(!name||seen[name+pos])return; seen[name+pos]=1; out.push({pos:((pos&&pos.textContent)||pos||"").toString().trim(),name:name,meta:cleanName(metaEl,false)}); }
-    var rows=document.querySelectorAll('.xi-list .xi-row:not(.empty)');
+    var rows=Array.from(document.querySelectorAll('.xi-list .xi-row:not(.empty)')).filter(function(r){ return r.offsetParent!==null; });
     if(rows.length){
       rows.forEach(function(r){ push(r.querySelector('.pos'),r.querySelector('.pn'),r.querySelector('.meta')); });
       if(out.length) return out;
