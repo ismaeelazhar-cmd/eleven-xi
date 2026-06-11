@@ -62,10 +62,10 @@
   }
 
   W.startRatingsWar = function(){
-    buildPool();
     RW = {
       phase:"intro", cur:0, revealStep:-1,
-      players:[ {name:"Player 1", picks:newPicks(), rerolls:5}, {name:"Player 2", picks:newPicks(), rerolls:5} ]
+      currentSpin:null, pendingRWPick:null, _spinning:false,
+      players:[ {name:"Player 1", picks:newPicks(), rerollsUsed:0}, {name:"Player 2", picks:newPicks(), rerollsUsed:0} ]
     };
     hideOthers(); view().style.display=""; if(W.scrollTo) W.scrollTo(0,0);
     render();
@@ -85,7 +85,8 @@
       online:true, role:role, myIdx:myIdx, oppIdx:oppIdx,
       phase:"onintro", cur:myIdx, revealStep:-1,
       myLocked:false, oppPicks:null, oppName:null, rematchMe:false, rematchOpp:false,
-      players:[ {name:"Host", picks:newPicks(), rerolls:5}, {name:"Guest", picks:newPicks(), rerolls:5} ]
+      currentSpin:null, pendingRWPick:null, _spinning:false,
+      players:[ {name:"Host", picks:newPicks(), rerollsUsed:0}, {name:"Guest", picks:newPicks(), rerollsUsed:0} ]
     };
     // Default display names until a hello arrives.
     RW.players[myIdx].name = myIdx === 0 ? "Host" : "Guest";
@@ -226,45 +227,274 @@
     };
   }
 
-  /* ---------- build (blind): fill 11 slots, ratings never shown ---------- */
+  /* ── Position eligibility helpers for RW slot assignment ── */
+  var RW_SLOT_FILLS = {
+    GK:["GK"], CB:["CB"], RB:["RB"], LB:["LB"], RWB:["RB"], LWB:["LB"],
+    CDM:["CDM","CM"], CM:["CM","CDM"], CAM:["CM"], RM:["CM"], LM:["CM"],
+    RW:["RW","ST"], LW:["LW","ST"], ST:["ST","RW","LW"]
+  };
+  var RW_BROAD = {GK:["GK"], DEF:["RB","CB","LB"], MID:["CDM","CM"], FWD:["RW","ST","LW"]};
+  function rwEligibleSlots(pl, P){
+    var pos = pl.gp || pl.p || "";
+    var eligible = [];
+    var isBroad = RW_BROAD.hasOwnProperty(pos);
+    SLOTS.forEach(function(slot, idx){
+      if (P.picks[idx]) return;
+      var sk = slot.k.trim();
+      var ok = isBroad ? (RW_BROAD[pos]||[]).indexOf(sk) !== -1
+                       : (RW_SLOT_FILLS[pos]||[pos]).indexOf(sk) !== -1;
+      if (ok) eligible.push(idx);
+    });
+    return eligible;
+  }
+
+  /* ── Reel item helpers (same markup as MP draft) ── */
+  function rwCItemHTML(c){ return '<div class="reel-item reel-item-noflag"><span class="name">'+esc(c)+'</span></div>'; }
+  function rwYItemHTML(y){ return '<div class="reel-item"><span class="year">'+y+'</span></div>'; }
+
+  /* ── Build phase spin animation ── */
+  function initRWStrips(cStrip, yStrip, currentSpin){
+    if (!cStrip || !yStrip) return;
+    if (currentSpin){
+      cStrip.innerHTML = rwCItemHTML(currentSpin.country);
+      yStrip.innerHTML = rwYItemHTML(currentSpin.year);
+      cStrip.style.cssText = "transform:translateY(0);transition:none";
+      yStrip.style.cssText = "transform:translateY(0);transition:none";
+      return;
+    }
+    var DATA = W.WORLD_CUP_DATA || {}; var countries = Object.keys(DATA);
+    var BLUR = 10;
+    var ci = [], yi = [];
+    for (var k=0; k<BLUR*2+1; k++){
+      ci.push(rwCItemHTML(countries[k % Math.max(countries.length,1)] || "—"));
+      yi.push(rwYItemHTML(2024 - ((k*2)%30)));
+    }
+    cStrip.innerHTML = ci.join(""); cStrip.style.cssText = "transform:translateY(0);transition:none";
+    yStrip.innerHTML = yi.join(""); yStrip.style.cssText = "transform:translateY(0);transition:none";
+  }
+
+  function doRWSpin(cStrip, yStrip, spinBtn, squadPanel, P){
+    if (RW._spinning) return;
+    var isRespin = !!RW.currentSpin;
+    if (isRespin && (P.rerollsUsed||0) >= 3) return;
+    var DATA = W.WORLD_CUP_DATA || {};
+    var countries = Object.keys(DATA);
+    if (!countries.length) return;
+
+    if (isRespin) P.rerollsUsed = (P.rerollsUsed||0) + 1;
+    RW._spinning = true;
+    spinBtn.disabled = true;
+    spinBtn.textContent = "SPINNING…";
+    squadPanel.style.display = "none";
+    RW.currentSpin = null; RW.pendingRWPick = null;
+
+    var tries=0, pC, pY, pS;
+    do {
+      pC = countries[Math.floor(Math.random()*countries.length)];
+      var ys = Object.keys(DATA[pC].years || {});
+      pY = ys[Math.floor(Math.random()*ys.length)];
+      pS = (DATA[pC].years||{})[pY];
+      tries++;
+    } while (tries<80 && (!pS || pS.length < 5));
+    if (!pS || !pS.length){ RW._spinning=false; spinBtn.disabled=false; spinBtn.textContent="SPIN"; return; }
+
+    var BLUR=10, IH=56;
+    var ci=[], yi=[];
+    for (var i=0; i<BLUR; i++){
+      ci.push(rwCItemHTML(countries[i%countries.length]));
+      yi.push(rwYItemHTML(2024-i*2));
+    }
+    ci.push(rwCItemHTML(pC)); yi.push(rwYItemHTML(pY));
+    cStrip.innerHTML = ci.join(""); yStrip.innerHTML = yi.join("");
+    cStrip.style.cssText = "transform:translateY(0);transition:none";
+    yStrip.style.cssText = "transform:translateY(0);transition:none";
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        var ease = "cubic-bezier(0.25,0.1,0.15,1)", dur = 420;
+        cStrip.style.transition = "transform "+dur+"ms "+ease;
+        cStrip.style.transform  = "translateY(-"+(BLUR*IH)+"px)";
+        yStrip.style.transition = "transform "+(dur+40)+"ms "+ease;
+        yStrip.style.transform  = "translateY(-"+(BLUR*IH)+"px)";
+        setTimeout(function(){
+          cStrip.style.cssText = "transform:translateY(0);transition:none";
+          cStrip.innerHTML = rwCItemHTML(pC);
+          yStrip.style.cssText = "transform:translateY(0);transition:none";
+          yStrip.innerHTML = rwYItemHTML(pY);
+          RW._spinning = false;
+          RW.currentSpin = { country:pC, year:pY, squad:pS };
+          /* Update spin button */
+          var left = Math.max(0, 3-(P.rerollsUsed||0));
+          spinBtn.disabled = (left===0);
+          spinBtn.textContent = left===0 ? "No rerolls left — pick!" : "RESPIN ("+left+" left)";
+          showRWSquadPanel(squadPanel, RW.currentSpin, P);
+        }, dur+80);
+      });
+    });
+  }
+
+  function showRWSquadPanel(panel, spin, P){
+    var DATA = W.WORLD_CUP_DATA || {};
+    var flag = (DATA[spin.country]&&DATA[spin.country].flag) ? DATA[spin.country].flag : "";
+    var lineOrder = {GK:0,DEF:1,MID:2,FWD:3};
+    var sorted = spin.squad.slice().sort(function(a,b){
+      var la = lineOrder[LINE_OF[a.gp||a.p]||"MID"]||2;
+      var lb = lineOrder[LINE_OF[b.gp||b.p]||"MID"]||2;
+      return la!==lb ? la-lb : (b.r||0)-(a.r||0);
+    });
+
+    var html = '<div class="mp-sq-head">'+
+      (flag?'<span class="mp-sq-flag">'+flag+'</span>':'')+
+      '<span class="mp-sq-title">'+esc(spin.country)+' &middot; '+spin.year+'</span>'+
+      '<span class="mp-sq-hint">Pick a player — ratings hidden</span>'+
+    '</div>';
+
+    /* Position chooser if a player has been tapped */
+    if (RW.pendingRWPick){
+      var pp = RW.pendingRWPick;
+      var eligs = rwEligibleSlots(pp, P);
+      html += '<div class="mp-chooser">'+
+        '<span class="mp-chooser-q">Where does <strong>'+esc(pp.n)+'</strong> play?</span>'+
+        '<div class="mp-chooser-btns">';
+      eligs.forEach(function(idx){
+        var slot = SLOTS[idx];
+        html += '<button class="mp-choose-pos pos '+slot.line+'" data-rwidx="'+idx+'">'+
+          esc(slot.k.trim())+'</button>';
+      });
+      html += '</div><button class="mp-chooser-cancel">Cancel</button></div>';
+    }
+
+    /* Squad list — no ratings (ratings hidden for blind build) */
+    html += '<div class="players mp-players-grid">';
+    sorted.forEach(function(pl){
+      var pos = pl.gp||pl.p||"MID", line = LINE_OF[pos]||"MID";
+      var noSlot = rwEligibleSlots(pl, P).length===0;
+      var isPending = RW.pendingRWPick && RW.pendingRWPick._n===pl.n && RW.pendingRWPick._pos===pos;
+      html += '<div class="player'+(noSlot?" noslot":"")+(isPending?" mp-player-pending":"")+'" data-rwn="'+esc(pl.n)+'" data-rwpos="'+esc(pos)+'">'+
+        '<span class="pos '+line+'">'+esc(pos)+'</span>'+
+        '<span class="pname">'+esc(pl.n)+'</span>'+
+        (noSlot ? '<span class="slot-tag">no slot</span>' : '')+
+      '</div>';
+    });
+    html += '</div>';
+
+    panel.innerHTML = html;
+    panel.style.display = "";
+
+    /* Wire up position chooser buttons */
+    if (RW.pendingRWPick){
+      panel.querySelectorAll("[data-rwidx]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          var idx = parseInt(btn.getAttribute("data-rwidx"),10);
+          var pp = RW.pendingRWPick;
+          P.picks[idx] = { n:pp.n, r:pp.r||75, gp:SLOTS[idx].k.trim(), club:spin.country, year:spin.year };
+          RW.pendingRWPick = null; RW.currentSpin = null;
+          render();
+        });
+      });
+      var cancel = panel.querySelector(".mp-chooser-cancel");
+      if (cancel) cancel.addEventListener("click", function(){
+        RW.pendingRWPick = null;
+        showRWSquadPanel(panel, spin, P);
+      });
+    } else {
+      panel.querySelectorAll(".player:not(.noslot)").forEach(function(el){
+        el.addEventListener("click", function(){
+          var plName = el.getAttribute("data-rwn");
+          var plPos  = el.getAttribute("data-rwpos");
+          var pl = sorted.filter(function(p){ return p.n===plName && (p.gp||p.p||"")==plPos; })[0];
+          if (!pl) return;
+          var slots = rwEligibleSlots(pl, P);
+          if (!slots.length) return;
+          RW.pendingRWPick = { n:pl.n, r:pl.r||75, gp:pl.gp||pl.p||"MID", _n:pl.n, _pos:plPos };
+          showRWSquadPanel(panel, spin, P);
+        });
+      });
+    }
+  }
+
+  function renderRWXiListHTML(P){
+    var html = '<section class="xi"><div class="xi-head"><h2>Your XI</h2>'+
+      '<div><span class="count">'+P.picks.filter(Boolean).length+'/11</span></div></div>'+
+      '<div class="xi-list" id="rwXiList">';
+    SLOTS.forEach(function(slot, i){
+      var pk = P.picks[i], line = slot.line, key = slot.k.trim();
+      if (pk){
+        html += '<div class="xi-row"><span class="pos '+line+'">'+esc(key)+'</span>'+
+          '<span class="info"><span class="pn">'+esc(pk.n)+'</span>'+
+          '<span class="meta">'+esc(pk.club||"")+(pk.year?' &middot; '+pk.year:'')+'</span></span></div>';
+      } else {
+        html += '<div class="xi-row empty"><span class="pos '+line+'">'+esc(key)+'</span>'+
+          '<span class="info"><span class="pn slot-empty">'+esc(key)+' — empty</span></span></div>';
+      }
+    });
+    html += '</div></section>';
+    return html;
+  }
+
+  /* ---------- build (blind): spin wheel picks a squad, player picks without seeing ratings ---------- */
   function renderBuild(v){
     var P = RW.players[RW.cur];
     var filled = P.picks.filter(Boolean).length;
-    var rows = SLOTS.map(function(s, i){
-      var pk = P.picks[i];
-      var line = s.line;
-      return "<div class='rw-slot "+(pk?"filled":"")+"' data-i='"+i+"'>"+
-        "<span class='pos "+line+"'>"+esc(s.k.trim())+"</span>"+
-        (pk ? "<span class='rw-slot-name'>"+esc(pk.n)+"</span>"+
-              "<span class='rw-slot-meta'>"+esc(pk.club)+(pk.year?" · "+pk.year:"")+"</span>"+
-              "<button class='rw-respin' data-i='"+i+"' aria-label='Re-spin'>↻</button>"
-            : "<span class='rw-slot-name dim'>— tap spin —</span>"+
-              "<button class='rw-spin' data-i='"+i+"'>Spin</button>")+
-        "</div>";
-    }).join("");
+    var rerollsLeft = Math.max(0, 3-(P.rerollsUsed||0));
+    var isRespin = !!RW.currentSpin;
+
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
       "<div class='rw-build-head'>"+
         "<div class='rw-turn'>"+esc(P.name)+" — building <span class='rw-blind'>● ratings hidden</span></div>"+
-        "<div class='rw-prog'><span id='rwCount'>"+filled+"</span>/11</div>"+
+        "<div class='rw-prog-row'>"+
+          "<span class='rw-prog'><span id='rwCount'>"+filled+"</span>/11</span>"+
+          "<span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+
+            "Rerolls: "+rerollsLeft+"/3"+
+          "</span>"+
+        "</div>"+
       "</div>"+
-      "<div class='rw-rerolls'>Spins are free — keep re-spinning until you're happy. Pick blind: you can't see ratings.</div>"+
-      "<div class='rw-slots'>"+rows+"</div>"+
-      "<button class='fl-btn rw-lock' id='rwLock' "+(filled<11?"disabled":"")+">"+
-        (RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
-                   : (RW.cur===0 ? "Lock XI — pass to "+esc(RW.players[1].name)+" →" : "Lock XI — reveal"))+"</button>"+
+      "<div class='machine'>"+
+        "<div class='reels'>"+
+          "<div class='reel-box'><div class='reel-label'>Club / Nation</div>"+
+            "<div class='reel'><div class='reel-strip' id='rwCS'></div></div></div>"+
+          "<div class='reel-box'><div class='reel-label'>Year</div>"+
+            "<div class='reel'><div class='reel-strip' id='rwYS'></div></div></div>"+
+        "</div>"+
+        "<div class='controls'>"+
+          "<button class='spin' id='rwSpinBtn'>"+
+            (isRespin ? (rerollsLeft>0 ? "RESPIN ("+rerollsLeft+" left)" : "No rerolls — pick!") : "SPIN")+
+          "</button>"+
+        "</div>"+
+      "</div>"+
+      "<section class='squad' id='rwSquadPanel' style='display:none;'></section>"+
+      renderRWXiListHTML(P)+
+      "<div class='xi-actions'>"+
+        "<button class='btn-primary rw-lock-btn' id='rwLock' "+(filled<11?"disabled":"")+">"+
+          (RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
+                     : (RW.cur===0 ? "Lock XI — pass to "+esc(RW.players[1].name)+" →" : "Lock XI — reveal"))+
+        "</button>"+
+      "</div>"+
       "</div>";
+
     document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Ratings War?")) goHome(); };
-    v.querySelectorAll(".rw-spin,.rw-respin").forEach(function(b){
-      b.onclick = function(){ spinSlot(parseInt(b.getAttribute("data-i"),10)); };
+
+    var spinBtn = document.getElementById("rwSpinBtn");
+    if (isRespin) spinBtn.disabled = (rerollsLeft===0);
+    initRWStrips(document.getElementById("rwCS"), document.getElementById("rwYS"), RW.currentSpin);
+
+    spinBtn.addEventListener("click", function(){
+      doRWSpin(document.getElementById("rwCS"), document.getElementById("rwYS"),
+               spinBtn, document.getElementById("rwSquadPanel"), P);
     });
+
+    if (RW.currentSpin){
+      showRWSquadPanel(document.getElementById("rwSquadPanel"), RW.currentSpin, P);
+    }
+
     var lock = document.getElementById("rwLock");
     if (lock) lock.onclick = function(){
       if (P.picks.filter(Boolean).length < 11) return;
+      RW.currentSpin = null; RW.pendingRWPick = null;
       if (RW.online){
         RW.myLocked = true;
         rwSend({ t:"rw_xi", name:RW.players[RW.myIdx].name, picks:RW.players[RW.myIdx].picks });
-        maybeStartReveal();   // reveal if opponent already sent, else wait
+        maybeStartReveal();
         return;
       }
       if (RW.cur === 0){ RW.cur = 1; RW.phase = "handoff"; }
@@ -272,20 +502,11 @@
       render();
     };
   }
-  function spinSlot(i){
-    var P = RW.players[RW.cur], line = SLOTS[i].line, pool = POOL[line] || [];
-    var taken = {}; P.picks.forEach(function(pk){ if(pk) taken[pk.n]=1; });
-    var pick, tries=0;
-    do { pick = rnd(pool); tries++; } while (pick && taken[pick.n] && tries<60);
-    P.picks[i] = pick ? { n:pick.n, r:pick.r, gp:pick.gp, club:pick.club, year:pick.year } : null;
-    render();
-  }
 
   /* ---------- handoff (privacy between players) ---------- */
   function renderHandoff(v){
     v.innerHTML =
       "<div class='wrap'><div class='rw-handoff'>"+
-        "<div class='rw-handoff-ico'>🔄</div>"+
         "<h2 class='rw-title'>Pass the device</h2>"+
         "<p class='rw-sub'><strong>"+esc(RW.players[1].name)+"</strong>, it's your turn to build — "+
         esc(RW.players[0].name)+"'s XI is hidden. Ratings stay secret until the reveal.</p>"+

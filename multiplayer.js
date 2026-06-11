@@ -146,9 +146,7 @@
     phase: "idle",        // idle | setup | player_setup | handoff_setup | draft | tournament
     mpMode: "wc",
     numPlayers: 2,
-    spinsPerPick: 3,
     tournamentFormat: "auto",
-    spinCount: 0,
     players: [],
     setupIdx: 0,
     handoffFrom: 0,
@@ -602,25 +600,6 @@
     modeWrap.appendChild(modeGrid);
     wrap.appendChild(modeWrap);
 
-    /* ── Spins per pick ── */
-    var spinWrap = mk("div","mp-section");
-    spinWrap.innerHTML = '<div class="mp-label">Spins per pick</div><div class="mp-sub-hint">How many times each player can spin before they must choose</div>';
-    var spinRow = mk("div","mp-btn-row");
-    var spinOpts = [
-      { val:1, label:"1 — Hardest" },
-      { val:2, label:"2" },
-      { val:3, label:"3" },
-      { val:5, label:"5" },
-      { val:0, label:"∞ Unlimited" }
-    ];
-    spinOpts.forEach(function(opt){
-      var b = mk("button","mp-pill-btn"+(opt.val===st.spinsPerPick?" active":""), opt.label);
-      b.addEventListener("click",function(){ st.spinsPerPick=opt.val; _render(); });
-      spinRow.appendChild(b);
-    });
-    spinWrap.appendChild(spinRow);
-    wrap.appendChild(spinWrap);
-
     /* ── Tournament format ── */
     var fmtWrap = mk("div","mp-section");
     fmtWrap.innerHTML = '<div class="mp-label">Tournament format</div>';
@@ -642,11 +621,10 @@
     wrap.appendChild(fmtWrap);
 
     /* ── Summary line ── */
-    var spinDesc = st.spinsPerPick===0 ? "Unlimited spins" : st.spinsPerPick+" spin"+(st.spinsPerPick>1?"s":"")+" per pick";
     var fmtDesc  = st.tournamentFormat==="auto" ? autoLabel :
                    st.tournamentFormat==="h2h"  ? "Head-to-head" :
                    st.tournamentFormat==="group" ? "Group stage → Final" : "Group → Semis → Final";
-    var infoEl = mk("div","mp-fmt-info","📋 "+spinDesc+" &nbsp;·&nbsp; "+fmtDesc+" &nbsp;·&nbsp; Round-robin draft · 11 picks each");
+    var infoEl = mk("div","mp-fmt-info","3 rerolls per player &nbsp;·&nbsp; "+fmtDesc+" &nbsp;·&nbsp; Round-robin draft · 11 picks each");
     wrap.appendChild(infoEl);
 
     /* ── Start ── */
@@ -663,7 +641,7 @@
     st.players = [];
     for (var i=0;i<st.numPlayers;i++){
       var raw = inputs[i] ? inputs[i].value.trim() : "";
-      st.players.push({ name: raw||("Player "+(i+1)), formation:"", manager:null, mgrSpun:false, picks:[] });
+      st.players.push({ name: raw||("Player "+(i+1)), formation:"", manager:null, mgrSpun:false, picks:[], rerollsUsed:0 });
     }
     st.setupIdx = 0;
     st.handoffFrom = 0;
@@ -675,7 +653,6 @@
     st.simData = null;
     st.simStep = -1;
     st.cur = 0;
-    st.spinCount = 0;
     st.mgrSpinResult = null;
     st.phase = "player_setup";
     _render();
@@ -774,7 +751,7 @@
     stripEl.id = "mpMgrStrip";
     reelEl.appendChild(stripEl);
     spinWrap.appendChild(reelEl);
-    var spinBtn = mk("button","mp-spin-btn"+(p.mgrSpun?" disabled":""),"🎰 "+(p.mgrSpun?"Manager appointed":"Spin for manager"));
+    var spinBtn = mk("button","mp-spin-btn"+(p.mgrSpun?" disabled":""),p.mgrSpun?"Manager appointed":"Spin for manager");
     spinBtn.id = "mpMgrSpinBtn";
     if(p.mgrSpun) spinBtn.disabled = true;
     spinWrap.appendChild(spinBtn);
@@ -933,7 +910,7 @@
         ' ('+fromP.picks.length+'/11)';
       passScreen.appendChild(msg);
       /* Pass button */
-      var passBtn = mk("button","mp-start-btn mp-pass-btn","🤝 Pass to "+esc(toP.name)+" →");
+      var passBtn = mk("button","mp-start-btn mp-pass-btn","Pass to "+esc(toP.name)+" →");
       passBtn.addEventListener("click", function(){
         st.cur = st.pendingHandoff.to;
         st.pendingHandoff = null;
@@ -954,11 +931,13 @@
     /* ── WC-style header: name/meta left + small pitch right ── */
     var head = mk("div","draft-head");
     var headInfo = mk("div","draft-head-info");
+    var rerollsRemaining = Math.max(0, 3 - (p.rerollsUsed||0));
     headInfo.innerHTML =
       '<div class="draft-team">'+esc(p.name)+'</div>'+
       '<div class="draft-meta">'+
         'Pick <strong>'+pickNum+'</strong>/11 · Round '+draftRound+' · '+
         esc(p.formation)+' · '+(p.manager?p.manager.emoji+' '+esc(p.manager.name):'No manager')+
+        ' · <span class="mp-reroll-badge'+(rerollsRemaining===0?' mp-reroll-empty':'')+'">'+rerollsRemaining+'/3 rerolls</span>'+
       '</div>';
     head.appendChild(headInfo);
     var pitchWrapHead = mk("div","draft-pitch-wrap");
@@ -1092,34 +1071,38 @@
     yStrip.innerHTML = yitems.join(""); yStrip.style.cssText = "transform:translateY(0);transition:none";
   }
 
-  function spinLimitLeft(){
-    /* Returns spins remaining. -1 = unlimited. 0 = must pick. */
-    if(st.spinsPerPick===0) return -1;
-    return Math.max(0, st.spinsPerPick - st.spinCount);
+  /* Returns rerolls remaining for the current player.
+     First spin (no current result) is always free.
+     Each respin costs 1 from the player's 3-reroll budget. */
+  function rerollsLeft(){
+    if(!st.currentSpin) return -1; /* free spin — not a reroll */
+    var p = st.players[st.cur];
+    return Math.max(0, 3 - (p ? p.rerollsUsed||0 : 0));
   }
 
   function updateSpinBtn(spinBtn){
-    var left = spinLimitLeft();
+    var left = rerollsLeft();
     if(left===0){
       spinBtn.disabled = true;
-      spinBtn.textContent = "No spins left — pick!";
+      spinBtn.textContent = "No rerolls left — pick!";
     } else if(left===-1){
       spinBtn.disabled = false;
-      spinBtn.textContent = st.currentSpin ? "RESPIN" : "SPIN";
+      spinBtn.textContent = "SPIN";
     } else {
       spinBtn.disabled = false;
-      spinBtn.textContent = (st.currentSpin ? "RESPIN" : "SPIN")+" ("+left+" left)";
+      spinBtn.textContent = "RESPIN ("+left+" left)";
     }
   }
 
   function doSpinDraft(cStrip, yStrip, spinBtn, squadPanel, player){
     if (_draftSpinning) return;
-    if(spinLimitLeft()===0) return; /* At spin limit */
+    var isRespin = !!st.currentSpin;
+    if(isRespin && rerollsLeft()===0) return; /* Reroll limit reached */
     var DATA = getData();
     var countries = Object.keys(DATA);
     if (!countries.length) return;
 
-    st.spinCount++;
+    if(isRespin){ player.rerollsUsed = (player.rerollsUsed||0) + 1; }
     _draftSpinning = true;
     spinBtn.disabled = true;
     spinBtn.textContent = "SPINNING…";
@@ -1308,7 +1291,6 @@
     st.pendingHandoff = { from: st.cur, to: next, lastPick: lastPick };
     st.currentSpin = null;
     st.pendingPick = null;
-    st.spinCount = 0;
     _render(); /* stays in "draft" phase — renderDraft handles pendingHandoff */
   }
 
