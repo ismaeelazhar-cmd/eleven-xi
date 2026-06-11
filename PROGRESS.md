@@ -124,7 +124,11 @@ _Last checkpoint: T10 Full playthrough bug hunt ✅ done. Bugs found and fixed. 
   - 🧤 emoji in clean sheet → removed (game.js)
   - 🥈/🏆 emojis in result strings → removed from engine.js + game.js (keys kept in sync)
   - game.js v83, engine.js v72, floodlights.js v85. Cache wcxi-v102.
-- ⏳ **T11** Review, improvements list, Duels feature suggestions
+- ✅ **T11** Review, improvements list, Duels feature suggestions:
+  **Remaining polish:** manager emoji icons → SVG; 🌙 theme toggle → SVG; "Lock XI" hidden until 11/11; save draft to sessionStorage; auto-fill quality floor ≥75; lazy-load data per mode; keyboard spin navigation; share-image PNG; persistent leaderboard.
+  **Duels quick wins:** X-Factor slot (1 random position counts double); Captain designation (chosen position = +2); position ban phase (ban 1 slot each before building).
+  **Duels medium:** Steal power-up (steal opponent's winning player once); Blind swap (swap 2 positions after lock); Wildcard spin (mystery pool player); Best-of-3 series.
+  **Duels big:** Draft-from-shared-pool (live draft, no duplicates); Async online mode (share-link, build async); Formation draft (secret formation assignment before reveal).
 
 ## 6b. EXACTLY WHERE TO PICK UP
 > **NEW TASK LIST received (master prompt).** Working order now:

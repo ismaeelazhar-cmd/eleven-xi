@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: T10 bug hunt done. Cache wcxi-v102. game.js v83, engine.js v72, floodlights.js v85. Next: T11 review + improvements list._
+_Living document — update after every significant change. Last updated: T11 done — all tasks complete. Cache wcxi-v102. game.js v83, engine.js v72, floodlights.js v85._
 
 ---
 
@@ -65,13 +65,23 @@ _Living document — update after every significant change. Last updated: T10 bu
 - **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
 
 ## 6. Features in progress
-- None mid-edit. Last completed: T10 bug hunt + fixes.
+- None. All 11 master tasks complete.
 
-## 7. Features outstanding (master task list order)
-- **T10** Final PROGRESS.md + HANDOVER.md + GitHub push (in progress).
-- **T6** Animations & 3D pass (card flips/tilt, screen transitions, physics spin, count-ups, confetti, ambient depth).
-- **Online Draft Tournament** — only Duels is synced online so far; deferred.
-- Also: **permanent hosting** (needs owner login), lazy-load 5 MB data, automate cache versioning.
+## 7. Features outstanding (post-T11 backlog, unordered)
+- Manager chip SVG icons (currently emoji: 🔥 🏆 ⚡ 🌏 in game.js manager data objects)
+- 🌙 theme toggle → SVG moon icon
+- "Lock XI" hidden until 11/11 (currently disabled-but-visible)
+- Save draft progress to sessionStorage (survive refresh)
+- Auto-fill quality floor ≥75 (prevents weak-rated filler)
+- Lazy-load data files per mode (~5 MB currently eager)
+- Keyboard navigation for spin wheel (Space = spin, Enter = pick)
+- Share-image: generate PNG of your XI formation
+- Persistent leaderboard via serverless backend (currently honour-system)
+- **Duels power-ups:** X-Factor slot (random position counts double); Captain (chosen position = +2 if won); Position ban phase; Steal power-up; Blind swap; Wildcard spin; Best-of-3 series
+- **Duels online extensions:** Draft-from-shared-pool; Async link-share mode; Formation draft
+- **T6** Animations & 3D pass (card flips, screen transitions, physics spin, count-ups, confetti)
+- Online Draft Tournament — only Duels is synced online; full draft sync deferred
+- Automate cache versioning (currently manual bump)
 
 ## 8. Decisions log (key — full in DECISIONS.md)
 - **Floodlights** chosen (most distinctive/premium/durable; furthest from 38-0).
@@ -100,6 +110,6 @@ _Living document — update after every significant change. Last updated: T10 bu
 
 ## 12. How to continue
 1. Read **this file**, then **PROGRESS.md** (last checkpoint + exact next step).
-2. **Exact next step right now: TASK 10** — Finalize PROGRESS.md + HANDOVER.md (done) and push to GitHub. Owner must add a remote first: `git remote add origin <github-url> && git push -u origin main`.
-3. Work task by task; after each, rebuild `eleven-xi.html`, bump cache version, and update **both** PROGRESS.md and this HANDOVER.md.
-4. **Current next step:** T10 — finalize docs and push to GitHub. To push: `git remote add origin <url> && git push -u origin main`. The remote has not been configured; owner must supply the GitHub repo URL.
+2. All 11 master tasks are done. Pick any item from section 7's backlog as the next task.
+3. Work task by task; after each, bump cache version (`wcxi-vNN` in `sw.js` + `?v=NN` in `index.html`), and update **both** PROGRESS.md and this HANDOVER.md, then push to GitHub.
+4. Live URL: **https://ismaeelazhar-cmd.github.io/eleven-xi/** — auto-deploys on push to main.
