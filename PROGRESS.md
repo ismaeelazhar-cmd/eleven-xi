@@ -65,7 +65,7 @@ _Last checkpoint: NEW SESSION — T1 complete (resumed, GitHub confirmed up to d
 
 ## 6. NEW SESSION TASK STATUS
 - ✅ T1 Resume — GitHub confirmed current (cd61c01), game open at localhost:8777
-- ⏳ T2 Shareable HTTPS link for playtesting
+- ✅ T2 Shareable HTTPS link: https://influenced-contents-facility-hoped.trycloudflare.com (Cloudflare tunnel, live while Mac is on)
 - ⏳ T3 Security audit
 - ⏳ T4 Harsh bug review
 - ⏳ T5 Squad list cleanup (remove list below wheel, keep pop-out)
