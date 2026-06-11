@@ -4,17 +4,16 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: end of the autonomous build session._
+_Last checkpoint: Task 8 complete — League mode overhaul. Next: Task 9 (summary audit across all modes)._
 
 ---
 
 ## 0. Project facts
 - **Project root:** `/Users/ismaeelazhar/worldcup-xi`  (vanilla HTML/CSS/JS, no build step)
 - **Run locally:** `python3 -m http.server 8777` from project root → http://localhost:8777/index.html
-- **Live link (Cloudflare quick tunnel — TEMPORARY):** https://investments-classifieds-aka-traditions.trycloudflare.com
-  - serves the project dir; restart with `/tmp/cloudflared tunnel --url http://localhost:8777` (URL changes each run).
-- **Standalone offline app:** `eleven-xi.html` (5.4 MB, self-contained, opens from file://). Rebuild: `python3` inline script (see §6 build-app note).
-- **Cache version:** service worker `wcxi-v85`; `index.html` references `?v=` query strings — bump on asset change.
+- **Standalone offline app:** `eleven-xi.html` (5.4 MB, self-contained, opens from file://). Rebuild: `python3` inline script.
+- **Cache version:** service worker `wcxi-v86`; `index.html` references `?v=` query strings — bump on asset change.
+- **Current versions:** style.css v75, league.js v74, data_league.js v74, game.js v74, floodlights.js v82, floodlights.css v85
 
 ## 1. Design direction — LOCKED: "Floodlights" (Option 1)
 3 options were presented; owner picked **Option 1 — Floodlights**.
@@ -64,7 +63,24 @@ _Last checkpoint: end of the autonomous build session._
 - Built the JS app (viable + valuable; trade-off: no SW from file://, not needed).
 - Did NOT rush Ratings War unattended (hidden-ratings must be airtight; flagged as #1).
 
-## 6. EXACTLY WHERE TO PICK UP
+## 6. MASTER TASK STATUS (current session)
+- ✅ T1 Resume from checkpoint
+- ✅ T2 SETUP.md terminal instructions
+- ✅ T3 Manager card size — compact chips
+- ✅ T4 Logo click → home from any screen
+- ✅ T5 Rating number inside position circle when ratings visible
+- ✅ T6 Squad selection as proper pop-out modal (full untruncated names)
+- ✅ T7 Autofill genuinely random (Fisher-Yates shuffle, all years, all clubs)
+- ✅ T8 League mode overhaul:
+  - (a) autofill fix ✅ (done in T7)
+  - (b) layout wider — results 800px (was 680px), setup 660px ✅
+  - (c) injury replacement spin ✅ (already coded at 2.5% per game — verified)
+  - (d) summary redesign ✅ — hero with huge position, W-D-L strip, mini table shown by default, awards, player stats, score breakdown; completely distinct from 38-0
+  - (e) league audit ✅ — removed Metz + Clermont Foot (not in 2024-25 Ligue 1)
+- ⏳ T9 Summary page audit across ALL game modes
+- ⏳ T10 Final PROGRESS.md + HANDOVER.md + GitHub push
+
+## 6b. EXACTLY WHERE TO PICK UP
 > **NEW TASK LIST received (master prompt).** Working order now:
 > - T1 ✅ resumed + results unification checkpointed.
 > - T2 ✅ HANDOVER.md written (12 sections + paste-to-orient prompt at top).
