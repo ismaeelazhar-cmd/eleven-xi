@@ -22,4 +22,4 @@ Decisions made on the owner's behalf (he stepped away and asked me to use best j
 - Permanent *hosted* link needs a one-time login (GitHub Pages/Netlify) which I can't do unattended, so for now the live link is the Cloudflare tunnel + the offline single-file is the truly portable artifact. Flagged hosting as the first thing to finish together.
 
 ## Judgement calls I deliberately did NOT rush
-- **Ratings War** (hidden-ratings mode): left as a styled placeholder. Building the blind-draft + reveal logic so ratings genuinely never leak into the DOM must be airtight; a rushed unattended version risks shipping the headline feature broken. Best judgement: flag as #1 to build together, not half-ship.
+- **Duels** (hidden-ratings mode): left as a styled placeholder. Building the blind-draft + reveal logic so ratings genuinely never leak into the DOM must be airtight; a rushed unattended version risks shipping the headline feature broken. Best judgement: flag as #1 to build together, not half-ship.

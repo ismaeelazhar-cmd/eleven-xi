@@ -506,9 +506,8 @@
     var draftable = 0;
 
     // Modal card header
-    var headFlag = mode === "wc" ? '<span class="flag">' + DATA[c].flag + "</span>" : "";
     var inner = '<div class="squad-card">';
-    inner += '<div class="squad-head"><h2>' + headFlag + esc(c) + " &middot; " + y + '</h2>' +
+    inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2>' +
       '<button class="squad-close" aria-label="Close">✕</button></div>';
     inner += '<div class="sub">Pick a player, then choose where they play.</div>';
 
@@ -627,7 +626,7 @@
         if (c.pick) {
           html += '<div class="xi-row"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
             '<span class="info"><span class="pn">' + esc(c.pick.n) + (showRatings ? ' <span class="xi-rate">' + c.pick.r + "</span>" : "") +
-            '</span><span class="meta">' + (mode === "wc" ? DATA[c.pick.country].flag + " " : "") + c.pick.country + " &middot; " + c.pick.year +
+            '</span><span class="meta">' + c.pick.country + " &middot; " + c.pick.year +
             '</span></span><button class="remove" data-id="' + c.pick.id + '">remove</button></div>';
         } else {
           html += '<div class="xi-row empty"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
@@ -738,7 +737,7 @@
   }
 
   // ================= RESULTS =================
-  function teamCell(t) { return '<span class="tname' + (t.isUser ? " me" : "") + '">' + t.flag + " " + esc(t.name) + "</span>"; }
+  function teamCell(t) { return '<span class="tname' + (t.isUser ? " me" : "") + '">' + esc(t.name) + "</span>"; }
   function groupCardHTML(g) {
     var html = '<div class="group-card"><div class="group-name">Group ' + g.name + "</div>";
     html += '<table class="mini"><thead><tr><th></th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
@@ -777,13 +776,13 @@
   }
   function renderLeague(result, label) {
     var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">🥇 Winners: ' + result.table[0].team.flag + " <b>" + esc(result.table[0].team.name) + "</b> · " + result.totalMatches + " matches played</div>";
+    html += '<div class="champion">Winners: <b>' + esc(result.table[0].team.name) + "</b> · " + result.totalMatches + " matches played</div>";
     return html + leagueTableHTML(result);
   }
   function renderWorldCup(result, label) {
     var champ = result.champion;
     var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">🏆 Champions: ' + champ.flag + " <b>" + esc(champ.name) + "</b></div>";
+    html += '<div class="champion">Champions: <b>' + esc(champ.name) + "</b></div>";
     html += '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds);
     html += '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups);
     return html;
@@ -799,7 +798,7 @@
     return '<div class="mcard ' + m.result + '"><div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
       '<span class="pill ' + m.result + '">' + m.result + "</span></div>" +
       '<div class="mscore"><span class="me">⭐ ' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
-      '<span class="oppname">' + m.opp.flag + " " + esc(m.opp.name) + "</span>" + pens + "</div>" +
+      '<span class="oppname">' + esc(m.opp.name) + "</span>" + pens + "</div>" +
       scorerLines(m.events) + (m.cleanSheet ? '<div class="mclean">🧤 Clean sheet</div>' : "") + "</div>";
   }
   function statRows(list, key, max) {

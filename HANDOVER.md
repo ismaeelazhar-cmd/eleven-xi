@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: Tasks 7–9 done (autofill fix, League overhaul + lgs-* summary redesign, summary audit + bottom CTAs on WC/CL). Cache wcxi-v87. Next: T10 final wrap._
+_Living document — update after every significant change. Last updated: New task list — T2 emoji flag removal done, T3 Ratings War → Duels rename complete. Cache wcxi-v95. Next: T4 formation view redesign._
 
 ---
 
@@ -27,9 +27,9 @@ _Living document — update after every significant change. Last updated: Tasks 
 - **Load order matters** (`index.html`): fonts → `style.css` → `tokens.css` → `floodlights.css` → data files → `positions.js` → `data_fixups.js` → engine/game/league/multiplayer → `floodlights.js` → `ratingswar.js`.
 - **Key files:**
   - `tokens.css` — design tokens (edit palette/type/spacing HERE only).
-  - `floodlights.css` — base, app shell, home/bento, button/results unification, compact-wheel rules, squad-dock + Ratings-War styles, legacy-var remap.
-  - `floodlights.js` — UI bootstrap: `flToast()`, Ratings War card hook (`window.startRatingsWar`), and the **universal squad dock** (FAB + slide-in panel, reads XI from DOM).
-  - `ratingswar.js` — Ratings War: local `window.startRatingsWar()` (pass-and-play) **and** online `window.startRatingsWarOnline(role)` (each device builds blind, XIs exchanged over `ElxiNet`, synced reveal).
+  - `floodlights.css` — base, app shell, home/bento, button/results unification, compact-wheel rules, squad-dock + Duels styles, legacy-var remap.
+  - `floodlights.js` — UI bootstrap: `flToast()`, Duels card hook (`window.startDuels`), and the **universal squad dock** (FAB + slide-in panel, reads XI from DOM).
+  - `ratingswar.js` — Duels: local `window.startDuels()` (pass-and-play) **and** online `window.startDuelsOnline(role)` (each device builds blind, XIs exchanged over `ElxiNet`, synced reveal).
   - `game.js` — World Cup + Champions League (shared `#draftView`; `body.mode-cl` toggles CL). Owns leaderboard (`window.WCXI_addScore`), managers (`window.WCXI_MANAGERS`).
   - `league.js` — League mode (La Liga/Serie A/Bundesliga/Ligue 1). Has the redesigned `lgr2-*` results, surprise events, scrollable squad modal.
   - `multiplayer.js` — multiplayer entry: **Online/Offline split**, online **lobby** (create/join codes), mode-select, plus local pass-and-play draft + knockout.
@@ -44,7 +44,7 @@ _Living document — update after every significant change. Last updated: Tasks 
 2. **Champions League** — `body.mode-cl`; club squads (153 clubs/768 seasons); Swiss/league/group formats; **compact** wheel.
 3. **League** — La Liga/Serie A/Bundesliga/Ligue 1; draft XI, simulate a full season game-by-game with surprise events (manager sacked, injuries), then the `lgs-*` premium summary (hero with huge position number, W-D-L strip, mini table highlighted with user, awards, player stats); **compact** wheel; scrollable squad modal. Distinct identity from the WC/CL summary. Widened layout: results 800px, setup 660px.
 4. **Multiplayer** — entry splits **Local** (pass-and-play; 2–8 draft then knockout) vs **Online** (create/join a game code, then play). **compact** wheel.
-5. **Ratings War** (`ratingswar.js`) — local (pass-and-play) **or online** (each builds blind on their own device, XIs synced over WebRTC, identical reveal both sides with a "(you)" perspective label + rematch handshake). Two players build an XI **blind** (ratings never in the DOM during build), pass-and-play handoff, then **head-to-head position-by-position reveal** (higher rating wins each slot) with sticky scorebar + winner arrows → verdict/rematch. Reachable from BOTH the home bento card AND a native **Multiplayer mode-select** (Draft Tournament vs Ratings War) — Task 3 done.
+5. **Duels** (`ratingswar.js`) — local (pass-and-play) **or online** (each builds blind on their own device, XIs synced over WebRTC, identical reveal both sides with a "(you)" perspective label + rematch handshake). Two players build an XI **blind** (ratings never in the DOM during build), pass-and-play handoff, then **head-to-head position-by-position reveal** (higher rating wins each slot) with sticky scorebar + winner arrows → verdict/rematch. Reachable from BOTH the home bento card AND a native **Multiplayer mode-select** (Draft Tournament vs Duels) — Task 3 done.
 - **Universal squad dock:** FAB ("Squad N/11") appears on every mode; opens a slide-in panel grouped GK/DEF/MID/FWD. Names now **wrap in full** (no ellipsis) and the dock **strips ratings** (RW-safe). Verified on all 5 modes — Task 4 done.
 
 ## 5. Features completed (confirmed working)
@@ -53,13 +53,13 @@ _Living document — update after every significant change. Last updated: Tasks 
 - Responsive base (dvh, fluid container, ≥44px touch targets, reduced-motion, focus rings).
 - **Compact spin wheel** everywhere except World Cup (verified League 58px vs WC 96px).
 - **Universal squad pop-out** dock on every mode (verified League).
-- **Ratings War** full flow (blind build verified leak-free; reveal; winner; rematch).
+- **Duels** full flow (blind build verified leak-free; reveal; winner; rematch).
 - **Unified results** — WC/CL/MP result components share the League summary language (verified WC results).
 - Security audit clean; nested duplicate removed; dead footer links neutralised.
 - **Standalone offline app** `eleven-xi.html` (rebuilt at v79).
-- **T3:** Ratings War integrated into the Multiplayer section (game-type select: Draft Tournament vs Ratings War).
-- **T4:** Squad pop-out shows FULL untruncated names on every mode (WC/CL/League/MP/Ratings War all verified); dock also strips ratings so none leak.
-- **T5:** Online multiplayer with shareable game codes — Online/Offline split, Create/Join lobby (real WebRTC P2P, no backend), edge cases (invalid code, disconnect, no-opponent timeout), premium lobby, and a **fully-synced online Ratings War** (verified across two browsers: matching 6–5 result, perspective labels, rematch).
+- **T3:** Duels integrated into the Multiplayer section (game-type select: Draft Tournament vs Duels).
+- **T4:** Squad pop-out shows FULL untruncated names on every mode (WC/CL/League/MP/Duels all verified); dock also strips ratings so none leak.
+- **T5:** Online multiplayer with shareable game codes — Online/Offline split, Create/Join lobby (real WebRTC P2P, no backend), edge cases (invalid code, disconnect, no-opponent timeout), premium lobby, and a **fully-synced online Duels** (verified across two browsers: matching 6–5 result, perspective labels, rematch).
 - **T7:** Autofill genuinely random (Fisher-Yates shuffle across all years/clubs) — fixed the previous sequential bias.
 - **T8:** League mode overhaul — layout wider (results 800px, setup 660px), injury replacement spin verified (2.5%/game), complete new `lgs-*` summary design with hero position number + W-D-L strip + mini table + awards + player stats. Ligue 1 data audited (removed Metz + Clermont Foot, now exactly 18 teams for 34-game season).
 - **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
@@ -70,7 +70,7 @@ _Living document — update after every significant change. Last updated: Tasks 
 ## 7. Features outstanding (master task list order)
 - **T10** Final PROGRESS.md + HANDOVER.md + GitHub push (in progress).
 - **T6** Animations & 3D pass (card flips/tilt, screen transitions, physics spin, count-ups, confetti, ambient depth).
-- **Online Draft Tournament** — only Ratings War is synced online so far; deferred.
+- **Online Draft Tournament** — only Duels is synced online so far; deferred.
 - Also: **permanent hosting** (needs owner login), lazy-load 5 MB data, automate cache versioning.
 
 ## 8. Decisions log (key — full in DECISIONS.md)
@@ -80,8 +80,8 @@ _Living document — update after every significant change. Last updated: Tasks 
 - Compact wheel via CSS height change is safe because modes re-render the final pick explicitly post-animation.
 - Results unification via shared CSS language (not a structural rewrite of each sim) to avoid breaking working simulations.
 - Built standalone JS app (offline; trade-off: no SW from file://, not needed).
-- **T5:** chose **PeerJS public broker + WebRTC** for online (only viable zero-backend P2P; verified the broker is reachable before building). Online is lazy-loaded so the offline game never touches the network. Game code = 4 chars from an unambiguous alphabet, namespaced `elxi-<code>` on the broker. **Scoped online gameplay to Ratings War** (natural 1v1, each builds on own device then XIs sync) — a synced live draft pool is a larger build, deferred; online Draft Tournament is steered to Local for now. Fixed a message-ordering race (XI sent before peer's handler was ready) with a hello-triggered re-send.
-- **T4:** dock names changed from `text-overflow:ellipsis/nowrap` to `overflow-wrap:anywhere` (wrap). Wrapping exposed a pre-existing scrape bug where the rating chip (`.xi-rate`) bled into the name; fixed `scrape()` to strip rating chips + a stray trailing rating number, so the dock stays rating-free (and Ratings-War safe) on every mode.
+- **T5:** chose **PeerJS public broker + WebRTC** for online (only viable zero-backend P2P; verified the broker is reachable before building). Online is lazy-loaded so the offline game never touches the network. Game code = 4 chars from an unambiguous alphabet, namespaced `elxi-<code>` on the broker. **Scoped online gameplay to Duels** (natural 1v1, each builds on own device then XIs sync) — a synced live draft pool is a larger build, deferred; online Draft Tournament is steered to Local for now. Fixed a message-ordering race (XI sent before peer's handler was ready) with a hello-triggered re-send.
+- **T4:** dock names changed from `text-overflow:ellipsis/nowrap` to `overflow-wrap:anywhere` (wrap). Wrapping exposed a pre-existing scrape bug where the rating chip (`.xi-rate`) bled into the name; fixed `scrape()` to strip rating chips + a stray trailing rating number, so the dock stays rating-free (and Duels-safe) on every mode.
 
 ## 9. Known issues
 - **Hosting is a temporary Cloudflare quick tunnel** — URL changes on restart, dies if the Mac sleeps. Not permanent.

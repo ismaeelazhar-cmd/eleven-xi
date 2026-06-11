@@ -1,5 +1,5 @@
 /* floodlights.js — Eleven XI UI bootstrap.
- * Grows across the build (Part 1: toast + Ratings War placeholder). */
+ * Grows across the build (Part 1: toast + Duels placeholder). */
 (function (W) {
   "use strict";
   var toastTimer = null;
@@ -42,7 +42,7 @@
   });
 
   /* ── Confetti — a short, modest burst reserved for real wins
-     (champions, perfect seasons, Ratings-War victories). Tasteful by
+     (champions, perfect seasons, Duels victories). Tasteful by
      design: ~90 pieces in the Floodlights palette, one second, then gone.
      Skipped entirely when the user prefers reduced motion. ── */
   W.triggerConfetti = function () {
@@ -102,9 +102,9 @@
 /* ============================================================
    UNIVERSAL SQUAD DOCK — a slide-in squad viewer reachable from
    EVERY mode. Reads the live XI from whatever the active screen
-   renders (pitch dots / XI list / Ratings-War slots), so it needs
+   renders (pitch dots / XI list / Duels slots), so it needs
    no hooks into each mode. Ratings are intentionally NOT shown
-   (keeps Ratings War's blind rule intact and stays consistent).
+   (keeps Duels's blind rule intact and stays consistent).
    ============================================================ */
 (function (W) {
   "use strict";
@@ -114,7 +114,7 @@
   function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
   // Read an element's text WITHOUT any embedded rating chips, so the dock never
-  // shows ratings (design decision + keeps it Ratings-War safe). Falls back to
+  // shows ratings (design decision + keeps it Duels safe). Falls back to
   // the raw text and strips a stray trailing rating number if no chip is present.
   function cleanName(el,isName){
     if(!el) return "";

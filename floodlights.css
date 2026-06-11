@@ -400,7 +400,7 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .brank { color: var(--text-mute); font-variant-numeric: tabular-nums; }
 
 /* ============================================================
-   MULTIPLAYER MODE SELECT (Tournament vs Ratings War)
+   MULTIPLAYER MODE SELECT (Tournament vs Duels)
    ============================================================ */
 .mp-modeselect { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); max-width: 720px; margin: var(--sp-4) auto 0;
   animation: fl-rise var(--dur-3) var(--ease-out); }

@@ -1,7 +1,7 @@
-/* ratingswar.js — Eleven XI · "Ratings War" mode.
+/* ratingswar.js — Eleven XI · "Duels" mode.
  * Two players build an XI BLIND (ratings never rendered during build),
  * then a head-to-head position-by-position reveal decides each slot.
- * Self-contained; wired from the home card via window.startRatingsWar(). */
+ * Self-contained; wired from the home card via window.startDuels(). */
 (function (W) {
   "use strict";
 
@@ -61,7 +61,7 @@
     if (W.scrollTo) W.scrollTo(0,0);
   }
 
-  W.startRatingsWar = function(){
+  W.startDuels = function(){
     RW = {
       phase:"intro", cur:0, revealStep:-1,
       currentSpin:null, pendingRWPick:null, _spinning:false,
@@ -73,12 +73,12 @@
   function newPicks(){ return SLOTS.map(function(){ return null; }); }
 
   /* ════════════════════════════════════════════════════
-     ONLINE Ratings War — each player builds on their own
+     ONLINE Duels — each player builds on their own
      device; XIs are exchanged over WebRTC, then both run
      the identical reveal. Host = player 0, guest = player 1
      (canonical, so the reveal matches on both screens).
   ════════════════════════════════════════════════════ */
-  W.startRatingsWarOnline = function(role){
+  W.startDuelsOnline = function(role){
     buildPool();
     var myIdx = role === "host" ? 0 : 1, oppIdx = myIdx === 0 ? 1 : 0;
     RW = {
@@ -148,7 +148,7 @@
     if(RW.rematchMe && RW.rematchOpp){
       var role = RW.role;
       RW.rematchMe = RW.rematchOpp = false;
-      W.startRatingsWarOnline(role);
+      W.startDuelsOnline(role);
     }
   }
 
@@ -169,8 +169,8 @@
     var me = RW.players[RW.myIdx], opp = RW.players[RW.oppIdx];
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
-      "<div class='rw-hero'><div class='rw-kicker'>Online · Ratings War</div>"+
-      "<h2 class='rw-title'>Ratings <span class='rw-accent'>War</span></h2>"+
+      "<div class='rw-hero'><div class='rw-kicker'>Online · Duels</div>"+
+      "<h2 class='rw-title'><span class='rw-accent'>Duels</span></h2>"+
       "<p class='rw-sub'>You're connected. Build your XI <strong>blind</strong> on your own device — "+
       "when you both lock in, the reveal decides it slot by slot.</p>"+
       "<div class='rw-names'>"+
@@ -209,7 +209,7 @@
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Multiplayer</div>"+
-      "<h2 class='rw-title'>Ratings <span class='rw-accent'>War</span></h2>"+
+      "<h2 class='rw-title'><span class='rw-accent'>Duels</span></h2>"+
       "<p class='rw-sub'>Both managers build an XI <strong>blind</strong> — no ratings shown. "+
       "Then it's a head-to-head: position by position, the higher-rated player wins the slot. Most slots wins.</p>"+
       "<div class='rw-names'>"+
@@ -333,8 +333,6 @@
   }
 
   function showRWSquadPanel(panel, spin, P){
-    var DATA = W.WORLD_CUP_DATA || {};
-    var flag = (DATA[spin.country]&&DATA[spin.country].flag) ? DATA[spin.country].flag : "";
     var lineOrder = {GK:0,DEF:1,MID:2,FWD:3};
     var sorted = spin.squad.slice().sort(function(a,b){
       var la = lineOrder[LINE_OF[a.gp||a.p]||"MID"]||2;
@@ -343,7 +341,6 @@
     });
 
     var html = '<div class="mp-sq-head">'+
-      (flag?'<span class="mp-sq-flag">'+flag+'</span>':'')+
       '<span class="mp-sq-title">'+esc(spin.country)+' &middot; '+spin.year+'</span>'+
       '<span class="mp-sq-hint">Pick a player — ratings hidden</span>'+
     '</div>';
@@ -472,7 +469,7 @@
       "</div>"+
       "</div>";
 
-    document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Ratings War?")) goHome(); };
+    document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Duels?")) goHome(); };
 
     var spinBtn = document.getElementById("rwSpinBtn");
     if (isRespin) spinBtn.disabled = (rerollsLeft===0);
@@ -597,7 +594,7 @@
         if (typeof W.flToast === "function") W.flToast("Rematch requested…");
         maybeRematch(); render();
       } else {
-        W.startRatingsWar();
+        W.startDuels();
       }
     };
     document.getElementById("rwHome").onclick = goHome;

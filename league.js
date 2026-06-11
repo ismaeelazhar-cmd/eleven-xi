@@ -175,7 +175,6 @@
     Object.keys(LEAGUES).forEach(function(k){
       var lc=LEAGUES[k];
       html+="<button class='lg-card' data-league='"+k+"'>"+
-        "<span class='lg-flag'>"+lc.flag+"</span>"+
         "<span class='lg-name'>"+lc.label+"</span>"+
         "<span class='lg-games'>"+lc.games+" games</span>"+
         "</button>";
@@ -208,7 +207,7 @@
     v.innerHTML=
       "<button class='back' id='lgBackLeague'>← Leagues</button>"+
       "<div class='setup'>"+
-        "<h2 class='lg-title' style='margin-top:.3rem'>"+lc.flag+" "+lc.label+"</h2>"+
+        "<h2 class='lg-title' style='margin-top:.3rem'>"+lc.label+"</h2>"+
         /* Team name */
         "<div class='setup-row'>"+
           "<label class='setup-label' for='lgTeamName'>Team name</label>"+
@@ -1018,7 +1017,7 @@
       v.innerHTML=
         "<div class='wrap'>"+
           "<button class='back' id='lgRevealBack'>← Quit season</button>"+
-          "<h2 class='lg-title' style='margin-top:.2rem'>"+lc.flag+" "+esc(LS.teamName)+" — "+lc.label+"</h2>"+
+          "<h2 class='lg-title' style='margin-top:.2rem'>"+esc(LS.teamName)+" — "+lc.label+"</h2>"+
           "<div class='stage-badge'>Your season · game by game</div>"+
           "<div class='lg-live-tally'>"+
             "<span class='lt-rec'>"+t.W+"-"+t.D+"-"+t.L+"</span>"+
@@ -1414,7 +1413,7 @@
 
         /* ── Hero ── */
         "<div class='lgs-hero'>" +
-          "<div class='lgs-league-label'>" + lc.flag + " " + esc(lc.label) + "</div>" +
+          "<div class='lgs-league-label'>" + esc(lc.label) + "</div>" +
           "<div class='lgs-team-name'>" + esc(LS.teamName) + "</div>" +
           "<div class='lgs-big-pos'>" + pos + "<sup class='lgs-pos-sfx'>" + posSuffix + "</sup></div>" +
           "<div class='lgs-hero-sub'>of " + N + " clubs · " + userRow.Pts + " points</div>" +

@@ -56,12 +56,12 @@
   var MP_MODE_DATA = {
     wc:           { label:"World Cup",            get: function(){ return window.WORLD_CUP_DATA; } },
     cl:           { label:"Champions League",    get: function(){ return window.CL_DATA; } },
-    pl:           { label:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League",   get: function(){ return window.PL_DATA; } },
+    pl:           { label:"Premier League",       get: function(){ return window.PL_DATA; } },
     championship: { label:"Championship",         get: function(){ return window.CHAMPIONSHIP_DATA; } },
-    euro:         { label:"🇪🇺 Euros (1980–2024)", get: function(){ return window.EURO_DATA; } },
-    laliga:       { label:"🇪🇸 La Liga",           get: function(){ return window.LALIGA_DATA; } },
-    seriea:       { label:"🇮🇹 Serie A",           get: function(){ return window.SERIEA_DATA; } },
-    bundesliga:   { label:"🇩🇪 Bundesliga",        get: function(){ return window.BUNDESLIGA_DATA; } }
+    euro:         { label:"Euros (1980–2024)",    get: function(){ return window.EURO_DATA; } },
+    laliga:       { label:"La Liga",              get: function(){ return window.LALIGA_DATA; } },
+    seriea:       { label:"Serie A",              get: function(){ return window.SERIEA_DATA; } },
+    bundesliga:   { label:"Bundesliga",           get: function(){ return window.BUNDESLIGA_DATA; } }
   };
 
   /* ── League-specific manager pools ── */
@@ -501,7 +501,7 @@
   }
 
   /* ════════════════════════════════════════════════════
-     PHASE 0 — MULTIPLAYER MODE SELECT (Tournament vs Ratings War)
+     PHASE 0 — MULTIPLAYER MODE SELECT (Tournament vs Duels)
   ════════════════════════════════════════════════════ */
   function renderMpModeSelect(){
     var wrap = mk("div","mp-wrap");
@@ -520,7 +520,7 @@
       t.classList.add("mp-ms-soon");
       t.addEventListener("click", function(){
         if (typeof window.flToast === "function")
-          window.flToast("Draft Tournament is local-only for now — try Ratings War online, or switch to Local.");
+          window.flToast("Draft Tournament is local-only for now — try Duels online, or switch to Local.");
       });
     } else {
       t.addEventListener("click", function(){ st.phase = "setup"; _render(); });
@@ -530,12 +530,12 @@
     var r = mk("button","mp-ms-card m-rw");
     r.innerHTML = '<span class="mp-ms-badge">'+(st.online?"Online":"Head to head")+'</span>'+
       '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3l6 6-3 3-6-6z"/><path d="M11.5 6L3 14.5 6 18l8.5-8.5"/><path d="M3 21l3-1M16 13l5 5-2 2-5-5"/></svg></span>'+
-      '<span class="mp-ms-name">Ratings War</span><span class="mp-ms-hint">'+
+      '<span class="mp-ms-name">Duels</span><span class="mp-ms-hint">'+
       (st.online ? "Each of you builds blind on your own device, then the reveal decides it slot by slot."
                  : "Two managers build blind — ratings hidden — then a position-by-position reveal decides each slot.")+'</span>';
     r.addEventListener("click", function(){
-      if (st.online && window.startRatingsWarOnline){ st.phase = "idle"; window.startRatingsWarOnline(st.netRole); }
-      else if (window.startRatingsWar){ st.phase = "idle"; window.startRatingsWar(); }
+      if (st.online && window.startDuelsOnline){ st.phase = "idle"; window.startDuelsOnline(st.netRole); }
+      else if (window.startDuels){ st.phase = "idle"; window.startDuels(); }
     });
     grid.appendChild(r);
 
@@ -1162,7 +1162,6 @@
 
   function showSquadPanel(panel, spin, player){
     var DATA = getData();
-    var flag = (DATA[spin.country]&&DATA[spin.country].flag) ? DATA[spin.country].flag : "";
 
     /* Sort: GK → DEF → MID → FWD, then by rating desc within each line */
     var lineOrder = {GK:0,DEF:1,MID:2,FWD:3};
@@ -1174,7 +1173,6 @@
 
     var html =
       '<div class="mp-sq-head">'+
-        (flag?'<span class="mp-sq-flag">'+flag+'</span>':'')+
         '<span class="mp-sq-title">'+esc(spin.country)+' &middot; '+spin.year+'</span>'+
         '<span class="mp-sq-hint">Tap a player to place them</span>'+
       '</div>';
