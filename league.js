@@ -373,8 +373,8 @@
     eid("lgGoDraft").addEventListener("click",function(){
       LS.teamName=(eid("lgTeamName").value.trim()||"My XI");
       if(!LS.manager){
-        var def=MGRS.filter(function(m){ return m.id==="motivator"; })[0]||MGRS[0];
-        LS.manager=def; LS.mgrBonus={attack:def.atk||0,defend:def.def||0};
+        var def=MGRS.filter(function(m){ return m.id==="none"; })[0]||MGRS[0];
+        LS.manager=def; LS.mgrBonus={attack:0,defend:0};
       }
       renderDraftScreen();
     });
@@ -829,6 +829,11 @@
         else if(j===userIdx){ LS.userResults.push({home:false,opp:teams[i].name,gf:res.a,ga:res.h}); LS.fixtures.push({opp:teams[i].name,home:false,oppStr:teams[i].str}); }
       }
     }
+    for(var si=LS.fixtures.length-1;si>0;si--){
+      var sj=Math.floor(Math.random()*(si+1));
+      var tf=LS.fixtures[si]; LS.fixtures[si]=LS.fixtures[sj]; LS.fixtures[sj]=tf;
+      var tr=LS.userResults[si]; LS.userResults[si]=LS.userResults[sj]; LS.userResults[sj]=tr;
+    }
 
     LS.table.sort(function(a,b){
       if(b.Pts!==a.Pts) return b.Pts-a.Pts;
@@ -984,7 +989,7 @@
 
   /* Build a random surprise event */
   function _lgMakeEvent(){
-    if(Math.random()<0.4){
+    if(LS.manager && LS.manager.id !== "none" && Math.random()<0.4){
       var reasons=["has been SACKED after a poor run","has SShockingly resigned","was sacked by the board","walked out for a rival club"];
       return { type:"manager", reason: reasons[Math.floor(Math.random()*reasons.length)].replace("SS","s") };
     }
