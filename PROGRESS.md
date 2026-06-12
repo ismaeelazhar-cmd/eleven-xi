@@ -4,7 +4,16 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: ALL 20 TASKS COMPLETE. Cache wcxi-v135. Push to GitHub done. All tasks done._
+_Last checkpoint: T1+T2 COMPLETE. T3 UI pass complete. Cache wcxi-v138._
+
+## CURRENT SESSION TASKS
+
+| Task | Status | Notes |
+|------|--------|-------|
+| T1: Fix spin wheel all modes | ✅ DONE | Root cause: `W is not defined` — `W.sfx` → `window.sfx` in game.js/league.js/dvc.js |
+| T2: DVC uses spin wheel | ✅ DONE | spin-reel mechanic, CPU auto-spins. User to test. |
+| T3: UI improvement pass | ✅ DONE | Gold→violet hover/focus/active; DVC compact reels; touch targets; see §33 |
+| T4: Squad FAB visibility + Back to Start | ⏳ TODO | FAB only during active draft; back button on all screens |
 
 ---
 
@@ -13,8 +22,8 @@ _Last checkpoint: ALL 20 TASKS COMPLETE. Cache wcxi-v135. Push to GitHub done. A
 - **Run locally:** `python3 -m http.server 8778` from project root → http://localhost:8778/index.html
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
-- **Cache version:** `wcxi-v135`
-- **Current file versions:** style.css v79, tokens.css v74, floodlights.css v114, game.js v96, multiplayer.js v94, floodlights.js v93, ratingswar.js v103, draftvscomputer.js v7, league.js v83, sw.js wcxi-v135
+- **Cache version:** `wcxi-v136`
+- **Current file versions:** style.css v80, tokens.css v74, floodlights.css v116, game.js v97, multiplayer.js v94, floodlights.js v93, ratingswar.js v103, draftvscomputer.js v10, league.js v84, sw.js wcxi-v138
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`
@@ -893,3 +902,30 @@ Recommended domains (check availability at Namecheap/Cloudflare):
 3. In GitHub repo Settings → Pages → Custom domain → enter domain
 4. GitHub auto-provisions HTTPS via Let's Encrypt
 5. Update `manifest.webmanifest` `start_url` and `scope` to use the new domain
+
+---
+
+## §33. Task 3 — UI Improvement Pass ✅
+
+**Status: COMPLETE** | Files: `style.css v80`, `floodlights.css v116`, `index.html`, `sw.js wcxi-v138`
+
+### Fixes applied
+
+**`style.css` — hover/focus/active colour fixes (gold → violet)**
+- `.squad-close` touch target: 32×32px → 44×44px
+- `.squad .sub, .squad-card .sub` extended selector (covers DVC squad panel)
+- `.player:hover` border-color: `rgba(249,156,0,0.5)` → `rgba(124,92,252,0.5)`
+- `.player:hover:not(.taken):not(.noslot)` border+bg: gold → violet
+- `.team-name-input:focus` border-color: gold → violet + subtle glow ring
+- `.manager-opt:hover` border+bg: gold → violet
+- `.manager-opt.active` bg + box-shadow: gold → violet
+- `.formation-opt:hover` (both definitions, lines ~642 + ~1173): border-color gold → violet
+- `.formation-opt.active` (both definitions): gradient gold fill → violet-tinted flat fill
+- `.tg-opt:hover` border-color: gold → violet
+- `.tg-opt.active` bg + box-shadow: gold → violet
+- `.seg-opt.active` (both definitions): gradient gold fill → violet-tinted; shadow gold → violet
+- `.setup-label` (second definition, ~line 1630): `rgba(249,156,0,0.8)` → `var(--text-mute)`
+
+**`floodlights.css` — active state background override**
+- `.formation-opt.active`, `.manager-opt.active`, `.seg-opt.active` etc. block extended to also set `background: color-mix(in srgb, var(--primary) 13%, var(--surface-2)) !important`
+- `#dvcView` added to all compact-reel-sizing rules (machine, reels, reel-box, reel-label, reel height/items, spin button) — DVC reels now use 58px compact format matching CL/League/MP

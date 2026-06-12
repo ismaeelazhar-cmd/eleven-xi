@@ -392,11 +392,11 @@ window.startDraftVsComputer = (function (W) {
     html += '<div class="reel" id="dvcCountryReel"><div class="reel-strip" id="dvcCS"><div class="reel-item"><span class="name">&#8212;</span></div></div></div>';
     html += '<div class="reel" id="dvcYearReel"><div class="reel-strip" id="dvcYS"><div class="reel-item"><span class="year">&#8212;</span></div></div></div>';
     html += '</div>';
-    html += '<button class="spin-btn" id="dvcSpinBtn"' + (isPlayerTurn ? '' : ' disabled') + '>SPIN</button>';
+    html += '<button class="spin" id="dvcSpinBtn"' + (isPlayerTurn ? '' : ' disabled') + '>SPIN</button>';
     html += '</div>';
 
-    /* Squad picker panel (hidden until after spin) */
-    html += '<div class="squad-panel" id="dvcSquadPanel" style="display:none"></div>';
+    /* Squad picker panel — uses .squad for the full-screen overlay backdrop */
+    html += '<div class="squad" id="dvcSquadPanel" style="display:none"></div>';
 
     /* Both XIs */
     html += '<div class="dvc-xi-panels">';

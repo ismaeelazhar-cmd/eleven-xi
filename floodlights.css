@@ -291,6 +291,7 @@ body.light {
 /* active chips/segments → violet */
 .formation-opt.active, .manager-opt.active, .seg-opt.active, .tg-opt.active, .diff-opt.active, .lg-card:hover {
   border-color: var(--primary) !important; color: var(--text) !important;
+  background: color-mix(in srgb, var(--primary) 13%, var(--surface-2)) !important;
 }
 /* headings across screens use the display face */
 .lg-title, .res-title, .draft-team, .xi-head h2, .mp-sq-title, h2.sec, .sec { font-family: var(--font-display); }
@@ -417,23 +418,23 @@ body.light .fl-dock-row { border-bottom-color: rgba(14,20,38,.06); }
    League (#leagueView) and Multiplayer (#mpView) get a slimmer
    inline wheel so it doesn't dominate the screen.
    ============================================================ */
-body.mode-cl .machine, #leagueView .machine, #mpView .machine {
+body.mode-cl .machine, #leagueView .machine, #mpView .machine, #dvcView .machine {
   padding: var(--sp-3) var(--sp-4); max-width: 480px; margin-left: auto; margin-right: auto;
 }
-body.mode-cl .reels, #leagueView .reels, #mpView .reels { gap: var(--sp-3); }
-body.mode-cl .reel-box, #leagueView .reel-box, #mpView .reel-box { padding: var(--sp-2); }
-body.mode-cl .reel-label, #leagueView .reel-label, #mpView .reel-label { font-size: 10px; margin-bottom: 5px; }
+body.mode-cl .reels, #leagueView .reels, #mpView .reels, #dvcView .reels { gap: var(--sp-3); }
+body.mode-cl .reel-box, #leagueView .reel-box, #mpView .reel-box, #dvcView .reel-box { padding: var(--sp-2); }
+body.mode-cl .reel-label, #leagueView .reel-label, #mpView .reel-label, #dvcView .reel-label { font-size: 10px; margin-bottom: 5px; }
 /* slim reel viewport + items (final pick is re-rendered explicitly, so this is safe) */
-body.mode-cl .reel,  #leagueView .reel,  #mpView .reel,
-body.mode-cl .reel::after, #leagueView .reel::after, #mpView .reel::after { height: 58px; }
-body.mode-cl .reel-item, #leagueView .reel-item, #mpView .reel-item { height: 58px; gap: 2px; }
-body.mode-cl .reel-item .name, #leagueView .reel-item .name, #mpView .reel-item .name { font-size: 14px; }
-body.mode-cl .reel-item-noflag .name, #leagueView .reel-item-noflag .name, #mpView .reel-item-noflag .name { font-size: clamp(14px, 3.4vw, 19px); }
-body.mode-cl .reel-item .year, #leagueView .reel-item .year, #mpView .reel-item .year { font-size: 22px; letter-spacing: 1px; }
-body.mode-cl .reel-item .flag, #leagueView .reel-item .flag, #mpView .reel-item .flag { font-size: 24px; }
+body.mode-cl .reel,  #leagueView .reel,  #mpView .reel,  #dvcView .reel,
+body.mode-cl .reel::after, #leagueView .reel::after, #mpView .reel::after, #dvcView .reel::after { height: 58px; }
+body.mode-cl .reel-item, #leagueView .reel-item, #mpView .reel-item, #dvcView .reel-item { height: 58px; gap: 2px; }
+body.mode-cl .reel-item .name, #leagueView .reel-item .name, #mpView .reel-item .name, #dvcView .reel-item .name { font-size: 14px; }
+body.mode-cl .reel-item-noflag .name, #leagueView .reel-item-noflag .name, #mpView .reel-item-noflag .name, #dvcView .reel-item-noflag .name { font-size: clamp(14px, 3.4vw, 19px); }
+body.mode-cl .reel-item .year, #leagueView .reel-item .year, #mpView .reel-item .year, #dvcView .reel-item .year { font-size: 22px; letter-spacing: 1px; }
+body.mode-cl .reel-item .flag, #leagueView .reel-item .flag, #mpView .reel-item .flag, #dvcView .reel-item .flag { font-size: 24px; }
 /* slimmer SPIN control row */
-body.mode-cl .machine .controls, #leagueView .machine .controls, #mpView .machine .controls { gap: var(--sp-2); margin-top: var(--sp-2); }
-body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-size: var(--t-sm); min-height: 42px; }
+body.mode-cl .machine .controls, #leagueView .machine .controls, #mpView .machine .controls, #dvcView .machine .controls { gap: var(--sp-2); margin-top: var(--sp-2); }
+body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 10px 22px; font-size: var(--t-sm); min-height: 42px; }
 /* World Cup keeps the full reel (unchanged) — #draftView without .mode-cl */
 
 /* ============================================================

@@ -3,7 +3,7 @@
  * formation lock, manager spin, global player lock,
  * group stage + knockout tournament sim.
  */
-(function () {
+(function (W) {
   "use strict";
 
   /* ── Self-contained constants (mirrors game.js, no coupling) ── */
@@ -1804,4 +1804,4 @@
     init();
   }
 
-})();
+})(window);
