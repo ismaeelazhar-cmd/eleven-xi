@@ -593,7 +593,14 @@
     if (window.sfx) window.sfx.spin();
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
-    var pairs = poolPairs(), pick = rand(pairs);
+    var pairs = poolPairs();
+    // Weight top 9 nations (most WC appearances) 3× more likely to spin
+    var TOP9 = { "Brazil":1,"Germany":1,"Italy":1,"Argentina":1,"Mexico":1,"France":1,"Spain":1,"England":1,"Uruguay":1 };
+    var weights = pairs.map(function(p){ return TOP9[p.c] ? 3 : 1; });
+    var totalW = 0; for (var wi=0;wi<weights.length;wi++) totalW+=weights[wi];
+    var rnd = Math.random()*totalW, cum=0, pickIdx=0;
+    for (var wj=0;wj<weights.length;wj++){ cum+=weights[wj]; if(rnd<=cum){ pickIdx=wj; break; } }
+    var pick = pairs[pickIdx];
     current = { country: pick.c, year: pick.y };
     var pc = pairs.map(function (p) { return p.c; }), py = pairs.map(function (p) { return p.y; });
     elSpin.textContent = "SPINNING…";
