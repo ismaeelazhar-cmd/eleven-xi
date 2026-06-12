@@ -308,11 +308,11 @@ _All pop-out panels, all game modes._
 
 ## 12. CURRENT FILE VERSIONS
 - floodlights.css: v103
-- game.js: v87
+- game.js: v88 (euro mode, modeLabel, goWorldCup euro)
 - multiplayer.js: v92
-- floodlights.js: v88
+- floodlights.js: v89
 - draftvscomputer.js: v3 (W/L/D record added)
-- sw.js: wcxi-v117
+- sw.js: wcxi-v118
 
 ## 14. TASK 1 — DVC W/L/D RECORD ✅
 - localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`
@@ -322,6 +322,19 @@ _All pop-out panels, all game modes._
 - Result screen: record shown in verdict banner (updated after this game)
 - CSS added: `.dvc-record`, `.dvc-rec-label`, `.dvc-rec-val`, `.dvc-rec-pct`, `.dvc-rec-none`, `.dvc-verdict-record`
 - Leaderboard tab integration deferred to Task 8 (OG-5)
+
+## 16. TASK 3 — SOLO EURO TOURNAMENT ✅
+- Extended `setMode("euro")` in game.js: DATA → EURO_DATA, pool label "Euro tournament eras", continent filter hidden
+- `eraApply()` updated: Euro shows "N Euros · N squads" (not "N World Cups · continent")
+- `updateControls()`: `goWorldCup` button relabels to "Euro Championship with my XI", `goLeague` hidden for euro
+- `runSim("euro", team)`: uses `runWorldCup()` engine with "Euro Championship" label, saves as mode:"euro"
+- `goWorldCup` click handler updated: `runSim(mode === "euro" ? "euro" : "wc", ...)`
+- `modeLabel()` updated: "euro" → "Euros" for leaderboard display
+- Leaderboard mode tab "Euros" added to index.html
+- Euro home card in game.js: `homeEuro` wired directly to `setMode("euro")` alongside homeWC/homeCL
+- Opponent field: uses `window.NATIONS` (all international teams) — same as WC, appropriate for Euro
+- Score system: uses `wcScore()` — same formula as World Cup, saves to localStorage leaderboard
+- Note: EURO_DATA uses `p` (broad position) same as WC data — no data structure issues
 
 ## 15. TASK 2 — EURO HOME CARD ✅
 - Added `fl-mode m-euro` button (`homeEuro`) to home screen after vs Computer card

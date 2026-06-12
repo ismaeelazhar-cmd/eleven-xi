@@ -47,14 +47,7 @@
       });
     }
 
-    // Euros home card — opens Multiplayer pre-set to Euro data (solo Euro added in Task 3)
-    var euroBtn = document.getElementById("homeEuro");
-    if (euroBtn) {
-      euroBtn.addEventListener("click", function () {
-        if (typeof window.startEuroMode === "function") { window.startEuroMode(); return; }
-        if (typeof window.openMultiplayerWithMode === "function") window.openMultiplayerWithMode("euro");
-      });
-    }
+    /* Euro home card — wired in game.js alongside homeWC/homeCL via setMode("euro") */
 
     // Logo click → home from any screen
     var brand = document.getElementById("brandLogo");

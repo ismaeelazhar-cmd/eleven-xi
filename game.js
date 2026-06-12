@@ -428,6 +428,8 @@
     var contName = { all: "all continents", EU: "Europe", AF: "Africa", SA: "South America" }[continent];
     if (mode === "cl") {
       elPoolDesc.textContent = ALL_YEARS[minIdx] + "–" + ALL_YEARS[maxIdx] + " · " + poolPairs().length + " squads in the draw.";
+    } else if (mode === "euro") {
+      elPoolDesc.textContent = cnt + " Euro" + (cnt === 1 ? "" : "s") + " · " + poolPairs().length + " squads in the draw.";
     } else {
       elPoolDesc.textContent = cnt + " World Cup" + (cnt === 1 ? "" : "s") + " · " + contName + " · " + poolPairs().length + " squads in the draw.";
     }
@@ -681,8 +683,10 @@
 
     var full = squad.length >= XI_SIZE;
     var cl = mode === "cl";
+    var euro = mode === "euro";
     $("goWorldCup").disabled = !full; $("goWorldCup").hidden = !full || cl;
-    $("goLeague").disabled = !full;   $("goLeague").hidden   = !full || cl;
+    $("goWorldCup").textContent = euro ? "Euro Championship with my XI" : "World Cup with my XI";
+    $("goLeague").disabled = !full;   $("goLeague").hidden   = !full || cl || euro;
     $("goCL").disabled     = !full;   $("goCL").hidden       = !full || !cl;
     $("shareBtn").disabled = squad.length < 1;
     $("autoFillBtn").disabled = full;
@@ -824,7 +828,7 @@
     mode = m;
     loadManagerPref();   /* restore last manager across modes */
     document.body.classList.toggle("mode-cl", m === "cl");
-    DATA = (m === "cl") ? window.CL_DATA : window.WORLD_CUP_DATA;
+    DATA = m === "cl" ? window.CL_DATA : m === "euro" ? (window.EURO_DATA || window.WORLD_CUP_DATA) : window.WORLD_CUP_DATA;
     COUNTRIES = Object.keys(DATA);
     ALL_YEARS = (function () { var s = {}; COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { s[y] = 1; }); }); return Object.keys(s).sort(); })();
     minIdx = 0; maxIdx = ALL_YEARS.length - 1;
@@ -832,10 +836,11 @@
     continent = "all";
     squad = []; current = null; pendingPick = null; awaitingPick = false;
     var cl = (m === "cl");
+    var euro = (m === "euro");
     $("clFormatRow").style.display = cl ? "block" : "none";
-    var cw = $("continentWrap"); if (cw) cw.style.display = cl ? "none" : "block";
-    var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Player pool — Champions League seasons" : "Player pool — World Cup eras";
-    var cl2 = $("countryLabel"); if (cl2) cl2.textContent = cl ? "Club" : "Country";
+    var cw = $("continentWrap"); if (cw) cw.style.display = (cl || euro) ? "none" : "block";
+    var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Player pool — Champions League seasons" : euro ? "Player pool — Euro tournament eras" : "Player pool — World Cup eras";
+    var cl2 = $("countryLabel"); if (cl2) cl2.textContent = cl ? "Club" : "Nation";
     renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra();
     renderContinent(); renderDifficultyBar(); renderClFormat();
     paintPitches(); renderXI(); updateControls(); showView("setup");
@@ -1038,7 +1043,7 @@
   function addScore(e) { var a = loadBoard(); a.push(e); saveBoard(a); }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
   function modeLabel(m) {
-    return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" : "League";
+    return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" : m === "euro" ? "Euros" : "League";
   }
   function renderBoard() {
     Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
@@ -1078,12 +1083,13 @@
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
     showView("results");
     setTimeout(function () {
-      if (type === "wc") {
+      if (type === "wc" || type === "euro") {
         var wc = window.ENGINE.runWorldCup(userTeam);
-        reveal = { wc: wc, userTeam: userTeam, label: whoLabel(userTeam, "World Cup"),
+        var compLabel = type === "euro" ? "Euro Championship" : "World Cup";
+        reveal = { wc: wc, userTeam: userTeam, label: whoLabel(userTeam, compLabel),
           groupMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; }),
           koMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; }),
-          shown: 0, stage: "groups", sc: wcScore(wc), saved: false };
+          shown: 0, stage: "groups", sc: wcScore(wc), saved: false, mode: type };
         renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
@@ -1207,7 +1213,7 @@
         html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
       }
     } else {
-      if (!r.saved) { r.saved = true; addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.cl ? "cl" : "wc", ts: Date.now() }); }
+      if (!r.saved) { r.saved = true; addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); }
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += scoreBannerHTML(r.sc, wc.userResult);
       html += statsSummaryHTML(wc.userStats);
@@ -1282,6 +1288,8 @@
   (function () { var t = null; try { t = localStorage.getItem("wcxi_theme"); } catch (e) {} applyTheme(t === "light"); })();
   $("homeWC").addEventListener("click", function () { setMode("wc"); });
   $("homeCL").addEventListener("click", function () { setMode("cl"); });
+  var _euroBtn = document.getElementById("homeEuro");
+  if (_euroBtn) _euroBtn.addEventListener("click", function () { setMode("euro"); });
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("goCL").addEventListener("click", function () { if (squad.length === XI_SIZE) runCLSim(clFormat); });
   $("setupBack").addEventListener("click", function () { showView("home"); });
@@ -1295,7 +1303,7 @@
   $("autoFillBtn").addEventListener("click", autoFill);
   $("clearBtn").addEventListener("click", newGame);
   $("shareBtn").addEventListener("click", shareTeam);
-  $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("wc", userTeamFromSquad()); });
+  $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim(mode === "euro" ? "euro" : "wc", userTeamFromSquad()); });
   $("goLeague").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("league", userTeamFromSquad()); });
   $("newGameBtn").addEventListener("click", newGame);
   var _sxib = $("shareXIBtn"); if (_sxib) _sxib.addEventListener("click", function () { shareXIPNG(this); });
