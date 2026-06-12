@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=81" />
+  <link rel="stylesheet" href="style.css?v=82" />
   <link rel="stylesheet" href="tokens.css?v=74" />
   <link rel="stylesheet" href="floodlights.css?v=117" />
 </head>
@@ -175,56 +175,63 @@
 
     <!-- ===== DRAFT (second part) ===== -->
     <section id="draftView" style="display:none;">
-      <div class="draft-head">
-        <button class="back" id="draftHomeBtn">&#8592; Home</button>
-        <div class="draft-head-info">
-          <div class="draft-team" id="draftTeam">My XI</div>
-          <div class="draft-meta" id="draftMeta">4-3-3 · No manager</div>
+      <button class="draft-corner-home" id="draftHomeBtn">&#8592; Home</button>
+
+      <div class="draft-layout">
+        <!-- LEFT: pitch + spin wheel -->
+        <div class="draft-left">
+          <div class="draft-pitch-header">
+            <div class="draft-team" id="draftTeam">My XI</div>
+            <div class="draft-meta" id="draftMeta">4-3-3 · No manager</div>
+          </div>
+          <div class="draft-pitch-wrap"><div id="draftPitch"></div></div>
+
+          <div class="machine" aria-label="Slot machine">
+            <div class="reels">
+              <div class="reel-box">
+                <div class="reel-label" id="countryLabel">Country</div>
+                <div class="reel"><div class="reel-strip" id="countryStrip"></div></div>
+              </div>
+              <div class="reel-box">
+                <div class="reel-label">Year</div>
+                <div class="reel"><div class="reel-strip" id="yearStrip"></div></div>
+              </div>
+            </div>
+            <div class="controls">
+              <button class="spin" id="spinBtn">SPIN</button>
+              <button class="reroll" id="rerollBtn" hidden>Reroll (<span id="rerollCount">3</span>)</button>
+              <button class="autopick" id="autoPickBtn" hidden>Auto-pick</button>
+            </div>
+            <div class="hint" id="hint"></div>
+            <div class="draft-under-spin">
+              <button class="btn-accent" id="autoFillBtn">Auto-fill XI</button>
+              <button class="btn-primary" id="goWorldCup" disabled hidden>World Cup with my XI</button>
+              <button class="btn-primary" id="goLeague" disabled hidden>League with my XI</button>
+              <button class="btn-primary" id="goCL" disabled hidden>Enter the Champions League</button>
+              <button class="btn-ghost" id="shareBtn" disabled>Copy XI</button>
+              <button class="btn-ghost" id="clearBtn">New game</button>
+            </div>
+          </div>
+
+          <section class="squad" id="squadPanel" style="display:none;"></section>
         </div>
-        <div class="draft-pitch-wrap"><div id="draftPitch"></div></div>
+
+        <!-- RIGHT: squad list -->
+        <div class="draft-right">
+          <div class="xi">
+            <div class="xi-head">
+              <h2>Your XI</h2>
+              <div>
+                <span class="count" id="xiCount">0/11</span>
+                <span class="formation" id="formation"></span>
+              </div>
+            </div>
+            <div class="xi-list" id="xiList"></div>
+            <div class="done-banner" id="doneBanner" style="display:none;"></div>
+            <div class="rating-note" id="ratingNote"></div>
+          </div>
+        </div>
       </div>
-
-      <div class="machine" aria-label="Slot machine">
-        <div class="reels">
-          <div class="reel-box">
-            <div class="reel-label" id="countryLabel">Country</div>
-            <div class="reel"><div class="reel-strip" id="countryStrip"></div></div>
-          </div>
-          <div class="reel-box">
-            <div class="reel-label">Year</div>
-            <div class="reel"><div class="reel-strip" id="yearStrip"></div></div>
-          </div>
-        </div>
-        <div class="controls">
-          <button class="spin" id="spinBtn">SPIN</button>
-          <button class="reroll" id="rerollBtn" hidden>Reroll (<span id="rerollCount">3</span>)</button>
-          <button class="autopick" id="autoPickBtn" hidden>Auto-pick</button>
-        </div>
-        <div class="hint" id="hint"></div>
-      </div>
-
-      <section class="squad" id="squadPanel" style="display:none;"></section>
-
-      <section class="xi">
-        <div class="xi-head">
-          <h2>Your XI</h2>
-          <div>
-            <span class="count" id="xiCount">0/11</span>
-            <span class="formation" id="formation"></span>
-          </div>
-        </div>
-        <div class="xi-list" id="xiList"></div>
-        <div class="done-banner" id="doneBanner" style="display:none;"></div>
-        <div class="xi-actions">
-          <button class="btn-accent" id="autoFillBtn">Auto-fill XI</button>
-          <button class="btn-primary" id="goWorldCup" disabled hidden>World Cup with my XI</button>
-          <button class="btn-primary" id="goLeague" disabled hidden>League with my XI</button>
-          <button class="btn-primary" id="goCL" disabled hidden>Enter the Champions League</button>
-          <button class="btn-ghost" id="shareBtn" disabled>Copy XI</button>
-          <button class="btn-ghost" id="clearBtn">New game</button>
-        </div>
-        <div class="rating-note" id="ratingNote"></div>
-      </section>
     </section>
 
     <!-- ===== RESULTS ===== -->
