@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Bug fixes — rating badge contrast + X button respin exploit. Cache wcxi-v110. floodlights.css v97, multiplayer.js v90, ratingswar.js v100. Commit 9096e13._
+_Last checkpoint: Task 0 audit + Task 1 (X button revert) + game.js ratingTierClass extended. Working through Tasks 2-7. Cache wcxi-v111._
 
 ---
 
@@ -89,15 +89,43 @@ All 10 toggles in the Duels setup menu. Each has ⓘ info icon with tooltip. All
 - No emoji unless genuinely purposeful
 
 ## 6. EXACTLY WHERE TO PICK UP
-> Bug fixes done (commit 9096e13):
-> - Rating badges in player pop-out now have solid backgrounds with 7-tier color system
-> - X button on squad panel now costs 1 respin; at 0 rerolls shows toast and blocks close
-> Next: tackle remaining backlog (lazy-load, animations, online tournament, etc.)
-> Or verify Phase 2 Duels features in live game at https://ismaeelazhar-cmd.github.io/eleven-xi/
+> Task 0 audit complete. Task 1 (X button revert) done. Working through Tasks 2-7.
+> New tasks list: T1=X button (done), T2=Draft vs Computer, T3=3D buttons/animations,
+> T4=game review, T5=new mode ideas, T6=security audit, T7=data audit
+> NOTE: idea.mov video could not be accessed (Photos NSItemProvider temp path expired).
+> Working from written task descriptions for T2/T3.
 
-## 6b. BUG FIXES COMPLETED
-- ✅ **Rating badge contrast** — mp-r-badge has solid background + 7-tier colors (gold/elite/great/good/amber/orange/red). ratingTierClass extended in both multiplayer.js and ratingswar.js.
-- ✅ **X button respin exploit** — X now costs 1 respin. At 0 rerolls, toast fires and panel stays open (must pick).
+## 6b. TASK 0 AUDIT — COMPLETE
+### Full checklist of prior 16 catch-up items (verified in codebase):
+1. ✅ SVG icons — manager chips (MGR_ICONS) + theme toggle (sun/moon SVGs in index.html)
+2. ⏳ Supabase leaderboard — DEFERRED (requires external account; documented)
+3. ⏳ Cold load lazy-loading — DEFERRED (5MB arch refactor; documented)
+4. ✅ sessionStorage draft — saveDraft/loadDraft/clearDraft in game.js verified
+5. ✅ Auto-fill quality floor 75 — `if ((pl.r || 0) < 75) return;` in autoFill() verified
+6. ✅ Lock XI hidden until 11/11 — elDone shows only when `full` (picks.length===11) verified
+7. ✅ Champion name/flag in WC Final — bracket-champion div in renderBracket verified
+8. ✅ Keyboard nav on spin — keydown handler (Space=spin) in game.js verified
+9. ✅ Share XI PNG — shareXIPNG() with canvas in game.js verified
+10. ✅ Half-pitch formation view — pitch SVG both dark+light in style.css verified
+11. ✅ Share game link — clipboard copy handler in floodlights.js verified
+12. ✅ Summary stat pills centred — stat-grid justify-content:center in style.css verified
+13. ✅ Player pop-out consistent — squad-card wrapper in multiplayer.js + ratingswar.js verified
+14. ✅ Production server — GitHub Pages returns 200 OK verified
+15. ⏳ Staging environment — DEFERRED (requires GitHub branch config; documented)
+16. ✅ SETUP.md — file exists verified
+
+### Phase 2 Duels features: ALL 10 ✅ (verified via commit history + code)
+
+### Bug fixes from last prompt:
+- ✅ Rating badge contrast (mp-r-badge) — DONE and EXTENDED to game.js this session
+- ❌→✅ X button change — previous session made X cost a respin (WRONG per Task 1); REVERTED in Task 1
+
+### Additional fix from Task 0:
+- ✅ game.js ratingTierClass — extended to cover r-amber/r-orange/r-red (was returning "" for <75)
+
+## 6c. BUG FIXES (commit 9096e13):
+- ✅ **Rating badge contrast** — mp-r-badge has solid background + 7-tier colors. ratingTierClass extended in multiplayer.js, ratingswar.js, and game.js.
+- ⚠️ **X button respin cost** — implemented in previous session but REVERSED in Task 1 (X should be pure close, no cost)
 
 ## 7. REMAINING BACKLOG
 - Lazy-load data per mode (~5 MB eager load)

@@ -292,7 +292,7 @@
   // ---- pitch ----
   function ratingTierClass(r) {
     if (!r) return "";
-    return r >= 90 ? " r-gold" : r >= 85 ? " r-elite" : r >= 80 ? " r-great" : r >= 75 ? " r-good" : "";
+    return r >= 90 ? " r-gold" : r >= 85 ? " r-elite" : r >= 80 ? " r-great" : r >= 75 ? " r-good" : r >= 70 ? " r-amber" : r >= 60 ? " r-orange" : " r-red";
   }
   function renderPitchInto(el) {
     var a = assignByLines();

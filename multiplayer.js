@@ -1227,24 +1227,9 @@
     panel.innerHTML = html;
     panel.style.display = "";
 
-    /* Close button — costs one respin if a spin result is showing.
-       At 0 rerolls the player must pick from the current squad. */
+    /* Close button — pure dismiss, no side effects on spin state or reroll count */
     var mpClose = panel.querySelector("#mpSqClose");
-    if (mpClose) mpClose.onclick = function() {
-      if (st.currentSpin) {
-        var left = rerollsLeft();
-        if (left === 0) {
-          if (typeof window.flToast === "function") window.flToast("No respins left — pick a player from this squad.");
-          return;
-        }
-        var cp = st.players[st.cur];
-        if (cp) cp.rerollsUsed = (cp.rerollsUsed||0) + 1;
-        var sb = document.getElementById("mpDraftSpin");
-        if (sb) updateSpinBtn(sb);
-      }
-      panel.style.display = "none";
-      st.pendingPick = null;
-    };
+    if (mpClose) mpClose.onclick = function() { panel.style.display = "none"; st.pendingPick = null; };
 
     /* Position chooser button handlers */
     if(st.pendingPick && st.pendingPick.spin===spin){
