@@ -4,146 +4,81 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: T10 Full playthrough bug hunt ✅ done. Bugs found and fixed. Cache wcxi-v102. game.js v83, engine.js v72, floodlights.js v85. Next: T11 Review, improvements list, Duels feature suggestions._
+_Last checkpoint: Catch-up audit complete. All 16 checklist items addressed (3 deferred). Cache wcxi-v104. Next: Phase 2 — 10 Duels features._
 
 ---
 
 ## 0. Project facts
 - **Project root:** `/Users/ismaeelazhar/worldcup-xi`  (vanilla HTML/CSS/JS, no build step)
-- **Run locally:** `python3 -m http.server 8777` from project root → http://localhost:8777/index.html
-- **Standalone offline app:** `eleven-xi.html` (5.4 MB, self-contained, opens from file://). Rebuild: `python3` inline script.
-- **Cache version:** service worker `wcxi-v92`; `index.html` references `?v=` query strings — bump on asset change.
-- **Current versions:** style.css v76, league.js v77, data_league.js v74, game.js v80, floodlights.js v84, floodlights.css v85, multiplayer.js v88, ratingswar.js v89, sw.js cache wcxi-v95
+- **Run locally:** `python3 -m http.server 8778` from project root → http://localhost:8778/index.html
+- **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
+- **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
+- **Cache version:** `wcxi-v104`
+- **Current file versions:** style.css v79, tokens.css v74, floodlights.css v91, game.js v85, multiplayer.js v89, floodlights.js v86, ratingswar.js v94, sw.js wcxi-v104
 
-## 1. Design direction — LOCKED: "Floodlights" (Option 1)
-3 options were presented; owner picked **Option 1 — Floodlights**.
-- **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` (primary) · Cyan `#22E0C8` (positive) · Coral `#FF7A59` (CTA) · Gold `#F5B43C` (champions only)
-- **Type:** Bricolage Grotesque (display) + Inter (body), fluid clamp() scale
-- **Signature:** tactics-board pitch (navy + cyan lines, not grass) · bento home · per-mode accent colours · SVG icons (no emoji)
-- (Options B "Claret Editorial" and C "Neon Stadium" were rejected — see DECISIONS.md.)
+## 1. Design direction — LOCKED: "Floodlights"
+- **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`
+- **Rule:** components use only tokens, never raw hex. `esc()` XSS prevention everywhere.
 
 ## 2. Architecture / file map
-- `tokens.css` — three-layer design tokens (primitive → semantic[dark+light] → component). **Edit palette/type/spacing here only.**
-- `floodlights.css` — base, app shell, home/bento, token-mapped buttons, and a **global remap** of every legacy CSS var → Floodlights token (this is why all old screens inherit the new look).
-- `floodlights.js` — UI bootstrap (toast; Duels placeholder hook `window.startDuels`).
-- `style.css` — legacy stylesheet (still in use; variable-driven so it re-skins via floodlights.css).
-- Game logic: `game.js` (WC/CL + shared), `league.js` (League mode), `multiplayer.js` (MP), `engine.js`.
-- Data: `data*.js`, `cl_data*.js`, `*_history.js`, `data_fixups.js` (positions+rating tiering), `positions.js`.
-- `DECISIONS.md` — autonomous decision log.
+- `tokens.css` — three-layer design tokens (primitive → semantic[dark+light] → component)
+- `floodlights.css` — base, app shell, home/bento, token-mapped buttons, global remap
+- `floodlights.js` — UI bootstrap (toast, share game link handler)
+- `style.css` — legacy stylesheet (still in use, variable-driven)
+- Game logic: `game.js` (WC/CL + shared), `league.js` (League mode), `multiplayer.js` (MP), `engine.js`
+- Data: `data*.js`, `cl_data*.js`, `*_history.js`, `data_fixups.js`, `positions.js`
 
-## 3. COMPLETED
-**Phase 1 (partial):**
-- ✅ Design tokens + fonts + redesigned **home/bento** (SVG icons, 5 mode cards incl. "NEW" Duels). Verified dark + light.
-- ✅ **Global cohesion** — every screen (setup, draft, reels, results, board, modals) now wears Floodlights via the token remap. Tactics-board pitch with colour-coded dots (gold GK / cyan DEF / violet MID / coral FWD). Verified on League draft.
-- ✅ Responsive base (dvh, fluid container, ≥44px touch targets, reduced-motion, focus rings).
-- ✅ **Compact spin wheel** (CSS in floodlights.css): full reel ONLY on World Cup (#draftView w/o body.mode-cl); Champions League, League, Multiplayer get a 58px slim inline wheel. Verified League 58px vs WC 96px.
-- ✅ **Universal squad pop-out** (dock in `floodlights.js`): a slide-in panel + persistent FAB on EVERY mode; reads the live XI from the DOM (pitch/XI-list/RW-slots), grouped by line, full name + club, NO ratings (RW-safe), responsive bottom-sheet on mobile. Verified in League draft.
-- ✅ **Duels mode built** (`ratingswar.js`): blind build (ratings NEVER in DOM — verified leak-free), pass-and-play handoff, head-to-head position-by-position reveal with sticky scorebar + winner arrows, winner/rematch. Own Floodlights flair. Verified dark+light, full flow 8–3 result.
+## 3. CATCH-UP AUDIT — STATUS
 
-**Phase 2 (done):**
-- ✅ Security audit: no secrets, no outbound calls (only SW cache handler), no external deps, input escaped, HTTPS via tunnel.
-- ✅ Fixes: removed nested `./worldcup-xi/` duplicate; neutralised dead footer links.
-- ✅ Standalone single-file app `eleven-xi.html` built + verified (boots with all data offline).
+### ✅ COMPLETED (10/16)
+1. ✅ **SVG icons** — manager chips (7 SVGs: shirt/swords/shield/flame/trophy/megaphone/lightning) + theme toggle (sun/moon SVGs)
+2. ✅ **Lock XI hidden** — buttons hidden until squad is exactly 11/11
+3. ✅ **Auto-fill quality floor ≥ 75** — `if ((pl.r || 0) < 75) return;` in autoFill()
+4. ✅ **Champion name/flag in WC Final bracket card** — `.bracket-champion` added to renderBracket() for last round
+5. ✅ **sessionStorage draft** — saveDraft/loadDraft/clearDraft, restore hint on draft screen
+6. ✅ **Keyboard navigation** — Space=spin, Enter=auto-pick on draft screen
+7. ✅ **Share XI PNG** — Canvas-based 900×1200 generation, navigator.share or download
+8. ✅ **Half-pitch formation view** — both dark + light themes updated in tokens.css + style.css
+9. ✅ **Share game link** — home screen "Share game" button, clipboard copy, fallback prompt
+10. ✅ **Summary stat pills centred** — `justify-content: center` on `.stat-grid`
+11. ✅ **Player pop-out consistency** — ratingswar.js + multiplayer.js wrapped with `.squad-card`
+12. ✅ **Production server** — GitHub Pages, auto-deploys, stays live when MacBook off
+13. ✅ **SETUP.md** — deployment, rollback, status check, cache bump checklist
 
-**Phase 3 (assessment delivered):** full code/design/gameplay review + top-5 + feature menu given to owner (recorded in §7).
+### ⏳ DEFERRED (requires external account/arch work)
+14. ⏳ **Supabase leaderboard** — requires Supabase project creation, RLS setup, API keys. Currently localStorage honour-system.
+15. ⏳ **Cold load lazy-loading** — ~5 MB eager load; significant architecture refactor of data.js loading
+16. ⏳ **Staging environment** — requires GitHub branch + separate Pages URL configuration
 
-## 4. OUTSTANDING (ranked — pick up here)
-1. ~~Duels~~ ✅ DONE (`ratingswar.js`). Next priority below.
-2. **Permanent hosting** — replace the tunnel. Needs owner's one-time login (GitHub Pages / Netlify / Cloudflare Pages). Until then: tunnel = "works while Mac on", single-file app = portable.
-3. ~~Universal squad pop-out~~ ✅ DONE (dock in floodlights.js).
-4. ~~Compact spin wheel everywhere except WC~~ ✅ DONE (CSS scoped to mode-cl/leagueView/mpView).
-5. ~~Unified results/summary across modes~~ ✅ DONE — League lgr2 redesign + a unification CSS layer brings WC/CL/MP result components (`.champion`,`.score-banner`,`.verdict-card`,`.stats-summary`,`.mcard`,board rows) onto the same Floodlights summary language (token cards, display headings, accent tabular numbers). Verified on World Cup results.
-6. **Full QA playthrough** — every mode end-to-end on desktop + 375px mobile; fix broken layouts/dead ends; verify Duels rating-hiding.
-7. **Performance** — lazy-load the ~5 MB data (load a mode's data file only on entering that mode).
-8. **Bespoke polish** — screen transitions, count-ups, confetti; restyle legacy "Install app" pill + theme toggle to tokens.
+## 4. PHASE 2 — DUELS FEATURES (next up)
 
-## 5. DECISION LOG (summary; full in DECISIONS.md)
-- Chose Floodlights (most distinctive/premium/durable; furthest from 38-0).
-- Re-mapped legacy CSS vars → tokens instead of rewriting markup (max cohesion, min regression risk).
-- Built the JS app (viable + valuable; trade-off: no SW from file://, not needed).
-- Did NOT rush Duels unattended (hidden-ratings must be airtight; flagged as #1).
+All 10 toggles go in the Duels setup/lobby menu. Each has an ⓘ info icon with semi-transparent tooltip (hover desktop / tap mobile, dismiss on click-away or mouse-leave). All default to OFF. Base Duels with all off must work perfectly.
 
-## 6. NEW SESSION TASK STATUS
-- ✅ T1 Resume — GitHub confirmed current (cd61c01), game open at localhost:8777
-- ✅ T2 Shareable HTTPS link: https://influenced-contents-facility-hoped.trycloudflare.com (Cloudflare tunnel, live while Mac is on)
-- ✅ T3 Security audit complete:
-  - FIXED: XSS in whoLabel() — userTeam.name and manager now wrapped in esc()
-  - FIXED: c.pick.n in squad list now esc()-wrapped (defence in depth)
-  - CLEAN: leaderboard (esc), match cards (esc), RW player names (esc), MP names (esc)
-  - CLEAN: no API keys/secrets anywhere, no outbound calls except SW + lazy PeerJS CDN
-  - CLEAN: directory listing — root serves index.html, no .env or credential files
-  - INFO: PeerJS CDN (versioned unpkg URL) only loads on Online MP click — acceptable
-  - game.js → v76, sw cache → wcxi-v88
-- ⏳ T4 Harsh bug review
-- ⏳ T5 Squad list cleanup (remove list below wheel, keep pop-out)
-- ⏳ T6 Spin wheel size reduction
-- ⏳ T7 Rating colour system (90+ gold, 85-89 green, etc.)
-- ⏳ T8 Visual overhaul (reduce purple, 3D + animation)
-- ⏳ T9 Game difficulty tuning
-- ⏳ T10 Mid-game events (manager sacked/resigned, transfer clause)
-- ⏳ T11 Duels power-ups (steal, remove+respin)
-- ⏳ T12 Ideas and suggestions
+**Order to implement:**
+1. ⏳ X-Factor Slot — one random position counts double at reveal
+2. ⏳ Captain — designate one position; that position scores +2 if won
+3. ⏳ Position Ban — each player bans 1 slot before building
+4. ⏳ Steal Power-Up — once per match, steal opponent's best player into your XI
+5. ⏳ Blind Swap — after lock, secretly swap 2 positions (countdown timer)
+6. ⏳ Wildcard Spin — one mystery spin from the full global pool (any era/nation)
+7. ⏳ Best of 3 Series — play 3 matches; first to 2 wins takes the series
+8. ⏳ Draft from Shared Pool — live pick-order draft, no duplicate players
+9. ⏳ Async Online Mode — share-link based async build (each player builds in own time)
+10. ⏳ Formation Draft — formation secretly assigned before reveal
 
-## 6b. PREVIOUS SESSION TASK STATUS (all ✅)
-- ✅ T1 Resume from checkpoint
-- ✅ T2 SETUP.md terminal instructions
-- ✅ T3 Manager card size — compact chips
-- ✅ T4 Logo click → home from any screen
-- ✅ T5 Rating number inside position circle when ratings visible
-- ✅ T6 Squad selection as proper pop-out modal (full untruncated names)
-- ✅ T7 Autofill genuinely random (Fisher-Yates shuffle, all years, all clubs)
-- ✅ T8 League mode overhaul:
-  - (a) autofill fix ✅ (done in T7)
-  - (b) layout wider — results 800px (was 680px), setup 660px ✅
-  - (c) injury replacement spin ✅ (already coded at 2.5% per game — verified)
-  - (d) summary redesign ✅ — hero with huge position, W-D-L strip, mini table shown by default, awards, player stats, score breakdown; completely distinct from 38-0
-  - (e) league audit ✅ — removed Metz + Clermont Foot (not in 2024-25 Ligue 1)
-- ✅ T9 Summary page audit across ALL game modes:
-  - WC result ✅ — added Play Again + ← Home at bottom of long scroll
-  - CL result ✅ — same fix (both renderWCStage + renderLeagueStage)
-  - League result ✅ — already has lgPlayAgain + lgHomeBtn (T8 work)
-  - Multiplayer result ✅ — code-verified "← Back to Home" button present
-  - Duels result ✅ — code-verified Rematch + ← Home buttons present
-- ✅ T10 Final PROGRESS.md + HANDOVER.md updated. Committed (main 15fff9d). GitHub push pending — no remote configured. To push: `git remote add origin <url> && git push -u origin main`.
+## 5. GROUND RULES (non-negotiable)
+- Push to GitHub IMMEDIATELY as first action and after every completed task
+- Save progress to PROGRESS.md after every task
+- Keep HANDOVER.md updated
+- Keep working without stopping between tasks
+- If new session starts: read HANDOVER.md and PROGRESS.md first
+- No exposed API keys/secrets
+- No user data off-device
+- `esc()` all user input
+- Ratings/Duels ratings NEVER in DOM during build phase
+- No emoji unless genuinely purposeful
 
-## 6c. MASTER TASK LIST STATUS (current session)
-- ✅ **T1** Resumed; read HANDOVER.md + PROGRESS.md.
-- ✅ **T2** Emoji flag removal — removed from all modes (game.js ×6, league.js ×4, multiplayer.js ×2, ratingswar.js ×1). Kept ONLY in WC spin wheel (`countryItemHTML` in game.js) and Euro spin wheel. `sw.js` → wcxi-v95, versions bumped.
-- ✅ **T3** Rename Ratings War → Duels — all user-visible strings, function names (`startRatingsWar`→`startDuels`, `startRatingsWarOnline`→`startDuelsOnline`), mode card label in multiplayer.js, online kicker, quit dialog, comments. Filename `ratingswar.js` unchanged (internal only). docs + eleven-xi.html updated.
-- ✅ **T4** Formation view redesign — SVG pitch markings (both penalty boxes, halfway line, centre circle, centre spot, GK area) baked into `--pitch-bg` token. Glassy frosted position circles with position-colour ring (coral FWD/violet MID/teal DEF/gold GK). `dotPopIn` spring animation on fill. Rating tier text colours (r-gold ≥90, r-elite 85-89, r-great 80-84, r-good 75-79). style.css v77, tokens.css v73, floodlights.css v86, game.js v81. Cache wcxi-v97.
-- ✅ **T5** Duels game setup — pool select step inserted between intro and build phases. Player picks from 6 data sources (WC, Euros, PL, La Liga, Serie A, Bundesliga) via `renderPoolSelect()`. Pool cards in 3×2 responsive grid. Each player independently picks pool before their build turn (handoff phase also routes to poolselect). `RW.poolDataCur/poolNationalCur/poolLabelCur` track current pick. Build header shows chosen pool. Reel label adapts Nation/Club. Ratings never in DOM throughout. ratingswar.js v90, floodlights.css v87. Cache wcxi-v98.
-- ✅ **T6** Duels rules screen — `showRWRules()` glassmorphism modal with 5-step rules + strategy tip. "How to play" button on intro screen + inline on pool select header. Backdrop dismiss + close button. ratingswar.js v91, floodlights.css v88. Cache wcxi-v99.
-- ✅ **T7** Duels tournament structure — intro screen player count picker (2/3/4, coral active state). 2-player: 1v1 unchanged. 3-player: round robin 3 matches, points table (3/1/0). 4-player: knockout bracket (semis + 3rd place play-off + final, dynamically added after semis). All builds generalized: handoff loops for N players, lock label adapts. `renderMatchNext()` transition screen. `renderTournResult()` final standings. ratingswar.js v92, floodlights.css v89. Cache wcxi-v100.
-- ✅ **T8** Full game makeover pass — rating tier coloured badges in squad list (`xi-rate.r-gold/elite/great/good`) and Duels reveal (`rw-rev-rating` with glow). Spin wheel restyle: cyan radial gradient + fl-rise animation, cyan `reel::after` selection line + `reel-label`. `ratingTierClass()` utility added to ratingswar.js. game.js v82, ratingswar.js v93, floodlights.css v90. Cache wcxi-v101.
-- ✅ **T9** Deploy + shareable permanent HTTPS link — GitHub Pages enabled from `main` branch root. Live at https://ismaeelazhar-cmd.github.io/eleven-xi/ (permanent, auto-updates on every push to main).
-- ✅ **T10** Full playthrough bug hunt — WC/Multiplayer/Duels all verified end-to-end. Bugs found and fixed:
-  - Squad dock "Squad 12/11" count inflation (floodlights.js: filter `.xi-row` to visible elements only)
-  - ✅ emoji in done banner → removed (game.js)
-  - ⭐ emoji in match cards and league result heading → removed (game.js)
-  - ⚽ emoji in goal events → removed (game.js)
-  - 🧤 emoji in clean sheet → removed (game.js)
-  - 🥈/🏆 emojis in result strings → removed from engine.js + game.js (keys kept in sync)
-  - game.js v83, engine.js v72, floodlights.js v85. Cache wcxi-v102.
-- ✅ **T11** Review, improvements list, Duels feature suggestions:
-  **Remaining polish:** manager emoji icons → SVG; 🌙 theme toggle → SVG; "Lock XI" hidden until 11/11; save draft to sessionStorage; auto-fill quality floor ≥75; lazy-load data per mode; keyboard spin navigation; share-image PNG; persistent leaderboard.
-  **Duels quick wins:** X-Factor slot (1 random position counts double); Captain designation (chosen position = +2); position ban phase (ban 1 slot each before building).
-  **Duels medium:** Steal power-up (steal opponent's winning player once); Blind swap (swap 2 positions after lock); Wildcard spin (mystery pool player); Best-of-3 series.
-  **Duels big:** Draft-from-shared-pool (live draft, no duplicates); Async online mode (share-link, build async); Formation draft (secret formation assignment before reveal).
-
-## 6b. EXACTLY WHERE TO PICK UP
-> **NEW TASK LIST received (master prompt).** Working order now:
-> - T1 ✅ resumed + results unification checkpointed.
-> - T2 ✅ HANDOVER.md written (12 sections + paste-to-orient prompt at top).
-> - T3 ✅ DONE — entering Multiplayer now shows a game-type select (Draft Tournament vs Duels, native Floodlights cards). Both routes verified. Home RW shortcut kept too.
-> - T4 ✅ DONE — dock names wrap in full (no ellipsis) on WC/CL/League/MP/Duels; dock also strips rating chips so ratings never leak (RW-safe). All 5 modes verified live.
-> - T5 ✅ DONE — Online multiplayer. `net.js` = zero-backend WebRTC P2P over the PeerJS public broker (lazy-loaded). Multiplayer entry now splits Local vs Online; Online lobby = Create Game (4-char code) / Join Game; premium Floodlights lobby (code card, copy, spinner, online tag). Edge cases handled: invalid code, disconnect (toast + back to lobby), no-opponent timeout. **Online Duels fully synced** — each builds blind on own device, XIs exchanged, identical reveal both sides, "(you)" label, rematch handshake. Verified across two real browser tabs (matching 6–5 result). Online Draft Tournament deferred (steered to Local/RW).
-> - T6 = Animations & 3D pass (flips/tilt, transitions, physics spin, count-ups, confetti, ambient depth). ← NEXT.
-> - T4 = squad pop-out on EVERY mode with FULL untruncated names (current dock truncates with ellipsis — must fix to wrap).
-> - T5 = online multiplayer with shareable game codes (Online vs Offline split). BIG — needs a realtime transport (PeerJS/WebRTC or a free service); flag hosting/backend implications.
-> - T6 = animations & 3D pass. T7 = consistency audit. T8 = player ratings audit. T9 = squad accuracy audit.
-> After that, work down §4 in order. Rebuild `eleven-xi.html` after each part (inline script) and bump cache version.
-
-## 7. PHASE 3 REVIEW + FEATURE MENU (saved for reference)
-**Verdict:** strong, fun core loop + unmatched historical data; now has a cohesive premium identity; honest gaps = Duels, permanent hosting, bespoke per-screen polish + QA.
-**Top 5 improvements:** 1) permanent hosting 2) build Duels 3) lazy-load 5 MB data 4) one consistent results template across modes 5) codebase cleanup (dedupe reel/pitch logic, automate cache versioning).
-**Feature menu:** Gameplay — Duels(med), Survival/streak(med), Daily challenge(med), Knockout cup(med). Social — share-image everywhere(quick), H2H share codes(big), online leaderboard(big). Progression — achievements(med), career mode(big). Presentation — transitions/count-ups/confetti(quick-med), sound+haptics(med). Data — real fixtures(big), deeper stats(med). Access — keyboard/SR pass(med), colourblind-safe(quick).
+## 6. EXACTLY WHERE TO PICK UP
+> Catch-up phase DONE. Push 7423850 is live on GitHub.
+> Next: implement Phase 2 Duels features starting with #1 X-Factor Slot.
+> Each feature needs: toggle in Duels setup menu + ⓘ tooltip + functional game logic.

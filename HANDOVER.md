@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: T11 done — all tasks complete. Cache wcxi-v102. game.js v83, engine.js v72, floodlights.js v85._
+_Living document — update after every significant change. Last updated: Catch-up audit complete. Cache wcxi-v104. game.js v85, style.css v79, tokens.css v74, floodlights.css v91, floodlights.js v86, multiplayer.js v89, ratingswar.js v94. Next: Phase 2 — 10 Duels features._
 
 ---
 
@@ -64,24 +64,47 @@ _Living document — update after every significant change. Last updated: T11 do
 - **T8:** League mode overhaul — layout wider (results 800px, setup 660px), injury replacement spin verified (2.5%/game), complete new `lgs-*` summary design with hero position number + W-D-L strip + mini table + awards + player stats. Ligue 1 data audited (removed Metz + Clermont Foot, now exactly 18 teams for 34-game season).
 - **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
 
-## 6. Features in progress
-- None. All 11 master tasks complete.
+## 6. Catch-up audit — completed ✅
+All 16 checklist items addressed (13 done, 3 deferred). Committed 7423850.
 
-## 7. Features outstanding (post-T11 backlog, unordered)
-- Manager chip SVG icons (currently emoji: 🔥 🏆 ⚡ 🌏 in game.js manager data objects)
-- 🌙 theme toggle → SVG moon icon
-- "Lock XI" hidden until 11/11 (currently disabled-but-visible)
-- Save draft progress to sessionStorage (survive refresh)
-- Auto-fill quality floor ≥75 (prevents weak-rated filler)
-- Lazy-load data files per mode (~5 MB currently eager)
-- Keyboard navigation for spin wheel (Space = spin, Enter = pick)
-- Share-image: generate PNG of your XI formation
-- Persistent leaderboard via serverless backend (currently honour-system)
-- **Duels power-ups:** X-Factor slot (random position counts double); Captain (chosen position = +2 if won); Position ban phase; Steal power-up; Blind swap; Wildcard spin; Best-of-3 series
-- **Duels online extensions:** Draft-from-shared-pool; Async link-share mode; Formation draft
-- **T6** Animations & 3D pass (card flips, screen transitions, physics spin, count-ups, confetti)
-- Online Draft Tournament — only Duels is synced online; full draft sync deferred
-- Automate cache versioning (currently manual bump)
+**Done:**
+- SVG icons: manager chips (7 SVGs) + theme toggle (sun/moon SVGs). No emoji in structural UI.
+- Lock XI hidden until squad is exactly 11/11
+- Auto-fill quality floor ≥ 75 in autoFill()
+- Champion name/flag in WC Final bracket card (`.bracket-champion` in renderBracket)
+- sessionStorage draft save/restore/clear (saveDraft/loadDraft/clearDraft)
+- Keyboard navigation on draft screen (Space=spin, Enter=auto-pick)
+- Share XI PNG via Canvas API (navigator.share or download fallback)
+- Half-pitch SVG in both dark + light themes (tokens.css + style.css)
+- Share game link button on home screen (clipboard copy + prompt fallback)
+- Summary stat pills centred (`justify-content: center` on `.stat-grid`)
+- Player pop-out consistency — ratingswar.js + multiplayer.js use `.squad-card` wrapper
+- Production on GitHub Pages, auto-deploys, live when MacBook off
+- SETUP.md: deployment, rollback, status check, cache bump checklist
+
+**Deferred (requires external account / arch work):**
+- Supabase persistent leaderboard (currently localStorage honour-system)
+- Cold load lazy-loading (~5 MB eager; significant architecture refactor)
+- Staging environment (GitHub branch + separate Pages URL)
+
+## 7. Features outstanding — NEXT PRIORITY
+**Phase 2: 10 Duels toggles** (all default OFF, all in Duels setup/lobby menu, each with ⓘ tooltip):
+1. X-Factor Slot — 1 random position counts double at reveal
+2. Captain — designate 1 position; +2 if won
+3. Position Ban — each player bans 1 slot before building
+4. Steal Power-Up — once, steal opponent's best player
+5. Blind Swap — after lock, secretly swap 2 positions (timer)
+6. Wildcard Spin — 1 mystery spin from full global pool
+7. Best of 3 Series — first to 2 wins takes the series
+8. Draft from Shared Pool — live pick-order draft, no dupes
+9. Async Online Mode — share-link async build
+10. Formation Draft — secret formation assignment before reveal
+
+**Also outstanding:**
+- Lazy-load data per mode (~5 MB eager load)
+- Animations & 3D pass (card flips, transitions, confetti)
+- Online Draft Tournament (only Duels synced online currently)
+- Automate cache versioning
 
 ## 8. Decisions log (key — full in DECISIONS.md)
 - **Floodlights** chosen (most distinctive/premium/durable; furthest from 38-0).
@@ -94,8 +117,7 @@ _Living document — update after every significant change. Last updated: T11 do
 - **T4:** dock names changed from `text-overflow:ellipsis/nowrap` to `overflow-wrap:anywhere` (wrap). Wrapping exposed a pre-existing scrape bug where the rating chip (`.xi-rate`) bled into the name; fixed `scrape()` to strip rating chips + a stray trailing rating number, so the dock stays rating-free (and Duels-safe) on every mode.
 
 ## 9. Known issues
-- **Hosting is a temporary Cloudflare quick tunnel** — URL changes on restart, dies if the Mac sleeps. Not permanent.
-- **Honour-system leaderboard** (client-side; editable via dev tools) — inherent to a serverless game; needs a backend to harden.
+- **Honour-system leaderboard** (client-side; editable via dev tools) — Supabase migration deferred.
 - **Manual cache versioning** — easy to forget; ship-stale risk.
 - **Online needs internet + the PeerJS public broker** — if the broker is down or a restrictive NAT/firewall blocks WebRTC, Online won't connect (Local always works offline). Online Draft Tournament not yet synced.
 - **~5 MB eager data load** — sluggish cold load on mid-range phones (lazy-load outstanding).
