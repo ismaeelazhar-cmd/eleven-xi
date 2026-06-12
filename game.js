@@ -771,7 +771,6 @@
     var euro = mode === "euro";
     $("goWorldCup").disabled = !full; $("goWorldCup").hidden = !full || cl;
     $("goWorldCup").textContent = euro ? "Euro Championship with my XI" : "World Cup with my XI";
-    $("goLeague").disabled = !full;   $("goLeague").hidden   = !full || cl || euro;
     $("goCL").disabled     = !full;   $("goCL").hidden       = !full || !cl;
     $("shareBtn").disabled = squad.length < 1;
     $("autoFillBtn").disabled = full;
@@ -1459,7 +1458,6 @@
   $("clearBtn").addEventListener("click", newGame);
   $("shareBtn").addEventListener("click", shareTeam);
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim(mode === "euro" ? "euro" : "wc", userTeamFromSquad()); });
-  $("goLeague").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("league", userTeamFromSquad()); });
   $("newGameBtn").addEventListener("click", newGame);
   // shareXIBtn and boardBtn are dynamically rendered inside resultsBody — wired in wireResults()
   $("boardBack").addEventListener("click", function () { showView("home"); });
