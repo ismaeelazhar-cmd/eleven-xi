@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: Phase 2 Duels features complete. Cache wcxi-v109. game.js v85, style.css v79, tokens.css v74, floodlights.css v96, floodlights.js v86, multiplayer.js v89, ratingswar.js v99. All 10 Duels feature toggles implemented._
+_Living document — update after every significant change. Last updated: Bug fixes (commit 9096e13). Cache wcxi-v110. game.js v85, style.css v79, tokens.css v74, floodlights.css v97, floodlights.js v86, multiplayer.js v90, ratingswar.js v100. All 10 Duels feature toggles done. Rating badge contrast + X button respin exploit fixed._
 
 ---
 
@@ -120,6 +120,10 @@ All 16 checklist items addressed (13 done, 3 deferred). Committed 7423850.
 - Built standalone JS app (offline; trade-off: no SW from file://, not needed).
 - **T5:** chose **PeerJS public broker + WebRTC** for online (only viable zero-backend P2P; verified the broker is reachable before building). Online is lazy-loaded so the offline game never touches the network. Game code = 4 chars from an unambiguous alphabet, namespaced `elxi-<code>` on the broker. **Scoped online gameplay to Duels** (natural 1v1, each builds on own device then XIs sync) — a synced live draft pool is a larger build, deferred; online Draft Tournament is steered to Local for now. Fixed a message-ordering race (XI sent before peer's handler was ready) with a hello-triggered re-send.
 - **T4:** dock names changed from `text-overflow:ellipsis/nowrap` to `overflow-wrap:anywhere` (wrap). Wrapping exposed a pre-existing scrape bug where the rating chip (`.xi-rate`) bled into the name; fixed `scrape()` to strip rating chips + a stray trailing rating number, so the dock stays rating-free (and Duels-safe) on every mode.
+
+## 8b. Recent bug fixes (commit 9096e13)
+- **Rating badge contrast** — `mp-r-badge` (player pop-out in multiplayer draft) now has solid background + 7-tier color system. `ratingTierClass()` extended in both `multiplayer.js` and `ratingswar.js` with `r-amber` (70–74), `r-orange` (60–69), `r-red` (<60). `xi-rate` and `rw-rev-rating` also updated with lower-tier styles for full consistency.
+- **X button respin exploit** — Closing the squad panel via X now costs one respin (increments `p.rerollsUsed`, updates spin button label). At 0 rerolls, X shows a toast "No respins left — pick a player from this squad" and does NOT close the panel, forcing the player to pick.
 
 ## 9. Known issues
 - **Honour-system leaderboard** (client-side; editable via dev tools) — Supabase migration deferred.

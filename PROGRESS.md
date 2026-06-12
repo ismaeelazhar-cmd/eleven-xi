@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Phase 2 — all 10 Duels features complete. Cache wcxi-v109. Next: verify all features in live game, then tackle remaining backlog._
+_Last checkpoint: Bug fixes — rating badge contrast + X button respin exploit. Cache wcxi-v110. floodlights.css v97, multiplayer.js v90, ratingswar.js v100. Commit 9096e13._
 
 ---
 
@@ -14,7 +14,7 @@ _Last checkpoint: Phase 2 — all 10 Duels features complete. Cache wcxi-v109. N
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v109`
-- **Current file versions:** style.css v79, tokens.css v74, floodlights.css v96, game.js v85, multiplayer.js v89, floodlights.js v86, ratingswar.js v99, sw.js wcxi-v109
+- **Current file versions:** style.css v79, tokens.css v74, floodlights.css v97, game.js v85, multiplayer.js v90, floodlights.js v86, ratingswar.js v100, sw.js wcxi-v110
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`
@@ -89,9 +89,15 @@ All 10 toggles in the Duels setup menu. Each has ⓘ info icon with tooltip. All
 - No emoji unless genuinely purposeful
 
 ## 6. EXACTLY WHERE TO PICK UP
-> Phase 2 DONE. All 10 Duels features implemented and pushed (commit 51c7a1e).
-> Next: verify all features work in the live game (test in browser).
-> After verification: tackle remaining backlog items (see section 7).
+> Bug fixes done (commit 9096e13):
+> - Rating badges in player pop-out now have solid backgrounds with 7-tier color system
+> - X button on squad panel now costs 1 respin; at 0 rerolls shows toast and blocks close
+> Next: tackle remaining backlog (lazy-load, animations, online tournament, etc.)
+> Or verify Phase 2 Duels features in live game at https://ismaeelazhar-cmd.github.io/eleven-xi/
+
+## 6b. BUG FIXES COMPLETED
+- ✅ **Rating badge contrast** — mp-r-badge has solid background + 7-tier colors (gold/elite/great/good/amber/orange/red). ratingTierClass extended in both multiplayer.js and ratingswar.js.
+- ✅ **X button respin exploit** — X now costs 1 respin. At 0 rerolls, toast fires and panel stays open (must pick).
 
 ## 7. REMAINING BACKLOG
 - Lazy-load data per mode (~5 MB eager load)
