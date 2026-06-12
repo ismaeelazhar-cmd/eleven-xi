@@ -254,6 +254,7 @@
     if (RW.phase === "build")        return renderBuild(v);
     if (RW.phase === "onbuild")      return renderBuild(v);
     if (RW.phase === "blindswap")    return renderBlindSwap(v);
+    if (RW.phase === "sharedpick")   return renderSharedPick(v);
     if (RW.phase === "waitopp")      return renderWaitOpp(v);
     if (RW.phase === "handoff")      return renderHandoff(v);
     if (RW.phase === "reveal")       return renderReveal(v);
@@ -406,6 +407,10 @@
     RW.swapSel = null;
     RW._swapTimerInterval = null;
     RW.swapTimeLeft = 30;
+    RW.sharedPool = null;
+    RW.sharedPicked = {};
+    RW.sharedPickTurn = 0;
+    RW.sharedPendingPick = null;
     if (f.bestOf3 && RW.numPlayers === 2){
       RW.seriesWins = [0, 0]; RW.seriesMatch = 0;
     }
@@ -452,7 +457,14 @@
         RW.poolNationalCur = pool.national;
         RW.poolLabelCur = pool.label;
         RW.currentSpin = null; RW.pendingRWPick = null;
-        RW.phase = "build"; render();
+        if (RW.features.sharedPool && !RW.online){
+          RW.sharedPool = generateSharedPool(RW.poolDataCur);
+          RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
+          RW.phase = "sharedpick";
+        } else {
+          RW.phase = "build";
+        }
+        render();
       });
     });
   }
@@ -824,6 +836,142 @@
     };
   }
 
+  /* ---------- shared pool draft: both players draft from same pool, alternating picks ---------- */
+  function generateSharedPool(data){
+    var keys = Object.keys(data);
+    var shuffledKeys = keys.slice().sort(function(){ return Math.random()-0.5; });
+    var teams = shuffledKeys.slice(0, Math.min(20, shuffledKeys.length));
+    var seen = {}, pool = [];
+    teams.forEach(function(team){
+      var ys = Object.keys((data[team]&&data[team].years)||{});
+      if (!ys.length) return;
+      var yr = ys[Math.floor(Math.random()*ys.length)];
+      var squad = ((data[team].years||{})[yr])||[];
+      squad.forEach(function(pl){
+        if (!pl||!pl.n||seen[pl.n]) return;
+        if ((pl.r||0) < 70) return;
+        seen[pl.n] = true;
+        pool.push({n:pl.n, r:pl.r||75, gp:pl.gp||pl.p||"MID", club:team, year:yr});
+      });
+    });
+    for (var i=pool.length-1; i>0; i--){
+      var j=Math.floor(Math.random()*(i+1)); var t=pool[i]; pool[i]=pool[j]; pool[j]=t;
+    }
+    return pool;
+  }
+
+  function renderSharedPick(v){
+    var turn = RW.sharedPickTurn||0;
+    var P = RW.players[turn];
+    var totalFilled = RW.players.reduce(function(a,p){ return a+p.picks.filter(Boolean).length; },0);
+    var allDone = RW.players.every(function(p){ return p.picks.filter(Boolean).length>=11; });
+
+    if (allDone){
+      RW.matches = buildMatchSchedule(RW.numPlayers);
+      RW.matchIdx = 0; RW.curA = RW.matches[0].a; RW.curB = RW.matches[0].b;
+      if (RW.features.blindSwap){
+        RW.cur=0; RW.swapDone=RW.players.map(function(){return false;});
+        RW.swapSel=null; RW.swapTimeLeft=30; RW.blindSwapPassing=false; RW.phase="blindswap";
+      } else { RW.phase="reveal"; RW.revealStep=-1; computeResult(); }
+      render(); return;
+    }
+
+    var pending = RW.sharedPendingPick;
+    var pickNum = totalFilled+1;
+
+    /* Pool list */
+    var poolHTML = "";
+    (RW.sharedPool||[]).forEach(function(pl, pi){
+      if (RW.sharedPicked[pl.n]!==undefined) return;
+      var slots = rwEligibleSlots(pl, P);
+      var noSlot = !slots.length;
+      var isPending = pending && pending.n===pl.n;
+      poolHTML += "<div class='rw-sp-player"+(noSlot?" noslot":"")+(isPending?" rw-sp-pending":"")+"' data-pi='"+pi+"' data-pname='"+esc(pl.n)+"' data-ppos='"+esc(pl.gp)+"'>"+
+        "<span class='pos "+(LINE_OF[pl.gp]||"MID")+"'>"+esc(pl.gp)+"</span>"+
+        "<span class='rw-sp-name'>"+esc(pl.n)+"</span>"+
+        "<span class='rw-sp-club'>"+esc(pl.club||"")+(pl.year?" · "+pl.year:"")+"</span>"+
+        (noSlot?"<span class='slot-tag'>no slot</span>":"")+
+      "</div>";
+    });
+    if (!poolHTML) poolHTML = "<p class='rw-sp-empty'>No available players left.</p>";
+
+    /* Team XI columns */
+    var xiHTML = "<div class='rw-sp-teams'>";
+    RW.players.forEach(function(p,pi){
+      xiHTML += "<div class='rw-sp-team"+(pi===turn?" active":"")+"'>"+
+        "<div class='rw-sp-team-name'>"+esc(p.name)+" "+p.picks.filter(Boolean).length+"/11</div>";
+      SLOTS.forEach(function(slot,si){
+        var pk = p.picks[si];
+        xiHTML += "<div class='rw-sp-slot"+(pk?"":" empty")+"'>"+
+          "<span class='pos "+slot.line+"'>"+esc(slot.k.trim())+"</span>"+
+          "<span class='rw-sp-slot-name'>"+(pk?esc(shortName(pk.n)):"—")+"</span>"+
+        "</div>";
+      });
+      xiHTML += "</div>";
+    });
+    xiHTML += "</div>";
+
+    /* Slot chooser (if a player was tapped) */
+    var chooserHTML = "";
+    if (pending){
+      var eligs = rwEligibleSlots(pending, P);
+      chooserHTML = "<div class='rw-sp-chooser'>"+
+        "<span class='rw-sp-chooser-q'>Where does <strong>"+esc(pending.n)+"</strong> play?</span>"+
+        "<div class='mp-chooser-btns'>";
+      eligs.forEach(function(idx){
+        chooserHTML += "<button class='mp-choose-pos pos "+SLOTS[idx].line+"' data-rwsidx='"+idx+"'>"+esc(SLOTS[idx].k.trim())+"</button>";
+      });
+      chooserHTML += "</div><button class='btn-ghost rw-sp-cancel'>Cancel</button></div>";
+    }
+
+    v.innerHTML = "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
+      "<div class='rw-build-head'>"+
+        "<div class='rw-turn'>Pick "+pickNum+" — "+esc(P.name)+"'s turn <span class='rw-blind'>● ratings hidden</span></div>"+
+        "<div class='rw-prog-row'>"+
+          RW.players.map(function(p,pi){
+            return "<span class='"+(pi===turn?"rw-sp-turn":"rw-sp-wait")+"'>"+esc(p.name)+" "+p.picks.filter(Boolean).length+"/11</span>";
+          }).join("<span class='rw-sp-sep'> · </span>")+
+        "</div>"+
+      "</div>"+
+      chooserHTML+
+      xiHTML+
+      "<div class='rw-sp-pool'>"+
+        "<div class='rw-sp-pool-head'>Available — pick one</div>"+
+        "<div class='rw-sp-pool-list' id='rwSPList'>"+poolHTML+"</div>"+
+      "</div></div>";
+
+    document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Duels?")) goHome(); };
+
+    if (pending){
+      v.querySelectorAll("[data-rwsidx]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          var idx = parseInt(btn.getAttribute("data-rwsidx"),10);
+          P.picks[idx] = {n:pending.n, r:pending.r||75, gp:SLOTS[idx].k.trim(), club:pending.club||"", year:pending.year||""};
+          RW.sharedPicked[pending.n] = turn;
+          RW.sharedPendingPick = null;
+          /* Advance to next player who still needs picks */
+          var nextTurn = (turn+1) % RW.numPlayers, tries=0;
+          while (RW.players[nextTurn].picks.filter(Boolean).length>=11 && tries<RW.numPlayers){
+            nextTurn=(nextTurn+1)%RW.numPlayers; tries++;
+          }
+          RW.sharedPickTurn = nextTurn;
+          render();
+        });
+      });
+      var cancel = v.querySelector(".rw-sp-cancel");
+      if (cancel) cancel.addEventListener("click", function(){ RW.sharedPendingPick=null; render(); });
+    } else {
+      v.querySelectorAll(".rw-sp-player:not(.noslot)").forEach(function(el){
+        el.addEventListener("click", function(){
+          var pname=el.getAttribute("data-pname"), ppos=el.getAttribute("data-ppos");
+          var pl=(RW.sharedPool||[]).filter(function(p){ return p.n===pname&&p.gp===ppos; })[0];
+          if(!pl) return;
+          RW.sharedPendingPick=pl; render();
+        });
+      });
+    }
+  }
+
   /* ---------- handoff (privacy between players) ---------- */
   function renderHandoff(v){
     var cur = RW.players[RW.cur], prev = RW.players[RW.cur-1];
@@ -1183,6 +1331,7 @@
     RW.currentSpin = null; RW.pendingRWPick = null; RW._spinning = false;
     RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
     if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
+    RW.sharedPool = null; RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
     /* Don't re-run posban/captain — those are set for the whole series */
     RW.cur = 0; RW.phase = "poolselect"; render();
   }
