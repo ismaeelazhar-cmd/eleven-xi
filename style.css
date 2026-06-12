@@ -774,29 +774,51 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 
 .draft-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 20px;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
   align-items: start;
 }
-.draft-left { display: flex; flex-direction: column; gap: 16px; }
-.draft-right { position: sticky; top: 16px; }
+.draft-left { display: flex; flex-direction: column; gap: 10px; }
+.draft-right { position: sticky; top: 8px; max-height: calc(100vh - 80px); overflow-y: auto; }
+.draft-right .xi { padding: 12px; border-radius: 12px; }
+.draft-right .xi-head { margin-bottom: 8px; }
+.draft-right .xi-head h2 { font-size: 16px; }
+.draft-right .xi-list { gap: 4px; }
+.draft-right .xi-row { padding: 6px 10px; border-radius: 8px; gap: 8px; }
+.draft-right .xi-row .pos { width: 26px; height: 26px; font-size: 9px; border-radius: 6px; }
+.draft-right .xi-row .info .pn { font-size: 12px; }
+.draft-right .xi-row .info .meta { font-size: 11px; }
+.draft-right .squad-group-label { font-size: 9px; padding: 6px 2px 2px; margin-top: 2px; }
 
 .draft-pitch-header { margin-bottom: 8px; }
 .draft-team { font-size: 20px; font-weight: 900; }
 .draft-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
 
 .draft-pitch-wrap { flex: 0 0 auto; }
-.draft-pitch-wrap .pitch { width: 100%; padding: 10px 8px; }
-.draft-pitch-wrap .pdot { width: 34px; height: 34px; border-width: 1.5px; border-style: solid; }
-.draft-pitch-wrap .pdot .dot-rate { font-size: 9px; }
+.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; max-height: 260px; padding: 6px 8px; aspect-ratio: unset; }
+.draft-pitch-wrap .pdot { width: 28px; height: 28px; border-width: 1.5px; border-style: solid; }
+.draft-pitch-wrap .pdot .dot-rate { font-size: 8px; }
 .draft-pitch-wrap .pdot .dot-name { display: none; }
-.draft-pitch-wrap .pdot .dot-pos { font-size: 9px; }
-.draft-pitch-wrap .pdot .dot-init { font-size: 11px; }
+.draft-pitch-wrap .pdot .dot-pos { font-size: 8px; }
+.draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
 
 .draft-under-spin {
-  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;
-  padding-top: 14px; border-top: 1px solid var(--line);
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+  padding-top: 10px; border-top: 1px solid var(--line);
 }
+
+/* Compact machine inside draft layout */
+.draft-left .machine { padding: 14px; margin-bottom: 0; border-radius: 14px; }
+.draft-left .reels { gap: 10px; }
+.draft-left .reel { height: 72px; }
+.draft-left .reel::after { height: 72px; }
+.draft-left .reel-item { height: 72px; font-size: 13px; }
+.draft-left .reel-item .flag { font-size: 26px; }
+.draft-left .reel-item .name { font-size: 13px; }
+.draft-left .reel-item .year { font-size: 24px; }
+.draft-left .controls { margin-top: 10px; gap: 8px; }
+.draft-left .spin { padding: 10px 24px; font-size: 15px; }
+.draft-left .hint { font-size: 12px; margin-top: 6px; }
 
 /* old draft-head no longer used but keep for safety */
 .draft-head { display: none; }
@@ -872,12 +894,12 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .dot-init { font-size: 14px; font-weight: 900; color: #0a0a0f; line-height: 1; }
 .pdot .dot-postag { font-size: 8px; font-weight: 900; line-height: 1; color: rgba(10, 10, 15, 0.72); letter-spacing: 0.3px; margin-bottom: 1px; }
 .draft-pitch-wrap .pdot .dot-postag { font-size: 7px; }
-.draft-pitch-wrap { align-self: center; width: 100%; }
-.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; padding: 16px 10px; margin: 0 auto; }
-.draft-pitch-wrap .pdot { width: 38px; height: 38px; border-width: 1.5px; border-style: solid; }
-.draft-pitch-wrap .pdot .dot-init { font-size: 13px; }
-.draft-pitch-wrap .pdot .dot-name { display: block; font-size: 8.5px; max-width: 56px; }
-.draft-pitch-wrap .pdot .dot-pos { font-size: 9px; }
+.draft-pitch-wrap { align-self: stretch; width: 100%; }
+.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; max-height: 260px; padding: 6px 10px; margin: 0; aspect-ratio: unset; }
+.draft-pitch-wrap .pdot { width: 28px; height: 28px; border-width: 1.5px; border-style: solid; }
+.draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
+.draft-pitch-wrap .pdot .dot-name { display: none; }
+.draft-pitch-wrap .pdot .dot-pos { font-size: 8px; }
 .draft-team { font-size: 22px; }
 
 /* ===== 38-0-style slot machine ===== */
@@ -1062,10 +1084,10 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .pdot.filled .dot-init { color: #0a0a0f; font-size: 15px; }
 .pdot.filled .dot-postag { color: rgba(10,10,15,0.7); }
 .pdot .dot-name { font-size: 9.5px; max-width: 64px; }
-.draft-pitch-wrap .pitch { max-width: 100%; padding: 16px 12px; }
-.draft-pitch-wrap .pdot { width: 34px; height: 34px; border-style: solid; }
-.draft-pitch-wrap .pdot .dot-init { font-size: 12px; }
-.draft-pitch-wrap .pdot .dot-name { display: block; font-size: 8px; }
+.draft-pitch-wrap .pitch { max-width: 100%; max-height: 260px; padding: 6px 10px; aspect-ratio: unset; }
+.draft-pitch-wrap .pdot { width: 28px; height: 28px; border-style: solid; }
+.draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
+.draft-pitch-wrap .pdot .dot-name { display: none; }
 
 /* ===== Year / era selector ===== */
 .year-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
