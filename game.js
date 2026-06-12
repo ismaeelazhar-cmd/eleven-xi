@@ -1,5 +1,5 @@
 /* World Cup XI — controller: setup → draft (granular positions) → simulate */
-(function () {
+(function (W) {
   "use strict";
 
   var DATA = window.WORLD_CUP_DATA;
@@ -588,7 +588,7 @@
 
   function doSpin() {
     if (spinning) return;
-    if (W.sfx) W.sfx.spin();
+    if (window.sfx) window.sfx.spin();
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
     var pairs = poolPairs(), pick = rand(pairs);
@@ -670,7 +670,7 @@
 
   function pickPlayer(name, pos) {
     if (squad.length >= XI_SIZE || !current || !pos || openOf(pos) <= 0) return;
-    if (W.sfx) W.sfx.pick();
+    if (window.sfx) window.sfx.pick();
     var pl = playerByName(name);
     squad.push({ id: nextId++, n: name, p: pl ? pl.p : "MID", r: pl ? pl.r : 80, slot: pos, country: current.country, year: current.year });
     current = null; awaitingPick = false; pendingPick = null;
@@ -1325,7 +1325,7 @@
         html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
       }
     } else {
-      if (!r.saved) { r.saved = true; if (W.sfx && wc.userResult === "Champions!") W.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); }
+      if (!r.saved) { r.saved = true; if (window.sfx && wc.userResult === "Champions!") window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); }
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += scoreBannerHTML(r.sc, wc.userResult);
       html += statsSummaryHTML(wc.userStats);
@@ -1380,7 +1380,7 @@
       html += revealListHTML(gm, r.shown, lg.teamName);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
-      if (!r.saved) { r.saved = true; if (W.sfx && lg.userPos === 1) W.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); }
+      if (!r.saved) { r.saved = true; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); }
       html += scoreBannerHTML(r.sc, result);
       html += '<div class="verdict-card"><div class="vc-row">' +
         '<div class="vc-cell"><div class="vc-k">Finished</div><div class="vc-v">' + ordinal(lg.userPos) + "</div></div>" +
@@ -1471,4 +1471,4 @@
   // ---- init ----
   renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderContinent(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
-})();
+})(window);
