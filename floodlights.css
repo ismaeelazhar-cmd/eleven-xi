@@ -860,3 +860,159 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .rw-sp-turn { font-weight: 700; color: var(--primary); }
 .rw-sp-wait { color: var(--text-mute); }
 .rw-sp-sep { color: var(--line-strong); }
+
+/* ============================================================
+   T3 POLISH — 3D BUTTONS + ANIMATION PASS
+   Applied last so these rules take precedence. Targets primary
+   CTAs and key interactive elements; not applied to every
+   element so the effect remains meaningful.
+   ============================================================ */
+
+/* ── 3D tactile effect on primary action buttons ── */
+.btn-primary, .start-btn, .spin, .fl-btn {
+  box-shadow:
+    var(--sh-glow-primary),
+    0 4px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 8px 20px rgba(0,0,0,.28);
+  transition:
+    transform 120ms var(--ease-spring),
+    box-shadow 120ms var(--ease-out),
+    filter 120ms var(--ease-out);
+}
+.btn-primary:hover:not(:disabled),
+.start-btn:hover:not(:disabled),
+.spin:hover:not(:disabled),
+.fl-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow:
+    var(--sh-glow-primary),
+    0 8px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 16px 30px rgba(0,0,0,.32);
+  filter: brightness(1.08);
+}
+.btn-primary:active:not(:disabled),
+.start-btn:active:not(:disabled),
+.spin:active:not(:disabled),
+.fl-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  transition-duration: 50ms;
+  box-shadow:
+    0 1px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 2px 8px rgba(0,0,0,.18);
+  filter: brightness(.95);
+}
+
+/* SPIN gets extra size + punchier glow to feel like the hero action */
+.spin {
+  font-size: var(--t-h3) !important;
+  letter-spacing: .04em;
+  padding: 16px 32px !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
+    var(--sh-glow-primary),
+    0 5px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 10px 24px rgba(0,0,0,.3);
+}
+
+/* ── Ghost buttons: lift + shadow ── */
+.btn-ghost, .fl-btn.ghost, .back {
+  transition:
+    background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow 120ms var(--ease-out),
+    transform 120ms var(--ease-spring);
+}
+.btn-ghost:hover:not(:disabled), .fl-btn.ghost:hover { transform: translateY(-2px); box-shadow: var(--sh-1); }
+.btn-ghost:active:not(:disabled), .fl-btn.ghost:active { transform: translateY(1px); transition-duration: 50ms; box-shadow: none; }
+
+/* ── CTA / warning / positive variant buttons ── */
+.fl-btn.cta {
+  box-shadow: 0 4px 0 0 color-mix(in srgb, var(--warning) 55%, #000), 0 10px 28px rgba(255,122,89,.35);
+}
+.fl-btn.cta:hover { box-shadow: 0 8px 0 0 color-mix(in srgb, var(--warning) 55%, #000), 0 16px 32px rgba(255,122,89,.4); }
+.fl-btn.cta:active { box-shadow: 0 1px 0 0 color-mix(in srgb, var(--warning) 55%, #000); transition-duration:50ms; }
+.fl-btn.pos {
+  box-shadow: 0 4px 0 0 color-mix(in srgb, var(--positive) 45%, #000), var(--sh-glow-cyan);
+}
+
+/* ── Segment / formation / option chips — press-down feedback ── */
+.formation-opt, .seg-opt, .tg-opt, .diff-opt, .era-btn, .mp-ms-card {
+  transition:
+    background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform 80ms var(--ease-spring),
+    box-shadow 80ms var(--ease-out);
+}
+.formation-opt:hover:not(.active),
+.seg-opt:hover:not(.active),
+.era-btn:hover { transform: translateY(-1px); box-shadow: var(--sh-1); }
+.formation-opt:active, .seg-opt:active, .tg-opt:active, .diff-opt:active, .era-btn:active, .mp-ms-card:active {
+  transform: scale(.96) translateY(1px);
+  transition-duration: 50ms;
+}
+
+/* ── Squad player cards — light press ── */
+.player, .dvc-player-card, .rw-sp-player {
+  transition: background var(--dur-1) var(--ease-out), transform 80ms var(--ease-spring);
+}
+.player:hover:not(.taken):not(.noslot), .rw-sp-player:hover:not(.noslot) { transform: translateX(2px); }
+.player:active:not(.taken):not(.noslot), .rw-sp-player:active:not(.noslot) { transform: scale(.97); transition-duration: 50ms; }
+
+/* ── Home mode cards — staggered entrance + stronger lift ── */
+.fl-mode { animation: fl-rise var(--dur-3) var(--ease-out) both; }
+.fl-modes .fl-mode:nth-child(1) { animation-delay:  30ms; }
+.fl-modes .fl-mode:nth-child(2) { animation-delay:  80ms; }
+.fl-modes .fl-mode:nth-child(3) { animation-delay: 130ms; }
+.fl-modes .fl-mode:nth-child(4) { animation-delay: 180ms; }
+.fl-modes .fl-mode:nth-child(5) { animation-delay: 230ms; }
+.fl-mode:hover { box-shadow: var(--sh-2), 0 0 0 1px color-mix(in srgb, var(--mode-accent, var(--primary)) 50%, transparent); }
+.fl-mode:hover .fl-mode-ico { transform: scale(1.14) translateY(-2px); }
+.fl-mode:active { transform: translateY(-1px) scale(.99); transition-duration: 60ms; }
+.fl-mode-ico { transition: transform 200ms var(--ease-spring); }
+
+/* ── Screen entrance — apply fl-rise consistently to all major views ── */
+#setupView, #draftView, #resultsView, #leagueView, #boardView {
+  animation: fl-rise var(--dur-3) var(--ease-out);
+}
+.setup, .machine, .squad-card, .xi, .results-head, .verdict-card, .lgr2-card, .lgr2-narr {
+  animation: fl-rise var(--dur-3) var(--ease-out);
+}
+
+/* ── Result / stat sections — stagger in ── */
+@keyframes fl-slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.stat-grid    { animation: fl-slide-up var(--dur-3) var(--ease-out) 60ms both; }
+.lgr2-ptable  { animation: fl-slide-up var(--dur-3) var(--ease-out) 100ms both; }
+.lgr2-xi      { animation: fl-slide-up var(--dur-3) var(--ease-out) 140ms both; }
+.lgr2-break   { animation: fl-slide-up var(--dur-3) var(--ease-out) 180ms both; }
+.score-banner { animation: fl-slide-up 220ms var(--ease-spring) 80ms both; }
+
+/* ── Pitch player dot pop ── */
+.pdot.filled { animation: dvc-dot-pop 280ms var(--ease-spring) both; }
+@keyframes dvc-dot-pop {
+  from { opacity: 0; transform: scale(.6); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Toast ── */
+.fl-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px);
+  background: var(--surface-3); color: var(--text); padding: 10px 20px;
+  border-radius: var(--r-pill); font-size: var(--t-sm); font-weight: 600;
+  box-shadow: var(--sh-2); opacity: 0; pointer-events: none; z-index: 9999;
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-spring);
+  border: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+.fl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Reduced-motion: strip all extras cleanly ── */
+@media (prefers-reduced-motion: reduce) {
+  .fl-mode, .setup, .machine, .squad-card, .xi, .stat-grid,
+  .lgr2-ptable, .lgr2-xi, .lgr2-break, .lgr2-narr, .lgr2-card,
+  .score-banner, #setupView, #draftView, #resultsView, #leagueView, #boardView,
+  .pdot.filled { animation: none !important; }
+}
