@@ -110,6 +110,11 @@ header h1 {
   font-size: var(--t-2xs); font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
   color: var(--on-positive); background: var(--positive); padding: 3px 9px; border-radius: var(--r-pill);
 }
+.fl-mode-stat {
+  font-size: var(--t-xs); color: var(--text-mute); font-weight: 600;
+  font-variant-numeric: tabular-nums; margin-top: auto; display: block; min-height: 1em;
+}
+.fl-mode-stat:empty { display: none; }
 /* per-mode accents */
 .m-wc   { --mode-accent: var(--champion); }
 .m-cl   { --mode-accent: var(--primary); }

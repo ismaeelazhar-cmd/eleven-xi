@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=79" />
   <link rel="stylesheet" href="tokens.css?v=74" />
-  <link rel="stylesheet" href="floodlights.css?v=104" />
+  <link rel="stylesheet" href="floodlights.css?v=105" />
 </head>
 <body>
   <div class="theme-toggle" id="themeToggle" aria-label="Theme">
@@ -47,19 +47,23 @@
       </div>
       <div class="fl-modes">
         <button class="fl-mode m-wc" id="homeWC">
+          <span class="fl-mode-badge" id="wcNewBadge">Start here</span>
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>
           <span class="fl-mode-name">World Cup</span>
           <span class="fl-mode-hint">93 nations · every tournament 1950–2026</span>
+          <span class="fl-mode-stat" id="wcBestScore"></span>
         </button>
         <button class="fl-mode m-cl" id="homeCL">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
           <span class="fl-mode-name">Champions League</span>
           <span class="fl-mode-hint">153 clubs · 768 seasons</span>
+          <span class="fl-mode-stat" id="clBestScore"></span>
         </button>
         <button class="fl-mode m-lg" id="homeLeague">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/><path d="M12 3v4M12 14.5V21M4.5 9l3.5 1M19.5 9L16 10M6 18l2.5-3.5M18 18l-2.5-3.5"/></svg></span>
           <span class="fl-mode-name">League</span>
           <span class="fl-mode-hint">La Liga · Serie A · Bundesliga · Ligue 1</span>
+          <span class="fl-mode-stat" id="lgBestScore"></span>
         </button>
         <button class="fl-mode m-mp" id="homeMP">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19a6 6 0 0 1 12 0M14.5 19a5 5 0 0 1 6.5-4.8"/></svg></span>
@@ -70,11 +74,13 @@
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
           <span class="fl-mode-name">vs Computer</span>
           <span class="fl-mode-hint">Alternating draft · outsmart the CPU</span>
+          <span class="fl-mode-stat" id="dvcHomeRecord"></span>
         </button>
         <button class="fl-mode m-euro" id="homeEuro">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
           <span class="fl-mode-name">Euros</span>
           <span class="fl-mode-hint">1980–2024 · 12 tournaments · solo &amp; multiplayer</span>
+          <span class="fl-mode-stat" id="euroBestScore"></span>
         </button>
       </div>
       <div class="home-links">
@@ -300,7 +306,7 @@
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=92"></script>
   <script src="league.js?v=78"></script>
-  <script src="floodlights.js?v=89" defer></script>
+  <script src="floodlights.js?v=90" defer></script>
   <script src="ratingswar.js?v=100" defer></script>
   <script src="draftvscomputer.js?v=3" defer></script>
 </body>

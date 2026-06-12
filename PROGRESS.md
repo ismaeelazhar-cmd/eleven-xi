@@ -307,13 +307,13 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v104
+- floodlights.css: v105
 - game.js: v89 (euro mode, manager bonus HTML)
 - league.js: v78 (manager bonus HTML)
 - multiplayer.js: v92
-- floodlights.js: v89
+- floodlights.js: v90 (home card stats)
 - draftvscomputer.js: v3 (W/L/D record added)
-- sw.js: wcxi-v119
+- sw.js: wcxi-v120
 
 ## 14. TASK 1 — DVC W/L/D RECORD ✅
 - localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`
@@ -344,6 +344,15 @@ _All pop-out panels, all game modes._
 - CSS added to floodlights.css: `.mgr-bonus-row`, `.mgr-bonus`, `.mgr-atk-pos/neg`, `.mgr-def-pos/neg`, `.mgr-ko-pos`
 - Colours: ATK+ = coral/warning, DEF+ = cyan/positive, KO+ = gold/champion, neg = muted
 - Applied in: WC/CL/Euro setup (game.js), League setup (league.js)
+
+## 18. TASK 5 — HOME SCREEN HIERARCHY ✅
+- Added `fl-mode-stat` slot to WC, CL, League, Euro, DVC cards (empty = hidden via CSS)
+- WC card: "Start here" badge (`wcNewBadge`) shown only when leaderboard is empty (new users)
+- `updateHomeCards()` in floodlights.js populates stats on page load:
+  - WC/CL/League/Euro: reads `wcxi_leaderboard_v1`, shows "Best: N pts — result" per mode
+  - DVC: reads `wcxi_dvc_record`, shows best-played difficulty W/L/D record
+- CSS: `.fl-mode-stat` (muted bottom text, auto-hides when empty), WC badge persists on new sessions
+- "Start here" badge hidden once user has any leaderboard entry (i.e. has played WC/CL/League/Euro)
 
 ## 15. TASK 2 — EURO HOME CARD ✅
 - Added `fl-mode m-euro` button (`homeEuro`) to home screen after vs Computer card

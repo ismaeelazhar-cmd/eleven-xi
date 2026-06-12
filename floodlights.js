@@ -49,6 +49,50 @@
 
     /* Euro home card — wired in game.js alongside homeWC/homeCL via setMode("euro") */
 
+    // Home card stats — populate best scores and DVC record from localStorage
+    (function updateHomeCards() {
+      try {
+        var board = JSON.parse(localStorage.getItem("wcxi_leaderboard_v1") || "[]");
+        var bestByMode = {};
+        board.forEach(function (e) {
+          if (!bestByMode[e.mode] || e.score > bestByMode[e.mode].score) bestByMode[e.mode] = e;
+        });
+        var hasAny = board.length > 0;
+
+        // Hide "Start here" badge once user has played any mode
+        var newBadge = document.getElementById("wcNewBadge");
+        if (newBadge) newBadge.style.display = hasAny ? "none" : "";
+
+        function setScore(elId, modeKey, label) {
+          var el = document.getElementById(elId);
+          if (!el) return;
+          var b = bestByMode[modeKey];
+          if (b) el.textContent = "Best: " + b.score + " pts — " + (b.result || label);
+        }
+        setScore("wcBestScore",  "wc",     "played");
+        setScore("clBestScore",  "cl",     "played");
+        setScore("lgBestScore",  "league", "played");
+        setScore("euroBestScore","euro",   "played");
+
+        // DVC record — show best difficulty record
+        var dvcRec = JSON.parse(localStorage.getItem("wcxi_dvc_record") || "{}");
+        var dvcEl = document.getElementById("dvcHomeRecord");
+        if (dvcEl) {
+          var best = null, bestTotal = 0;
+          ["hard","medium","easy"].forEach(function(d) {
+            var r = dvcRec[d];
+            if (!r) return;
+            var t = (r.w||0)+(r.l||0)+(r.d||0);
+            if (t > bestTotal) { bestTotal = t; best = { label: d, r: r }; }
+          });
+          if (best) {
+            var r = best.r;
+            dvcEl.textContent = best.label.charAt(0).toUpperCase()+best.label.slice(1) + ": " + (r.w||0) + "W " + (r.l||0) + "L " + (r.d||0) + "D";
+          }
+        }
+      } catch (e) {}
+    })();
+
     // Logo click → home from any screen
     var brand = document.getElementById("brandLogo");
     if (brand && !brand._wired) {
