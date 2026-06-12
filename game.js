@@ -370,8 +370,7 @@
   function styleById(id) { for (var i = 0; i < MANAGERS.length; i++) if (MANAGERS[i].id === id) return MANAGERS[i]; return MANAGERS[0]; }
   function managerItemHTML(name, styleId) {
     var st = styleById(styleId);
-    return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) +
-      '</span><span class="mgr-style-tag"><span class="mgr-icon">' + (MGR_ICONS[st.id] || "") + '</span>' + esc(st.name) + "</span></div>";
+    return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) + '</span></div>';
   }
   function renderManagerStyles() {
     elManagerStyles.innerHTML = MANAGERS.map(function (m) {

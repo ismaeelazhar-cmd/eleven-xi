@@ -732,7 +732,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .pdot {
   position: relative; width: 40px; height: 40px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; flex-direction: column;
-  background: rgba(255,255,255,0.06); border: 1.5px dashed rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.25);
 }
 .pdot .dot-pos { font-size: 10px; font-weight: 800; color: var(--muted); }
 .pdot.filled { border-style: solid; }
