@@ -1,7 +1,7 @@
 /* draftvscomputer.js — Draft vs Computer mode
- * Player and CPU alternate picks from a shared pool of players.
- * CPU is smart-ish: fills needed positions, prefers high-rated players,
- * adds slight randomness so it doesn't feel robotic. */
+ * Player and CPU alternate picks using the spin wheel mechanic.
+ * Each turn: spin → reveal a squad → pick one player.
+ * CPU spins automatically and picks via scoring algorithm. */
 window.startDraftVsComputer = (function (W) {
   "use strict";
 
@@ -66,146 +66,178 @@ window.startDraftVsComputer = (function (W) {
 
   function lineOf(pos){ return LINE_OF[(pos||"").trim()] || "MID"; }
 
-  /* Build the shared draft pool from all available data */
-  function buildPool() {
-    var combined = {};
-    var sources = [W.WORLD_CUP_DATA, W.EURO_DATA, W.PL_DATA, W.LALIGA_DATA, W.SERIEA_DATA, W.BUNDESLIGA_DATA];
-    sources.forEach(function(d){
-      if (!d) return;
-      Object.keys(d).forEach(function(team){
-        var ys = (d[team] && d[team].years) ? d[team].years : {};
-        Object.keys(ys).forEach(function(y){
-          var key = team+"|"+y;
-          if (!combined[key]) combined[key] = { team:team, year:y, squad:(ys[y]||[]) };
-        });
-      });
-    });
-    var keys = Object.keys(combined);
-    if (!keys.length) return [];
-
-    /* Pick 12 random team-years to form the pool */
-    shuffle(keys);
-    var chosen = keys.slice(0, 12);
-    var players = [], seen = {};
-    chosen.forEach(function(k){
-      var entry = combined[k];
-      /* Sort by rating desc, take top 11 */
-      var sq = (entry.squad||[]).slice().sort(function(a,b){ return (b.r||70)-(a.r||70); }).slice(0,11);
-      sq.forEach(function(p){
-        if (!p.n) return;
-        if (seen[p.n]) return; /* deduplicate by name */
-        seen[p.n] = true;
-        var pos = p.gp||p.p||"CM";
-        var line = lineOf(pos);
-        if ((p.r||0) < 68) return; /* quality floor */
-        players.push({ n:p.n, r:p.r||75, pos:pos, line:line, team:entry.team, year:entry.year });
-      });
-    });
-
-    /* Ensure position balance: need at least 4 GK, 10 DEF, 10 MID, 8 FWD */
-    var counts = {GK:0,DEF:0,MID:0,FWD:0};
-    players.forEach(function(p){ counts[p.line]++; });
-
-    /* If GKs are missing, try to pull more from other team-years */
-    if (counts.GK < 4) {
-      var remaining = keys.slice(12);
-      shuffle(remaining);
-      remaining.some(function(k){
-        var entry = combined[k];
-        var sq = entry.squad||[];
-        sq.forEach(function(p){
-          if (p.n && !seen[p.n] && lineOf(p.gp||p.p||"CM")==="GK" && counts.GK<4) {
-            seen[p.n]=true; counts.GK++;
-            players.push({n:p.n,r:p.r||75,pos:p.gp||p.p||"GK",line:"GK",team:entry.team,year:entry.year});
-          }
-        });
-        return counts.GK >= 4;
-      });
-    }
-
-    return shuffle(players);
+  function ratingTierClass(r){
+    if(!r) return "";
+    return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red";
   }
 
-  /* Personality line bias: which lines the CPU prioritises */
+  /* ---- Team pool: all team-years from WC, CL, Euro data ---- */
+  function buildTeamPool() {
+    var entries = [];
+    var seen = {};
+    var sources = [W.WORLD_CUP_DATA, W.CL_DATA, W.EURO_DATA];
+    sources.forEach(function(d) {
+      if (!d) return;
+      Object.keys(d).forEach(function(team) {
+        var ys = (d[team] && d[team].years) ? d[team].years : {};
+        Object.keys(ys).forEach(function(y) {
+          var key = team + "|" + y;
+          if (seen[key]) return;
+          seen[key] = true;
+          var squad = (ys[y] || []).filter(function(p){ return p.n && (p.r||0) >= 68; });
+          if (squad.length < 5) return;
+          entries.push({ team: team, year: y, squad: squad, flag: (d[team] && d[team].flag) || "" });
+        });
+      });
+    });
+    return entries;
+  }
+
+  /* ---- Spin reel (same mechanic as game.js / multiplayer.js) ---- */
+  function dvcSpinReel(stripEl, randomItem, finalHTML, duration) {
+    var reelEl = stripEl.parentElement;
+    return new Promise(function(resolve) {
+      var BLUR = 12, html = "";
+      for (var i = 0; i < BLUR; i++) html += randomItem();
+      html += finalHTML;
+      stripEl.style.transition = "none";
+      stripEl.style.transform = "translateY(0)";
+      stripEl.innerHTML = html;
+      void stripEl.offsetHeight;
+      var itemH = (stripEl.firstElementChild && stripEl.firstElementChild.offsetHeight) || 56;
+      stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.12,0.05,0.05,1)";
+      stripEl.style.transform = "translateY(" + (-(BLUR * itemH)) + "px)";
+      var done = false;
+      function finish(e) {
+        if (e && e.propertyName && e.propertyName !== "transform") return;
+        if (done) return; done = true;
+        stripEl.style.transition = "none";
+        stripEl.style.transform = "translateY(0)";
+        stripEl.innerHTML = finalHTML;
+        if (reelEl) {
+          reelEl.classList.add("reel--settled");
+          setTimeout(function() { reelEl.classList.remove("reel--settled"); }, 950);
+        }
+        resolve();
+      }
+      stripEl.addEventListener("transitionend", finish, { once: true });
+      setTimeout(function() { finish(null); }, duration + 120);
+    });
+  }
+
+  function teamItemHTML(team) {
+    return '<div class="reel-item"><span class="name">' + esc(team) + '</span></div>';
+  }
+  function yearItemHTML(y) {
+    return '<div class="reel-item"><span class="year">' + y + '</span></div>';
+  }
+
+  /* ---- Position / slot helpers ---- */
+
+  /* Count open formation slots by line for a set of picks */
+  function openSlotsByLine(picks) {
+    var slots = DVC_FORMATIONS[DVC.formation].slots;
+    var total = {GK:0, DEF:0, MID:0, FWD:0};
+    slots.forEach(function(s){ total[lineOf(s)]++; });
+    var filled = {GK:0, DEF:0, MID:0, FWD:0};
+    picks.forEach(function(p){ if(p) filled[p.line]++; });
+    return {
+      GK:  total.GK  - filled.GK,
+      DEF: total.DEF - filled.DEF,
+      MID: total.MID - filled.MID,
+      FWD: total.FWD - filled.FWD
+    };
+  }
+
+  /* For renderDraft: annotate squad players with taken/noSlot status */
+  function annotateSquad(squad, playerPicks, cpuPicks) {
+    var takenNames = {};
+    playerPicks.forEach(function(p){ takenNames[p.n] = true; });
+    cpuPicks.forEach(function(p){ if(p) takenNames[p.n] = true; });
+    var open = openSlotsByLine(playerPicks);
+    return squad.map(function(p) {
+      var pos = p.gp || p.p || "MID";
+      var l = lineOf(pos);
+      var taken = !!takenNames[p.n];
+      var noSlot = !taken && (open[l] || 0) <= 0;
+      return { p: p, pos: pos, line: l, taken: taken, noSlot: noSlot };
+    });
+  }
+
+  /* ---- CPU picking from a squad ---- */
   var PERSONALITY_BIAS = {
     scorer:   { FWD: 25, MID: 8,  DEF: -12, GK: 0 },
     defender: { FWD: -12, MID: 5, DEF: 25,  GK: 15 },
     balanced: { FWD: 0,  MID: 0,  DEF: 0,   GK: 0 }
   };
 
-  /* CPU pick: fills most-needed line, prefers high rated, has some randomness */
-  function cpuPick(pool) {
-    var needs = {GK:0,DEF:0,MID:0,FWD:0};
-    var slots = DVC_FORMATIONS[DVC.formation].slots;
-    slots.forEach(function(s){ needs[lineOf(s)]++; });
-    DVC.cpuPicks.forEach(function(p){ if(p) needs[p.line]--; });
+  function cpuPickFromSquad(squad) {
+    var takenNames = {};
+    DVC.playerPicks.forEach(function(p){ takenNames[p.n] = true; });
+    DVC.cpuPicks.forEach(function(p){ if(p) takenNames[p.n] = true; });
 
+    var open = openSlotsByLine(DVC.cpuPicks);
     var bias = PERSONALITY_BIAS[DVC.personality] || PERSONALITY_BIAS.balanced;
+    var spread = DVC.difficulty === "hard" ? 6 : DVC.difficulty === "easy" ? 28 : 18;
 
-    /* Score each available player */
-    var scored = pool.map(function(p){
-      var n = Math.max(0, needs[p.line]||0);
-      var urgency = n >= 3 ? 30 : n >= 2 ? 20 : n >= 1 ? 10 : -20; /* penalise if line full */
-      var personalityBonus = bias[p.line] || 0;
-      /* Hard: smaller random spread → more deterministic. Easy: larger spread → sloppier */
-      var spread = DVC.difficulty === "hard" ? 6 : DVC.difficulty === "easy" ? 28 : 18;
-      var score = urgency + personalityBonus + (p.r||75) + (Math.random()*spread - spread/4);
-      return { p:p, score:score };
+    /* Prefer players that fill a needed slot */
+    var available = squad.filter(function(p) {
+      if (takenNames[p.n]) return false;
+      var l = lineOf(p.gp || p.p || "MID");
+      return (open[l] || 0) > 0;
     });
-    scored.sort(function(a,b){ return b.score-a.score; });
 
-    /* Hard: always top pick. Easy: top 5 for variety. Medium: top 3. */
+    /* Fallback: any untaken player — CPU will accept the positional imbalance */
+    if (!available.length) {
+      available = squad.filter(function(p){ return !takenNames[p.n]; });
+    }
+    if (!available.length) return null;
+
+    var scored = available.map(function(p) {
+      var l = lineOf(p.gp || p.p || "MID");
+      var n = Math.max(0, open[l] || 0);
+      var urgency = n >= 3 ? 30 : n >= 2 ? 20 : n >= 1 ? 10 : -20;
+      var score = urgency + (bias[l] || 0) + (p.r || 75) + (Math.random() * spread - spread / 4);
+      return { p: p, score: score };
+    });
+    scored.sort(function(a, b){ return b.score - a.score; });
+
     var topN = DVC.difficulty === "hard" ? 1 : DVC.difficulty === "easy" ? Math.min(5, scored.length) : Math.min(3, scored.length);
-    return scored[Math.floor(Math.random()*topN)].p;
+    var winner = scored[Math.floor(Math.random() * topN)];
+    return winner ? winner.p : null;
   }
 
-  /* Find the best slot for a picked player (first unfilled slot matching line) */
-  function bestSlot(picks, line, formation) {
-    var slots = DVC_FORMATIONS[formation].slots;
-    var slotCounts = {GK:0,DEF:0,MID:0,FWD:0};
-    picks.forEach(function(p){ if(p) slotCounts[p.line]++; });
-    var lineSlots = slots.filter(function(s){ return lineOf(s)===line; });
-    var needed = lineSlots.length - slotCounts[line];
-    return needed > 0 ? lineSlots[slotCounts[line]] : null;
-  }
-
-  /* Compute team object for engine */
+  /* ---- Team builders for engine ---- */
   function buildTeam(picks, name, isUser) {
     var players = picks.filter(Boolean);
     if (!players.length) return { name:name, rating:75, atk:75, def:75, isUser:isUser, players:[] };
     var fwd = players.filter(function(p){ return p.line==="FWD"||p.line==="MID"; });
     var def = players.filter(function(p){ return p.line==="DEF"||p.line==="GK"; });
     var avg = function(arr){ return arr.length ? arr.reduce(function(s,p){ return s+(p.r||75); },0)/arr.length : 75; };
-    var atk = avg(fwd), def2 = avg(def), overall = avg(players);
     return {
-      name: name, rating: overall, atk: atk, def: def2, isUser: isUser,
+      name: name, rating: avg(players), atk: avg(fwd), def: avg(def), isUser: isUser,
       players: players.map(function(p){ return {n:p.n,r:p.r,p:p.line}; })
     };
   }
 
-  /* Render the pitch for a team's XI */
+  /* ---- Pitch diagram ---- */
   function pitchHTML(picks, formation) {
     var slots = DVC_FORMATIONS[formation].slots;
-    var filled = [];
-    /* Map picks back to slots */
     var byLine = {GK:[],DEF:[],MID:[],FWD:[]};
     picks.filter(Boolean).forEach(function(p){ byLine[p.line].push(p); });
+    var filled = [];
     slots.forEach(function(s){ var l=lineOf(s); var p=byLine[l].shift()||null; filled.push({slot:s,line:l,player:p}); });
-
-    /* Group into lines (GK row, then formation rows) */
     var lineMap = {GK:[],DEF:[],MID:[],FWD:[]};
     filled.forEach(function(f){ lineMap[f.line].push(f); });
-
     var rows = [lineMap.FWD, lineMap.MID, lineMap.DEF, lineMap.GK];
     var html = '<div class="pitch dvc-pitch">';
     rows.forEach(function(row){
       if (!row.length) return;
       html += '<div class="pitch-row">';
       row.forEach(function(f){
-        var tier = f.player ? (" r-tier-"+f.line.toLowerCase()) : "";
-        html += '<div class="pdot'+(f.player?" filled "+f.line:(" "+f.line))+tier+'">'+
-          '<span class="dot-pos">'+esc(f.slot)+'</span>'+
-          (f.player ? '<span class="dot-name">'+esc(f.player.n.split(" ").pop())+'</span>' : '')+
+        html += '<div class="pdot'+(f.player?" filled "+f.line:" "+f.line)+'">' +
+          '<span class="dot-pos">'+esc(f.slot)+'</span>' +
+          (f.player ? '<span class="dot-name">'+esc(f.player.n.split(" ").pop())+'</span>' : '') +
         '</div>';
       });
       html += '</div>';
@@ -214,7 +246,7 @@ window.startDraftVsComputer = (function (W) {
     return html;
   }
 
-  /* Render current draft state */
+  /* ---- Main render dispatcher ---- */
   function render() {
     var el = document.getElementById("dvcView");
     if (!el) return;
@@ -223,10 +255,11 @@ window.startDraftVsComputer = (function (W) {
     if (DVC.phase === "result") { el.innerHTML = renderResult(); wireResult(); return; }
   }
 
+  /* ---- Setup screen (unchanged) ---- */
   function renderSetup() {
-    var html = '<button class="back" id="dvcBack">← Home</button>';
+    var html = '<button class="back" id="dvcBack">&#8592; Home</button>';
     html += '<div class="setup"><h2 class="rw-title">Draft vs Computer</h2>';
-    html += '<p class="rw-sub" style="margin-bottom:var(--sp-5)">Build an XI by alternating picks with the computer from a shared pool. You go first. Best squad wins.</p>';
+    html += '<p class="rw-sub" style="margin-bottom:var(--sp-5)">Spin to reveal a squad, pick a player — alternate with the CPU until you each have 11. Best side wins.</p>';
     html += '<div class="setup-row setup-row-col"><span class="setup-label">Your formation</span>';
     html += '<div class="formation-options" id="dvcFormBar">';
     Object.keys(DVC_FORMATIONS).forEach(function(f){
@@ -239,7 +272,7 @@ window.startDraftVsComputer = (function (W) {
       html += '<button class="diff-opt'+(DVC.difficulty===d.id?" active":"")+'" data-d="'+d.id+'">'+esc(d.label)+'</button>';
     });
     html += '</div>';
-    html += '<div class="seg-desc" id="dvcDiffDesc">'+(DVC.difficulty==="easy"?"CPU picks with lower priority — easier to outbuild.":DVC.difficulty==="hard"?"CPU always takes the best available player — tough competition.":"CPU plays sensibly but isn't perfect.")+'</div>';
+    html += '<div class="seg-desc" id="dvcDiffDesc">'+(DVC.difficulty==="easy"?"CPU picks with lower priority — easier to outbuild.":DVC.difficulty==="hard"?"CPU always takes the best available player — tough competition.":"CPU plays sensibly but isn\'t perfect.")+'</div>';
     html += '<div class="dvc-record" id="dvcRecord">'+renderRecordHtml(DVC.difficulty)+'</div>';
     html += '</div>';
     html += '<div class="setup-row setup-row-col"><span class="setup-label">CPU Style</span>';
@@ -250,7 +283,7 @@ window.startDraftVsComputer = (function (W) {
     html += '</div>';
     html += '<div class="seg-desc" id="dvcPersonDesc">'+(DVC.personality==="scorer"?"CPU hunts strikers — expect a high-scoring game.":DVC.personality==="defender"?"CPU prioritises defence — it will be a battle to break down.":"No obvious weakness — CPU builds a complete side.")+'</div>';
     html += '</div>';
-    html += '<button class="start-btn" id="dvcStart">Start Draft →</button></div>';
+    html += '<button class="start-btn" id="dvcStart">Start Draft &#8594;</button></div>';
     return html;
   }
 
@@ -290,186 +323,342 @@ window.startDraftVsComputer = (function (W) {
 
     var startBtn = document.getElementById("dvcStart");
     if (startBtn) startBtn.onclick = function(){
-      DVC.pool = buildPool();
-      if (DVC.pool.length < 22) {
+      DVC.teamPool = buildTeamPool();
+      if (DVC.teamPool.length < 4) {
         if (W.flToast) W.flToast("Not enough data loaded — try again in a moment.");
         return;
       }
       DVC.playerPicks = [];
       DVC.cpuPicks = [];
-      DVC.turn = 0; /* 0 = player, 1 = cpu */
+      DVC.turn = 0;
       DVC.round = 1;
-      DVC.originalPool = DVC.pool.slice();
       DVC.phase = "draft";
       DVC.cpuName = rnd(CPU_NAMES[DVC.personality] || CPU_NAMES.balanced);
       DVC.lastCpuPick = null;
+      DVC.spinBusy = false;
+      DVC.awaitingPick = false;
+      DVC.spinResult = null;
       render();
     };
   }
 
-  function renderDraft() {
-    var totalPicks = DVC.playerPicks.length + DVC.cpuPicks.length;
-    var isPlayerTurn = DVC.turn === 0;
-    var roundLabel = "Round " + DVC.round + " of 11";
-
-    var html = '<button class="back" id="dvcBack">← Home</button>';
-    html += '<div class="dvc-draft-wrap">';
-
-    /* Header */
-    html += '<div class="dvc-draft-header">';
-    html += '<div class="dvc-draft-progress">';
-    html += '<span class="dvc-round-badge">'+esc(roundLabel)+'</span>';
-    html += '<div class="dvc-progress-bar"><div class="dvc-progress-fill" style="width:'+Math.round(totalPicks/22*100)+'%"></div></div>';
-    html += '</div>';
-    if (isPlayerTurn) {
-      html += '<div class="dvc-turn-banner dvc-your-turn">Your pick — choose a player</div>';
-    } else {
-      html += '<div class="dvc-turn-banner dvc-cpu-turn">'+esc(DVC.cpuName)+' is thinking…</div>';
-    }
-    if (DVC.lastCpuPick) {
-      html += '<div class="dvc-last-cpu-pick">'+esc(DVC.cpuName)+' picked: <strong>'+esc(DVC.lastCpuPick.n)+'</strong> ('+esc(DVC.lastCpuPick.pos)+', '+DVC.lastCpuPick.r+')</div>';
+  /* ---- Draft screen ---- */
+  function renderXIList(picks, title, isCpu) {
+    var html = '<h3 class="dvc-col-title">' + esc(title) + ' <span class="count">' + picks.length + '/11</span></h3>';
+    html += '<div class="dvc-xi-list">';
+    picks.forEach(function(p) {
+      html += '<div class="dvc-xi-row">';
+      html += '<span class="pos ' + p.line + '">' + esc(p.pos) + '</span>';
+      html += '<span class="dvc-xi-name">' + esc(p.n) + '</span>';
+      if (!isCpu) {
+        html += '<span class="mp-r-badge' + ratingTierClass(p.r) + '">' + p.r + '</span>';
+      }
+      html += '</div>';
+    });
+    for (var i = picks.length; i < 11; i++) {
+      html += '<div class="dvc-xi-row empty"><span class="pos MID">&#8212;</span><span class="dvc-xi-name dvc-empty-slot">empty</span></div>';
     }
     html += '</div>';
-
-    /* Two-column layout: pool on left, both XIs on right */
-    html += '<div class="dvc-main">';
-
-    /* Pool */
-    html += '<div class="dvc-pool-col"><h3 class="dvc-col-title">Available Players</h3>';
-    html += '<div class="dvc-pool-grid" id="dvcPool">';
-    var byLine = {GK:[],DEF:[],MID:[],FWD:[]};
-    DVC.pool.forEach(function(p){ byLine[p.line].push(p); });
-    ["GK","DEF","MID","FWD"].forEach(function(line){
-      if (!byLine[line].length) return;
-      var lineLabels = {GK:"Goalkeeper",DEF:"Defenders",MID:"Midfielders",FWD:"Forwards"};
-      html += '<div class="dvc-pool-line-label">'+lineLabels[line]+'</div>';
-      byLine[line].forEach(function(p){
-        var tierCls = W.game && W.game.ratingTierClass ? W.game.ratingTierClass(p.r) : "";
-        html += '<button class="dvc-player-card'+(isPlayerTurn?"":" disabled")+'" data-n="'+esc(p.n)+'"'+(isPlayerTurn?'':" disabled")+'>';
-        html += '<span class="dvc-pos pos '+line+'">'+esc(p.pos)+'</span>';
-        html += '<span class="dvc-name">'+esc(p.n)+'</span>';
-        html += '<span class="dvc-meta">'+esc(p.team)+' \''+String(p.year).slice(-2)+'</span>';
-        if (W.dvcShowRatings !== false) {
-          html += '<span class="mp-r-badge'+ratingTierClass(p.r)+'">'+p.r+'</span>';
-        }
-        html += '</button>';
-      });
-    });
-    html += '</div></div>';
-
-    /* XIs */
-    html += '<div class="dvc-xi-col">';
-
-    /* Player XI */
-    html += '<div class="dvc-xi-panel"><h3 class="dvc-col-title">Your XI <span class="count">'+DVC.playerPicks.length+'/11</span></h3>';
-    html += '<div class="dvc-xi-list">';
-    DVC.playerPicks.forEach(function(p){
-      html += '<div class="dvc-xi-row"><span class="pos '+p.line+'">'+esc(p.pos)+'</span><span class="dvc-xi-name">'+esc(p.n)+'</span><span class="mp-r-badge'+ratingTierClass(p.r)+'">'+p.r+'</span></div>';
-    });
-    if (DVC.playerPicks.length < 11) {
-      var slots = DVC_FORMATIONS[DVC.formation].slots;
-      var byL = {GK:0,DEF:0,MID:0,FWD:0};
-      DVC.playerPicks.forEach(function(p){ byL[p.line]++; });
-      var remaining = slots.filter(function(s){ var l=lineOf(s); if(byL[l]>0){byL[l]--;return false;}return true; });
-      remaining.forEach(function(s){
-        html += '<div class="dvc-xi-row empty"><span class="pos '+lineOf(s)+'">'+esc(s)+'</span><span class="dvc-xi-name dvc-empty-slot">empty</span></div>';
-      });
-    }
-    html += '</div></div>';
-
-    /* CPU XI */
-    html += '<div class="dvc-xi-panel dvc-cpu-xi"><h3 class="dvc-col-title dvc-cpu-label">'+esc(DVC.cpuName)+' <span class="count">'+DVC.cpuPicks.length+'/11</span></h3>';
-    html += '<div class="dvc-xi-list">';
-    DVC.cpuPicks.forEach(function(p){
-      html += '<div class="dvc-xi-row"><span class="pos '+p.line+'">'+esc(p.pos)+'</span><span class="dvc-xi-name">'+esc(p.n)+'</span></div>';
-    });
-    for (var i=DVC.cpuPicks.length; i<11; i++){
-      html += '<div class="dvc-xi-row empty"><span class="pos MID">—</span><span class="dvc-xi-name dvc-empty-slot">…</span></div>';
-    }
-    html += '</div></div>';
-
-    html += '</div>'; /* dvc-xi-col */
-    html += '</div>'; /* dvc-main */
-    html += '</div>'; /* dvc-draft-wrap */
     return html;
   }
 
-  function ratingTierClass(r){
-    if(!r) return "";
-    return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red";
+  function renderDraft() {
+    var isPlayerTurn = DVC.turn === 0;
+    var totalPicks = DVC.playerPicks.length + DVC.cpuPicks.length;
+    var roundLabel = "Round " + DVC.round + " of 11";
+
+    var html = '<button class="back" id="dvcBack">&#8592; Home</button>';
+    html += '<div class="dvc-draft-wrap">';
+
+    /* Progress header */
+    html += '<div class="dvc-draft-header">';
+    html += '<div class="dvc-draft-progress">';
+    html += '<span class="dvc-round-badge" id="dvcRoundBadge">' + esc(roundLabel) + '</span>';
+    html += '<div class="dvc-progress-bar"><div class="dvc-progress-fill" id="dvcProgressFill" style="width:' + Math.round(totalPicks / 22 * 100) + '%"></div></div>';
+    html += '</div>';
+    html += '<div class="dvc-turn-banner ' + (isPlayerTurn ? 'dvc-your-turn' : 'dvc-cpu-turn') + '" id="dvcTurnBanner">';
+    html += isPlayerTurn ? 'Your pick &#8212; hit SPIN' : esc(DVC.cpuName) + ' is spinning&#8230;';
+    html += '</div>';
+    if (DVC.lastCpuPick) {
+      html += '<div class="dvc-last-cpu-pick" id="dvcLastCpu">' + esc(DVC.cpuName) + ' picked: <strong>' + esc(DVC.lastCpuPick.n) + '</strong> (' + esc(DVC.lastCpuPick.pos) + ', ' + DVC.lastCpuPick.r + ')</div>';
+    } else {
+      html += '<div class="dvc-last-cpu-pick" id="dvcLastCpu" style="display:none"></div>';
+    }
+    html += '</div>';
+
+    /* Spin section */
+    html += '<div class="dvc-spin-section">';
+    html += '<div class="reels dvc-reels">';
+    html += '<div class="reel" id="dvcCountryReel"><div class="reel-strip" id="dvcCS"><div class="reel-item"><span class="name">&#8212;</span></div></div></div>';
+    html += '<div class="reel" id="dvcYearReel"><div class="reel-strip" id="dvcYS"><div class="reel-item"><span class="year">&#8212;</span></div></div></div>';
+    html += '</div>';
+    html += '<button class="spin-btn" id="dvcSpinBtn"' + (isPlayerTurn ? '' : ' disabled') + '>SPIN</button>';
+    html += '</div>';
+
+    /* Squad picker panel (hidden until after spin) */
+    html += '<div class="squad-panel" id="dvcSquadPanel" style="display:none"></div>';
+
+    /* Both XIs */
+    html += '<div class="dvc-xi-panels">';
+    html += '<div class="dvc-xi-panel" id="dvcPlayerXI">' + renderXIList(DVC.playerPicks, "Your XI", false) + '</div>';
+    html += '<div class="dvc-xi-panel dvc-cpu-xi" id="dvcCpuXI">' + renderXIList(DVC.cpuPicks, DVC.cpuName, true) + '</div>';
+    html += '</div>';
+
+    html += '</div>'; /* dvc-draft-wrap */
+    return html;
   }
 
   function wireDraft() {
     var back = document.getElementById("dvcBack");
     if (back) back.onclick = function(){ W.flGoHome(); };
 
-    /* Player pick handlers */
-    document.querySelectorAll(".dvc-player-card:not(.disabled)").forEach(function(btn){
-      btn.onclick = function(){
-        var name = btn.getAttribute("data-n");
-        var picked = DVC.pool.filter(function(p){ return p.n===name; })[0];
-        if (!picked) return;
-        doPlayerPick(picked);
-      };
+    var spinBtn = document.getElementById("dvcSpinBtn");
+    if (spinBtn) spinBtn.addEventListener("click", doDvcSpin);
+  }
+
+  /* ---- Spin mechanics ---- */
+  function doDvcSpin() {
+    if (DVC.spinBusy || DVC.awaitingPick || DVC.turn !== 0) return;
+    if (DVC.playerPicks.length >= 11) return;
+
+    var pool = DVC.teamPool;
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    DVC.spinResult = pick;
+    DVC.spinBusy = true;
+
+    var cStrip = document.getElementById("dvcCS");
+    var yStrip = document.getElementById("dvcYS");
+    var spinBtn = document.getElementById("dvcSpinBtn");
+    if (!cStrip || !yStrip) { DVC.spinBusy = false; showDvcSquadPicker(); return; }
+
+    if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = "SPINNING…"; }
+    if (window.sfx) window.sfx.spin();
+
+    var p1 = dvcSpinReel(cStrip,
+      function(){ return teamItemHTML(pool[Math.floor(Math.random()*pool.length)].team); },
+      teamItemHTML(pick.team), 520);
+    var p2 = dvcSpinReel(yStrip,
+      function(){ return yearItemHTML(pool[Math.floor(Math.random()*pool.length)].year); },
+      yearItemHTML(pick.year), 580);
+
+    Promise.all([p1, p2]).then(function() {
+      DVC.spinBusy = false;
+      DVC.awaitingPick = true;
+      if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = "SPIN"; }
+      showDvcSquadPicker();
     });
   }
 
-  function doPlayerPick(player) {
+  function showDvcSquadPicker() {
+    var panel = document.getElementById("dvcSquadPanel");
+    if (!panel || !DVC.spinResult) return;
+
+    var team = DVC.spinResult.team;
+    var year = DVC.spinResult.year;
+    var squad = DVC.spinResult.squad.slice().sort(function(a,b){ return (b.r||0)-(a.r||0); });
+    var annotated = annotateSquad(squad, DVC.playerPicks, DVC.cpuPicks);
+    var hasDraftable = annotated.some(function(item){ return !item.taken && !item.noSlot; });
+
+    var html = '<div class="squad-card">';
+    html += '<div class="squad-head"><h2>' + esc(team) + ' &middot; ' + year + '</h2>';
+    html += '<button class="squad-close" id="dvcSquadClose" title="Dismiss and spin again">&#10005;</button></div>';
+    if (!hasDraftable) {
+      html += '<div class="sub" style="color:var(--warning)">No pickable players in this squad &#8212; spin again for free.</div>';
+    } else {
+      html += '<div class="sub">Pick a player for your XI</div>';
+    }
+    html += '<div class="players">';
+    annotated.forEach(function(item) {
+      var p = item.p;
+      var cls = "player" + (item.taken ? " taken" : "") + (item.noSlot && !item.taken ? " noslot" : "");
+      html += '<div class="' + cls + '" data-n="' + esc(p.n) + '">';
+      html += '<span class="pos ' + item.line + '">' + esc(item.pos) + '</span>';
+      html += '<span class="pname">' + esc(p.n) + '</span>';
+      if (item.taken) {
+        html += '<span class="slot-tag">taken</span>';
+      } else if (item.noSlot) {
+        html += '<span class="slot-tag">no slot</span>';
+      } else {
+        html += '<span class="mp-r-badge' + ratingTierClass(p.r) + '">' + (p.r || '?') + '</span>';
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
+
+    panel.innerHTML = html;
+    panel.style.display = "flex";
+
+    /* Close / dismiss — free re-spin */
+    var closeBtn = panel.querySelector("#dvcSquadClose");
+    if (closeBtn) closeBtn.addEventListener("click", function() {
+      panel.style.display = "none";
+      DVC.spinResult = null;
+      DVC.awaitingPick = false;
+      var spinBtn = document.getElementById("dvcSpinBtn");
+      if (spinBtn) { spinBtn.disabled = false; spinBtn.textContent = "SPIN"; }
+    });
+
+    /* Backdrop click also dismisses */
+    panel.addEventListener("click", function(e) {
+      if (e.target === panel) {
+        var cb = panel.querySelector("#dvcSquadClose");
+        if (cb) cb.click();
+      }
+    });
+
+    /* Player pick handlers */
+    panel.querySelectorAll(".player:not(.taken):not(.noslot)").forEach(function(el) {
+      el.addEventListener("click", function() {
+        var name = el.getAttribute("data-n");
+        var found = null;
+        DVC.spinResult.squad.forEach(function(p){ if (p.n === name) found = p; });
+        if (!found) return;
+        var pos = found.gp || found.p || "MID";
+        var l = lineOf(pos);
+        panel.style.display = "none";
+        DVC.awaitingPick = false;
+        DVC.spinResult = null;
+        doPlayerPickDvc({ n: found.n, r: found.r || 75, pos: pos, line: l });
+      });
+    });
+  }
+
+  function updateDraftUI() {
+    var totalPicks = DVC.playerPicks.length + DVC.cpuPicks.length;
+    var isPlayerTurn = DVC.turn === 0;
+    var roundLabel = "Round " + DVC.round + " of 11";
+
+    var badge = document.getElementById("dvcRoundBadge");
+    var fill = document.getElementById("dvcProgressFill");
+    var banner = document.getElementById("dvcTurnBanner");
+    var lastCpu = document.getElementById("dvcLastCpu");
+    var spinBtn = document.getElementById("dvcSpinBtn");
+    var playerXI = document.getElementById("dvcPlayerXI");
+    var cpuXI = document.getElementById("dvcCpuXI");
+
+    if (badge) badge.textContent = roundLabel;
+    if (fill) fill.style.width = Math.round(totalPicks / 22 * 100) + "%";
+
+    if (banner) {
+      if (isPlayerTurn && !DVC.spinBusy && !DVC.awaitingPick) {
+        banner.className = "dvc-turn-banner dvc-your-turn";
+        banner.innerHTML = "Your pick &#8212; hit SPIN";
+      } else if (!isPlayerTurn || DVC.spinBusy) {
+        banner.className = "dvc-turn-banner dvc-cpu-turn";
+        banner.innerHTML = esc(DVC.cpuName) + " is spinning&#8230;";
+      }
+    }
+
+    if (lastCpu) {
+      if (DVC.lastCpuPick) {
+        lastCpu.style.display = "";
+        lastCpu.innerHTML = esc(DVC.cpuName) + " picked: <strong>" + esc(DVC.lastCpuPick.n) + "</strong> (" + esc(DVC.lastCpuPick.pos) + ", " + DVC.lastCpuPick.r + ")";
+      } else {
+        lastCpu.style.display = "none";
+      }
+    }
+
+    if (spinBtn) {
+      spinBtn.disabled = !isPlayerTurn || DVC.spinBusy || DVC.awaitingPick || DVC.playerPicks.length >= 11;
+      if (!spinBtn.disabled) spinBtn.textContent = "SPIN";
+    }
+
+    if (playerXI) playerXI.innerHTML = renderXIList(DVC.playerPicks, "Your XI", false);
+    if (cpuXI) cpuXI.innerHTML = renderXIList(DVC.cpuPicks, DVC.cpuName, true);
+  }
+
+  /* ---- Pick handlers ---- */
+  function doPlayerPickDvc(player) {
     if (window.sfx) window.sfx.pick();
-    /* Remove from pool */
-    DVC.pool = DVC.pool.filter(function(p){ return p.n!==player.n; });
     DVC.playerPicks.push(player);
     DVC.lastCpuPick = null;
 
-    /* Check if player is done */
-    if (DVC.playerPicks.length === 11) {
-      /* If CPU still needs picks, do them now before going to result */
+    if (DVC.playerPicks.length >= 11) {
       doCpuRemainingPicks();
       return;
     }
 
-    /* Switch to CPU turn */
     DVC.turn = 1;
     DVC.round = Math.floor((DVC.playerPicks.length + DVC.cpuPicks.length) / 2) + 1;
-    render();
-    /* CPU pick after short delay */
-    setTimeout(doCpuTurn, 900);
+    updateDraftUI();
+    setTimeout(doCpuSpinTurn, 600);
   }
 
-  function doCpuTurn() {
-    if (!DVC.pool.length) { goToResult(); return; }
-    var pick = cpuPick(DVC.pool);
-    DVC.pool = DVC.pool.filter(function(p){ return p.n!==pick.n; });
-    DVC.cpuPicks.push(pick);
-    DVC.lastCpuPick = pick;
-
-    if (DVC.cpuPicks.length === 11) {
-      /* CPU done, player might still need picks */
-      if (DVC.playerPicks.length === 11) { setTimeout(goToResult, 600); }
-      else { DVC.turn = 0; DVC.round++; render(); }
+  /* CPU auto-spins with a fast animation, then picks via algorithm */
+  function doCpuSpinTurn() {
+    if (DVC.cpuPicks.length >= 11) {
+      if (DVC.playerPicks.length >= 11) { setTimeout(goToResult, 400); }
+      else { DVC.turn = 0; updateDraftUI(); }
       return;
     }
 
-    /* Back to player */
-    DVC.turn = 0;
-    DVC.round = Math.floor((DVC.playerPicks.length + DVC.cpuPicks.length) / 2) + 1;
-    render();
+    var pool = DVC.teamPool;
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    DVC.spinBusy = true;
+    updateDraftUI();
+
+    var cStrip = document.getElementById("dvcCS");
+    var yStrip = document.getElementById("dvcYS");
+
+    /* CPU spin is quicker */
+    var p1 = dvcSpinReel(cStrip,
+      function(){ return teamItemHTML(pool[Math.floor(Math.random()*pool.length)].team); },
+      teamItemHTML(pick.team), 340);
+    var p2 = dvcSpinReel(yStrip,
+      function(){ return yearItemHTML(pool[Math.floor(Math.random()*pool.length)].year); },
+      yearItemHTML(pick.year), 380);
+
+    Promise.all([p1, p2]).then(function() {
+      var cpuPlayer = cpuPickFromSquad(pick.squad);
+      if (!cpuPlayer) {
+        /* No suitable player in this squad — spin again silently */
+        DVC.spinBusy = false;
+        setTimeout(doCpuSpinTurn, 200);
+        return;
+      }
+
+      var pos = cpuPlayer.gp || cpuPlayer.p || "MID";
+      var l = lineOf(pos);
+      DVC.cpuPicks.push({ n: cpuPlayer.n, r: cpuPlayer.r || 75, pos: pos, line: l });
+      DVC.lastCpuPick = { n: cpuPlayer.n, r: cpuPlayer.r || 75, pos: pos, line: l };
+      DVC.spinBusy = false;
+
+      if (DVC.cpuPicks.length >= 11) {
+        if (DVC.playerPicks.length >= 11) { setTimeout(goToResult, 500); }
+        else {
+          DVC.turn = 0;
+          DVC.round = Math.floor((DVC.playerPicks.length + DVC.cpuPicks.length) / 2) + 1;
+          updateDraftUI();
+        }
+        return;
+      }
+
+      DVC.turn = 0;
+      DVC.round = Math.floor((DVC.playerPicks.length + DVC.cpuPicks.length) / 2) + 1;
+      updateDraftUI();
+    });
   }
 
   function doCpuRemainingPicks() {
+    var pool = DVC.teamPool;
     var needed = 11 - DVC.cpuPicks.length;
-    for (var i=0; i<needed && DVC.pool.length; i++) {
-      var pick = cpuPick(DVC.pool);
-      DVC.pool = DVC.pool.filter(function(p){ return p.n!==pick.n; });
-      DVC.cpuPicks.push(pick);
+    var tries = 0;
+    while (needed > 0 && tries < 400) {
+      tries++;
+      var pick = pool[Math.floor(Math.random() * pool.length)];
+      var cpuPlayer = cpuPickFromSquad(pick.squad);
+      if (!cpuPlayer) continue;
+      var pos = cpuPlayer.gp || cpuPlayer.p || "MID";
+      DVC.cpuPicks.push({ n: cpuPlayer.n, r: cpuPlayer.r || 75, pos: pos, line: lineOf(pos) });
+      needed--;
     }
     goToResult();
   }
 
+  /* ---- Result ---- */
   function goToResult() {
     DVC.phase = "result";
-    /* Simulate the match */
-    var diffTax = DVC.difficulty==="easy" ? -4 : DVC.difficulty==="hard" ? 4 : 0;
+    var diffTax = DVC.difficulty === "easy" ? -4 : DVC.difficulty === "hard" ? 4 : 0;
     var playerTeam = buildTeam(DVC.playerPicks, "Your XI", true);
     var cpuTeam = buildTeam(DVC.cpuPicks, DVC.cpuName, false);
     cpuTeam.atk += diffTax; cpuTeam.def += diffTax;
@@ -481,7 +670,7 @@ window.startDraftVsComputer = (function (W) {
     } catch(e){}
     DVC.playerTeam = playerTeam;
     DVC.cpuTeam = cpuTeam;
-    /* Record W/L/D */
+
     var rec = loadDvcRecord();
     var diff = DVC.difficulty;
     if (DVC.matchResult) {
@@ -491,7 +680,7 @@ window.startDraftVsComputer = (function (W) {
       saveDvcRecord(rec);
     }
     DVC.savedRecord = rec;
-    /* Post to shared leaderboard */
+
     if (DVC.matchResult && typeof W.WCXI_addScore === "function") {
       var diffMult = DVC.difficulty === "hard" ? 4 : DVC.difficulty === "medium" ? 2 : 1;
       var outcome = DVC.matchResult.winner === "A" ? "w" : DVC.matchResult.winner === "B" ? "l" : "d";
@@ -502,12 +691,13 @@ window.startDraftVsComputer = (function (W) {
         var outcomeLabel = outcome === "w" ? "Win" : "Draw";
         var res = DVC.matchResult;
         var scoreStr = res.a + "-" + res.b + (res.pens ? " (pens " + res.pens[0] + "-" + res.pens[1] + ")" : "");
-        W.WCXI_addScore({ name: "Your XI", score: pts, result: outcomeLabel + " · " + diffLabel + " · " + scoreStr, mode: "dvc", ts: Date.now() });
+        W.WCXI_addScore({ name: "Your XI", score: pts, result: outcomeLabel + " \xb7 " + diffLabel + " \xb7 " + scoreStr, mode: "dvc", ts: Date.now() });
       }
     }
+
     render();
-    if (window.sfx && DVC.matchResult && DVC.matchResult.winner==="A") window.sfx.win();
-    if (W.triggerConfetti && DVC.matchResult && DVC.matchResult.winner==="A") {
+    if (window.sfx && DVC.matchResult && DVC.matchResult.winner === "A") window.sfx.win();
+    if (W.triggerConfetti && DVC.matchResult && DVC.matchResult.winner === "A") {
       setTimeout(W.triggerConfetti, 400);
     }
   }
@@ -521,13 +711,11 @@ window.startDraftVsComputer = (function (W) {
   function renderResult() {
     var res = DVC.matchResult;
     var winner = res ? (res.winner==="A" ? "You" : res.winner==="B" ? DVC.cpuName : "Draw") : "—";
-    var score = res ? res.a+"-"+res.b+(res.pens?"("+res.pens[0]+"-"+res.pens[1]+" pens)":"") : "—";
+    var score = res ? res.a+"-"+res.b+(res.pens?" ("+res.pens[0]+"-"+res.pens[1]+" pens)":"") : "—";
     var playerAvg = avgRating(DVC.playerPicks);
     var cpuAvg = avgRating(DVC.cpuPicks);
 
     var html = '<div class="dvc-result-wrap">';
-
-    /* Verdict banner */
     var verdictCls = res ? (res.winner==="A"?"dvc-win":res.winner==="B"?"dvc-loss":"dvc-draw") : "";
     html += '<div class="dvc-verdict '+verdictCls+'">';
     if (res) {
@@ -543,9 +731,7 @@ window.startDraftVsComputer = (function (W) {
     }
     html += '</div>';
 
-    /* Both pitches */
     html += '<div class="dvc-result-pitches">';
-
     html += '<div class="dvc-result-xi">';
     html += '<div class="dvc-xi-header"><span class="dvc-xi-title">Your XI</span>';
     html += '<span class="dvc-xi-avg mp-r-badge'+ratingTierClass(Math.round(playerAvg))+'">avg '+playerAvg+'</span></div>';
@@ -565,10 +751,8 @@ window.startDraftVsComputer = (function (W) {
       html += '<div class="dvc-xi-row"><span class="pos '+p.line+'">'+esc(p.pos)+'</span><span class="dvc-xi-name">'+esc(p.n)+'</span><span class="mp-r-badge'+ratingTierClass(p.r)+'">'+p.r+'</span></div>';
     });
     html += '</div></div>';
+    html += '</div>';
 
-    html += '</div>'; /* dvc-result-pitches */
-
-    /* Goal events */
     if (res && res.eventsA && res.eventsA.length) {
       html += '<div class="dvc-goals"><span class="dvc-goals-label">Your goals:</span> ';
       html += res.eventsA.map(function(e){ return esc(e.scorer)+(e.assist?" ("+esc(e.assist)+")":""); }).join(", ");
@@ -577,10 +761,7 @@ window.startDraftVsComputer = (function (W) {
 
     html += '<div class="dvc-result-cta">';
     html += '<button class="btn-primary" id="dvcPlayAgain">Draft Again</button>';
-    if (DVC.originalPool && DVC.originalPool.length >= 22) {
-      html += '<button class="btn-ghost" id="dvcRematch">Rematch (same pool)</button>';
-    }
-    html += '<button class="btn-ghost" id="dvcHome">← Home</button>';
+    html += '<button class="btn-ghost" id="dvcHome">&#8592; Home</button>';
     html += '</div>';
     html += '</div>';
     return html;
@@ -592,57 +773,39 @@ window.startDraftVsComputer = (function (W) {
       DVC.phase = "setup";
       DVC.playerPicks = [];
       DVC.cpuPicks = [];
-      DVC.pool = [];
-      DVC.originalPool = [];
-      render();
-    };
-    var rematch = document.getElementById("dvcRematch");
-    if (rematch) rematch.onclick = function(){
-      /* Restore original pool and start a new draft with same settings */
-      DVC.pool = DVC.originalPool.slice();
-      DVC.originalPool = DVC.pool.slice();
-      DVC.playerPicks = [];
-      DVC.cpuPicks = [];
-      DVC.turn = 0;
-      DVC.round = 1;
-      DVC.phase = "draft";
-      DVC.cpuName = rnd(CPU_NAMES[DVC.personality] || CPU_NAMES.balanced);
-      DVC.lastCpuPick = null;
-      DVC.matchResult = null;
-      DVC.playerTeam = null;
-      DVC.cpuTeam = null;
+      DVC.teamPool = [];
       render();
     };
     var home = document.getElementById("dvcHome");
     if (home) home.onclick = function(){ W.flGoHome(); };
   }
 
-  /* Public entry point */
+  /* ---- Public entry point ---- */
   return function() {
     var el = document.getElementById("dvcView");
     if (!el) return;
 
-    /* Hide all other views */
     ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView"].forEach(function(id){
       var v = document.getElementById(id); if (v) v.style.display = "none";
     });
     el.style.display = "";
-    if (W.scrollTo) W.scrollTo(0,0);
+    if (W.scrollTo) W.scrollTo(0, 0);
 
-    /* Init state */
     DVC = {
       phase: "setup",
       formation: "4-3-3",
       difficulty: "medium",
       personality: "balanced",
-      pool: [],
-      originalPool: [],
+      teamPool: [],
       playerPicks: [],
       cpuPicks: [],
       turn: 0,
       round: 1,
       cpuName: rnd(CPU_NAMES.balanced),
       lastCpuPick: null,
+      spinBusy: false,
+      awaitingPick: false,
+      spinResult: null,
       matchResult: null,
       playerTeam: null,
       cpuTeam: null
