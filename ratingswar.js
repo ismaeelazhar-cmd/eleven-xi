@@ -88,6 +88,8 @@
   var DEFAULT_FEATURES = { xfactor:false, captain:false, posBan:false, steal:false, blindSwap:false, wildcard:false, bestOf3:false, sharedPool:false, asyncOnline:false, formationDraft:false };
 
   W.startDuels = function(){
+    /* Intercept async challenge URL */
+    if (checkAndLoadAsyncChallenge()){ hideOthers(); view().style.display=""; if(W.scrollTo) W.scrollTo(0,0); render(); return; }
     RW = {
       phase:"intro", cur:0, revealStep:-1,
       numPlayers:2, curA:0, curB:1,
@@ -265,6 +267,8 @@
     if (RW.phase === "blindswap")    return renderBlindSwap(v);
     if (RW.phase === "formation")    return renderFormationDraft(v);
     if (RW.phase === "sharedpick")   return renderSharedPick(v);
+    if (RW.phase === "asyncshare")   return renderAsyncShare(v);
+    if (RW.phase === "asyncaccept")  return renderAsyncAccept(v);
     if (RW.phase === "waitopp")      return renderWaitOpp(v);
     if (RW.phase === "handoff")      return renderHandoff(v);
     if (RW.phase === "reveal")       return renderReveal(v);
@@ -423,6 +427,7 @@
     RW.sharedPendingPick = null;
     RW.formations = RW.players.map(function(){ return null; });
     RW.formationPassing = false;
+    RW.stealUsed = RW.players.map(function(){ return false; });
     if (f.bestOf3 && RW.numPlayers === 2){
       RW.seriesWins = [0, 0]; RW.seriesMatch = 0;
     }
@@ -468,6 +473,7 @@
         RW.poolDataCur = W[pool.dataKey] || {};
         RW.poolNationalCur = pool.national;
         RW.poolLabelCur = pool.label;
+        RW._asyncPoolKey = pool.key;
         RW.currentSpin = null; RW.pendingRWPick = null;
         if (RW.features.sharedPool && !RW.online){
           RW.sharedPool = generateSharedPool(RW.poolDataCur);
@@ -829,6 +835,20 @@
         maybeStartReveal();
         return;
       }
+      /* Async mode: player 1 locks → generate share URL */
+      if (RW.features.asyncOnline && !RW.online && RW.cur===0 && RW.numPlayers===2){
+        var aData = {
+          v:1, p1n:RW.players[0].name, p1p:RW.players[0].picks,
+          feat:RW.features,
+          pool:{key:RW._asyncPoolKey||"wc", national:RW.poolNationalCur, label:RW.poolLabelCur},
+          xfs:RW.xfactorSlot,
+          bans:[RW.bannedSlots?RW.bannedSlots[0]:null],
+          caps:[RW.captains?RW.captains[0]:null],
+          forms:[RW.formations?RW.formations[0]:null]
+        };
+        try { RW._asyncShareURL = location.href.split('#')[0]+'#async='+btoa(JSON.stringify(aData)); } catch(e){ RW._asyncShareURL = ""; }
+        RW.phase = "asyncshare"; render(); return;
+      }
       if (RW.cur < RW.numPlayers - 1){
         RW.cur++; RW.phase = "handoff";
       } else {
@@ -982,6 +1002,101 @@
         });
       });
     }
+  }
+
+  /* ---------- async online mode ---------- */
+  function findPoolDataKey(poolKey){
+    for(var i=0;i<RW_POOLS.length;i++) if(RW_POOLS[i].key===poolKey) return RW_POOLS[i].dataKey;
+    return "WORLD_CUP_DATA";
+  }
+
+  function checkAndLoadAsyncChallenge(){
+    var hash = W.location && W.location.hash;
+    if (!hash || hash.indexOf("#async=") !== 0) return false;
+    try {
+      var d = JSON.parse(atob(hash.slice(7)));
+      if (!d || !Array.isArray(d.p1p)) return false;
+      buildPool();
+      var p1picks = d.p1p.map(function(p){ return p ? {n:p.n||"",r:p.r||75,gp:p.gp||"",club:p.club||"",year:p.year||""} : null; });
+      while(p1picks.length<11) p1picks.push(null);
+      var poolKey = d.pool && d.pool.key ? d.pool.key : "wc";
+      var poolDataKey = findPoolDataKey(poolKey);
+      RW = {
+        phase:"asyncaccept", cur:1, numPlayers:2, curA:0, curB:1,
+        matches:[], matchIdx:0, matchResults:[],
+        revealStep:-1, currentSpin:null, pendingRWPick:null, _spinning:false, _t:null,
+        features: Object.assign({}, DEFAULT_FEATURES, d.feat||{}),
+        xfactorSlot: d.xfs!=null ? d.xfs : null,
+        captains: [d.caps?d.caps[0]:null, null],
+        bannedSlots: [d.bans?d.bans[0]:null, null],
+        formations: [d.forms?d.forms[0]:null, null], formationPassing:false,
+        stealUsed:[false,false],
+        posBanPassing:false, captainPassing:false, blindSwapPassing:false,
+        swapSel:null, swapTimeLeft:30, _swapTimerInterval:null, swapDone:[false,false],
+        sharedPool:null, sharedPicked:{}, sharedPickTurn:1, sharedPendingPick:null,
+        poolDataCur: W[poolDataKey]||{},
+        poolNationalCur: d.pool ? !!d.pool.national : true,
+        poolLabelCur: d.pool ? (d.pool.label||"") : "World Cup",
+        _asyncPoolKey: poolKey,
+        players:[
+          {name:d.p1n||"Player 1", picks:p1picks, rerollsUsed:0, wildcardUsed:false},
+          {name:"Player 2",         picks:newPicks(), rerollsUsed:0, wildcardUsed:false}
+        ]
+      };
+      if (W.history && W.history.replaceState)
+        W.history.replaceState(null, "", W.location.pathname + W.location.search);
+      return true;
+    } catch(e){ return false; }
+  }
+
+  function renderAsyncShare(v){
+    var url = RW._asyncShareURL || "";
+    v.innerHTML =
+      "<div class='wrap'><div class='rw-handoff'>"+
+        "<h2 class='rw-title'>Challenge created!</h2>"+
+        "<p class='rw-sub'>Share this link with your opponent. They open it, build their XI, and the reveal starts automatically.</p>"+
+        "<div class='rw-async-url' id='rwAsyncURL'>"+esc(url)+"</div>"+
+        "<div class='rw-async-btns'>"+
+          "<button class='fl-btn' id='rwAsyncCopy'>Copy link</button>"+
+          "<button class='btn-ghost' id='rwAsyncHome'>← Home</button>"+
+        "</div>"+
+      "</div></div>";
+    document.getElementById("rwAsyncCopy").onclick = function(){
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){
+          if(typeof W.flToast==="function") W.flToast("Link copied!");
+        });
+      } else {
+        var el = document.getElementById("rwAsyncURL");
+        var sel = document.createRange(); sel.selectNode(el);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(sel);
+        document.execCommand("copy");
+        s.removeAllRanges();
+        if(typeof W.flToast==="function") W.flToast("Link copied!");
+      }
+    };
+    document.getElementById("rwAsyncHome").onclick = goHome;
+  }
+
+  function renderAsyncAccept(v){
+    var P1 = RW.players[0];
+    /* If captain enabled, P2 still needs to pick captain before building */
+    v.innerHTML =
+      "<div class='wrap'><div class='rw-handoff'>"+
+        "<div class='rw-kicker'>Async Challenge</div>"+
+        "<h2 class='rw-title'>"+esc(P1.name)+" has challenged you!</h2>"+
+        "<p class='rw-sub'>Build your XI blind — ratings stay hidden until you lock. Once you lock, the reveal starts automatically.</p>"+
+        "<button class='fl-btn rw-start' id='rwAccept'>Accept &amp; build my XI →</button>"+
+        "<button class='btn-ghost' id='rwDecline' style='margin-top:var(--sp-3)'>Decline</button>"+
+      "</div></div>";
+    document.getElementById("rwAccept").onclick = function(){
+      RW.cur = 1;
+      /* Route to captain pick for P2 if enabled (P2 hasn't picked yet) */
+      if (RW.features.captain){ RW.phase = "captain"; RW.captainPassing = false; }
+      else { RW.phase = "poolselect"; }
+      render();
+    };
+    document.getElementById("rwDecline").onclick = goHome;
   }
 
   /* ---------- handoff (privacy between players) ---------- */
@@ -1300,6 +1415,25 @@
         "<div class='rw-team b'><div class='rw-team-score' id='rwS2'>"+s2+"</div><div class='rw-team-name'>"+esc(RW.players[RW.curB!=null?RW.curB:1].name)+"</div></div>"+
       "</div>"+
       "<div class='rw-rev-list'>"+cards+"</div>"+
+      /* Steal Power-Up buttons */
+      (function(){
+        if (!RW.features.steal || shown.length===0) return "";
+        var idxA2 = RW.curA!=null?RW.curA:0, idxB2 = RW.curB!=null?RW.curB:1;
+        var stealHTML = "";
+        /* Find best revealed pick per player */
+        function bestRevealedOf(rows, pickKey){
+          var best=null;
+          rows.forEach(function(r){ var p=r[pickKey]; if(p&&!best||(p&&best&&p.r>best.r)){best=p;} });
+          return best;
+        }
+        var bestB = bestRevealedOf(shown, "b"); /* best of player B = steal target for player A */
+        var bestA = bestRevealedOf(shown, "a"); /* best of player A = steal target for player B */
+        if (!RW.stealUsed[idxA2] && bestB)
+          stealHTML += "<button class='rw-steal-btn' id='rwStealA'>Steal "+esc(shortName(bestB.n))+" ("+bestB.r+")</button>";
+        if (!RW.stealUsed[idxB2] && bestA)
+          stealHTML += "<button class='rw-steal-btn' id='rwStealB'>Steal "+esc(shortName(bestA.n))+" ("+bestA.r+")</button>";
+        return stealHTML ? "<div class='rw-steal-row'>"+stealHTML+"</div>" : "";
+      }())+
       "<div class='reveal-bar'>"+(done
         ? "<button class='fl-btn rw-lock' id='rwToResult'>See the verdict →</button>"
         : "<button class='btn-ghost' id='rwSkip'>Skip</button>")+"</div>"+
@@ -1308,6 +1442,26 @@
     if(sk) sk.onclick=function(){ clearTimeout(RW._t); RW.revealStep=RW.rows.length-1; renderReveal(v); };
     var tr=document.getElementById("rwToResult");
     if(tr) tr.onclick=function(){ RW.phase="result"; if(W.scrollTo)W.scrollTo(0,0); render(); };
+
+    /* Steal button handlers */
+    function doSteal(thisPIdx, oppPIdx, oppPickKey){
+      var rows2 = RW.rows.slice(0, Math.max(0, RW.revealStep+1));
+      var best=null, bestSlotIdx=-1;
+      rows2.forEach(function(r,ri){ var p=r[oppPickKey]; if(p&&(!best||p.r>best.r)){best=p;bestSlotIdx=ri;} });
+      if(!best) return;
+      clearTimeout(RW._t);
+      /* Replace the same slot in the stealing player's picks */
+      RW.players[thisPIdx].picks[bestSlotIdx] = {n:best.n, r:best.r, gp:best.gp||SLOTS[bestSlotIdx].k.trim(), club:best.club||"", year:best.year||""};
+      RW.stealUsed[thisPIdx] = true;
+      RW.revealStep = RW.rows.length-1;
+      computeResult();
+      renderReveal(v);
+    }
+    var sa=document.getElementById("rwStealA");
+    if(sa) sa.onclick=function(){ doSteal(RW.curA!=null?RW.curA:0, RW.curB!=null?RW.curB:1, "b"); };
+    var sb=document.getElementById("rwStealB");
+    if(sb) sb.onclick=function(){ doSteal(RW.curB!=null?RW.curB:1, RW.curA!=null?RW.curA:0, "a"); };
+
     if(!done){ clearTimeout(RW._t); RW._t=setTimeout(function(){ RW.revealStep++; renderReveal(v); }, 900); }
   }
 
@@ -1405,6 +1559,7 @@
     if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
     RW.sharedPool = null; RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
     RW.formations = RW.players.map(function(){ return null; }); RW.formationPassing = false;
+    RW.stealUsed = RW.players.map(function(){ return false; });
     /* Don't re-run posban/captain — those are set for the whole series */
     RW.cur = 0; RW.phase = "poolselect"; render();
   }
@@ -1480,4 +1635,8 @@
     document.getElementById("rwHome").onclick = goHome;
     if (typeof W.triggerConfetti === "function") W.triggerConfetti();
   }
+  /* Auto-intercept async challenge links on page load */
+  window.addEventListener("load", function(){
+    if (window.location.hash.indexOf("#async=") === 0) W.startDuels();
+  });
 })(window);
