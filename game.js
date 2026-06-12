@@ -117,7 +117,52 @@
   window.WCXI_MANAGERS    = MANAGERS;
   window.WCXI_MANAGERS_DB = MANAGERS_DB;
   /* Shared leaderboard API so League / Multiplayer can post per-mode scores */
-  window.WCXI_addScore = function (e) { try { addScore(e); } catch (err) {} };
+  window.WCXI_addScore = function (e) { try { addScore(e); _trackProgress(e); } catch (err) {} };
+
+  /* ── Progression system ───────────────────────────────────────────── */
+  var PROG_KEY = "wcxi_progress";
+  var PROG_MILESTONES = [
+    { id:"first_game",   check:function(p){ return p.gamesPlayed >= 1;  }, msg:"First game played!" },
+    { id:"first_win",    check:function(p){ return p.wins >= 1;          }, msg:"First win!" },
+    { id:"win_5",        check:function(p){ return p.wins >= 5;          }, msg:"5 wins — you're on a roll!" },
+    { id:"win_10",       check:function(p){ return p.wins >= 10;         }, msg:"10 wins — you're a manager now!" },
+    { id:"win_25",       check:function(p){ return p.wins >= 25;         }, msg:"25 wins — legendary form!" },
+    { id:"streak_3",     check:function(p){ return p.bestStreak >= 3;    }, msg:"3-win streak — on fire!" },
+    { id:"streak_5",     check:function(p){ return p.bestStreak >= 5;    }, msg:"5-win streak — unstoppable!" },
+    { id:"games_10",     check:function(p){ return p.gamesPlayed >= 10;  }, msg:"10 games played" },
+    { id:"games_50",     check:function(p){ return p.gamesPlayed >= 50;  }, msg:"50 games — true fan" },
+    { id:"games_100",    check:function(p){ return p.gamesPlayed >= 100; }, msg:"100 games — all-timer!" }
+  ];
+  function _loadProgress(){
+    try{ return JSON.parse(localStorage.getItem(PROG_KEY)||"{}"); }catch(e){ return {}; }
+  }
+  function _saveProgress(p){
+    try{ localStorage.setItem(PROG_KEY, JSON.stringify(p)); }catch(e){}
+  }
+  function _trackProgress(e){
+    var p = _loadProgress();
+    if(typeof p.gamesPlayed !== "number") p.gamesPlayed = 0;
+    if(typeof p.wins !== "number") p.wins = 0;
+    if(typeof p.currentStreak !== "number") p.currentStreak = 0;
+    if(typeof p.bestStreak !== "number") p.bestStreak = 0;
+    if(!p.milestones) p.milestones = {};
+    p.gamesPlayed++;
+    /* Detect a win: score > 0 and result doesn't include "Relegated" or "Bottom" */
+    var isWin = (e.score && e.score > 0) && !/relegate|bottom|last/i.test(e.result||"");
+    if(isWin){ p.wins++; p.currentStreak++; if(p.currentStreak > p.bestStreak) p.bestStreak = p.currentStreak; }
+    else { p.currentStreak = 0; }
+    _saveProgress(p);
+    /* Check milestones */
+    PROG_MILESTONES.forEach(function(m){
+      if(!p.milestones[m.id] && m.check(p)){
+        p.milestones[m.id] = Date.now();
+        _saveProgress(p);
+        setTimeout(function(){ if(typeof W.flToast==="function") W.flToast(m.msg, 3000); }, 600);
+      }
+    });
+  }
+  /* Expose for home screen reading */
+  window.WCXI_getProgress = function(){ return _loadProgress(); };
 
   // ---- state ----
   var squad = [];        // [{id,n,p(broad),r,slot(granular),country,year}]

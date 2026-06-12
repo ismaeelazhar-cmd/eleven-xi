@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-16 ALL COMPLETE. Cache wcxi-v131. Push to GitHub done. Next: Task 17 (Progression hooks and lazy loading)._
+_Last checkpoint: Tasks 1-17 ALL COMPLETE. Cache wcxi-v132. Push to GitHub done. Next: Task 18 (New rare surprise events with bonus respins)._
 
 ---
 
@@ -307,16 +307,37 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v111 (Duels presets, resume banner, history CSS)
-- game.js: v93 (journey section in WC/CL result screen)
+- floodlights.css: v112 (progression bar + lazy-load state CSS)
+- game.js: v94 (progression hook system)
 - engine.js: v73 (buildField/seedGroups exported, runWorldCupFromGroups added)
-- league.js: v81 (Premier League + surprise event before/after panels)
+- league.js: v82 (lazy loading for league data files)
 - multiplayer.js: v93 (auto-fill, squad reveal, win tracking)
-- floodlights.js: v91 (home stats + HTP overlay)
+- floodlights.js: v92 (lazyLoad utility + progression display)
 - draftvscomputer.js: v6 (CPU personality + rematch)
 - ratingswar.js: v102 (Duels presets, series persistence, result history)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v131
+- sw.js: wcxi-v132
+
+## 29. TASK 17 — PROGRESSION HOOKS + LAZY LOADING ✅
+**Progression hooks:**
+- `wcxi_progress` localStorage: `{gamesPlayed, wins, currentStreak, bestStreak, milestones}`
+- Tracked inside `WCXI_addScore()` in game.js via `_trackProgress(e)` — covers ALL modes
+- Win detection: score > 0 AND result doesn't contain "relegated/bottom/last"
+- 10 milestones: first game, first win, 5/10/25 wins, 3/5-win streak, 10/50/100 games
+- Milestone toast shown after 600ms delay (avoids colliding with other toasts)
+- `W.WCXI_getProgress()` exposed for home screen reading
+- Progress stat line on home screen (`#flProgBar`): "47 games · 23 wins | Best streak: 5"
+- Updated in `updateHomeCards()` in floodlights.js
+
+**Lazy loading (league data files):**
+- 5 league history files removed from static loading in index.html: data_pl_history.js, data_laliga_history.js, data_seriea_history.js, data_bundesliga_history.js, data_ligue1_history.js (~2.8MB)
+- `W.lazyLoad(src, globalKey, cb)` added to floodlights.js — single-inject, queued callbacks, onerror logged
+- `ensureLeagueData(key, cb)` added to league.js — delegates to W.lazyLoad for unloaded files
+- LEAGUES object extended with `dataKey` and `src` per entry
+- League card click wrapped: if data not loaded, disables button + shows "Loading..." + calls ensureLeagueData before renderSetup()
+- Files removed from sw.js ASSETS pre-cache (still cached by network-first on first fetch)
+- data_championship_history.js kept in static loading (needed for MP Championship mode)
+- Initial load reduction: ~2.8MB removed from eager load
 
 ## 28. TASK 16 — DUELS IMPROVEMENTS ✅
 - D-1 (Feature presets): DONE

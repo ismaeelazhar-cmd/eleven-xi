@@ -12,6 +12,30 @@
     toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
   };
 
+  /* ── Lazy data loader ─────────────────────────────────────────────
+     W.lazyLoad(src, globalKey, cb) — inject a script tag once, then cb().
+     If already loaded (globalKey set on window), calls cb() synchronously.
+     Queues multiple callbacks for the same in-flight load.
+  ────────────────────────────────────────────────────────────────── */
+  var _lazyQueue = {};
+  W.lazyLoad = function(src, globalKey, cb) {
+    if (window[globalKey]) { cb(); return; }
+    if (_lazyQueue[globalKey]) { _lazyQueue[globalKey].push(cb); return; }
+    _lazyQueue[globalKey] = [cb];
+    var s = document.createElement("script");
+    s.src = src;
+    s.onload = function() {
+      var cbs = _lazyQueue[globalKey] || [];
+      delete _lazyQueue[globalKey];
+      cbs.forEach(function(f){ try{ f(); }catch(e){} });
+    };
+    s.onerror = function() {
+      console.warn("lazyLoad failed:", src);
+      delete _lazyQueue[globalKey];
+    };
+    document.head.appendChild(s);
+  };
+
   /* Universal "go home" — hides every known view, shows homeView.
      Each module's own goHome handles cleanup; this covers the logo tap
      from any screen without needing per-module hooks. */
@@ -90,6 +114,20 @@
             dvcEl.textContent = best.label.charAt(0).toUpperCase()+best.label.slice(1) + ": " + (r.w||0) + "W " + (r.l||0) + "L " + (r.d||0) + "D";
           }
         }
+
+        // Progression stats
+        try {
+          var prog = JSON.parse(localStorage.getItem("wcxi_progress") || "{}");
+          var progBar = document.getElementById("flProgBar");
+          var progGames = document.getElementById("flProgGames");
+          var progStreak = document.getElementById("flProgStreak");
+          if (progBar && prog.gamesPlayed > 0) {
+            progBar.style.display = "";
+            if (progGames) progGames.textContent = prog.gamesPlayed + (prog.gamesPlayed===1?" game":" games") + " · " + (prog.wins||0) + " wins";
+            if (progStreak && prog.bestStreak > 1) progStreak.textContent = "Best streak: " + prog.bestStreak;
+            else if (progStreak) progStreak.textContent = "";
+          }
+        } catch(pe) {}
       } catch (e) {}
     })();
 

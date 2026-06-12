@@ -1219,6 +1219,21 @@ body.light .rw-resume-banner { background: rgba(245,180,60,.08); border-color: r
 body.light .rw-duel-history { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
 body.light .rw-hist-row { border-color: rgba(0,0,0,0.05); }
 
+/* ── Progression bar on home screen ─────────────────────────── */
+.fl-prog-bar {
+  display: flex; gap: var(--sp-3); align-items: center;
+  margin-top: var(--sp-3); flex-wrap: wrap;
+}
+.fl-prog-games { font-size: .78rem; color: var(--txt-sub); }
+.fl-prog-streak { font-size: .78rem; color: var(--cyan); font-weight: 600; }
+.fl-prog-streak:not(:empty)::before { content: "·"; color: var(--txt-muted); margin-right: var(--sp-2); }
+
+/* ── League lazy-load state ──────────────────────────────────── */
+.lg-loading {
+  display: block; font-size: .68rem; color: var(--txt-muted);
+  margin-top: 4px; font-style: italic;
+}
+
 /* ── Reduced-motion: strip all extras cleanly ── */
 @media (prefers-reduced-motion: reduce) {
   .fl-mode, .setup, .machine, .squad-card, .xi, .stat-grid,

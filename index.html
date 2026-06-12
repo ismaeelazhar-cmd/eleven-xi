@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=79" />
   <link rel="stylesheet" href="tokens.css?v=74" />
-  <link rel="stylesheet" href="floodlights.css?v=111" />
+  <link rel="stylesheet" href="floodlights.css?v=112" />
 </head>
 <body>
   <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Sound on — click to mute">
@@ -48,6 +48,10 @@
       <div class="fl-hero">
         <h2 class="fl-hero-title">Build your <span class="accent">all-time XI</span>.</h2>
         <p class="fl-hero-sub">Spin real squads from 1950 to today. Pick a formation and manager. Simulate, and dominate.</p>
+        <div class="fl-prog-bar" id="flProgBar" style="display:none">
+          <span class="fl-prog-games" id="flProgGames"></span>
+          <span class="fl-prog-streak" id="flProgStreak"></span>
+        </div>
       </div>
       <div class="fl-modes">
         <button class="fl-mode m-wc" id="homeWC">
@@ -330,22 +334,18 @@
   <script src="ratings_overrides.js?v=71"></script>
   <script src="nations.js?v=71"></script>
   <script src="data_mp.js?v=71"></script>
-  <script src="data_pl_history.js?v=71"></script>
+  <!-- data_pl_history.js / laliga / seriea / bundesliga / ligue1 are lazy-loaded on demand by league.js -->
   <script src="data_euro_history.js?v=71"></script>
   <script src="data_history.js?v=71"></script>
   <script src="data_league.js?v=74"></script>
-  <script src="data_laliga_history.js?v=71"></script>
-  <script src="data_seriea_history.js?v=71"></script>
-  <script src="data_bundesliga_history.js?v=71"></script>
-  <script src="data_ligue1_history.js?v=71"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=73"></script>
-  <script src="game.js?v=93"></script>
+  <script src="game.js?v=94"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=93"></script>
-  <script src="league.js?v=81"></script>
+  <script src="league.js?v=82"></script>
   <script src="audio.js?v=1" defer></script>
-  <script src="floodlights.js?v=91" defer></script>
+  <script src="floodlights.js?v=92" defer></script>
   <script src="ratingswar.js?v=102" defer></script>
   <script src="draftvscomputer.js?v=6" defer></script>
 </body>

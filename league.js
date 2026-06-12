@@ -35,12 +35,21 @@
 
   /* ── Leagues ── */
   var LEAGUES = {
-    pl:         { label:"Premier League", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", games:38, getData:function(){ return W.PL_DATA; } },
-    laliga:     { label:"La Liga",    flag:"🇪🇸", games:38, getData:function(){ return W.LALIGA_DATA; } },
-    seriea:     { label:"Serie A",    flag:"🇮🇹", games:38, getData:function(){ return W.SERIEA_DATA; } },
-    bundesliga: { label:"Bundesliga", flag:"🇩🇪", games:34, getData:function(){ return W.BUNDESLIGA_DATA; } },
-    ligue1:     { label:"Ligue 1",    flag:"🇫🇷", games:34, getData:function(){ return W.LIGUE1_DATA; } }
+    pl:         { label:"Premier League", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", games:38, dataKey:"PL_DATA",         src:"./data_pl_history.js?v=71",         getData:function(){ return W.PL_DATA; } },
+    laliga:     { label:"La Liga",    flag:"🇪🇸", games:38, dataKey:"LALIGA_DATA",     src:"./data_laliga_history.js?v=71",     getData:function(){ return W.LALIGA_DATA; } },
+    seriea:     { label:"Serie A",    flag:"🇮🇹", games:38, dataKey:"SERIEA_DATA",     src:"./data_seriea_history.js?v=71",     getData:function(){ return W.SERIEA_DATA; } },
+    bundesliga: { label:"Bundesliga", flag:"🇩🇪", games:34, dataKey:"BUNDESLIGA_DATA", src:"./data_bundesliga_history.js?v=71", getData:function(){ return W.BUNDESLIGA_DATA; } },
+    ligue1:     { label:"Ligue 1",    flag:"🇫🇷", games:34, dataKey:"LIGUE1_DATA",     src:"./data_ligue1_history.js?v=71",     getData:function(){ return W.LIGUE1_DATA; } }
   };
+
+  /* Lazy-load league data if not already on window */
+  function ensureLeagueData(key, cb){
+    var lc = LEAGUES[key];
+    if(!lc){ cb(); return; }
+    if(lc.getData()){ cb(); return; }
+    if(typeof W.lazyLoad !== "function"){ cb(); return; }
+    W.lazyLoad(lc.src, lc.dataKey, cb);
+  }
 
   /* ── Formations ── */
   var FORMATIONS = ["4-3-3","4-4-2","4-2-3-1","3-5-2","5-3-2","3-4-3"];
@@ -186,7 +195,18 @@
     v.querySelectorAll(".lg-card").forEach(function(btn){
       btn.addEventListener("click",function(){
         LS.league=btn.dataset.league;
-        renderSetup();
+        /* Lazy-load league data before proceeding */
+        var lc = LEAGUES[LS.league];
+        if(lc && lc.src && !lc.getData()){
+          btn.disabled = true;
+          btn.innerHTML = btn.innerHTML + "<span class='lg-loading'>Loading…</span>";
+          ensureLeagueData(LS.league, function(){
+            btn.disabled = false;
+            renderSetup();
+          });
+        } else {
+          renderSetup();
+        }
       });
     });
   }
