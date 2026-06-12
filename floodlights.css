@@ -1130,6 +1130,44 @@ body.light .xi-rate.r-good     { color: #4A5568; background: color-mix(in srgb, 
 }
 .fl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ── MP-2: Auto-fill button ─────────────────────────────────── */
+.mp-autofill-btn {
+  width: 100%; margin-top: var(--sp-3); font-size: .85rem;
+  border: 1px dashed rgba(124,92,252,.5); color: var(--violet);
+  padding: 10px 16px; border-radius: var(--r-md);
+  background: rgba(124,92,252,.07);
+  transition: background var(--dur-1) var(--ease-out);
+}
+.mp-autofill-btn:hover { background: rgba(124,92,252,.14); }
+
+/* ── MP-1: Squad reveal carousel ────────────────────────────── */
+.mp-champion { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mp-champ-trophy { font-size: 2.5rem; line-height: 1; }
+.mp-reveal-cta { display: flex; flex-direction: column; gap: var(--sp-2); align-items: center; }
+.mp-reveal-cta .btn-ghost { font-size: .82rem; color: var(--txt-sub); }
+.mp-squad-reveal { }
+.mp-rev-meta { font-size: .8rem; color: var(--txt-sub); margin-bottom: var(--sp-3); }
+.mp-rev-pitch { display: flex; justify-content: center; margin: var(--sp-3) 0; }
+.mp-rev-pitch .pitch { width: 240px; }
+
+/* ── MP-3: Session history ───────────────────────────────────── */
+.mp-history-sec {
+  margin-top: var(--sp-5); padding: var(--sp-4);
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--r-md);
+}
+.mp-hist-row {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: .82rem;
+}
+.mp-hist-row:last-child { border-bottom: none; }
+.mp-hist-winner { font-weight: 700; color: #F5B43C; flex: 0 0 auto; min-width: 110px; }
+.mp-hist-players { color: var(--txt-sub); flex: 1; font-size: .78rem; }
+.mp-hist-date { color: var(--txt-muted); font-size: .72rem; flex: 0 0 auto; }
+body.light .mp-history-sec { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
+body.light .mp-hist-row { border-color: rgba(0,0,0,0.05); }
+
 /* ── Reduced-motion: strip all extras cleanly ── */
 @media (prefers-reduced-motion: reduce) {
   .fl-mode, .setup, .machine, .squad-card, .xi, .stat-grid,

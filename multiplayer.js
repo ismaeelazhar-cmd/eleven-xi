@@ -159,6 +159,7 @@
     pendingHandoff: null, // {from, to, lastPick} — show pass screen after picking
     simData: null,        // pre-computed tournament data
     simStep: -1,          // which match to reveal next
+    revealIdx: -1,        // squad reveal step: -1=not started, 0..N=showing squad N, >=numPlayers=done
     // ── online session ──
     online: false,        // true when playing over the network
     netRole: null,        // "host" | "guest"
@@ -322,6 +323,25 @@
     grid.appendChild(on);
 
     wrap.appendChild(grid);
+
+    /* MP-3: Session history */
+    var hist = _loadMpHistory();
+    if(hist.length > 0){
+      var histSec = mk("div","mp-history-sec");
+      histSec.innerHTML = '<div class="mp-label">Recent Sessions</div>';
+      hist.slice(0,5).forEach(function(entry){
+        var row = mk("div","mp-hist-row");
+        var d = entry.ts ? new Date(entry.ts) : null;
+        var dateStr = d ? (d.getDate()+"/"+(d.getMonth()+1)+"/"+(d.getFullYear()+"").slice(-2)) : "";
+        var playersStr = (entry.players||[]).map(function(p){ return esc(p.name)+" ("+p.avg+")"; }).join(", ");
+        row.innerHTML = '<span class="mp-hist-winner">'+esc(entry.winner)+'</span>'+
+          '<span class="mp-hist-players">'+playersStr+'</span>'+
+          (dateStr?'<span class="mp-hist-date">'+dateStr+'</span>':'');
+        histSec.appendChild(row);
+      });
+      wrap.appendChild(histSec);
+    }
+
     root.appendChild(wrap);
   }
 
@@ -657,6 +677,7 @@
     st.pendingHandoff = null;
     st.simData = null;
     st.simStep = -1;
+    st.revealIdx = -1;
     st.cur = 0;
     st.mgrSpinResult = null;
     st.phase = "player_setup";
@@ -988,6 +1009,18 @@
       '</div>';
     var xiList = mk("div","xi-list"); xiList.id="mpXiList";
     xiSec.appendChild(xiList);
+
+    /* MP-2: Auto-fill button when 9+ slots filled */
+    if(p.picks.length >= 9 && p.picks.length < 11){
+      var remaining = 11 - p.picks.length;
+      var afBtn = mk("button","btn-ghost mp-autofill-btn",
+        "Auto-fill remaining " + remaining + " slot" + (remaining===1?"":"s") + " →");
+      afBtn.addEventListener("click",function(){
+        mpAutoFill(p);
+      });
+      xiSec.appendChild(afBtn);
+    }
+
     wrap.appendChild(xiSec);
 
     root.appendChild(wrap);
@@ -1077,6 +1110,87 @@
   }
 
   function ratingTierClass(r){ if(!r) return ""; return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red"; }
+
+  /* ── MP-2: Auto-fill remaining slots ─────────────────────────────── */
+  function mpAutoFillSlotCompat(gp){
+    var m = {
+      GK:["GK"], CB:["CB"], RB:["RB","RWB"], LB:["LB","LWB"],
+      RWB:["RWB","RB"], LWB:["LWB","LB"],
+      CDM:["CDM","CM"], CM:["CM","CDM","CAM"], CAM:["CAM","CM","ST"],
+      RM:["RM","RW","CM"], LM:["LM","LW","CM"],
+      RW:["RW","RM","ST"], LW:["LW","LM","ST"], ST:["ST","LW","RW","CAM"],
+      /* broad position fallbacks */
+      DEF:["CB","RB","LB","RWB","LWB"],
+      MID:["CM","CDM","CAM","LM","RM"],
+      FWD:["ST","LW","RW"]
+    };
+    return m[gp] || [gp];
+  }
+
+  function mpAutoFill(player){
+    var DATA = getData();
+    var pool = [];
+    Object.keys(DATA).forEach(function(country){
+      var entry = DATA[country];
+      if(!entry || !entry.years) return;
+      Object.keys(entry.years).forEach(function(yr){
+        (entry.years[yr] || []).forEach(function(pl){
+          if((pl.r||0) >= 75 && !st.lockedNames.hasOwnProperty(pl.n)){
+            pool.push({ n:pl.n, p:pl.p||"MID", r:pl.r||75,
+                        gp:pl.gp||pl.p||"MID", country:country, year:yr });
+          }
+        });
+      });
+    });
+    /* Shuffle for variety */
+    for(var i=pool.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+
+    var openCounts = openSlotCounts(player);
+    Object.keys(openCounts).forEach(function(slot){
+      var remaining = openCounts[slot];
+      if(remaining <= 0) return;
+      for(var i=0; i<remaining; i++){
+        var candidates = pool.filter(function(pl){
+          return mpAutoFillSlotCompat(pl.gp).indexOf(slot) !== -1;
+        }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
+        if(!candidates.length) continue;
+        var pick = candidates[0];
+        pool = pool.filter(function(pl){ return pl.n !== pick.n; });
+        st.lockedNames[pick.n] = st.cur;
+        player.picks.push({ n:pick.n, p:pick.p, r:pick.r, gp:pick.gp,
+                             slot:slot, country:pick.country, year:pick.year });
+        openCounts[slot]--;
+      }
+    });
+
+    st.currentSpin = null;
+    st.pendingPick = null;
+    advanceDraft();
+  }
+
+  /* ── MP-3: Cross-session win history ─────────────────────────────── */
+  var MP_HISTORY_KEY = "wcxi_mp_history";
+
+  function _saveMpHistory(championName){
+    var entry = {
+      ts: new Date().toISOString(),
+      winner: championName,
+      players: st.players.map(function(p){
+        var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+(pk.r||0);},0)/p.picks.length) : 0;
+        return { name: p.name, avg: avg };
+      })
+    };
+    var hist = [];
+    try{ hist = JSON.parse(localStorage.getItem(MP_HISTORY_KEY)||"[]"); }catch(e){}
+    if(!Array.isArray(hist)) hist = [];
+    hist.unshift(entry);
+    if(hist.length > 10) hist = hist.slice(0,10);
+    try{ localStorage.setItem(MP_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+  }
+
+  function _loadMpHistory(){
+    try{ return JSON.parse(localStorage.getItem(MP_HISTORY_KEY)||"[]"); }catch(e){ return []; }
+  }
 
   /* Returns rerolls remaining for the current player.
      First spin (no current result) is always free.
@@ -1468,36 +1582,78 @@
 
     /* ── CHAMPION banner ── */
     if (st.simStep >= maxStep) {
+      /* Save session history once */
+      if(!st._histSaved){ st._histSaved = true; _saveMpHistory(sd.champion); }
+
       var banner = mk("div","mp-champion");
-      banner.innerHTML = '🏆<br><span class="mp-champ-name">'+esc(sd.champion)+'</span><br><span class="mp-champ-sub">Champion!</span>';
+      banner.innerHTML = '<span class="mp-champ-trophy">🏆</span><span class="mp-champ-name">'+esc(sd.champion)+'</span><span class="mp-champ-sub">Champion!</span>';
       wrap.appendChild(banner);
 
-      /* Team summaries */
-      var summSec = mk("div","mp-section");
-      summSec.innerHTML = '<div class="mp-label">All Teams</div>';
-      st.players.forEach(function(p){
-        var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+pk.r;},0)/p.picks.length):0;
-        var card = mk("div","mp-team-card");
-        card.innerHTML = '<div class="mp-tc-head"><span class="mp-tc-name">'+esc(p.name)+'</span>'+
-          '<span class="mp-tc-info">'+esc(p.formation)+' · '+(p.manager?p.manager.emoji+" "+esc(p.manager.name):"")+'</span>'+
-          '<span class="mp-tc-avg">Avg '+avg+'</span></div>';
-        var ul = mk("ul","mp-tc-ul");
-        p.picks.forEach(function(pk){
+      /* MP-1: Squad reveal carousel */
+      if(st.revealIdx < 0){
+        /* Not started yet — show CTA */
+        var revCta = mk("div","mp-section mp-reveal-cta");
+        var revBtn = mk("button","mp-start-btn","Reveal All Squads →");
+        revBtn.addEventListener("click",function(){ st.revealIdx = 0; _render(); });
+        var skipRevBtn = mk("button","btn-ghost","Skip to Standings →");
+        skipRevBtn.addEventListener("click",function(){ st.revealIdx = st.numPlayers; _render(); });
+        revCta.appendChild(revBtn);
+        revCta.appendChild(skipRevBtn);
+        wrap.appendChild(revCta);
+      } else if(st.revealIdx < st.numPlayers){
+        /* Show current squad on pitch */
+        var rp = st.players[st.revealIdx];
+        var rpAvg = rp.picks.length ? Math.round(rp.picks.reduce(function(s,pk){return s+(pk.r||0);},0)/rp.picks.length) : 0;
+        var sqSec = mk("div","mp-section mp-squad-reveal");
+        sqSec.innerHTML = '<div class="mp-label">'+esc(rp.name)+'\'s Squad</div>'+
+          '<div class="mp-rev-meta">'+esc(rp.formation)+' · '+(rp.manager?rp.manager.emoji+' '+esc(rp.manager.name):'')+' · Avg '+rpAvg+'</div>';
+        var pitchWrap = mk("div","mp-rev-pitch");
+        pitchWrap.innerHTML = buildWCPitch(rp);
+        sqSec.appendChild(pitchWrap);
+        /* Player list below pitch */
+        var revList = mk("ul","mp-tc-ul");
+        rp.picks.forEach(function(pk){
           var li = mk("li","mp-tc-player");
           li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
             '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
             '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
-            '<span class="mp-tc-r">'+pk.r+'</span>';
-          ul.appendChild(li);
+            '<span class="mp-tc-r mp-r-badge'+ratingTierClass(pk.r)+'">'+pk.r+'</span>';
+          revList.appendChild(li);
         });
-        card.appendChild(ul);
-        summSec.appendChild(card);
-      });
-      wrap.appendChild(summSec);
+        sqSec.appendChild(revList);
+        var isLast = st.revealIdx === st.numPlayers - 1;
+        var nextBtn = mk("button","mp-start-btn", isLast ? "See Final Standings →" : "Next Squad →");
+        nextBtn.addEventListener("click",function(){ st.revealIdx++; _render(); });
+        sqSec.appendChild(nextBtn);
+        wrap.appendChild(sqSec);
+      } else {
+        /* All squads revealed — show full summaries */
+        var summSec = mk("div","mp-section");
+        summSec.innerHTML = '<div class="mp-label">All Teams</div>';
+        st.players.forEach(function(p){
+          var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+(pk.r||0);},0)/p.picks.length):0;
+          var card = mk("div","mp-team-card");
+          card.innerHTML = '<div class="mp-tc-head"><span class="mp-tc-name">'+esc(p.name)+'</span>'+
+            '<span class="mp-tc-info">'+esc(p.formation)+' · '+(p.manager?p.manager.emoji+" "+esc(p.manager.name):"")+'</span>'+
+            '<span class="mp-tc-avg">Avg '+avg+'</span></div>';
+          var ul = mk("ul","mp-tc-ul");
+          p.picks.forEach(function(pk){
+            var li = mk("li","mp-tc-player");
+            li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
+              '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
+              '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
+              '<span class="mp-tc-r">'+pk.r+'</span>';
+            ul.appendChild(li);
+          });
+          card.appendChild(ul);
+          summSec.appendChild(card);
+        });
+        wrap.appendChild(summSec);
 
-      var again = mk("button","mp-start-btn","← Back to Home");
-      again.addEventListener("click", goHome);
-      wrap.appendChild(again);
+        var again = mk("button","mp-start-btn","← Back to Home");
+        again.addEventListener("click", goHome);
+        wrap.appendChild(again);
+      }
     }
 
     /* ── Navigation buttons ── */

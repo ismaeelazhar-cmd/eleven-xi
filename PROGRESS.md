@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-14 ALL COMPLETE. Cache wcxi-v129. Push to GitHub done. Next: Task 15 (Multiplayer improvements)._
+_Last checkpoint: Tasks 1-15 ALL COMPLETE. Cache wcxi-v130. Push to GitHub done. Next: Task 16 (Duels improvements)._
 
 ---
 
@@ -307,16 +307,35 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v109 (lge-compare before/after panel CSS)
+- floodlights.css: v110 (MP autofill, squad reveal, history CSS)
 - game.js: v93 (journey section in WC/CL result screen)
 - engine.js: v73 (buildField/seedGroups exported, runWorldCupFromGroups added)
 - league.js: v81 (Premier League + surprise event before/after panels)
-- multiplayer.js: v92
+- multiplayer.js: v93 (auto-fill, squad reveal, win tracking)
 - floodlights.js: v91 (home stats + HTP overlay)
 - draftvscomputer.js: v6 (CPU personality + rematch)
 - ratingswar.js: v101 (WCXI_addScore on completed duel/series)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v129
+- sw.js: wcxi-v130
+
+## 27. TASK 15 — MULTIPLAYER IMPROVEMENTS ✅
+- MP-1 (Squad reveal post-tournament): DONE
+  - After champion banner, shows "Reveal All Squads →" CTA with "Skip to Standings →" option
+  - Clicking reveal shows each squad in turn: name, formation, manager, avg rating, half-pitch view, player list with rating badges
+  - Prev/Next navigation ("Next Squad →" then "See Final Standings →" on last)
+  - "All Teams" summary + "← Back to Home" shown after all squads revealed
+  - st.revealIdx state added; reset to -1 on each new game
+  - st._histSaved flag prevents duplicate writes per session
+- MP-2 (Auto-fill at 9/11): DONE
+  - `mpAutoFill(player)` function: builds flat pool from all data years, shuffles, fills open slots by highest-rated eligible player
+  - `mpAutoFillSlotCompat(gp)`: extended slotCompat with broad-position fallbacks (DEF→CB/RB/LB, MID→CM/CDM/CAM/LM/RM, FWD→ST/LW/RW)
+  - "Auto-fill remaining N slot(s) →" button appears in XI section when picks >= 9 and < 11
+  - Calls advanceDraft() after filling, so pass screen and tournament flow continue normally
+- MP-3 (Cross-session win tracking): DONE
+  - localStorage key: wcxi_mp_history (last 10 sessions)
+  - Saved after champion revealed: timestamp, winner name, player names + avg ratings
+  - Shown on the Multiplayer connect screen (under the Local/Online grid)
+  - Up to 5 recent sessions shown: winner name (gold), player list with avgs, date
 
 ## 26. TASK 14 — LEAGUE IMPROVEMENTS ✅
 - L-1 (Premier League): DONE — Premier League added to LEAGUES object in league.js. Uses `W.PL_DATA` (data_pl_history.js, 616KB, already loaded in index.html and sw.js ASSETS). 38-game season.
