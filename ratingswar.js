@@ -1546,6 +1546,25 @@
       } else { W.startDuels(); }
     };
     document.getElementById("rwHome").onclick = goHome;
+    /* Post to shared leaderboard for completed single matches + completed Bo3 series */
+    var isCompletedDuel = !isTourn && ((!isBo3 && winnerIdx >= 0) || (isBo3 && seriesDone && seriesWinnerIdx >= 0));
+    if (isCompletedDuel && !RW._savedToBoard && typeof W.WCXI_addScore === "function") {
+      RW._savedToBoard = true;
+      var boardWinnerIdx = isBo3 && seriesDone ? seriesWinnerIdx : winnerIdx;
+      var boardLoserIdx  = boardWinnerIdx === idxA ? idxB : idxA;
+      var winPicks = RW.players[boardWinnerIdx].picks.filter(Boolean);
+      var winAvg   = winPicks.length ? Math.round(winPicks.reduce(function(s,p){ return s+(p.r||75); },0)/winPicks.length) : 75;
+      var boardScore = winAvg * 10;
+      var loserName = RW.players[boardLoserIdx].name;
+      var seriesInfo = isBo3 ? " (Bo3 " + sw[0] + "-" + sw[1] + ")" : " " + s1 + "-" + s2;
+      W.WCXI_addScore({
+        name: RW.players[boardWinnerIdx].name,
+        score: boardScore,
+        result: "Won vs " + loserName + seriesInfo,
+        mode: "duels",
+        ts: Date.now()
+      });
+    }
     if ((seriesWinnerIdx>=0 || (winnerIdx>=0 && !isBo3)) && typeof W.triggerConfetti === "function") W.triggerConfetti();
   }
 

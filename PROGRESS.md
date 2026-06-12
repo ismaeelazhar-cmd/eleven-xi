@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-7 ALL COMPLETE. Cache wcxi-v123. Push to GitHub done. Next: Task 8 (OG-5: DVC + Duels into leaderboard)._
+_Last checkpoint: Tasks 1-8 ALL COMPLETE. Cache wcxi-v124. Push to GitHub done. Next: Task 9 (OG-8: Shareable League season card)._
 
 ---
 
@@ -308,13 +308,27 @@ _All pop-out panels, all game modes._
 
 ## 12. CURRENT FILE VERSIONS
 - floodlights.css: v107 (sound-toggle CSS added)
-- game.js: v90 (audio wiring: sfxSpin in doSpin, sfxPick in pickPlayer, sfxWin at result)
-- league.js: v79 (audio wiring: sfxSpin in doLgSpin, sfxPick in draftPlayer, sfxWin at champion)
+- game.js: v91 (modeLabel extended for dvc/duels)
+- league.js: v79 (audio wiring)
 - multiplayer.js: v92
 - floodlights.js: v91 (home stats + HTP overlay)
-- draftvscomputer.js: v4 (audio wiring: sfxPick in doPlayerPick, sfxWin at win)
-- audio.js: v1 (NEW — Web Audio API module)
-- sw.js: wcxi-v123
+- draftvscomputer.js: v5 (WCXI_addScore on win/draw)
+- ratingswar.js: v101 (WCXI_addScore on completed duel/series)
+- audio.js: v1 (Web Audio API module)
+- sw.js: wcxi-v124
+
+## 21. TASK 8 — OG-5: DVC + DUELS INTO LEADERBOARD ✅
+- DVC results now posted to `wcxi_leaderboard_v1` via `window.WCXI_addScore`
+  - Score formula: Win × difficulty (Easy=100, Medium=200, Hard=400), Draw = 30×mult
+  - Losses not saved (no points). Name = "Your XI". Mode = "dvc"
+  - Result string: "Win · Hard · 2-1" format
+- Duels results posted when a complete single match or Bo3 series finishes
+  - Score = winning team avg rating × 10 (e.g. 84 avg → 840pts)
+  - Only saves the winner. Mode = "duels". Result = "Won vs Opponent X-Y"
+  - De-duped via `RW._savedToBoard` flag (cleared on each new `W.startDuels()` call)
+- Leaderboard mode tabs: added "vs Computer" (dvc) and "Duels" (duels) to `#boardModes` in index.html
+- `modeLabel()` in game.js extended: "dvc" → "vs Computer", "duels" → "Duels"
+- "All" tab shows DVC + Duels entries mixed with WC/CL/League (sorted by score desc)
 
 ## 20. TASK 7 — AUDIO (OG-4) ✅
 - `audio.js` created: Web Audio API, 3 procedurally generated sounds, no external files

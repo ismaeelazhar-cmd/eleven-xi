@@ -456,6 +456,20 @@ window.startDraftVsComputer = (function (W) {
       saveDvcRecord(rec);
     }
     DVC.savedRecord = rec;
+    /* Post to shared leaderboard */
+    if (DVC.matchResult && typeof W.WCXI_addScore === "function") {
+      var diffMult = DVC.difficulty === "hard" ? 4 : DVC.difficulty === "medium" ? 2 : 1;
+      var outcome = DVC.matchResult.winner === "A" ? "w" : DVC.matchResult.winner === "B" ? "l" : "d";
+      var basePts = outcome === "w" ? 100 : outcome === "d" ? 30 : 0;
+      var pts = basePts * diffMult;
+      if (pts > 0) {
+        var diffLabel = DVC.difficulty.charAt(0).toUpperCase() + DVC.difficulty.slice(1);
+        var outcomeLabel = outcome === "w" ? "Win" : "Draw";
+        var res = DVC.matchResult;
+        var scoreStr = res.a + "-" + res.b + (res.pens ? " (pens " + res.pens[0] + "-" + res.pens[1] + ")" : "");
+        W.WCXI_addScore({ name: "Your XI", score: pts, result: outcomeLabel + " · " + diffLabel + " · " + scoreStr, mode: "dvc", ts: Date.now() });
+      }
+    }
     render();
     if (W.sfx && DVC.matchResult && DVC.matchResult.winner==="A") W.sfx.win();
     if (W.triggerConfetti && DVC.matchResult && DVC.matchResult.winner==="A") {

@@ -1056,7 +1056,8 @@
   function addScore(e) { var a = loadBoard(); a.push(e); saveBoard(a); }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
   function modeLabel(m) {
-    return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" : m === "euro" ? "Euros" : "League";
+    return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" :
+           m === "euro" ? "Euros" : m === "dvc" ? "vs Computer" : m === "duels" ? "Duels" : "League";
   }
   function renderBoard() {
     Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
