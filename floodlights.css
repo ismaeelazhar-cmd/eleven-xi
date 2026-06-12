@@ -842,6 +842,12 @@ body.light .xi-rate.r-good     { color: #4A5568; background: color-mix(in srgb, 
 .dvc-win .dvc-verdict-title { color: var(--positive); }
 .dvc-loss .dvc-verdict-title { color: var(--warning); }
 .dvc-verdict-score { font-size: var(--t-h3); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.dvc-verdict-record { margin-top: var(--sp-2); font-size: var(--t-sm); color: var(--text-mute); font-variant-numeric: tabular-nums; }
+.dvc-record { margin-top: var(--sp-3); font-size: var(--t-sm); display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.dvc-rec-label { color: var(--text-mute); }
+.dvc-rec-val { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.dvc-rec-pct { font-size: var(--t-xs); color: var(--text-mute); background: var(--surface-2); border-radius: var(--r-pill); padding: 2px 7px; }
+.dvc-rec-none { color: var(--text-mute); font-style: italic; }
 .dvc-result-pitches { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
 @media (max-width: 600px) { .dvc-result-pitches { grid-template-columns: 1fr; } }
 .dvc-result-xi { background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); }

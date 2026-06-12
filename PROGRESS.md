@@ -306,11 +306,20 @@ _All pop-out panels, all game modes._
 - ✅ DVC pool (draftvscomputer.js): `.dvc-name` already had `color: var(--text)` + `mp-r-badge` tier
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
-## 12. CURRENT FILE VERSIONS (post-contrast-fix)
-- floodlights.css: v101
+## 12. CURRENT FILE VERSIONS
+- floodlights.css: v102
 - game.js: v87
-- draftvscomputer.js: v2 (LINE_OF bug fixed)
-- sw.js: wcxi-v115
+- draftvscomputer.js: v3 (W/L/D record added)
+- sw.js: wcxi-v116
+
+## 14. TASK 1 — DVC W/L/D RECORD ✅
+- localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`
+- `loadDvcRecord()` / `saveDvcRecord(rec)` helpers in draftvscomputer.js
+- `renderRecordHtml(diff)` renders label + W/L/D + win% pill
+- Setup screen: record shown below difficulty description, updates live when difficulty is switched
+- Result screen: record shown in verdict banner (updated after this game)
+- CSS added: `.dvc-record`, `.dvc-rec-label`, `.dvc-rec-val`, `.dvc-rec-pct`, `.dvc-rec-none`, `.dvc-verdict-record`
+- Leaderboard tab integration deferred to Task 8 (OG-5)
 
 ## 12. REMAINING BACKLOG
 - Lazy-load data per mode (~5 MB eager load)

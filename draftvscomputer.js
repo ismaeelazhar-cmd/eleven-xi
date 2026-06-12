@@ -21,11 +21,40 @@ window.startDraftVsComputer = (function (W) {
 
   var CPU_NAMES = ["The Machine", "AutoXI", "CPU Manager", "Iron Bot", "The Algorithm"];
 
+  var DVC_RECORD_KEY = "wcxi_dvc_record";
+
   function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function rnd(a) { return a[Math.floor(Math.random()*a.length)]; }
   function shuffle(a) {
     for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
     return a;
+  }
+
+  function loadDvcRecord() {
+    try {
+      var r = JSON.parse(localStorage.getItem(DVC_RECORD_KEY) || "{}");
+      return {
+        easy:   { w: r.easy   && r.easy.w   || 0, l: r.easy   && r.easy.l   || 0, d: r.easy   && r.easy.d   || 0 },
+        medium: { w: r.medium && r.medium.w || 0, l: r.medium && r.medium.l || 0, d: r.medium && r.medium.d || 0 },
+        hard:   { w: r.hard   && r.hard.w   || 0, l: r.hard   && r.hard.l   || 0, d: r.hard   && r.hard.d   || 0 }
+      };
+    } catch(e) {
+      return { easy:{w:0,l:0,d:0}, medium:{w:0,l:0,d:0}, hard:{w:0,l:0,d:0} };
+    }
+  }
+
+  function saveDvcRecord(rec) {
+    try { localStorage.setItem(DVC_RECORD_KEY, JSON.stringify(rec)); } catch(e) {}
+  }
+
+  function renderRecordHtml(diff) {
+    var rec = loadDvcRecord();
+    var r = rec[diff] || {w:0,l:0,d:0};
+    var total = r.w + r.l + r.d;
+    var label = diff.charAt(0).toUpperCase() + diff.slice(1);
+    if (!total) return '<span class="dvc-rec-label">'+esc(label)+' record:</span> <span class="dvc-rec-none">No games yet</span>';
+    var winPct = Math.round(r.w / total * 100);
+    return '<span class="dvc-rec-label">'+esc(label)+' record:</span> <span class="dvc-rec-val">'+r.w+'W&thinsp;'+r.l+'L&thinsp;'+r.d+'D</span><span class="dvc-rec-pct">'+winPct+'%</span>';
   }
 
   /* State */
@@ -195,6 +224,7 @@ window.startDraftVsComputer = (function (W) {
     });
     html += '</div>';
     html += '<div class="seg-desc" id="dvcDiffDesc">'+(DVC.difficulty==="easy"?"CPU picks with lower priority — easier to outbuild.":DVC.difficulty==="hard"?"CPU always takes the best available player — tough competition.":"CPU plays sensibly but isn't perfect.")+'</div>';
+    html += '<div class="dvc-record" id="dvcRecord">'+renderRecordHtml(DVC.difficulty)+'</div>';
     html += '</div>';
     html += '<button class="start-btn" id="dvcStart">Start Draft →</button></div>';
     return html;
@@ -219,6 +249,8 @@ window.startDraftVsComputer = (function (W) {
         btn.classList.add("active");
         var desc = document.getElementById("dvcDiffDesc");
         if (desc) desc.textContent = DVC.difficulty==="easy"?"CPU picks with lower priority — easier to outbuild.":DVC.difficulty==="hard"?"CPU always takes the best available player — tough competition.":"CPU plays sensibly but isn't perfect.";
+        var recEl = document.getElementById("dvcRecord");
+        if (recEl) recEl.innerHTML = renderRecordHtml(DVC.difficulty);
       };
     });
 
@@ -413,6 +445,16 @@ window.startDraftVsComputer = (function (W) {
     } catch(e){}
     DVC.playerTeam = playerTeam;
     DVC.cpuTeam = cpuTeam;
+    /* Record W/L/D */
+    var rec = loadDvcRecord();
+    var diff = DVC.difficulty;
+    if (DVC.matchResult) {
+      if (DVC.matchResult.winner === "A") rec[diff].w++;
+      else if (DVC.matchResult.winner === "B") rec[diff].l++;
+      else rec[diff].d++;
+      saveDvcRecord(rec);
+    }
+    DVC.savedRecord = rec;
     render();
     if (W.triggerConfetti && DVC.matchResult && DVC.matchResult.winner==="A") {
       setTimeout(W.triggerConfetti, 400);
@@ -442,6 +484,11 @@ window.startDraftVsComputer = (function (W) {
       else if (res.winner==="B") html += '<div class="dvc-verdict-title">'+esc(DVC.cpuName)+' Won</div>';
       else html += '<div class="dvc-verdict-title">Draw</div>';
       html += '<div class="dvc-verdict-score">'+esc(score)+'</div>';
+      var savedRec = DVC.savedRecord || loadDvcRecord();
+      var diff = DVC.difficulty;
+      var sr = savedRec[diff] || {w:0,l:0,d:0};
+      var label = diff.charAt(0).toUpperCase() + diff.slice(1);
+      html += '<div class="dvc-verdict-record">'+esc(label)+': '+sr.w+'W&thinsp;'+sr.l+'L&thinsp;'+sr.d+'D</div>';
     }
     html += '</div>';
 
