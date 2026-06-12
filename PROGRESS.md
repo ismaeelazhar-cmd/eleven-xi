@@ -271,10 +271,46 @@ All data files use **only 4 broad positions**: `GK`, `DEF`, `MID`, `FWD`. No gra
 
 ---
 
-## 11. CURRENT FILE VERSIONS (post-tasks 4-7)
-- floodlights.css: v100
+## 11. CONTRAST FIX — PLAYER NAMES + RATING BADGES ✅
+
+_All pop-out panels, all game modes._
+
+### Problem
+- Player names in all squad pop-outs appeared muted/grey — no explicit `color:` was set on `.pname`
+- `mp-r-badge.r-great` (80–84): used `var(--p-violet-300)` text on violet-tinted background = purple on purple (unreadable)
+- `mp-r-badge.r-good` (75–79) and `mp-r-badge.r-orange` (60–69): both used `var(--warning)` = coral = identical tiers, wrong for 75–79
+- `xi-rate.r-great` and `xi-rate.r-good`: same colour problems in the squad XI list
+- `rw-rev-rating.r-great` and `.r-good`: same in Duels reveal
+- `game.js ratingBadge()`: used old flat `.rate-badge` class with no tier system at all
+- `body.light .mp-r-badge` in style.css had higher specificity than the tier rules, overriding all tier colours in light mode
+
+### Fixes applied (floodlights.css v101, game.js v87)
+| Tier | Before | After |
+|------|--------|-------|
+| r-great 80–84 | violet on violet-tint (unreadable) | `#5BA4FF` clear blue |
+| r-good 75–79 | coral/orange (wrong) | `#ECF1FF` near-white |
+| r-orange 60–69 | same coral as r-good (duplicate) | `#FF8C42` distinct orange |
+| player names | no explicit color | `color: var(--text)` on `.player .pname` |
+
+- All three badge locations updated: `mp-r-badge`, `xi-rate`, `rw-rev-rating`
+- Added `body` prefix to `mp-r-badge` tier rules → beats `body.light .mp-r-badge` specificity issue
+- Light mode overrides added for r-great and r-good to ensure dark-on-light contrast
+- `game.js ratingBadge()` now uses `mp-r-badge` + `ratingTierClass()` — consistent with all other modes
+
+### Coverage — modes verified
+- ✅ WC/CL (game.js): `.pname` + `ratingBadge()` now uses tier system
+- ✅ Multiplayer (multiplayer.js): `.pname` + `mp-r-badge` tier
+- ✅ Duels build (ratingswar.js): `.pname` + no ratings (correct — blind build)
+- ✅ Duels reveal (ratingswar.js): `rw-rev-rating` tier fixed
+- ✅ Duels shared pool (ratingswar.js): `.rw-sp-name` already had `color: var(--text)`
+- ✅ DVC pool (draftvscomputer.js): `.dvc-name` already had `color: var(--text)` + `mp-r-badge` tier
+- ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
+
+## 12. CURRENT FILE VERSIONS (post-contrast-fix)
+- floodlights.css: v101
+- game.js: v87
 - draftvscomputer.js: v2 (LINE_OF bug fixed)
-- sw.js: wcxi-v114
+- sw.js: wcxi-v115
 
 ## 12. REMAINING BACKLOG
 - Lazy-load data per mode (~5 MB eager load)

@@ -531,7 +531,7 @@
     Promise.all([p1, p2]).then(function () { spinning = false; elHint.textContent = ""; renderSquadPicker(); });
   }
 
-  function ratingBadge(p) { return showRatings ? '<span class="rate-badge">' + p.r + "</span>" : ""; }
+  function ratingBadge(p) { return showRatings ? '<span class="mp-r-badge' + ratingTierClass(p.r) + '">' + p.r + '</span>' : ""; }
   function playerByName(name) {
     var list = DATA[current.country].years[current.year];
     for (var i = 0; i < list.length; i++) if (list[i].n === name) return list[i];
