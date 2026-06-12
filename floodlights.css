@@ -184,6 +184,25 @@ header h1 {
 .htp-dot.active { background: var(--primary); transform: scale(1.3); }
 .htp-btns { display: flex; gap: var(--sp-3); justify-content: flex-end; }
 
+/* ===== Sound toggle ===== */
+.sound-toggle {
+  position: fixed; top: 16px; right: 108px; z-index: 100;
+  width: 42px; height: 42px; border-radius: 999px;
+  background: rgba(8,8,16,0.82); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: rgba(255,255,255,0.55);
+  transition: color var(--dur-1), background var(--dur-1);
+}
+.sound-toggle:hover { color: rgba(255,255,255,0.9); }
+.sound-toggle[aria-pressed="true"] { color: rgba(255,255,255,0.22); }
+body.light .sound-toggle {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(0,0,0,0.12); color: rgba(42,38,32,0.45);
+}
+body.light .sound-toggle:hover { color: rgba(42,38,32,0.88); }
+
 /* ============================================================
    Part 2 — GLOBAL COHESION
    Re-point every legacy CSS variable at a Floodlights token so

@@ -576,6 +576,7 @@
 
   function doLgSpin(){
     if(_lgSpinning) return;
+    if(W.sfx) W.sfx.spin();
     var cStrip=eid("lgCS"),yStrip=eid("lgYS"),spinBtn=eid("lgSpinBtn");
     if(!cStrip) return;
     _lgSpinning=true; spinBtn.disabled=true; spinBtn.textContent="SPINNING…";
@@ -730,6 +731,7 @@
 
   function draftPlayer(pl, spin, slot){
     if(LS.xi.some(function(x){ return x&&x.n===pl.n; })) return;
+    if(W.sfx) W.sfx.pick();
     LS.xi.push({n:pl.n,p:pl.p||"MID",r:pl.r||75,gp:pl.gp||pl.p||"MID",slot:slot,club:spin.club,year:spin.year});
     updatePitch();
     var cnt=eid("lgPickCount"); if(cnt) cnt.textContent=LS.xi.length;
@@ -1513,6 +1515,7 @@
       _lgShareImage({ team:LS.teamName, league:lc.label, pill:pill, pos:pos, N:N,
         W:W2, D:D, L:L, pts:userRow.Pts, score:score, boot:boot }, sh);
     });
+    if((isChamp||isPerfect)&&W.sfx) W.sfx.win();
     if((isChamp||isPerfect)&&typeof W.triggerConfetti==="function") W.triggerConfetti();
   }
 

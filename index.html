@@ -22,9 +22,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=79" />
   <link rel="stylesheet" href="tokens.css?v=74" />
-  <link rel="stylesheet" href="floodlights.css?v=106" />
+  <link rel="stylesheet" href="floodlights.css?v=107" />
 </head>
 <body>
+  <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Sound on — click to mute">
+    <span class="snd-on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+    <span class="snd-off" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg></span>
+  </button>
   <div class="theme-toggle" id="themeToggle" aria-label="Theme">
     <button data-theme="light" title="Light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button>
     <button data-theme="dark" title="Dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -334,12 +338,13 @@
   <script src="data_ligue1_history.js?v=71"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=72"></script>
-  <script src="game.js?v=89"></script>
+  <script src="game.js?v=90"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=92"></script>
-  <script src="league.js?v=78"></script>
+  <script src="league.js?v=79"></script>
+  <script src="audio.js?v=1" defer></script>
   <script src="floodlights.js?v=91" defer></script>
   <script src="ratingswar.js?v=100" defer></script>
-  <script src="draftvscomputer.js?v=3" defer></script>
+  <script src="draftvscomputer.js?v=4" defer></script>
 </body>
 </html>

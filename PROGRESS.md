@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 0-7 ALL COMPLETE. Cache wcxi-v114. floodlights.css v100, draftvscomputer.js v2 (LINE_OF bug fixed), game.js v86, multiplayer.js v91. Push to GitHub after this checkpoint._
+_Last checkpoint: Tasks 1-7 ALL COMPLETE. Cache wcxi-v123. Push to GitHub done. Next: Task 8 (OG-5: DVC + Duels into leaderboard)._
 
 ---
 
@@ -307,13 +307,27 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v106
-- game.js: v89 (euro mode, manager bonus HTML)
-- league.js: v78 (manager bonus HTML)
+- floodlights.css: v107 (sound-toggle CSS added)
+- game.js: v90 (audio wiring: sfxSpin in doSpin, sfxPick in pickPlayer, sfxWin at result)
+- league.js: v79 (audio wiring: sfxSpin in doLgSpin, sfxPick in draftPlayer, sfxWin at champion)
 - multiplayer.js: v92
 - floodlights.js: v91 (home stats + HTP overlay)
-- draftvscomputer.js: v3 (W/L/D record added)
-- sw.js: wcxi-v121
+- draftvscomputer.js: v4 (audio wiring: sfxPick in doPlayerPick, sfxWin at win)
+- audio.js: v1 (NEW — Web Audio API module)
+- sw.js: wcxi-v123
+
+## 20. TASK 7 — AUDIO (OG-4) ✅
+- `audio.js` created: Web Audio API, 3 procedurally generated sounds, no external files
+  - `sfxSpin()` — 900Hz sine, 55ms (spin tick)
+  - `sfxPick()` — 200+320Hz triangle, 180ms (pick confirm thud)
+  - `sfxWin()` — C5-E5-G5 arpeggio (win fanfare)
+- Mute state persisted: `wcxi_muted` in localStorage
+- Sound toggle button: `#soundToggle` fixed-position button (top-right, left of theme toggle)
+- CSS: `.sound-toggle` in floodlights.css (same floating-pill style as theme toggle)
+- Wired in game.js: `doSpin()` → sfxSpin, `pickPlayer()` → sfxPick, result stage → sfxWin (Champions! only)
+- Wired in league.js: `doLgSpin()` → sfxSpin, `draftPlayer()` → sfxPick, champion result → sfxWin
+- Wired in draftvscomputer.js: `doPlayerPick()` → sfxPick, DVC win → sfxWin
+- `audio.js` in sw.js ASSETS array (cached offline)
 
 ## 14. TASK 1 — DVC W/L/D RECORD ✅
 - localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`

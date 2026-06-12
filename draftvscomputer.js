@@ -380,6 +380,7 @@ window.startDraftVsComputer = (function (W) {
   }
 
   function doPlayerPick(player) {
+    if (W.sfx) W.sfx.pick();
     /* Remove from pool */
     DVC.pool = DVC.pool.filter(function(p){ return p.n!==player.n; });
     DVC.playerPicks.push(player);
@@ -456,6 +457,7 @@ window.startDraftVsComputer = (function (W) {
     }
     DVC.savedRecord = rec;
     render();
+    if (W.sfx && DVC.matchResult && DVC.matchResult.winner==="A") W.sfx.win();
     if (W.triggerConfetti && DVC.matchResult && DVC.matchResult.winner==="A") {
       setTimeout(W.triggerConfetti, 400);
     }
