@@ -702,6 +702,18 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .rw-badge.cap-a { background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); }
 .rw-badge.cap-b { background: color-mix(in srgb, var(--positive) 20%, transparent); color: var(--positive); border: 1px solid color-mix(in srgb, var(--positive) 35%, transparent); }
 .rw-ban { font-size: var(--t-2xs); color: var(--text-mute); font-style: italic; }
+.rw-badge.form-a { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); }
+.rw-badge.form-b { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); }
+
+/* Formation draft grid */
+.rw-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin: 0 auto var(--sp-5); max-width: 480px; }
+@media (max-width: 400px) { .rw-form-grid { grid-template-columns: repeat(2, 1fr); } }
+.rw-form-card { padding: var(--sp-3) var(--sp-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); display: flex; flex-direction: column; gap: 3px; align-items: center; cursor: pointer; transition: background var(--dur-1), border-color var(--dur-1); text-align: center; }
+.rw-form-card:hover { background: var(--surface-3); border-color: var(--line-strong); }
+.rw-form-card.rw-slot-selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--surface-2)); }
+.rw-form-name { font-size: var(--t-sm); font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.rw-form-style { font-size: var(--t-2xs); font-weight: 700; color: var(--primary); letter-spacing: .06em; text-transform: uppercase; }
+.rw-form-hint { font-size: 10px; color: var(--text-mute); line-height: 1.4; }
 
 /* Wildcard spin button (during build) */
 .rw-wildcard-btn { background: transparent; border: 1px dashed color-mix(in srgb, var(--champion) 50%, var(--line)); border-radius: var(--r-md); color: var(--champion); font-size: var(--t-xs); font-weight: 700; padding: var(--sp-2) var(--sp-4); cursor: pointer; letter-spacing: .04em; margin-top: var(--sp-2); transition: background var(--dur-1), border-color var(--dur-1); }

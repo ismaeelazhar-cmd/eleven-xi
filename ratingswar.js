@@ -7,6 +7,15 @@
 
   var LINE_OF = { GK:"GK", CB:"DEF",RB:"DEF",LB:"DEF",RWB:"DEF",LWB:"DEF",
     CDM:"MID",CM:"MID",CAM:"MID",RM:"MID",LM:"MID", RW:"FWD",LW:"FWD",ST:"FWD" };
+  /* Formation Draft: slot indices 0=GK,1=RB,2=CB,3=CB,4=LB,5=CDM,6=CM,7=CM,8=RW,9=ST,10=LW */
+  var RW_FORMATIONS = [
+    { name:"4-3-3",   style:"Attacking",  bonusIdx:[8,9,10],  hint:"RW · ST · LW" },
+    { name:"5-3-2",   style:"Defensive",  bonusIdx:[1,2,3,4], hint:"RB · CB · CB · LB" },
+    { name:"4-2-3-1", style:"Possession", bonusIdx:[5,6,7],   hint:"CDM · CM · CM" },
+    { name:"4-4-2",   style:"Balanced",   bonusIdx:[2,3,6,9], hint:"CB · CB · CM · ST" },
+    { name:"3-5-2",   style:"Wide",       bonusIdx:[1,4,6,9], hint:"RB · LB · CM · ST" },
+    { name:"4-1-4-1", style:"Counter",    bonusIdx:[5,8,9,10],hint:"CDM · RW · ST · LW" }
+  ];
   /* fixed shared XI so both squads compare slot-for-slot */
   var SLOTS = [
     {k:"GK",  line:"GK"},
@@ -254,6 +263,7 @@
     if (RW.phase === "build")        return renderBuild(v);
     if (RW.phase === "onbuild")      return renderBuild(v);
     if (RW.phase === "blindswap")    return renderBlindSwap(v);
+    if (RW.phase === "formation")    return renderFormationDraft(v);
     if (RW.phase === "sharedpick")   return renderSharedPick(v);
     if (RW.phase === "waitopp")      return renderWaitOpp(v);
     if (RW.phase === "handoff")      return renderHandoff(v);
@@ -411,6 +421,8 @@
     RW.sharedPicked = {};
     RW.sharedPickTurn = 0;
     RW.sharedPendingPick = null;
+    RW.formations = RW.players.map(function(){ return null; });
+    RW.formationPassing = false;
     if (f.bestOf3 && RW.numPlayers === 2){
       RW.seriesWins = [0, 0]; RW.seriesMatch = 0;
     }
@@ -829,7 +841,7 @@
           RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
           RW.phase = "blindswap";
         } else {
-          RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+          goToReveal();
         }
       }
       render();
@@ -872,7 +884,7 @@
       if (RW.features.blindSwap){
         RW.cur=0; RW.swapDone=RW.players.map(function(){return false;});
         RW.swapSel=null; RW.swapTimeLeft=30; RW.blindSwapPassing=false; RW.phase="blindswap";
-      } else { RW.phase="reveal"; RW.revealStep=-1; computeResult(); }
+      } else { goToReveal(); }
       render(); return;
     }
 
@@ -1089,7 +1101,7 @@
       if (RW.cur < RW.numPlayers - 1){
         RW.cur++; RW.blindSwapPassing = true; RW.swapSel = null; RW.swapTimeLeft = 30;
       } else {
-        RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+        goToReveal();
       }
       render();
     }
@@ -1162,6 +1174,62 @@
     document.getElementById("rwSwapSkip").onclick = finishSwap;
   }
 
+  /* ---------- formation draft (before reveal, each player secretly picks a formation) ---------- */
+  function renderFormationDraft(v){
+    var P = RW.players[RW.cur];
+    if (RW.formationPassing){
+      v.innerHTML =
+        "<div class='wrap'><div class='rw-handoff'>"+
+          "<h2 class='rw-title'>Pass the device</h2>"+
+          "<p class='rw-sub'><strong>"+esc(P.name)+"</strong>, secretly pick your formation. Your chosen style gives tactical bonuses at the reveal.</p>"+
+          "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(P.name)+" — pick my formation →</button>"+
+        "</div></div>";
+      document.getElementById("rwGo").onclick = function(){ RW.formationPassing = false; render(); };
+      return;
+    }
+    var html = "<div class='wrap'><div class='rw-phase-screen'>"+
+      "<h2 class='rw-title'>Formation Draft</h2>"+
+      "<p class='rw-phase-sub'><strong>"+esc(P.name)+"</strong> — secretly pick your formation. You earn +1 point for each bonus position you win.</p>"+
+      "<div class='rw-form-grid'>";
+    RW_FORMATIONS.forEach(function(f, fi){
+      var sel = RW.formations[RW.cur] === fi;
+      html += "<button class='rw-form-card"+(sel?" rw-slot-selected":"")+"' data-fi='"+fi+"'>"+
+        "<span class='rw-form-name'>"+esc(f.name)+"</span>"+
+        "<span class='rw-form-style'>"+esc(f.style)+"</span>"+
+        "<span class='rw-form-hint'>+1: "+esc(f.hint)+"</span>"+
+      "</button>";
+    });
+    html += "</div>"+
+      "<button class='fl-btn rw-start' id='rwFormConfirm' "+(RW.formations[RW.cur]===null?"disabled":"")+">"+
+        (RW.cur < RW.numPlayers-1 ? "Confirm — pass to "+esc(RW.players[RW.cur+1].name)+" →" : "Confirm — start reveal →")+
+      "</button></div></div>";
+    v.innerHTML = html;
+    v.querySelectorAll(".rw-form-card").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        RW.formations[RW.cur] = parseInt(btn.getAttribute("data-fi"), 10);
+        var c = document.getElementById("rwFormConfirm"); if(c) c.disabled = false;
+        v.querySelectorAll(".rw-form-card").forEach(function(b){ b.classList.remove("rw-slot-selected"); });
+        btn.classList.add("rw-slot-selected");
+      });
+    });
+    document.getElementById("rwFormConfirm").onclick = function(){
+      if (RW.formations[RW.cur] === null) return;
+      if (RW.cur < RW.numPlayers - 1){ RW.cur++; RW.formationPassing = true; }
+      else { RW.phase = "reveal"; RW.revealStep = -1; computeResult(); }
+      render();
+    };
+  }
+
+  /* routes to formation draft (if on) then reveal */
+  function goToReveal(){
+    if (RW.features.formationDraft){
+      RW.cur = 0; RW.formationPassing = false; RW.formations = RW.players.map(function(){ return null; });
+      RW.phase = "formation";
+    } else {
+      RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+    }
+  }
+
   /* ---------- result computation ---------- */
   function computeResult(){
     var idxA = RW.curA!=null ? RW.curA : 0;
@@ -1179,10 +1247,12 @@
       var isXF = f.xfactor && RW.xfactorSlot === i;
       var capA = f.captain && RW.captains[idxA] === i;
       var capB = f.captain && RW.captains[idxB] === i;
+      var formA = f.formationDraft && RW.formations[idxA]!=null && (RW_FORMATIONS[RW.formations[idxA]].bonusIdx.indexOf(i)!==-1);
+      var formB = f.formationDraft && RW.formations[idxB]!=null && (RW_FORMATIONS[RW.formations[idxB]].bonusIdx.indexOf(i)!==-1);
       var pts = isXF ? 2 : 1;
-      if(win===1){ s1 += pts; if(capA) s1 += 2; }
-      else if(win===2){ s2 += pts; if(capB) s2 += 2; }
-      rows.push({slot:s.k.trim(), line:s.line, a:a, b:b, win:win, xfactor:isXF, capA:capA, capB:capB, aBanned:aBanned, bBanned:bBanned, pts:pts});
+      if(win===1){ s1 += pts; if(capA) s1 += 2; if(formA) s1 += 1; }
+      else if(win===2){ s2 += pts; if(capB) s2 += 2; if(formB) s2 += 1; }
+      rows.push({slot:s.k.trim(), line:s.line, a:a, b:b, win:win, xfactor:isXF, capA:capA, capB:capB, aBanned:aBanned, bBanned:bBanned, pts:pts, formA:formA, formB:formB});
     });
     RW.rows = rows; RW.score=[s1,s2];
   }
@@ -1194,8 +1264,8 @@
     var s1=0,s2=0;
     shown.forEach(function(r){
       var p = r.pts || 1;
-      if(r.win===1){ s1+=p; if(r.capA) s1+=2; }
-      else if(r.win===2){ s2+=p; if(r.capB) s2+=2; }
+      if(r.win===1){ s1+=p; if(r.capA) s1+=2; if(r.formA) s1+=1; }
+      else if(r.win===2){ s2+=p; if(r.capB) s2+=2; if(r.formB) s2+=1; }
     });
     var done = step >= RW.rows.length-1;
     var cards = shown.slice().reverse().map(function(r){
@@ -1204,6 +1274,8 @@
       if(r.xfactor) badges += "<span class='rw-badge xf'>×2</span>";
       if(r.capA)    badges += "<span class='rw-badge cap-a'>C</span>";
       if(r.capB)    badges += "<span class='rw-badge cap-b'>C</span>";
+      if(r.formA)   badges += "<span class='rw-badge form-a'>+1</span>";
+      if(r.formB)   badges += "<span class='rw-badge form-b'>+1</span>";
       var aName = r.aBanned ? "<span class='rw-ban'>banned</span>" : esc(shortName(r.a?r.a.n:"—"));
       var bName = r.bBanned ? "<span class='rw-ban'>banned</span>" : esc(shortName(r.b?r.b.n:"—"));
       var aRat  = r.aBanned ? "—" : (r.a?r.a.r:"–");
@@ -1332,6 +1404,7 @@
     RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
     if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
     RW.sharedPool = null; RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
+    RW.formations = RW.players.map(function(){ return null; }); RW.formationPassing = false;
     /* Don't re-run posban/captain — those are set for the whole series */
     RW.cur = 0; RW.phase = "poolselect"; render();
   }
