@@ -1071,6 +1071,8 @@
     yStrip.innerHTML = yitems.join(""); yStrip.style.cssText = "transform:translateY(0);transition:none";
   }
 
+  function ratingTierClass(r){ if(!r) return ""; return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red"; }
+
   /* Returns rerolls remaining for the current player.
      First spin (no current result) is always free.
      Each respin costs 1 from the player's 3-reroll budget. */
@@ -1216,7 +1218,7 @@
             ? '<span class="mp-locked-badge">'+esc(lockedByName||"✓")+'</span>'
             : noSlot
               ? '<span class="slot-tag">no slot</span>'
-              : '<span class="mp-r-badge">'+pl.r+'</span>'
+              : '<span class="mp-r-badge'+ratingTierClass(pl.r)+'">'+pl.r+'</span>'
           )+
         '</div>';
     });
@@ -1225,9 +1227,24 @@
     panel.innerHTML = html;
     panel.style.display = "";
 
-    /* Close button */
+    /* Close button — costs one respin if a spin result is showing.
+       At 0 rerolls the player must pick from the current squad. */
     var mpClose = panel.querySelector("#mpSqClose");
-    if (mpClose) mpClose.onclick = function() { panel.style.display = "none"; st.pendingPick = null; };
+    if (mpClose) mpClose.onclick = function() {
+      if (st.currentSpin) {
+        var left = rerollsLeft();
+        if (left === 0) {
+          if (typeof window.flToast === "function") window.flToast("No respins left — pick a player from this squad.");
+          return;
+        }
+        var cp = st.players[st.cur];
+        if (cp) cp.rerollsUsed = (cp.rerollsUsed||0) + 1;
+        var sb = document.getElementById("mpDraftSpin");
+        if (sb) updateSpinBtn(sb);
+      }
+      panel.style.display = "none";
+      st.pendingPick = null;
+    };
 
     /* Position chooser button handlers */
     if(st.pendingPick && st.pendingPick.spin===spin){

@@ -28,7 +28,7 @@
   function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
   function shortName(n){ var p=String(n).split(" "); return p.length>1?p[p.length-1]:n; }
-  function ratingTierClass(r){ if(!r) return ""; return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":""; }
+  function ratingTierClass(r){ if(!r) return ""; return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red"; }
 
   function buildPool(){
     if (POOL) return POOL;

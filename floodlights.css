@@ -617,17 +617,37 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 
 /* Rating tier on xi-rate (squad list) and rw-rev-rating (Duels reveal) */
 .xi-rate { font-weight: 800; font-size: 13px; border-radius: 4px; padding: 1px 5px; }
-.xi-rate.r-gold  { color: var(--champion); background: color-mix(in srgb, var(--champion) 15%, transparent); }
-.xi-rate.r-elite { color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
-.xi-rate.r-great { color: var(--p-violet-300); background: color-mix(in srgb, var(--primary) 12%, transparent); }
-.xi-rate.r-good  { color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
-/* default (below 75) keeps legacy gold from style.css */
+.xi-rate.r-gold   { color: var(--champion); background: color-mix(in srgb, var(--champion) 15%, transparent); }
+.xi-rate.r-elite  { color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
+.xi-rate.r-great  { color: var(--p-violet-300); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.xi-rate.r-good   { color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.xi-rate.r-amber  { color: #E8A020; background: color-mix(in srgb, #E8A020 12%, transparent); }
+.xi-rate.r-orange { color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.xi-rate.r-red    { color: #E04040; background: color-mix(in srgb, #E04040 12%, transparent); }
 
 /* Duels reveal row rating — tier colors */
-.rw-rev-rating.r-gold  { color: var(--champion) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--champion) 55%, transparent); }
-.rw-rev-rating.r-elite { color: var(--positive) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--positive) 50%, transparent); }
-.rw-rev-rating.r-great { color: var(--p-violet-300) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 50%, transparent); }
-.rw-rev-rating.r-good  { color: var(--warning) !important; text-shadow: 0 0 6px color-mix(in srgb, var(--warning) 45%, transparent); }
+.rw-rev-rating.r-gold   { color: var(--champion) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--champion) 55%, transparent); }
+.rw-rev-rating.r-elite  { color: var(--positive) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--positive) 50%, transparent); }
+.rw-rev-rating.r-great  { color: var(--p-violet-300) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 50%, transparent); }
+.rw-rev-rating.r-good   { color: var(--warning) !important; text-shadow: 0 0 6px color-mix(in srgb, var(--warning) 45%, transparent); }
+.rw-rev-rating.r-amber  { color: #E8A020 !important; text-shadow: 0 0 6px color-mix(in srgb, #E8A020 45%, transparent); }
+.rw-rev-rating.r-orange { color: var(--warning) !important; text-shadow: 0 0 6px color-mix(in srgb, var(--warning) 45%, transparent); }
+.rw-rev-rating.r-red    { color: #E04040 !important; text-shadow: 0 0 6px color-mix(in srgb, #E04040 45%, transparent); }
+
+/* Player pop-out squad panel — rating badges with solid background + tier color */
+.mp-r-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; padding: 2px 6px; border-radius: 5px;
+  font-weight: 800; font-size: var(--t-xs); font-variant-numeric: tabular-nums;
+  background: var(--surface-3); color: var(--text-mute);
+}
+.mp-r-badge.r-gold   { background: color-mix(in srgb, var(--champion) 22%, var(--surface-2)); color: var(--champion); }
+.mp-r-badge.r-elite  { background: color-mix(in srgb, var(--positive) 18%, var(--surface-2)); color: var(--positive); }
+.mp-r-badge.r-great  { background: color-mix(in srgb, var(--primary) 22%, var(--surface-2)); color: var(--p-violet-300); }
+.mp-r-badge.r-good   { background: color-mix(in srgb, var(--warning) 15%, var(--surface-2)); color: var(--warning); }
+.mp-r-badge.r-amber  { background: color-mix(in srgb, #E8A020 18%, var(--surface-2)); color: #E8A020; }
+.mp-r-badge.r-orange { background: color-mix(in srgb, var(--warning) 18%, var(--surface-2)); color: var(--warning); }
+.mp-r-badge.r-red    { background: color-mix(in srgb, #E04040 18%, var(--surface-2)); color: #E04040; }
 
 /* Spin wheel machine — remap legacy green glow to Floodlights cyan */
 .machine {
