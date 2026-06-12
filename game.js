@@ -1422,6 +1422,8 @@
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("goCL").addEventListener("click", function () { if (squad.length === XI_SIZE) runCLSim(clFormat); });
   $("setupBack").addEventListener("click", function () { showView("home"); });
+  $("draftHomeBtn").addEventListener("click", function () { showView("home"); });
+  $("resultsHomeBtn").addEventListener("click", function () { showView("home"); });
   $("startBtn").addEventListener("click", startDraft);
   Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("home"); }); });
 

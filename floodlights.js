@@ -305,11 +305,18 @@
     if(rw.length){ rw.forEach(function(s){ push(s.querySelector('.pos'),s.querySelector('.rw-slot-name'),s.querySelector('.rw-slot-meta')); }); return out; }
     var tc=document.querySelectorAll('.mp-tc-row');
     if(tc.length){ tc.forEach(function(s){ push(s.querySelector('.mp-tc-pos'),s.querySelector('.mp-tc-name'),null); }); if(out.length) return out; }
+    // DVC draft — only the user's panel (not CPU panel), only filled rows
+    var dvcRows=Array.from(document.querySelectorAll('.dvc-xi-panel:not(.dvc-cpu-xi) .dvc-xi-list .dvc-xi-row:not(.empty)')).filter(function(r){ return r.offsetParent!==null; });
+    if(dvcRows.length){ dvcRows.forEach(function(r){ push(r.querySelector('.pos'),r.querySelector('.dvc-xi-name'),null); }); if(out.length) return out; }
     var dots=document.querySelectorAll('.pitch .pdot.filled');
     dots.forEach(function(d){ push(d.querySelector('.dot-pos'),d.querySelector('.dot-name'),null); });
     return out;
   }
-  function hasContext(){ return !!document.querySelector('.pitch .pdot.filled, .xi-list .xi-row:not(.empty), #rwView .rw-slot.filled, .mp-tc-row'); }
+  function hasContext(){
+    // Only count elements that are actually visible — elements inside display:none have offsetParent===null
+    var els = document.querySelectorAll('.pitch .pdot.filled, .xi-list .xi-row:not(.empty), #rwView .rw-slot.filled, .mp-tc-row, .dvc-xi-panel:not(.dvc-cpu-xi) .dvc-xi-row:not(.empty)');
+    return Array.prototype.some.call(els, function(el){ return el.offsetParent !== null; });
+  }
 
   var fab, panel, open=false;
   function ensure(){

@@ -13,7 +13,7 @@ _Last checkpoint: T1+T2 COMPLETE. T3 UI pass complete. Cache wcxi-v138._
 | T1: Fix spin wheel all modes | ✅ DONE | Root cause: `W is not defined` — `W.sfx` → `window.sfx` in game.js/league.js/dvc.js |
 | T2: DVC uses spin wheel | ✅ DONE | spin-reel mechanic, CPU auto-spins. User to test. |
 | T3: UI improvement pass | ✅ DONE | Gold→violet hover/focus/active; DVC compact reels; touch targets; see §33 |
-| T4: Squad FAB visibility + Back to Start | ⏳ TODO | FAB only during active draft; back button on all screens |
+| T4: Squad FAB visibility + Back to Start | ✅ DONE | FAB offsetParent check + DVC scrape; ← Home on draft+results; see §34 |
 
 ---
 
@@ -23,7 +23,7 @@ _Last checkpoint: T1+T2 COMPLETE. T3 UI pass complete. Cache wcxi-v138._
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v136`
-- **Current file versions:** style.css v80, tokens.css v74, floodlights.css v116, game.js v97, multiplayer.js v94, floodlights.js v93, ratingswar.js v103, draftvscomputer.js v10, league.js v84, sw.js wcxi-v138
+- **Current file versions:** style.css v80, tokens.css v74, floodlights.css v116, game.js v98, multiplayer.js v94, floodlights.js v94, ratingswar.js v103, draftvscomputer.js v10, league.js v84, sw.js wcxi-v139
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`
@@ -929,3 +929,24 @@ Recommended domains (check availability at Namecheap/Cloudflare):
 **`floodlights.css` — active state background override**
 - `.formation-opt.active`, `.manager-opt.active`, `.seg-opt.active` etc. block extended to also set `background: color-mix(in srgb, var(--primary) 13%, var(--surface-2)) !important`
 - `#dvcView` added to all compact-reel-sizing rules (machine, reels, reel-box, reel-label, reel height/items, spin button) — DVC reels now use 58px compact format matching CL/League/MP
+
+---
+
+## §34. Task 4 — Squad FAB visibility + Back to Start ✅
+
+**Status: COMPLETE** | Files: `floodlights.js v94`, `game.js v98`, `index.html`, `sw.js wcxi-v139`
+
+### FAB visibility fix (`floodlights.js`)
+- `hasContext()` rewritten to check `el.offsetParent !== null` for all candidate elements — FAB no longer shows on results/home screens where picked players remain in hidden DOM nodes
+- Added `.dvc-xi-panel:not(.dvc-cpu-xi) .dvc-xi-row:not(.empty)` to selector — FAB now appears during DVC draft when user picks players
+- DVC result screen uses `.dvc-result-xi` container instead of `.dvc-xi-panel`, so result rows are excluded
+- `scrape()` updated: added DVC branch — reads `.dvc-xi-panel:not(.dvc-cpu-xi) .dvc-xi-list .dvc-xi-row:not(.empty)` for the dock "Your XI" list; uses `.dvc-xi-name` for player names
+- Result: FAB visible during WC/CL/Euro draft, League draft, DVC draft, MP draft, Duels build. Hidden on home, setup, results screens.
+
+### Back to Start buttons (`index.html` + `game.js`)
+- Added `<button class="back" id="draftHomeBtn">← Home</button>` inside `draft-head` (top of WC/CL/Euro draft screen)
+- Added `<button class="back" id="resultsHomeBtn">← Home</button>` to `results-head` (top of WC/CL/Euro results screen)  
+- Both wired in `game.js` init: click → `showView("home")`
+- DVC already has `← Home` at every step (setup/draft/result) ✅
+- League already has `← Home`/`← Leagues`/`← Setup` back chain ✅
+- Coverage: every screen now has an unambiguous "← Home" escape hatch
