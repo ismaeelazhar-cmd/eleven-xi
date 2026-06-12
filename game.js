@@ -275,6 +275,7 @@
   function showView(name) {
     Object.keys(views).forEach(function (k) { views[k].style.display = "none"; });
     views[name].style.display = "block";
+    document.body.setAttribute("data-view", name);
     if (window.scrollTo) window.scrollTo(0, 0);
   }
 
