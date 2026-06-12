@@ -276,9 +276,8 @@
     Object.keys(views).forEach(function (k) { views[k].style.display = "none"; });
     views[name].style.display = "block";
     document.body.setAttribute("data-view", name);
-    // Close the squad dock whenever the view changes
-    var dock = document.getElementById("flSquadDock");
-    if (dock) dock.classList.remove("show");
+    // Close, wipe and reset the squad dock whenever the view changes
+    if (window.flResetSquadDock) window.flResetSquadDock();
     if (window.scrollTo) window.scrollTo(0, 0);
   }
 

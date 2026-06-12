@@ -350,6 +350,13 @@
     panel.classList.add("show"); open=true;
   }
   function closeDock(){ if(panel) panel.classList.remove("show"); open=false; }
+  function resetDock(){
+    closeDock();
+    if(panel){ var b=document.getElementById("flDockBody"); if(b) b.innerHTML=""; }
+    _lastN=null; _lastShow=null;
+    if(fab){ fab.classList.remove("show"); var n=document.getElementById("flSquadN"); if(n) n.textContent=""; }
+  }
+  W.flResetSquadDock = resetDock;
 
   var _lastShow=null, _lastN=null, _deb=null;
   function refreshFab(){
