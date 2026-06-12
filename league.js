@@ -283,12 +283,24 @@
           '</span><span class="mgr-style-tag">tactical style</span></div>';
       }
     }
+    function mgrBonusHTML(m){
+      if(!m||m.id==="none") return "";
+      var p=[];
+      if(m.atk>0) p.push('<span class="mgr-bonus mgr-atk-pos">+'+m.atk+' ATK</span>');
+      if(m.atk<0) p.push('<span class="mgr-bonus mgr-atk-neg">'+m.atk+' ATK</span>');
+      if(m.def>0) p.push('<span class="mgr-bonus mgr-def-pos">+'+m.def+' DEF</span>');
+      if(m.def<0) p.push('<span class="mgr-bonus mgr-def-neg">'+m.def+' DEF</span>');
+      if(m.ko>0)  p.push('<span class="mgr-bonus mgr-ko-pos">+'+m.ko+' KO</span>');
+      return p.length ? '<div class="mgr-bonus-row">'+p.join("")+'</div>' : "";
+    }
     function refreshMgrDesc(){
       var d=eid("lgMgrDesc"); if(!d) return;
       var m=LS.manager||MGRS[0];
-      d.textContent=(!m||m.id==="none")
-        ? "Pick a tactical style above, or spin for a famous manager."
-        : m.emoji+" "+m.name+" — "+m.desc;
+      if(!m||m.id==="none"){
+        d.innerHTML="Pick a tactical style above, or spin for a famous manager.";
+      } else {
+        d.innerHTML=esc(m.emoji+" "+m.name+" — "+m.desc)+mgrBonusHTML(m);
+      }
     }
     refreshMgrStrip(); refreshMgrDesc();
 

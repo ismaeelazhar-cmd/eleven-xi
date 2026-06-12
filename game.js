@@ -341,10 +341,21 @@
       });
     });
   }
+  function mgrBonusHTML(st) {
+    if (!st || st.id === "none") return "";
+    var parts = [];
+    if (st.atk > 0) parts.push('<span class="mgr-bonus mgr-atk-pos">+' + st.atk + " ATK</span>");
+    if (st.atk < 0) parts.push('<span class="mgr-bonus mgr-atk-neg">' + st.atk + " ATK</span>");
+    if (st.def > 0) parts.push('<span class="mgr-bonus mgr-def-pos">+' + st.def + " DEF</span>");
+    if (st.def < 0) parts.push('<span class="mgr-bonus mgr-def-neg">' + st.def + " DEF</span>");
+    if (st.ko  > 0) parts.push('<span class="mgr-bonus mgr-ko-pos">+' + st.ko + " KO</span>");
+    return parts.length ? '<div class="mgr-bonus-row">' + parts.join("") + "</div>" : "";
+  }
+
   function renderManager() {
     if (managerId === "none") {
       elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span><span class="mgr-style-tag">pick a style or spin</span></div>';
-      elManagerDesc.textContent = "Pick a tactical style above, or spin the wheel for a famous manager.";
+      elManagerDesc.innerHTML = "Pick a tactical style above, or spin the wheel for a famous manager.";
     } else {
       var st = currentManager();
       if (managerName) {
@@ -353,7 +364,7 @@
         elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big"><span class="mgr-icon">' + (MGR_ICONS[st.id] || "") + '</span>' + esc(st.name) +
           '</span><span class="mgr-style-tag">tactical style</span></div>';
       }
-      elManagerDesc.textContent = st.name + " — " + st.desc;
+      elManagerDesc.innerHTML = esc(st.name) + " — " + esc(st.desc) + mgrBonusHTML(st);
     }
   }
   function saveManagerPref(){

@@ -307,12 +307,13 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v103
-- game.js: v88 (euro mode, modeLabel, goWorldCup euro)
+- floodlights.css: v104
+- game.js: v89 (euro mode, manager bonus HTML)
+- league.js: v78 (manager bonus HTML)
 - multiplayer.js: v92
 - floodlights.js: v89
 - draftvscomputer.js: v3 (W/L/D record added)
-- sw.js: wcxi-v118
+- sw.js: wcxi-v119
 
 ## 14. TASK 1 — DVC W/L/D RECORD ✅
 - localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`
@@ -335,6 +336,14 @@ _All pop-out panels, all game modes._
 - Opponent field: uses `window.NATIONS` (all international teams) — same as WC, appropriate for Euro
 - Score system: uses `wcScore()` — same formula as World Cup, saves to localStorage leaderboard
 - Note: EURO_DATA uses `p` (broad position) same as WC data — no data structure issues
+
+## 17. TASK 4 — MANAGER BONUS NUMERIC DISPLAY ✅
+- `mgrBonusHTML(st)` added to game.js: renders coloured chips (+4 ATK, -2 DEF, +6 KO) based on style object
+- `renderManager()` in game.js: changed from `.textContent` to `.innerHTML`, appends bonus chip row
+- `mgrBonusHTML()` and `refreshMgrDesc()` updated in league.js — same chip system
+- CSS added to floodlights.css: `.mgr-bonus-row`, `.mgr-bonus`, `.mgr-atk-pos/neg`, `.mgr-def-pos/neg`, `.mgr-ko-pos`
+- Colours: ATK+ = coral/warning, DEF+ = cyan/positive, KO+ = gold/champion, neg = muted
+- Applied in: WC/CL/Euro setup (game.js), League setup (league.js)
 
 ## 15. TASK 2 — EURO HOME CARD ✅
 - Added `fl-mode m-euro` button (`homeEuro`) to home screen after vs Computer card

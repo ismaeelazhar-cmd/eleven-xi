@@ -849,6 +849,15 @@ body.light .xi-rate.r-good     { color: #4A5568; background: color-mix(in srgb, 
 .dvc-rec-val { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 .dvc-rec-pct { font-size: var(--t-xs); color: var(--text-mute); background: var(--surface-2); border-radius: var(--r-pill); padding: 2px 7px; }
 .dvc-rec-none { color: var(--text-mute); font-style: italic; }
+
+/* Manager bonus chips — shown below desc in setup screens */
+.mgr-bonus-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
+.mgr-bonus { font-size: 11px; font-weight: 700; border-radius: var(--r-sm); padding: 2px 7px; font-variant-numeric: tabular-nums; }
+.mgr-atk-pos { background: color-mix(in srgb, var(--warning) 16%, var(--surface-2)); color: var(--warning); }
+.mgr-atk-neg { background: color-mix(in srgb, var(--text-mute) 14%, var(--surface-2)); color: var(--text-mute); }
+.mgr-def-pos { background: color-mix(in srgb, var(--positive) 16%, var(--surface-2)); color: var(--positive); }
+.mgr-def-neg { background: color-mix(in srgb, var(--text-mute) 14%, var(--surface-2)); color: var(--text-mute); }
+.mgr-ko-pos  { background: color-mix(in srgb, var(--champion) 16%, var(--surface-2)); color: var(--champion); }
 .dvc-result-pitches { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
 @media (max-width: 600px) { .dvc-result-pitches { grid-template-columns: 1fr; } }
 .dvc-result-xi { background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); }
