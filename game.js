@@ -1273,6 +1273,23 @@
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += scoreBannerHTML(r.sc, wc.userResult);
       html += statsSummaryHTML(wc.userStats);
+      /* Group phase journey (shown for all WC/CL result screens) */
+      var gPhase = r.phaseLabel || "Group stage";
+      if (r.groupMatches && r.groupMatches.length) {
+        html += '<h3 class="sec">Your ' + esc(gPhase.toLowerCase()) + '</h3>';
+        html += '<div class="journey">' + r.groupMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
+        /* Show the user's group table for old-format CL or WC */
+        if (wc.groups) {
+          var ug2 = null;
+          wc.groups.forEach(function (g) { if (g.table.some(function (row) { return row.team.isUser; })) ug2 = g; });
+          if (ug2) html += '<h4 class="sub-sec">Your group · Group ' + ug2.name + "</h4>" + renderGroups([ug2]);
+        }
+      }
+      /* Knockout journey */
+      if (r.koMatches && r.koMatches.length) {
+        html += '<h3 class="sec">Knockouts</h3>';
+        html += '<div class="journey">' + r.koMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
+      }
       html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
       html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
     }

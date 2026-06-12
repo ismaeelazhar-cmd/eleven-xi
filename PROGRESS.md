@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-12 ALL COMPLETE. Cache wcxi-v127. Push to GitHub done. Next: Task 13 (CL improvements)._
+_Last checkpoint: Tasks 1-13 ALL COMPLETE. Cache wcxi-v128. Push to GitHub done. Next: Task 14 (League improvements: Premier League, surprise events, cup)._
 
 ---
 
@@ -308,7 +308,7 @@ _All pop-out panels, all game modes._
 
 ## 12. CURRENT FILE VERSIONS
 - floodlights.css: v108 (group preview CSS)
-- game.js: v92 (WC group preview interstitial)
+- game.js: v93 (journey section in WC/CL result screen)
 - engine.js: v73 (buildField/seedGroups exported, runWorldCupFromGroups added)
 - league.js: v80 (share card redesign with squad + GD)
 - multiplayer.js: v92
@@ -316,7 +316,18 @@ _All pop-out panels, all game modes._
 - draftvscomputer.js: v6 (CPU personality + rematch)
 - ratingswar.js: v101 (WCXI_addScore on completed duel/series)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v127
+- sw.js: wcxi-v128
+
+## 25. TASK 13 — CL IMPROVEMENTS ✅
+- CL-1 (real squads): DEFERRED — high effort, needs extensive data addition
+- CL-2 (format explanation): ALREADY DONE — CL_FORMATS.desc + clFormatDesc element show descriptions
+- CL-3 (richer result screen): DONE THIS SESSION
+  - Result stage in renderWCStage() now shows full journey:
+    - "Your group stage" section with match cards (all group phase matches)
+    - Group table for user's group (old-format CL and WC with groups)
+    - "Knockouts" section with KO match cards
+    - Then the bracket (was already shown)
+  - This applies to WC, CL (all formats), and Euro — any mode using renderWCStage()
 
 ## 24. TASKS 11+12 — DVC FORMATIONS + WC IMPROVEMENTS ✅
 **Task 11 (DVC-3)**: ALREADY DONE — DVC_FORMATIONS already has 4 formations (4-3-3, 4-4-2, 4-2-3-1, 3-5-2) from a previous session.
