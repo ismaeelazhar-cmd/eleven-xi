@@ -16,7 +16,7 @@
      Each module's own goHome handles cleanup; this covers the logo tap
      from any screen without needing per-module hooks. */
   W.flGoHome = function () {
-    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView"];
+    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView"];
     ALL.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = "none"; });
     var home = document.getElementById("homeView");
     if (home) home.style.display = "";
@@ -44,6 +44,15 @@
     if (dvcBtn) {
       dvcBtn.addEventListener("click", function () {
         if (typeof window.startDraftVsComputer === "function") window.startDraftVsComputer();
+      });
+    }
+
+    // Euros home card — opens Multiplayer pre-set to Euro data (solo Euro added in Task 3)
+    var euroBtn = document.getElementById("homeEuro");
+    if (euroBtn) {
+      euroBtn.addEventListener("click", function () {
+        if (typeof window.startEuroMode === "function") { window.startEuroMode(); return; }
+        if (typeof window.openMultiplayerWithMode === "function") window.openMultiplayerWithMode("euro");
       });
     }
 

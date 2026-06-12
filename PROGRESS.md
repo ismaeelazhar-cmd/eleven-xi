@@ -307,10 +307,12 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v102
+- floodlights.css: v103
 - game.js: v87
+- multiplayer.js: v92
+- floodlights.js: v88
 - draftvscomputer.js: v3 (W/L/D record added)
-- sw.js: wcxi-v116
+- sw.js: wcxi-v117
 
 ## 14. TASK 1 — DVC W/L/D RECORD ✅
 - localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`
@@ -320,6 +322,16 @@ _All pop-out panels, all game modes._
 - Result screen: record shown in verdict banner (updated after this game)
 - CSS added: `.dvc-record`, `.dvc-rec-label`, `.dvc-rec-val`, `.dvc-rec-pct`, `.dvc-rec-none`, `.dvc-verdict-record`
 - Leaderboard tab integration deferred to Task 8 (OG-5)
+
+## 15. TASK 2 — EURO HOME CARD ✅
+- Added `fl-mode m-euro` button (`homeEuro`) to home screen after vs Computer card
+- Shield SVG icon with checkmark — distinct from other mode icons
+- CSS: `.m-euro { --mode-accent: #4A90E2; }` (European blue)
+- Animation stagger: added `nth-child(6) { animation-delay: 280ms; }` to floodlights.css
+- `W.openMultiplayerWithMode(mode)` exposed in multiplayer.js — sets `st.mpMode` then opens MP
+- Euro card click handler in floodlights.js: checks for `window.startEuroMode` (Task 3), falls back to MP with euro pre-selected
+- `euroView` added to `flGoHome` hidden-views list for Task 3 solo mode
+- Hint text: "1980–2024 · 12 tournaments · solo & multiplayer"
 
 ## 12. REMAINING BACKLOG
 - Lazy-load data per mode (~5 MB eager load)

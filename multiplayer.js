@@ -244,6 +244,11 @@
     if (!root) return;
     var btn = eid("homeMP");
     if (btn) btn.addEventListener("click", openMultiplayer);
+    /* Expose for Euro card — opens MP pre-set to a specific pool */
+    W.openMultiplayerWithMode = function(mode) {
+      if (mode && MP_MODE_DATA[mode]) st.mpMode = mode;
+      openMultiplayer();
+    };
     var lbtn = eid("homeLeague");
     if (lbtn) lbtn.addEventListener("click", function(){
       ["homeView","setupView","draftView","resultsView","boardView"].forEach(function(id){

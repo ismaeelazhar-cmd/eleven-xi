@@ -116,6 +116,7 @@ header h1 {
 .m-lg   { --mode-accent: var(--positive); }
 .m-mp   { --mode-accent: var(--p-violet-300); }
 .m-dvc  { --mode-accent: var(--warning); }
+.m-euro { --mode-accent: #4A90E2; }
 .m-rw   { --mode-accent: var(--warning); }
 
 .home-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
@@ -982,6 +983,7 @@ body.light .xi-rate.r-good     { color: #4A5568; background: color-mix(in srgb, 
 .fl-modes .fl-mode:nth-child(3) { animation-delay: 130ms; }
 .fl-modes .fl-mode:nth-child(4) { animation-delay: 180ms; }
 .fl-modes .fl-mode:nth-child(5) { animation-delay: 230ms; }
+.fl-modes .fl-mode:nth-child(6) { animation-delay: 280ms; }
 .fl-mode:hover { box-shadow: var(--sh-2), 0 0 0 1px color-mix(in srgb, var(--mode-accent, var(--primary)) 50%, transparent); }
 .fl-mode:hover .fl-mode-ico { transform: scale(1.14) translateY(-2px); }
 .fl-mode:active { transform: translateY(-1px) scale(.99); transition-duration: 60ms; }
