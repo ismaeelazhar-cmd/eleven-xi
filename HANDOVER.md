@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: Catch-up audit complete. Cache wcxi-v104. game.js v85, style.css v79, tokens.css v74, floodlights.css v91, floodlights.js v86, multiplayer.js v89, ratingswar.js v94. Next: Phase 2 — 10 Duels features._
+_Living document — update after every significant change. Last updated: Phase 2 Duels features complete. Cache wcxi-v109. game.js v85, style.css v79, tokens.css v74, floodlights.css v96, floodlights.js v86, multiplayer.js v89, ratingswar.js v99. All 10 Duels feature toggles implemented._
 
 ---
 
@@ -87,24 +87,29 @@ All 16 checklist items addressed (13 done, 3 deferred). Committed 7423850.
 - Cold load lazy-loading (~5 MB eager; significant architecture refactor)
 - Staging environment (GitHub branch + separate Pages URL)
 
-## 7. Features outstanding — NEXT PRIORITY
-**Phase 2: 10 Duels toggles** (all default OFF, all in Duels setup/lobby menu, each with ⓘ tooltip):
-1. X-Factor Slot — 1 random position counts double at reveal
-2. Captain — designate 1 position; +2 if won
-3. Position Ban — each player bans 1 slot before building
-4. Steal Power-Up — once, steal opponent's best player
-5. Blind Swap — after lock, secretly swap 2 positions (timer)
-6. Wildcard Spin — 1 mystery spin from full global pool
-7. Best of 3 Series — first to 2 wins takes the series
-8. Draft from Shared Pool — live pick-order draft, no dupes
-9. Async Online Mode — share-link async build
-10. Formation Draft — secret formation assignment before reveal
+## 7. Features outstanding
+**Phase 2 Duels — ALL 10 DONE** (commit 51c7a1e):
+1. ✅ X-Factor Slot — ×2 badge, computeResult doubles pts for that slot
+2. ✅ Captain — renderCaptain phase, +2 bonus, C badge in reveal
+3. ✅ Position Ban — renderPosBan phase, banned slot = 0 rating
+4. ✅ Steal Power-Up — steal buttons in reveal, copies opponent's best revealed pick
+5. ✅ Blind Swap — renderBlindSwap phase after build, 30s countdown, auto-advance
+6. ✅ Wildcard Spin — bonus button in build, full global pool, one-use per player
+7. ✅ Best of 3 Series — series score tracking, Match N → button, rwSeriesNextMatch
+8. ✅ Draft from Shared Pool — renderSharedPick, alternating picks, no duplicates
+9. ✅ Async Online Mode — URL btoa/atob encode, share link, P2 accepts + builds, reveals
+10. ✅ Formation Draft — renderFormationDraft before reveal, 6 formations, +1 tactical bonus
 
-**Also outstanding:**
+**Phase flow (all features on):**
+`intro → posban → captain → poolselect → build → blindswap → formation → reveal → result`
+
+**Remaining backlog:**
 - Lazy-load data per mode (~5 MB eager load)
 - Animations & 3D pass (card flips, transitions, confetti)
 - Online Draft Tournament (only Duels synced online currently)
 - Automate cache versioning
+- Supabase persistent leaderboard (deferred)
+- Staging environment (deferred)
 
 ## 8. Decisions log (key — full in DECISIONS.md)
 - **Floodlights** chosen (most distinctive/premium/durable; furthest from 38-0).
