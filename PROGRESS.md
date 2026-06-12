@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-15 ALL COMPLETE. Cache wcxi-v130. Push to GitHub done. Next: Task 16 (Duels improvements)._
+_Last checkpoint: Tasks 1-16 ALL COMPLETE. Cache wcxi-v131. Push to GitHub done. Next: Task 17 (Progression hooks and lazy loading)._
 
 ---
 
@@ -307,16 +307,39 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v110 (MP autofill, squad reveal, history CSS)
+- floodlights.css: v111 (Duels presets, resume banner, history CSS)
 - game.js: v93 (journey section in WC/CL result screen)
 - engine.js: v73 (buildField/seedGroups exported, runWorldCupFromGroups added)
 - league.js: v81 (Premier League + surprise event before/after panels)
 - multiplayer.js: v93 (auto-fill, squad reveal, win tracking)
 - floodlights.js: v91 (home stats + HTP overlay)
 - draftvscomputer.js: v6 (CPU personality + rematch)
-- ratingswar.js: v101 (WCXI_addScore on completed duel/series)
+- ratingswar.js: v102 (Duels presets, series persistence, result history)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v130
+- sw.js: wcxi-v131
+
+## 28. TASK 16 — DUELS IMPROVEMENTS ✅
+- D-1 (Feature presets): DONE
+  - 3 preset buttons at top of feature section: Quick (posBan+captain), Standard (5 features), Full Rules (8 features, excludes asyncOnline)
+  - Active preset highlighted in violet; clicking preset sets all features and re-renders
+  - `activePresetId()` helper checks exact match against all 10 keys
+  - CSS: `.rw-presets`, `.rw-preset-btn`, `.rw-preset-label`, `.rw-preset-desc`, `.rw-preset-active`
+- D-2 (Strategy depth): DEFERRED — high effort structural rework, documented
+- D-3 (Bo3 series persistence): DONE
+  - `wcxi_duel_series` localStorage key; 4-hour TTL
+  - Saved after each match via `rwSeriesNextMatch()` → `_saveDuelSeries()`
+  - Saved state: features, numPlayers, player names, matchResults, seriesMatch, captains, bannedSlots
+  - Series resume banner shown on Duels intro if saved + not expired: shows series score, match number
+  - "Resume →" restores full RW state, jumps to poolselect phase
+  - "Discard" clears saved state; "Start" also clears on new game
+  - Series cleared when series completes (isCompletedDuel + seriesDone)
+  - CSS: `.rw-resume-banner`, `.rw-resume-score`, `.rw-resume-hint`, `.rw-resume-btns`
+- D-4 (Result history): DONE
+  - `wcxi_duel_history` localStorage key; last 5 results
+  - Saved alongside leaderboard save in `renderResult()` when `isCompletedDuel && !_savedToBoard`
+  - Entry: `{ts, winner, loser, score (e.g. "2-0" or "11-8"), isBo3}`
+  - Shown at bottom of Duels intro screen: winner (gold), vs loser, score, date
+  - CSS: `.rw-duel-history`, `.rw-hist-head`, `.rw-hist-row`, `.rw-hist-winner`, `.rw-hist-vs`, `.rw-hist-score`, `.rw-hist-date`
 
 ## 27. TASK 15 — MULTIPLAYER IMPROVEMENTS ✅
 - MP-1 (Squad reveal post-tournament): DONE

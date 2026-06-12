@@ -87,6 +87,62 @@
 
   var DEFAULT_FEATURES = { xfactor:false, captain:false, posBan:false, steal:false, blindSwap:false, wildcard:false, bestOf3:false, sharedPool:false, asyncOnline:false, formationDraft:false };
 
+  /* ── D-1: Feature presets ────────────────────────────────────────── */
+  var DUEL_PRESETS = [
+    { id:"quick",    label:"Quick",    desc:"Just the essentials",
+      f:{ posBan:true, captain:true, xfactor:false, steal:false, blindSwap:false, wildcard:false, bestOf3:false, sharedPool:false, asyncOnline:false, formationDraft:false } },
+    { id:"standard", label:"Standard", desc:"Balanced house rules",
+      f:{ posBan:true, captain:true, xfactor:true, steal:false, blindSwap:false, wildcard:true, bestOf3:false, sharedPool:true, asyncOnline:false, formationDraft:false } },
+    { id:"full",     label:"Full Rules", desc:"All features on",
+      f:{ posBan:true, captain:true, xfactor:true, steal:true, blindSwap:true, wildcard:true, bestOf3:true, sharedPool:true, asyncOnline:false, formationDraft:true } }
+  ];
+  function activePresetId(){
+    for(var i=0;i<DUEL_PRESETS.length;i++){
+      var p=DUEL_PRESETS[i]; var match=true;
+      for(var k in DEFAULT_FEATURES){ if((!!RW.features[k]) !== (!!p.f[k])){ match=false; break; } }
+      if(match) return p.id;
+    }
+    return null;
+  }
+
+  /* ── D-3: Bo3 series persistence ────────────────────────────────── */
+  var DUEL_SERIES_KEY = "wcxi_duel_series";
+  var DUEL_SERIES_TTL = 4 * 60 * 60 * 1000; // 4 hours
+  function _saveDuelSeries(){
+    if(!RW || !RW.features || !RW.features.bestOf3 || RW.numPlayers !== 2) return;
+    var state = { ts: Date.now(), features: Object.assign({}, RW.features),
+      numPlayers: RW.numPlayers,
+      players: RW.players.map(function(p){ return { name: p.name }; }),
+      matchResults: (RW.matchResults||[]).slice(),
+      seriesMatch: RW.seriesMatch||0,
+      captains: (RW.captains||[]).slice(),
+      bannedSlots: (RW.bannedSlots||[]).slice() };
+    try{ localStorage.setItem(DUEL_SERIES_KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function _loadDuelSeries(){
+    try{
+      var s = JSON.parse(localStorage.getItem(DUEL_SERIES_KEY)||"null");
+      if(!s) return null;
+      if(Date.now() - (s.ts||0) > DUEL_SERIES_TTL){ localStorage.removeItem(DUEL_SERIES_KEY); return null; }
+      return s;
+    }catch(e){ return null; }
+  }
+  function _clearDuelSeries(){ try{ localStorage.removeItem(DUEL_SERIES_KEY); }catch(e){} }
+
+  /* ── D-4: Duel result history ────────────────────────────────────── */
+  var DUEL_HISTORY_KEY = "wcxi_duel_history";
+  function _saveDuelHistory(entry){
+    var hist = [];
+    try{ hist = JSON.parse(localStorage.getItem(DUEL_HISTORY_KEY)||"[]"); }catch(e){}
+    if(!Array.isArray(hist)) hist = [];
+    hist.unshift(entry);
+    if(hist.length > 5) hist = hist.slice(0,5);
+    try{ localStorage.setItem(DUEL_HISTORY_KEY, JSON.stringify(hist)); }catch(e){}
+  }
+  function _loadDuelHistory(){
+    try{ return JSON.parse(localStorage.getItem(DUEL_HISTORY_KEY)||"[]"); }catch(e){ return []; }
+  }
+
   W.startDuels = function(){
     /* Intercept async challenge URL */
     if (checkAndLoadAsyncChallenge()){ hideOthers(); view().style.display=""; if(W.scrollTo) W.scrollTo(0,0); render(); return; }
@@ -328,7 +384,19 @@
       if (i < n-1 && n===2) nameFields += "<div class='rw-vs-badge'>VS</div>";
     }
     var formatHint = n===3 ? "Round robin · 3 matches" : n===4 ? "Bracket · semi-finals + final" : "Head-to-head · 1 match";
-    var featHTML = "<div class='rw-features'><div class='rw-feat-title'>House rules <span class='rw-feat-sub'>all off by default</span></div>";
+
+    /* D-1: Preset buttons */
+    var activePreset = activePresetId();
+    var presetsHTML = "<div class='rw-presets'>";
+    DUEL_PRESETS.forEach(function(p){
+      presetsHTML += "<button class='rw-preset-btn"+(activePreset===p.id?" rw-preset-active":"")+"' data-preset='"+p.id+"'>"+
+        "<span class='rw-preset-label'>"+esc(p.label)+"</span>"+
+        "<span class='rw-preset-desc'>"+esc(p.desc)+"</span>"+
+        "</button>";
+    });
+    presetsHTML += "</div>";
+
+    var featHTML = "<div class='rw-features'>"+presetsHTML+"<div class='rw-feat-title'>House rules <span class='rw-feat-sub'>all off by default</span></div>";
     DUEL_FEATURES.forEach(function(f){
       var on = RW.features[f.key];
       featHTML += "<div class='rw-feat-row' data-fkey='"+f.key+"'>"+
@@ -340,12 +408,53 @@
       "</div>";
     });
     featHTML += "</div>";
+
+    /* D-3: Series resume banner */
+    var savedSeries = _loadDuelSeries();
+    var resumeHTML = "";
+    if(savedSeries && savedSeries.numPlayers === 2){
+      var sw0 = 0, sw1 = 0;
+      (savedSeries.matchResults||[]).forEach(function(r){
+        if((r.score[0]||0) > (r.score[1]||0)) sw0++; else if((r.score[1]||0) > (r.score[0]||0)) sw1++; else { sw0+=0.5; sw1+=0.5; }
+      });
+      var p0 = (savedSeries.players[0]||{}).name||"Player 1";
+      var p1 = (savedSeries.players[1]||{}).name||"Player 2";
+      resumeHTML = "<div class='rw-resume-banner'>"+
+        "<div class='rw-resume-label'>Series in progress</div>"+
+        "<div class='rw-resume-score'>"+esc(p0)+" "+sw0+" – "+sw1+" "+esc(p1)+"</div>"+
+        "<div class='rw-resume-hint'>Match "+(savedSeries.matchResults.length+1)+" of 3</div>"+
+        "<div class='rw-resume-btns'>"+
+          "<button class='fl-btn rw-resume-btn' id='rwResumeSeries'>Resume →</button>"+
+          "<button class='btn-ghost rw-discard-btn' id='rwDiscardSeries'>Discard</button>"+
+        "</div>"+
+      "</div>";
+    }
+
+    /* D-4: History */
+    var hist = _loadDuelHistory();
+    var histHTML = "";
+    if(hist.length > 0){
+      histHTML = "<div class='rw-duel-history'><div class='rw-hist-head'>Recent Duels</div>";
+      hist.forEach(function(e){
+        var d = e.ts ? new Date(e.ts) : null;
+        var ds = d ? (d.getDate()+"/"+(d.getMonth()+1)+"/"+(d.getFullYear()+"").slice(-2)) : "";
+        histHTML += "<div class='rw-hist-row'>"+
+          "<span class='rw-hist-winner'>"+esc(e.winner||"—")+"</span>"+
+          "<span class='rw-hist-vs'>vs "+esc(e.loser||"—")+"</span>"+
+          "<span class='rw-hist-score'>"+esc(e.score||"")+"</span>"+
+          (ds?"<span class='rw-hist-date'>"+ds+"</span>":"")+
+        "</div>";
+      });
+      histHTML += "</div>";
+    }
+
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Multiplayer</div>"+
       "<h2 class='rw-title'><span class='rw-accent'>Duels</span></h2>"+
       "<p class='rw-sub'>Managers build an XI <strong>blind</strong> — no ratings shown. "+
       "Then it's head-to-head: position by position, higher-rated player wins the slot.</p>"+
+      resumeHTML+
       "<div class='rw-player-count'><span class='rw-pc-label'>Players</span>"+
         "<div class='rw-pc-btns'>"+
           '<button class="rw-pc-btn'+(n===2?' rw-pc-active':'')+'" data-pc="2">2</button>'+
@@ -358,6 +467,7 @@
       featHTML+
       "<button class='fl-btn rw-start' id='rwStart'>"+esc(RW.players[0]?RW.players[0].name:defaultName(0))+" — build your XI →</button>"+
       "<button class='rw-rules-link' id='rwHowToPlay'>How to play</button>"+
+      histHTML+
       "</div></div>";
     document.getElementById("rwBack").onclick = goHome;
     document.getElementById("rwHowToPlay").onclick = showRWRules;
@@ -399,6 +509,7 @@
         var inp = document.getElementById("rwN"+i);
         RW.players[i].name = inp ? (inp.value.trim()||defaultName(i)) : defaultName(i);
       }
+      _clearDuelSeries();
       initFeatures();
       RW.cur = 0;
       if (RW.features.posBan){ RW.phase = "posban"; }
@@ -406,6 +517,48 @@
       else { RW.phase = "poolselect"; }
       render();
     };
+
+    /* D-1: Preset buttons */
+    v.querySelectorAll(".rw-preset-btn").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var pid = btn.getAttribute("data-preset");
+        var preset = DUEL_PRESETS.filter(function(p){ return p.id===pid; })[0];
+        if(!preset) return;
+        RW.features = Object.assign({}, preset.f);
+        render();
+      });
+    });
+
+    /* D-3: Resume/Discard series buttons */
+    var resumeBtn = document.getElementById("rwResumeSeries");
+    if(resumeBtn) resumeBtn.addEventListener("click",function(){
+      var s = _loadDuelSeries();
+      if(!s) return;
+      /* Restore series state */
+      RW.features = Object.assign({}, DEFAULT_FEATURES, s.features||{});
+      RW.numPlayers = 2;
+      RW.players = (s.players||[]).map(function(p,i){ return { name:p.name||defaultName(i), picks:newPicks(), rerollsUsed:0 }; });
+      RW.matchResults = (s.matchResults||[]).slice();
+      RW.seriesMatch = s.seriesMatch||0;
+      RW.captains = (s.captains||[]).slice();
+      RW.bannedSlots = (s.bannedSlots||[]).slice();
+      /* Restore other series-scoped state */
+      RW.seriesWins = [0,0];
+      RW.xfactorSlot = RW.features.xfactor ? Math.floor(Math.random()*SLOTS.length) : null;
+      RW.swapDone = RW.players.map(function(){ return false; });
+      RW.posBanPassing = false; RW.captainPassing = false; RW.blindSwapPassing = false;
+      RW.swapSel = null; RW._swapTimerInterval = null; RW.swapTimeLeft = 30;
+      RW.sharedPool = null; RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
+      RW.formations = RW.players.map(function(){ return null; }); RW.formationPassing = false;
+      RW.stealUsed = RW.players.map(function(){ return false; });
+      RW.wildcardUsed = false; RW._savedToBoard = false;
+      RW.currentSpin = null; RW.pendingRWPick = null; RW._spinning = false;
+      RW.cur = 0;
+      RW.phase = "poolselect";
+      render();
+    });
+    var discardBtn = document.getElementById("rwDiscardSeries");
+    if(discardBtn) discardBtn.addEventListener("click",function(){ _clearDuelSeries(); render(); });
   }
 
   /* ── Initialise enabled features when a match starts ── */
@@ -1564,6 +1717,16 @@
         mode: "duels",
         ts: Date.now()
       });
+      /* D-4: Save to local duel history */
+      _saveDuelHistory({
+        ts: Date.now(),
+        winner: RW.players[boardWinnerIdx].name,
+        loser: loserName,
+        score: isBo3 ? (sw[0]+"-"+sw[1]) : (s1+"-"+s2),
+        isBo3: isBo3
+      });
+      /* D-3: Series complete — clear saved series */
+      if(isBo3 && seriesDone) _clearDuelSeries();
     }
     if ((seriesWinnerIdx>=0 || (winnerIdx>=0 && !isBo3)) && typeof W.triggerConfetti === "function") W.triggerConfetti();
   }
@@ -1572,6 +1735,7 @@
     /* Save this match result then reset picks, keeping feature state */
     RW.matchResults.push({a:RW.curA, b:RW.curB, score:[RW.score[0],RW.score[1]]});
     RW.seriesMatch = (RW.seriesMatch||0) + 1;
+    _saveDuelSeries(); /* D-3: persist series state between matches */
     RW.players.forEach(function(p){ p.picks = newPicks(); p.rerollsUsed = 0; p.wildcardUsed = false; });
     RW.currentSpin = null; RW.pendingRWPick = null; RW._spinning = false;
     RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;

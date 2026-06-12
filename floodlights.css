@@ -1168,6 +1168,57 @@ body.light .xi-rate.r-good     { color: #4A5568; background: color-mix(in srgb, 
 body.light .mp-history-sec { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
 body.light .mp-hist-row { border-color: rgba(0,0,0,0.05); }
 
+/* ── D-1: Duels feature presets ──────────────────────────────── */
+.rw-presets {
+  display: flex; gap: var(--sp-2); margin-bottom: var(--sp-4);
+}
+.rw-preset-btn {
+  flex: 1; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md);
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer; text-align: center; transition: background var(--dur-1) var(--ease-out);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.rw-preset-btn:hover { background: rgba(124,92,252,0.12); border-color: rgba(124,92,252,.3); }
+.rw-preset-btn.rw-preset-active { background: rgba(124,92,252,0.18); border-color: var(--violet); }
+.rw-preset-label { font-size: .82rem; font-weight: 700; color: var(--txt); }
+.rw-preset-desc { font-size: .68rem; color: var(--txt-sub); }
+body.light .rw-preset-btn { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+body.light .rw-preset-btn.rw-preset-active { background: rgba(124,92,252,0.12); }
+
+/* ── D-3: Series resume banner ───────────────────────────────── */
+.rw-resume-banner {
+  margin: var(--sp-3) 0 var(--sp-4);
+  padding: var(--sp-4); border-radius: var(--r-md);
+  background: rgba(245,180,60,.1); border: 1px solid rgba(245,180,60,.3);
+}
+.rw-resume-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: #F5B43C; margin-bottom: 4px; }
+.rw-resume-score { font-size: 1rem; font-weight: 700; color: var(--txt); }
+.rw-resume-hint { font-size: .75rem; color: var(--txt-sub); margin-bottom: var(--sp-3); }
+.rw-resume-btns { display: flex; gap: var(--sp-2); align-items: center; }
+.rw-resume-btn { padding: 8px 18px; font-size: .85rem; }
+.rw-discard-btn { font-size: .78rem; color: var(--txt-sub); }
+body.light .rw-resume-banner { background: rgba(245,180,60,.08); border-color: rgba(245,180,60,.25); }
+
+/* ── D-4: Duels result history ───────────────────────────────── */
+.rw-duel-history {
+  margin-top: var(--sp-5); padding: var(--sp-4);
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--r-md);
+}
+.rw-hist-head { font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: var(--txt-sub); margin-bottom: var(--sp-3); }
+.rw-hist-row {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: .8rem;
+}
+.rw-hist-row:last-child { border-bottom: none; }
+.rw-hist-winner { font-weight: 700; color: #F5B43C; min-width: 90px; flex: 0 0 auto; }
+.rw-hist-vs { color: var(--txt-sub); flex: 1; }
+.rw-hist-score { font-weight: 700; color: var(--txt); flex: 0 0 auto; }
+.rw-hist-date { color: var(--txt-muted); font-size: .7rem; flex: 0 0 auto; }
+body.light .rw-duel-history { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
+body.light .rw-hist-row { border-color: rgba(0,0,0,0.05); }
+
 /* ── Reduced-motion: strip all extras cleanly ── */
 @media (prefers-reduced-motion: reduce) {
   .fl-mode, .setup, .machine, .squad-card, .xi, .stat-grid,
