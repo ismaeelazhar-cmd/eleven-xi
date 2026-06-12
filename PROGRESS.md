@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-8 ALL COMPLETE. Cache wcxi-v124. Push to GitHub done. Next: Task 9 (OG-8: Shareable League season card)._
+_Last checkpoint: Tasks 1-9 ALL COMPLETE. Cache wcxi-v125. Push to GitHub done. Next: Task 10 (DVC-2 & DVC-4: CPU personality + rematch)._
 
 ---
 
@@ -309,13 +309,27 @@ _All pop-out panels, all game modes._
 ## 12. CURRENT FILE VERSIONS
 - floodlights.css: v107 (sound-toggle CSS added)
 - game.js: v91 (modeLabel extended for dvc/duels)
-- league.js: v79 (audio wiring)
+- league.js: v80 (share card redesign with squad + GD)
 - multiplayer.js: v92
 - floodlights.js: v91 (home stats + HTP overlay)
 - draftvscomputer.js: v5 (WCXI_addScore on win/draw)
 - ratingswar.js: v101 (WCXI_addScore on completed duel/series)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v124
+- sw.js: wcxi-v125
+
+## 22. TASK 9 — OG-8: SHAREABLE LEAGUE SEASON CARD ✅
+- `_lgShareImage()` in league.js redesigned (1080×1400 canvas):
+  - Gradient background (dark green → midnight blue)
+  - Rainbow accent bar at top
+  - Pill in appropriate colour (gold=champions, green=top4, coral=relegated)
+  - Big position ordinal + league name
+  - Team name
+  - Stats row: W-D-L, PTS, GD (replaces old "score" stat)
+  - Squad section: 11 players in 2 columns, position badge + name in line colour
+  - Golden Boot section (name + goals)
+  - Footer: "Build your all-time XI · eleven-xi.com"
+- Call site updated to pass `gd:userRow.GD, xi:xiOrdered`
+- "Share your season" button already in results screen (was from previous implementation)
 
 ## 21. TASK 8 — OG-5: DVC + DUELS INTO LEADERBOARD ✅
 - DVC results now posted to `wcxi_leaderboard_v1` via `window.WCXI_addScore`

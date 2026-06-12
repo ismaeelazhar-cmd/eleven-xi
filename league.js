@@ -1184,32 +1184,97 @@
 
   /* Render a shareable season-summary image and share/download it */
   function _lgShareImage(d, btn){
-    var CW=1080, CH=1350;
+    var CW=1080, CH=1400;
     var c=document.createElement("canvas"); c.width=CW; c.height=CH;
     var x=c.getContext("2d"); if(!x) return;
     var FS="Helvetica, Arial, sans-serif";
+
+    /* Background */
     var g=x.createLinearGradient(0,0,CW,CH);
-    g.addColorStop(0,"#0e2a1d"); g.addColorStop(1,"#0a0a12");
+    g.addColorStop(0,"#0d1f18"); g.addColorStop(0.5,"#0e1628"); g.addColorStop(1,"#080810");
     x.fillStyle=g; x.fillRect(0,0,CW,CH);
-    x.fillStyle="#22c97d"; x.fillRect(0,0,CW,16);
+
+    /* Top accent bar */
+    var ag=x.createLinearGradient(0,0,CW,0);
+    ag.addColorStop(0,"#22c97d"); ag.addColorStop(0.5,"#7C5CFC"); ag.addColorStop(1,"#22E0C8");
+    x.fillStyle=ag; x.fillRect(0,0,CW,12);
+
     x.textAlign="center";
-    x.fillStyle="#9fb0c3"; x.font="600 36px "+FS; x.fillText("ELEVEN XI", CW/2, 120);
-    x.fillStyle="#f5b301"; x.font="800 44px "+FS; x.fillText(String(d.pill||"").toUpperCase(), CW/2, 210);
-    x.fillStyle="#ffffff"; x.font="900 210px "+FS; x.fillText(ordinal(d.pos), CW/2, 470);
-    x.fillStyle="#9fb0c3"; x.font="500 42px "+FS; x.fillText("of "+d.N+" · "+d.league, CW/2, 540);
-    x.fillStyle="#ffffff"; x.font="800 64px "+FS; x.fillText(d.team, CW/2, 680);
+
+    /* Branding */
+    x.fillStyle="#5a6a80"; x.font="700 34px "+FS; x.fillText("ELEVEN XI", CW/2, 96);
+
+    /* Pill */
+    var pillColor = d.pill==="CHAMPIONS" ? "#f5b301" : d.pill==="TOP FOUR" ? "#22c97d" :
+                    d.pill==="RELEGATED" ? "#FF7A59" : "#7C9FC5";
+    x.fillStyle=pillColor; x.font="900 52px "+FS; x.fillText(String(d.pill||"").toUpperCase(), CW/2, 192);
+
+    /* Big position ordinal */
+    x.fillStyle="#ffffff"; x.font="900 160px "+FS; x.fillText(ordinal(d.pos), CW/2, 390);
+    x.fillStyle="#7a8fa8"; x.font="500 40px "+FS; x.fillText("of "+d.N+" · "+d.league, CW/2, 456);
+
+    /* Team name */
+    x.fillStyle="#ffffff"; x.font="800 60px "+FS;
+    var tn = d.team.length > 22 ? d.team.slice(0, 21) + "…" : d.team;
+    x.fillText(tn, CW/2, 564);
+
+    /* Stats row — W-D-L, POINTS, GD */
     function stat(cx,y,val,label){
-      x.fillStyle="#ffffff"; x.font="900 66px "+FS; x.fillText(val,cx,y);
-      x.fillStyle="#9fb0c3"; x.font="600 28px "+FS; x.fillText(label,cx,y+46);
+      x.fillStyle="#ffffff"; x.font="900 60px "+FS; x.fillText(val,cx,y);
+      x.fillStyle="#5a6a80"; x.font="600 26px "+FS; x.fillText(label,cx,y+42);
     }
-    stat(CW*0.27, 820, d.W+"-"+d.D+"-"+d.L, "W-D-L");
-    stat(CW*0.5,  820, String(d.pts), "POINTS");
-    stat(CW*0.73, 820, d.score.toLocaleString(), "SCORE");
+    var gdStr = (d.gd != null) ? (d.gd > 0 ? "+"+d.gd : String(d.gd)) : "";
+    stat(CW*0.22, 670, d.W+"-"+d.D+"-"+d.L, "W-D-L");
+    stat(CW*0.5,  670, String(d.pts), "PTS");
+    stat(CW*0.78, 670, gdStr, "GD");
+
+    /* Divider */
+    x.strokeStyle="rgba(255,255,255,0.10)"; x.lineWidth=1;
+    x.beginPath(); x.moveTo(60,740); x.lineTo(CW-60,740); x.stroke();
+
+    /* Squad — 2 columns (FWD→GK order) */
+    var xi = d.xi || [];
+    var lineColour = { FWD:"#FF7A59", MID:"#22E0C8", DEF:"#7C5CFC", GK:"#F5B43C" };
+    var lineOf2 = { FWD:"FWD", MID:"MID", DEF:"DEF", GK:"GK",
+      ST:"FWD",LW:"FWD",RW:"FWD",CF:"FWD",
+      CAM:"MID",CM:"MID",CDM:"MID",LM:"MID",RM:"MID",
+      CB:"DEF",LB:"DEF",RB:"DEF" };
+    var leftCol = xi.slice(0, 6), rightCol = xi.slice(6, 11);
+    var colX = [96, CW/2 + 36], LH = 52, Y0 = 794;
+
+    [leftCol, rightCol].forEach(function(col, ci){
+      col.forEach(function(p, ri){
+        var yy = Y0 + ri * LH;
+        var slot = p.slot || p.gp || p.p || "MID";
+        var line = lineOf2[slot] || "MID";
+        var col2 = lineColour[line] || "#7C5CFC";
+        /* Position badge */
+        x.fillStyle = col2; x.font = "700 26px "+FS;
+        x.textAlign = "left"; x.fillText(slot, colX[ci], yy);
+        /* Player name */
+        x.fillStyle = "#e8edf2"; x.font = "500 32px "+FS;
+        var nm = p.n.length > 18 ? p.n.slice(0,17)+"…" : p.n;
+        x.fillText(nm, colX[ci] + 108, yy);
+      });
+    });
+
+    /* Divider below squad */
+    var squadBottom = Y0 + Math.ceil(xi.length / 2) * LH + 20;
+    if(squadBottom < 1080) squadBottom = 1080;
+    x.strokeStyle="rgba(255,255,255,0.10)"; x.lineWidth=1;
+    x.beginPath(); x.moveTo(60,squadBottom); x.lineTo(CW-60,squadBottom); x.stroke();
+
+    /* Golden Boot */
+    x.textAlign="center";
+    var bootY = squadBottom + 70;
     if(d.boot){
-      x.fillStyle="#22c97d"; x.font="700 40px "+FS; x.fillText("Golden Boot", CW/2, 980);
-      x.fillStyle="#ffffff"; x.font="800 52px "+FS; x.fillText(d.boot.n+" — "+d.boot.G+" goals", CW/2, 1044);
+      x.fillStyle="#F5B43C"; x.font="700 34px "+FS; x.fillText("Golden Boot", CW/2, bootY);
+      x.fillStyle="#ffffff"; x.font="700 44px "+FS; x.fillText(d.boot.n+" — "+d.boot.G+" goals", CW/2, bootY+60);
     }
-    x.fillStyle="#6b7a90"; x.font="500 32px "+FS; x.fillText("Build your all-time XI", CW/2, CH-70);
+
+    /* Footer */
+    x.fillStyle="#3a4a5c"; x.font="500 28px "+FS; x.fillText("Build your all-time XI · eleven-xi.com", CW/2, CH-50);
+
     c.toBlob(function(blob){
       if(!blob) return;
       var fname="eleven-xi-season.png";
@@ -1223,7 +1288,7 @@
       var url=URL.createObjectURL(blob), a=document.createElement("a");
       a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-      if(btn){ btn.textContent="Image saved"; setTimeout(function(){ btn.innerHTML="Share your season"; }, 1800); }
+      if(btn){ btn.textContent="Saved!"; setTimeout(function(){ btn.textContent="Share your season"; }, 2000); }
     }, "image/png");
   }
 
@@ -1513,7 +1578,8 @@
     var sh=eid("lgShare");
     if(sh) sh.addEventListener("click",function(){
       _lgShareImage({ team:LS.teamName, league:lc.label, pill:pill, pos:pos, N:N,
-        W:W2, D:D, L:L, pts:userRow.Pts, score:score, boot:boot }, sh);
+        W:W2, D:D, L:L, pts:userRow.Pts, score:score, boot:boot,
+        gd:userRow.GD, xi:xiOrdered }, sh);
     });
     if((isChamp||isPerfect)&&W.sfx) W.sfx.win();
     if((isChamp||isPerfect)&&typeof W.triggerConfetti==="function") W.triggerConfetti();
