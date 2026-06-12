@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=79" />
   <link rel="stylesheet" href="tokens.css?v=74" />
-  <link rel="stylesheet" href="floodlights.css?v=105" />
+  <link rel="stylesheet" href="floodlights.css?v=106" />
 </head>
 <body>
   <div class="theme-toggle" id="themeToggle" aria-label="Theme">
@@ -86,6 +86,7 @@
       <div class="home-links">
         <button class="home-board-link" id="homeBoard">Leaderboards</button>
         <button class="home-board-link" id="homeShare">Share game</button>
+        <button class="home-board-link" id="homeHelp" aria-label="How to play">How to play</button>
       </div>
     </section>
 
@@ -277,6 +278,37 @@
     </footer>
   </div>
 
+  <!-- ===== HOW TO PLAY OVERLAY ===== -->
+  <div id="howToPlay" class="htp-overlay" hidden aria-modal="true" role="dialog">
+    <div class="htp-panel">
+      <button class="htp-close" id="htpClose" aria-label="Close">&times;</button>
+      <div class="htp-slides" id="htpSlides">
+        <div class="htp-slide">
+          <div class="htp-ico">&#9881;</div>
+          <h3 class="htp-title">Build your XI</h3>
+          <p class="htp-body">Spin the wheel to get squads from football history — World Cup, Euros, Champions League, and more. Pick 11 players for your chosen formation. Use rerolls to swap a spin you don&apos;t want.</p>
+        </div>
+        <div class="htp-slide">
+          <div class="htp-ico">&#128081;</div>
+          <h3 class="htp-title">Pick a manager</h3>
+          <p class="htp-body">Choose a tactical style (Attack +4 ATK, Defence +4 DEF, Gegenpress +2/+2) or spin the wheel for a famous historical manager. Their bonus chips show the exact effect on your team stats.</p>
+        </div>
+        <div class="htp-slide">
+          <div class="htp-ico">&#127942;</div>
+          <h3 class="htp-title">Simulate &amp; score</h3>
+          <p class="htp-body">Run your XI in a World Cup, Euro Championship, Champions League, or League season. Score points based on how far you go, goals, clean sheets, and difficulty. Results save to the leaderboard.</p>
+        </div>
+      </div>
+      <div class="htp-dots" id="htpDots">
+        <span class="htp-dot active"></span><span class="htp-dot"></span><span class="htp-dot"></span>
+      </div>
+      <div class="htp-btns">
+        <button class="btn-ghost" id="htpPrev" hidden>&#8592; Back</button>
+        <button class="btn-primary" id="htpNext">Next &#8594;</button>
+      </div>
+    </div>
+  </div>
+
   <script src="data.js?v=71"></script>
   <script src="data_extra.js?v=71"></script>
   <script src="data_full.js?v=71"></script>
@@ -306,7 +338,7 @@
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=92"></script>
   <script src="league.js?v=78"></script>
-  <script src="floodlights.js?v=90" defer></script>
+  <script src="floodlights.js?v=91" defer></script>
   <script src="ratingswar.js?v=100" defer></script>
   <script src="draftvscomputer.js?v=3" defer></script>
 </body>

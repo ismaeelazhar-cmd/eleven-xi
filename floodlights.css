@@ -153,6 +153,37 @@ header h1 {
 }
 .fl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ===== How To Play overlay ===== */
+.htp-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 9998;
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-4);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.htp-overlay[hidden] { display: none; }
+.htp-panel {
+  background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: var(--r-xl);
+  padding: var(--sp-6) var(--sp-6) var(--sp-5); max-width: 440px; width: 100%; position: relative;
+  box-shadow: var(--sh-2); animation: htp-in var(--dur-3) var(--ease-spring);
+}
+@keyframes htp-in { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+.htp-close {
+  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  background: transparent; border: none; color: var(--text-mute); font-size: 22px; line-height: 1;
+  cursor: pointer; width: 36px; height: 36px; border-radius: var(--r-pill);
+  transition: background var(--dur-1); display: flex; align-items: center; justify-content: center;
+}
+.htp-close:hover { background: var(--surface-3); color: var(--text); }
+.htp-slides { overflow: hidden; }
+.htp-slide { display: none; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-3); }
+.htp-slide.active { display: flex; }
+.htp-ico { font-size: 36px; line-height: 1; }
+.htp-title { font-family: var(--font-display); font-size: var(--t-h3); font-weight: 800; color: var(--text); margin: 0; }
+.htp-body { font-size: var(--t-sm); color: var(--text-dim); line-height: 1.6; margin: 0; max-width: 360px; }
+.htp-dots { display: flex; gap: 8px; justify-content: center; margin: var(--sp-5) 0 var(--sp-4); }
+.htp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); transition: background var(--dur-1), transform var(--dur-1); }
+.htp-dot.active { background: var(--primary); transform: scale(1.3); }
+.htp-btns { display: flex; gap: var(--sp-3); justify-content: flex-end; }
+
 /* ============================================================
    Part 2 — GLOBAL COHESION
    Re-point every legacy CSS variable at a Floodlights token so

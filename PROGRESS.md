@@ -307,13 +307,13 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v105
+- floodlights.css: v106
 - game.js: v89 (euro mode, manager bonus HTML)
 - league.js: v78 (manager bonus HTML)
 - multiplayer.js: v92
-- floodlights.js: v90 (home card stats)
+- floodlights.js: v91 (home stats + HTP overlay)
 - draftvscomputer.js: v3 (W/L/D record added)
-- sw.js: wcxi-v120
+- sw.js: wcxi-v121
 
 ## 14. TASK 1 — DVC W/L/D RECORD ✅
 - localStorage key: `wcxi_dvc_record` — JSON object `{easy:{w,l,d}, medium:{w,l,d}, hard:{w,l,d}}`
@@ -353,6 +353,15 @@ _All pop-out panels, all game modes._
   - DVC: reads `wcxi_dvc_record`, shows best-played difficulty W/L/D record
 - CSS: `.fl-mode-stat` (muted bottom text, auto-hides when empty), WC badge persists on new sessions
 - "Start here" badge hidden once user has any leaderboard entry (i.e. has played WC/CL/League/Euro)
+
+## 19. TASK 6 — ONBOARDING (HOW TO PLAY) ✅
+- 3-slide overlay: "Build your XI" / "Pick a manager" / "Simulate & score"
+- Auto-shows 600ms after load for new users (no `wcxi_seen_howto` key AND no leaderboard entries)
+- "How to play" button in home-links bar → always accessible via `W.openHowToPlay()`
+- Navigation: Next/Back buttons + dot indicators + keyboard (←/→/Escape) + backdrop click to dismiss
+- Persistent dismiss: sets `wcxi_seen_howto` in localStorage — never shown twice unless cleared
+- CSS: `.htp-overlay`, `.htp-panel`, `.htp-slide`, `.htp-dots`, `.htp-btns` — slide-in animation
+- Last slide: "Next →" becomes "Got it ✔"
 
 ## 15. TASK 2 — EURO HOME CARD ✅
 - Added `fl-mode m-euro` button (`homeEuro`) to home screen after vs Computer card

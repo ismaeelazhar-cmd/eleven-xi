@@ -93,6 +93,71 @@
       } catch (e) {}
     })();
 
+    // How To Play overlay
+    (function () {
+      var HTP_KEY = "wcxi_seen_howto";
+      var overlay = document.getElementById("howToPlay");
+      var slides, dots, prevBtn, nextBtn, closeBtn;
+      var step = 0;
+
+      function openHTP() {
+        if (!overlay) return;
+        step = 0;
+        slides = overlay.querySelectorAll(".htp-slide");
+        dots   = overlay.querySelectorAll(".htp-dot");
+        prevBtn = document.getElementById("htpPrev");
+        nextBtn = document.getElementById("htpNext");
+        closeBtn = document.getElementById("htpClose");
+        syncSlide();
+        overlay.hidden = false;
+        if (nextBtn) nextBtn.focus();
+      }
+
+      function closeHTP() {
+        if (overlay) overlay.hidden = true;
+        try { localStorage.setItem(HTP_KEY, "1"); } catch (e) {}
+      }
+
+      function syncSlide() {
+        slides.forEach(function (s, i) { s.classList.toggle("active", i === step); });
+        dots.forEach(function (d, i) { d.classList.toggle("active", i === step); });
+        if (prevBtn) prevBtn.hidden = (step === 0);
+        var last = step === slides.length - 1;
+        if (nextBtn) { nextBtn.textContent = last ? "Got it ✔" : "Next →"; }
+      }
+
+      if (overlay) {
+        overlay.addEventListener("click", function (e) { if (e.target === overlay) closeHTP(); });
+        document.addEventListener("keydown", function (e) {
+          if (overlay.hidden) return;
+          if (e.key === "Escape") closeHTP();
+          if (e.key === "ArrowRight") { step = Math.min(step + 1, 2); syncSlide(); }
+          if (e.key === "ArrowLeft") { step = Math.max(step - 1, 0); syncSlide(); }
+        });
+      }
+
+      document.addEventListener("click", function (e) {
+        var t = e.target.id;
+        if (t === "htpClose") { closeHTP(); return; }
+        if (t === "htpNext") {
+          if (step < 2) { step++; syncSlide(); }
+          else closeHTP();
+          return;
+        }
+        if (t === "htpPrev") { if (step > 0) { step--; syncSlide(); } return; }
+        if (t === "homeHelp") { openHTP(); return; }
+      });
+
+      // Auto-show for new users (no prior visits, no leaderboard entries)
+      try {
+        var seen = localStorage.getItem(HTP_KEY);
+        var hasScores = (JSON.parse(localStorage.getItem("wcxi_leaderboard_v1") || "[]")).length > 0;
+        if (!seen && !hasScores) setTimeout(openHTP, 600);
+      } catch (e) {}
+
+      W.openHowToPlay = openHTP;
+    })();
+
     // Logo click → home from any screen
     var brand = document.getElementById("brandLogo");
     if (brand && !brand._wired) {
