@@ -1078,7 +1078,13 @@
     var btmNew = document.getElementById("btmNewGame");
     if (btmNew) btmNew.addEventListener("click", newGame);
     var btmHome = document.getElementById("btmGoHome");
-    if (btmHome) btmHome.addEventListener("click", function () { window.flGoHome(); });
+    if (btmHome) btmHome.addEventListener("click", function () { showView("home"); });
+    var btmBoard = document.getElementById("btmBoard");
+    if (btmBoard) btmBoard.addEventListener("click", function () { renderBoard(); showView("board"); });
+    var shareXIBtn = document.getElementById("shareXIBtn");
+    if (shareXIBtn) shareXIBtn.addEventListener("click", function () { shareXIPNG(this); });
+    var boardBtn = document.getElementById("boardBtn");
+    if (boardBtn) boardBtn.addEventListener("click", function () { renderBoard(); showView("board"); });
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
@@ -1338,6 +1344,7 @@
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += scoreBannerHTML(r.sc, wc.userResult);
       html += statsSummaryHTML(wc.userStats);
+      html += '<div class="result-under-summary"><button class="btn-ghost" id="shareXIBtn">Share Score &amp; XI</button><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       /* Group phase journey (shown for all WC/CL result screens) */
       var gPhase = r.phaseLabel || "Group stage";
       if (r.groupMatches && r.groupMatches.length) {
@@ -1356,7 +1363,7 @@
         html += '<div class="journey">' + r.koMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
       }
       html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
-      html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
+      html += '<div class="result-bottom-cta"><button class="btn-ghost" id="btmGoHome">← Home</button><button class="btn-ghost" id="btmBoard">Leaderboards</button></div>';
     }
     elResultsBody.innerHTML = html;
     var skip = document.getElementById("skipReveal");
@@ -1398,8 +1405,9 @@
         '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
       html += statsSummaryHTML(lg.userStats);
+      html += '<div class="result-under-summary"><button class="btn-ghost" id="shareXIBtn">Share Score &amp; XI</button><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       html += '<h3 class="sec">Final ' + lg.table.length + '-team table</h3>' + leagueTableHTML(lg);
-      html += '<div class="result-bottom-cta"><button class="btn-primary" id="btmNewGame">Play Again</button><button class="btn-ghost" id="btmGoHome">← Home</button></div>';
+      html += '<div class="result-bottom-cta"><button class="btn-ghost" id="btmGoHome">← Home</button><button class="btn-ghost" id="btmBoard">Leaderboards</button></div>';
     }
     elResultsBody.innerHTML = html;
     var skip = document.getElementById("skipReveal");
@@ -1446,8 +1454,7 @@
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim(mode === "euro" ? "euro" : "wc", userTeamFromSquad()); });
   $("goLeague").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("league", userTeamFromSquad()); });
   $("newGameBtn").addEventListener("click", newGame);
-  var _sxib = $("shareXIBtn"); if (_sxib) _sxib.addEventListener("click", function () { shareXIPNG(this); });
-  $("boardBtn").addEventListener("click", function () { renderBoard(); showView("board"); });
+  // shareXIBtn and boardBtn are dynamically rendered inside resultsBody — wired in wireResults()
   $("boardBack").addEventListener("click", function () { showView("home"); });
   $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
   Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {

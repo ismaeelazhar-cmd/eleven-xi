@@ -920,7 +920,11 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 /* ===== Results header buttons ===== */
 .results-head-right { display: flex; gap: 8px; }
 
-.result-bottom-cta { display: flex; gap: 1rem; justify-content: center; margin-top: 2.5rem; padding-bottom: 3rem; }
+/* Buttons injected under the summary stats block */
+.result-under-summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 8px; }
+
+/* Bottom CTA: Home left, Leaderboards right */
+.result-bottom-cta { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 2.5rem; padding-bottom: 3rem; }
 
 /* ===== Leaderboards ===== */
 .board-tabs { margin-bottom: 16px; }
