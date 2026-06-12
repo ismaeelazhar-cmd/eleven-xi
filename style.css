@@ -762,15 +762,15 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 /* ---------- Draft header ---------- */
 /* ---------- Draft page layout ---------- */
 .draft-corner-home {
-  position: absolute; top: 14px; left: 14px;
+  position: fixed; top: 18px; left: 20px;
   background: transparent; border: 1px solid var(--line); color: var(--muted);
-  border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+  border-radius: 8px; padding: 5px 14px; font-size: 12px; font-weight: 700;
   cursor: pointer; transition: color var(--dur-1), border-color var(--dur-1);
-  z-index: 10;
+  z-index: 200;
 }
 .draft-corner-home:hover { color: var(--text); border-color: var(--line-strong); }
 
-#draftView { position: relative; padding-top: 44px; }
+#draftView { position: relative; padding-top: 52px; }
 
 .draft-layout {
   display: grid;
