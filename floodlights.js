@@ -16,7 +16,7 @@
      Each module's own goHome handles cleanup; this covers the logo tap
      from any screen without needing per-module hooks. */
   W.flGoHome = function () {
-    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView"];
+    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView"];
     ALL.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = "none"; });
     var home = document.getElementById("homeView");
     if (home) home.style.display = "";
@@ -36,6 +36,14 @@
             W.flToast("Link copied — send it to a friend!");
           }, function () { window.prompt("Copy the link:", url); });
         } else { window.prompt("Copy the link:", url); }
+      });
+    }
+
+    // Draft vs Computer home card button
+    var dvcBtn = document.getElementById("homeDVC");
+    if (dvcBtn) {
+      dvcBtn.addEventListener("click", function () {
+        if (typeof window.startDraftVsComputer === "function") window.startDraftVsComputer();
       });
     }
 

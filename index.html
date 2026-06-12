@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=79" />
   <link rel="stylesheet" href="tokens.css?v=74" />
-  <link rel="stylesheet" href="floodlights.css?v=97" />
+  <link rel="stylesheet" href="floodlights.css?v=98" />
 </head>
 <body>
   <div class="theme-toggle" id="themeToggle" aria-label="Theme">
@@ -65,6 +65,11 @@
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19a6 6 0 0 1 12 0M14.5 19a5 5 0 0 1 6.5-4.8"/></svg></span>
           <span class="fl-mode-name">Multiplayer</span>
           <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
+        </button>
+        <button class="fl-mode m-dvc" id="homeDVC">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
+          <span class="fl-mode-name">vs Computer</span>
+          <span class="fl-mode-hint">Alternating draft · outsmart the CPU</span>
         </button>
       </div>
       <div class="home-links">
@@ -213,6 +218,9 @@
       <div id="resultsBody"></div>
     </section>
 
+    <!-- ===== DRAFT vs COMPUTER ===== -->
+    <section id="dvcView" style="display:none;"></section>
+
     <!-- ===== MULTIPLAYER ===== -->
     <section id="mpView" style="display:none;"></section>
 
@@ -286,7 +294,8 @@
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=91"></script>
   <script src="league.js?v=77"></script>
-  <script src="floodlights.js?v=86" defer></script>
+  <script src="floodlights.js?v=87" defer></script>
   <script src="ratingswar.js?v=100" defer></script>
+  <script src="draftvscomputer.js?v=1" defer></script>
 </body>
 </html>
