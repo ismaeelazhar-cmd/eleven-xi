@@ -414,6 +414,9 @@ window.startDraftVsComputer = (function (W) {
 
     var spinBtn = document.getElementById("dvcSpinBtn");
     if (spinBtn) spinBtn.addEventListener("click", doDvcSpin);
+
+    /* Sync button enabled state after render — belt-and-suspenders */
+    updateDraftUI();
   }
 
   /* ---- Spin mechanics ---- */
