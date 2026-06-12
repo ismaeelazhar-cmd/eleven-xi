@@ -19,7 +19,11 @@ window.startDraftVsComputer = (function (W) {
     "3-5-2":   { slots:["GK","CB","CB","CB","RM","CM","CDM","CM","LM","ST","ST"] }
   };
 
-  var CPU_NAMES = ["The Machine", "AutoXI", "CPU Manager", "Iron Bot", "The Algorithm"];
+  var CPU_NAMES = {
+    balanced: ["The Algorithm", "CPU Manager", "Iron Bot", "AutoXI", "The Machine"],
+    scorer:   ["The Poacher", "Goal Machine", "Strike Force", "Boot Camp", "The Finisher"],
+    defender: ["The Sweeper", "Ironclad", "The Wall", "Catenaccio", "Fort Knox"]
+  };
 
   var DVC_RECORD_KEY = "wcxi_dvc_record";
 
@@ -122,6 +126,13 @@ window.startDraftVsComputer = (function (W) {
     return shuffle(players);
   }
 
+  /* Personality line bias: which lines the CPU prioritises */
+  var PERSONALITY_BIAS = {
+    scorer:   { FWD: 25, MID: 8,  DEF: -12, GK: 0 },
+    defender: { FWD: -12, MID: 5, DEF: 25,  GK: 15 },
+    balanced: { FWD: 0,  MID: 0,  DEF: 0,   GK: 0 }
+  };
+
   /* CPU pick: fills most-needed line, prefers high rated, has some randomness */
   function cpuPick(pool) {
     var needs = {GK:0,DEF:0,MID:0,FWD:0};
@@ -129,17 +140,22 @@ window.startDraftVsComputer = (function (W) {
     slots.forEach(function(s){ needs[lineOf(s)]++; });
     DVC.cpuPicks.forEach(function(p){ if(p) needs[p.line]--; });
 
+    var bias = PERSONALITY_BIAS[DVC.personality] || PERSONALITY_BIAS.balanced;
+
     /* Score each available player */
     var scored = pool.map(function(p){
       var n = Math.max(0, needs[p.line]||0);
       var urgency = n >= 3 ? 30 : n >= 2 ? 20 : n >= 1 ? 10 : -20; /* penalise if line full */
-      var score = urgency + (p.r||75) + (Math.random()*18 - 4);
+      var personalityBonus = bias[p.line] || 0;
+      /* Hard: smaller random spread → more deterministic. Easy: larger spread → sloppier */
+      var spread = DVC.difficulty === "hard" ? 6 : DVC.difficulty === "easy" ? 28 : 18;
+      var score = urgency + personalityBonus + (p.r||75) + (Math.random()*spread - spread/4);
       return { p:p, score:score };
     });
     scored.sort(function(a,b){ return b.score-a.score; });
 
-    /* Pick from top 3 for variety */
-    var topN = Math.min(3, scored.length);
+    /* Hard: always top pick. Easy: top 5 for variety. Medium: top 3. */
+    var topN = DVC.difficulty === "hard" ? 1 : DVC.difficulty === "easy" ? Math.min(5, scored.length) : Math.min(3, scored.length);
     return scored[Math.floor(Math.random()*topN)].p;
   }
 
@@ -226,6 +242,14 @@ window.startDraftVsComputer = (function (W) {
     html += '<div class="seg-desc" id="dvcDiffDesc">'+(DVC.difficulty==="easy"?"CPU picks with lower priority — easier to outbuild.":DVC.difficulty==="hard"?"CPU always takes the best available player — tough competition.":"CPU plays sensibly but isn't perfect.")+'</div>';
     html += '<div class="dvc-record" id="dvcRecord">'+renderRecordHtml(DVC.difficulty)+'</div>';
     html += '</div>';
+    html += '<div class="setup-row setup-row-col"><span class="setup-label">CPU Style</span>';
+    html += '<div class="diff-row" id="dvcPersonBar">';
+    [{id:"balanced",label:"Balanced",desc:"No obvious weakness — CPU builds a complete side."},{id:"scorer",label:"The Scorer",desc:"CPU hunts strikers — expect a high-scoring game."},{id:"defender",label:"The Defender",desc:"CPU prioritises defence — it will be a battle to break down."}].forEach(function(p){
+      html += '<button class="diff-opt'+(DVC.personality===p.id?" active":"")+'" data-p="'+p.id+'" title="'+esc(p.desc)+'">'+esc(p.label)+'</button>';
+    });
+    html += '</div>';
+    html += '<div class="seg-desc" id="dvcPersonDesc">'+(DVC.personality==="scorer"?"CPU hunts strikers — expect a high-scoring game.":DVC.personality==="defender"?"CPU prioritises defence — it will be a battle to break down.":"No obvious weakness — CPU builds a complete side.")+'</div>';
+    html += '</div>';
     html += '<button class="start-btn" id="dvcStart">Start Draft →</button></div>';
     return html;
   }
@@ -254,6 +278,16 @@ window.startDraftVsComputer = (function (W) {
       };
     });
 
+    document.querySelectorAll("#dvcPersonBar .diff-opt").forEach(function(btn){
+      btn.onclick = function(){
+        DVC.personality = btn.getAttribute("data-p");
+        document.querySelectorAll("#dvcPersonBar .diff-opt").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        var desc = document.getElementById("dvcPersonDesc");
+        if (desc) desc.textContent = DVC.personality==="scorer"?"CPU hunts strikers — expect a high-scoring game.":DVC.personality==="defender"?"CPU prioritises defence — it will be a battle to break down.":"No obvious weakness — CPU builds a complete side.";
+      };
+    });
+
     var startBtn = document.getElementById("dvcStart");
     if (startBtn) startBtn.onclick = function(){
       DVC.pool = buildPool();
@@ -265,8 +299,9 @@ window.startDraftVsComputer = (function (W) {
       DVC.cpuPicks = [];
       DVC.turn = 0; /* 0 = player, 1 = cpu */
       DVC.round = 1;
+      DVC.originalPool = DVC.pool.slice();
       DVC.phase = "draft";
-      DVC.cpuName = rnd(CPU_NAMES);
+      DVC.cpuName = rnd(CPU_NAMES[DVC.personality] || CPU_NAMES.balanced);
       DVC.lastCpuPick = null;
       render();
     };
@@ -542,6 +577,9 @@ window.startDraftVsComputer = (function (W) {
 
     html += '<div class="dvc-result-cta">';
     html += '<button class="btn-primary" id="dvcPlayAgain">Draft Again</button>';
+    if (DVC.originalPool && DVC.originalPool.length >= 22) {
+      html += '<button class="btn-ghost" id="dvcRematch">Rematch (same pool)</button>';
+    }
     html += '<button class="btn-ghost" id="dvcHome">← Home</button>';
     html += '</div>';
     html += '</div>';
@@ -555,6 +593,24 @@ window.startDraftVsComputer = (function (W) {
       DVC.playerPicks = [];
       DVC.cpuPicks = [];
       DVC.pool = [];
+      DVC.originalPool = [];
+      render();
+    };
+    var rematch = document.getElementById("dvcRematch");
+    if (rematch) rematch.onclick = function(){
+      /* Restore original pool and start a new draft with same settings */
+      DVC.pool = DVC.originalPool.slice();
+      DVC.originalPool = DVC.pool.slice();
+      DVC.playerPicks = [];
+      DVC.cpuPicks = [];
+      DVC.turn = 0;
+      DVC.round = 1;
+      DVC.phase = "draft";
+      DVC.cpuName = rnd(CPU_NAMES[DVC.personality] || CPU_NAMES.balanced);
+      DVC.lastCpuPick = null;
+      DVC.matchResult = null;
+      DVC.playerTeam = null;
+      DVC.cpuTeam = null;
       render();
     };
     var home = document.getElementById("dvcHome");
@@ -578,12 +634,14 @@ window.startDraftVsComputer = (function (W) {
       phase: "setup",
       formation: "4-3-3",
       difficulty: "medium",
+      personality: "balanced",
       pool: [],
+      originalPool: [],
       playerPicks: [],
       cpuPicks: [],
       turn: 0,
       round: 1,
-      cpuName: rnd(CPU_NAMES),
+      cpuName: rnd(CPU_NAMES.balanced),
       lastCpuPick: null,
       matchResult: null,
       playerTeam: null,

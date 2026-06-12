@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-9 ALL COMPLETE. Cache wcxi-v125. Push to GitHub done. Next: Task 10 (DVC-2 & DVC-4: CPU personality + rematch)._
+_Last checkpoint: Tasks 1-10 ALL COMPLETE. Cache wcxi-v126. Push to GitHub done. Next: Task 11 (DVC-3: Extra formations for DVC)._
 
 ---
 
@@ -312,10 +312,25 @@ _All pop-out panels, all game modes._
 - league.js: v80 (share card redesign with squad + GD)
 - multiplayer.js: v92
 - floodlights.js: v91 (home stats + HTP overlay)
-- draftvscomputer.js: v5 (WCXI_addScore on win/draw)
+- draftvscomputer.js: v6 (CPU personality + rematch)
 - ratingswar.js: v101 (WCXI_addScore on completed duel/series)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v125
+- sw.js: wcxi-v126
+
+## 23. TASK 10 — DVC-2 + DVC-4: CPU PERSONALITY + REMATCH ✅
+**CPU Personality (DVC-2):**
+- 3 personalities added: Balanced / The Scorer / The Defender
+- `PERSONALITY_BIAS` map: scorer gets FWD+25/DEF-12, defender gets DEF+25/FWD-12
+- Bias applied in `cpuPick()` scoring formula
+- Personality selector added to setup UI (same `diff-opt` button style)
+- CPU name pool changes by personality (scorer: "The Poacher", defender: "The Sweeper", etc.)
+- Difficulty now also affects pick randomness: hard=top1, medium=top3, easy=top5
+
+**Rematch (DVC-4):**
+- `DVC.originalPool` saved at draft start (`pool.slice()`)
+- "Rematch (same pool)" button shown at result screen if pool exists
+- Rematch resets picks/turns but restores original pool — same player options, different outcomes
+- "Draft Again" still goes back to setup and discards pool
 
 ## 22. TASK 9 — OG-8: SHAREABLE LEAGUE SEASON CARD ✅
 - `_lgShareImage()` in league.js redesigned (1080×1400 canvas):
