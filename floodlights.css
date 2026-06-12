@@ -656,3 +656,49 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 
 /* Pitch container in draft view — gentle rise */
 .draft-pitch-wrap { animation: fl-rise var(--dur-3) var(--ease-out); }
+
+/* ── Duels Phase 2: feature toggles in setup screen ── */
+.rw-features { margin: var(--sp-5) 0 var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.rw-feat-title { font-size: var(--t-xs); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-mute); padding: var(--sp-3) var(--sp-4); background: var(--surface-2); display: flex; align-items: center; gap: var(--sp-2); }
+.rw-feat-sub { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-sub); font-size: var(--t-2xs); }
+.rw-feat-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--line); transition: background var(--dur-1); }
+.rw-feat-row:hover { background: var(--surface-2); }
+.rw-feat-label { flex: 1; font-size: var(--t-sm); font-weight: 600; color: var(--text); }
+.rw-feat-info { position: relative; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: var(--t-xs); color: var(--text-mute); cursor: pointer; border-radius: 50%; transition: color var(--dur-1); flex-shrink: 0; }
+.rw-feat-info:hover, .rw-feat-info:focus-visible { color: var(--primary); outline: none; }
+.rw-tip { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); width: 220px; background: var(--surface-3); border: 1px solid var(--line-strong); border-radius: var(--r-md); padding: var(--sp-3); font-size: var(--t-2xs); color: var(--text-sub); line-height: 1.5; pointer-events: none; opacity: 0; transition: opacity var(--dur-1); z-index: 20; }
+.rw-tip-show .rw-tip { opacity: 1; pointer-events: auto; }
+@media (max-width: 540px) { .rw-tip { right: auto; left: 0; top: calc(100% + 6px); transform: none; width: 240px; } }
+.rw-feat-toggle { position: relative; width: 40px; height: 22px; border: none; border-radius: 11px; background: var(--line-strong); cursor: pointer; flex-shrink: 0; transition: background var(--dur-1); padding: 0; }
+.rw-feat-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rw-feat-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-sub); transition: transform var(--dur-1) var(--ease-spring), background var(--dur-1); }
+.rw-feat-on { background: var(--primary); }
+.rw-feat-on .rw-feat-knob { transform: translateX(18px); background: #fff; }
+
+/* ── Phase screens (posban / captain / blindswap) ── */
+.rw-phase-screen { max-width: 520px; margin: var(--sp-5) auto; text-align: center; }
+.rw-phase-sub { font-size: var(--t-sm); color: var(--text-sub); margin: var(--sp-2) 0 var(--sp-5); line-height: 1.6; }
+.rw-slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); margin: 0 auto var(--sp-5); max-width: 360px; }
+@media (max-width: 400px) { .rw-slot-grid { grid-template-columns: repeat(3, 1fr); } }
+.rw-slot-pick { padding: var(--sp-2) var(--sp-1); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); font-size: var(--t-xs); font-weight: 700; color: var(--text); cursor: pointer; transition: background var(--dur-1), border-color var(--dur-1), transform var(--dur-1); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.rw-slot-pick:hover { background: var(--surface-3); border-color: var(--line-strong); }
+.rw-slot-pick.rw-slot-selected { background: color-mix(in srgb, var(--primary) 18%, var(--surface-2)); border-color: var(--primary); color: var(--primary); }
+.rw-slot-pick.rw-slot-disabled { opacity: .38; cursor: not-allowed; }
+.rw-ban-chip { font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--warning); }
+
+/* ── Blind swap specifics ── */
+.rw-swap-header { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.rw-swap-timer { font-size: var(--t-h3); font-weight: 800; font-variant-numeric: tabular-nums; color: var(--positive); min-width: 3ch; }
+.rw-timer-urgent { color: var(--warning); animation: rw-pulse 0.8s infinite; }
+@keyframes rw-pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+.rw-swap-grid { max-width: 440px; }
+.rw-swap-pos { font-size: var(--t-2xs); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-mute); }
+.rw-swap-player { font-size: var(--t-xs); font-weight: 600; color: var(--text); }
+.rw-swap-actions { margin-top: var(--sp-4); }
+
+/* ── Reveal: feature badges (×2, C, banned) ── */
+.rw-badge { display: inline-flex; align-items: center; font-size: 9px; font-weight: 800; letter-spacing: .06em; padding: 1px 5px; border-radius: 4px; margin-left: 3px; vertical-align: middle; text-transform: uppercase; }
+.rw-badge.xf { background: color-mix(in srgb, var(--champion) 20%, transparent); color: var(--champion); border: 1px solid color-mix(in srgb, var(--champion) 35%, transparent); }
+.rw-badge.cap-a { background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); }
+.rw-badge.cap-b { background: color-mix(in srgb, var(--positive) 20%, transparent); color: var(--positive); border: 1px solid color-mix(in srgb, var(--positive) 35%, transparent); }
+.rw-ban { font-size: var(--t-2xs); color: var(--text-mute); font-style: italic; }

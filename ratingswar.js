@@ -62,12 +62,35 @@
     if (W.scrollTo) W.scrollTo(0,0);
   }
 
+  /* ── Feature definitions (10 Duels toggles) ── */
+  var DUEL_FEATURES = [
+    { key:"xfactor",       label:"X-Factor Slot",        desc:"One random position is secretly chosen as the X-Factor. Winning that slot counts double." },
+    { key:"captain",       label:"Captain",               desc:"Each player designates one position as Captain before building. Winning your Captain's slot earns +2 bonus points." },
+    { key:"posBan",        label:"Position Ban",          desc:"Before building, each player secretly bans one slot. That position is excluded from your own XI at reveal." },
+    { key:"steal",         label:"Steal Power-Up",        desc:"Once per match, after the reveal starts, you may steal your opponent's highest-rated revealed player into your XI." },
+    { key:"blindSwap",     label:"Blind Swap",            desc:"After locking your XI, you have 30 seconds to secretly swap any two positions before the reveal begins." },
+    { key:"wildcard",      label:"Wildcard Spin",         desc:"Each player gets one bonus spin from the entire global pool — any nation, any era, any position." },
+    { key:"bestOf3",       label:"Best of 3 Series",      desc:"Play 3 matches. First player to win 2 takes the series. Ties count as half a win each." },
+    { key:"sharedPool",    label:"Draft from Shared Pool",desc:"Both players draft from the same displayed pool in alternating pick order. No duplicate players." },
+    { key:"asyncOnline",   label:"Async Online Mode",     desc:"Get a shareable link. Build your XI in your own time — your opponent picks up the link and builds theirs. Reveal when both are done." },
+    { key:"formationDraft",label:"Formation Draft",       desc:"Before the reveal, each player secretly picks a formation. Your formation sets which positions get a tactical bonus." }
+  ];
+
+  var DEFAULT_FEATURES = { xfactor:false, captain:false, posBan:false, steal:false, blindSwap:false, wildcard:false, bestOf3:false, sharedPool:false, asyncOnline:false, formationDraft:false };
+
   W.startDuels = function(){
     RW = {
       phase:"intro", cur:0, revealStep:-1,
       numPlayers:2, curA:0, curB:1,
       matches:[], matchIdx:0, matchResults:[],
       currentSpin:null, pendingRWPick:null, _spinning:false,
+      features: Object.assign({}, DEFAULT_FEATURES),
+      xfactorSlot: null,
+      captains: [],
+      bannedSlots: [],
+      swapDone: [],
+      seriesWins: [],
+      seriesMatch: 0,
       players:[ {name:"Player 1", picks:newPicks(), rerollsUsed:0}, {name:"Player 2", picks:newPicks(), rerollsUsed:0} ]
     };
     hideOthers(); view().style.display=""; if(W.scrollTo) W.scrollTo(0,0);
@@ -223,17 +246,20 @@
 
   function render(){
     var v = view();
-    if (RW.phase === "intro")      return renderIntro(v);
-    if (RW.phase === "onintro")    return renderOnlineIntro(v);
-    if (RW.phase === "poolselect") return renderPoolSelect(v);
-    if (RW.phase === "build")      return renderBuild(v);
-    if (RW.phase === "onbuild")    return renderBuild(v);
-    if (RW.phase === "waitopp")    return renderWaitOpp(v);
-    if (RW.phase === "handoff")    return renderHandoff(v);
-    if (RW.phase === "reveal")     return renderReveal(v);
-    if (RW.phase === "matchnext")  return renderMatchNext(v);
-    if (RW.phase === "tournresult") return renderTournResult(v);
-    if (RW.phase === "result")     return renderResult(v);
+    if (RW.phase === "intro")        return renderIntro(v);
+    if (RW.phase === "onintro")      return renderOnlineIntro(v);
+    if (RW.phase === "posban")       return renderPosBan(v);
+    if (RW.phase === "captain")      return renderCaptain(v);
+    if (RW.phase === "poolselect")   return renderPoolSelect(v);
+    if (RW.phase === "build")        return renderBuild(v);
+    if (RW.phase === "onbuild")      return renderBuild(v);
+    if (RW.phase === "blindswap")    return renderBlindSwap(v);
+    if (RW.phase === "waitopp")      return renderWaitOpp(v);
+    if (RW.phase === "handoff")      return renderHandoff(v);
+    if (RW.phase === "reveal")       return renderReveal(v);
+    if (RW.phase === "matchnext")    return renderMatchNext(v);
+    if (RW.phase === "tournresult")  return renderTournResult(v);
+    if (RW.phase === "result")       return renderResult(v);
   }
 
   /* ---------- online: name yourself, then build ---------- */
@@ -287,6 +313,18 @@
       if (i < n-1 && n===2) nameFields += "<div class='rw-vs-badge'>VS</div>";
     }
     var formatHint = n===3 ? "Round robin · 3 matches" : n===4 ? "Bracket · semi-finals + final" : "Head-to-head · 1 match";
+    var featHTML = "<div class='rw-features'><div class='rw-feat-title'>House rules <span class='rw-feat-sub'>all off by default</span></div>";
+    DUEL_FEATURES.forEach(function(f){
+      var on = RW.features[f.key];
+      featHTML += "<div class='rw-feat-row' data-fkey='"+f.key+"'>"+
+        "<span class='rw-feat-label'>"+esc(f.label)+"</span>"+
+        "<span class='rw-feat-info' data-tip='"+esc(f.desc)+"' tabindex='0' role='button' aria-label='Info about "+esc(f.label)+"'>ⓘ<span class='rw-tip'>"+esc(f.desc)+"</span></span>"+
+        "<button class='rw-feat-toggle"+(on?" rw-feat-on":"")+"' data-fkey='"+f.key+"' aria-pressed='"+(on?"true":"false")+"' aria-label='"+esc(f.label)+(on?" on":" off")+"'>"+
+          "<span class='rw-feat-knob'></span>"+
+        "</button>"+
+      "</div>";
+    });
+    featHTML += "</div>";
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Multiplayer</div>"+
@@ -302,6 +340,7 @@
         "<span class='rw-pc-hint'>"+esc(formatHint)+"</span>"+
       "</div>"+
       "<div class='rw-names' id='rwNamesWrap'>"+nameFields+"</div>"+
+      featHTML+
       "<button class='fl-btn rw-start' id='rwStart'>"+esc(RW.players[0]?RW.players[0].name:defaultName(0))+" — build your XI →</button>"+
       "<button class='rw-rules-link' id='rwHowToPlay'>How to play</button>"+
       "</div></div>";
@@ -321,13 +360,55 @@
         render();
       });
     });
+    v.querySelectorAll(".rw-feat-toggle").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var fk = btn.getAttribute("data-fkey");
+        RW.features[fk] = !RW.features[fk];
+        btn.classList.toggle("rw-feat-on", RW.features[fk]);
+        btn.setAttribute("aria-pressed", RW.features[fk] ? "true" : "false");
+        btn.setAttribute("aria-label", btn.closest(".rw-feat-row").querySelector(".rw-feat-label").textContent + (RW.features[fk] ? " on" : " off"));
+      });
+    });
+    v.querySelectorAll(".rw-feat-info").forEach(function(el){
+      el.addEventListener("mouseenter", function(){ el.classList.add("rw-tip-show"); });
+      el.addEventListener("mouseleave", function(){ el.classList.remove("rw-tip-show"); });
+      el.addEventListener("focus",      function(){ el.classList.add("rw-tip-show"); });
+      el.addEventListener("blur",       function(){ el.classList.remove("rw-tip-show"); });
+      el.addEventListener("click",      function(){ el.classList.toggle("rw-tip-show"); });
+    });
+    document.addEventListener("click", function handler(e){
+      if (!e.target.closest(".rw-feat-info")){ v.querySelectorAll(".rw-tip-show").forEach(function(el){ el.classList.remove("rw-tip-show"); }); }
+    }, { capture:true, once:false });
     document.getElementById("rwStart").onclick = function(){
       for (var i=0; i<n; i++){
         var inp = document.getElementById("rwN"+i);
         RW.players[i].name = inp ? (inp.value.trim()||defaultName(i)) : defaultName(i);
       }
-      RW.cur = 0; RW.phase = "poolselect"; render();
+      initFeatures();
+      RW.cur = 0;
+      if (RW.features.posBan){ RW.phase = "posban"; }
+      else if (RW.features.captain){ RW.phase = "captain"; }
+      else { RW.phase = "poolselect"; }
+      render();
     };
+  }
+
+  /* ── Initialise enabled features when a match starts ── */
+  function initFeatures(){
+    var f = RW.features;
+    RW.xfactorSlot = f.xfactor ? Math.floor(Math.random() * SLOTS.length) : null;
+    RW.captains = RW.players.map(function(){ return null; });
+    RW.bannedSlots = RW.players.map(function(){ return null; });
+    RW.swapDone = RW.players.map(function(){ return false; });
+    RW.posBanPassing = false;
+    RW.captainPassing = false;
+    RW.blindSwapPassing = false;
+    RW.swapSel = null;
+    RW._swapTimerInterval = null;
+    RW.swapTimeLeft = 30;
+    if (f.bestOf3 && RW.numPlayers === 2){
+      RW.seriesWins = [0, 0]; RW.seriesMatch = 0;
+    }
   }
 
   /* ── Available data pools for Duels ── */
@@ -654,7 +735,13 @@
         RW.matches = buildMatchSchedule(RW.numPlayers);
         RW.matchIdx = 0;
         RW.curA = RW.matches[0].a; RW.curB = RW.matches[0].b;
-        RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+        if (RW.features.blindSwap){
+          RW.cur = 0; RW.swapDone = RW.players.map(function(){ return false; });
+          RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
+          RW.phase = "blindswap";
+        } else {
+          RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+        }
       }
       render();
     };
@@ -675,16 +762,202 @@
     document.getElementById("rwGo").onclick = function(){ RW.phase="poolselect"; render(); };
   }
 
+  /* ---------- position ban (before build, each player secretly bans one slot) ---------- */
+  function renderPosBan(v){
+    var P = RW.players[RW.cur];
+    if (RW.posBanPassing){
+      v.innerHTML =
+        "<div class='wrap'><div class='rw-handoff'>"+
+          "<h2 class='rw-title'>Pass the device</h2>"+
+          "<p class='rw-sub'><strong>"+esc(P.name)+"</strong>, it's your turn to secretly ban a position.</p>"+
+          "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(P.name)+" — pick my ban →</button>"+
+        "</div></div>";
+      document.getElementById("rwGo").onclick = function(){ RW.posBanPassing = false; render(); };
+      return;
+    }
+    var html = "<div class='wrap'><div class='rw-phase-screen'>"+
+      "<h2 class='rw-title'>Position Ban</h2>"+
+      "<p class='rw-phase-sub'><strong>"+esc(P.name)+"</strong> — secretly ban one slot. That position counts as 0 for you at the reveal.</p>"+
+      "<div class='rw-slot-grid'>";
+    SLOTS.forEach(function(s, i){
+      var sel = RW.bannedSlots[RW.cur] === i;
+      html += "<button class='rw-slot-pick"+(sel?" rw-slot-selected":"")+"' data-si='"+i+"'>"+esc(s.k.trim())+"</button>";
+    });
+    html += "</div>"+
+      "<button class='fl-btn rw-start' id='rwPBConfirm' "+(RW.bannedSlots[RW.cur]===null?"disabled":"")+">"+
+        (RW.cur < RW.numPlayers-1 ? "Confirm — pass to "+esc(RW.players[RW.cur+1].name)+" →" : "Confirm →")+
+      "</button></div></div>";
+    v.innerHTML = html;
+    v.querySelectorAll(".rw-slot-pick").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        RW.bannedSlots[RW.cur] = parseInt(btn.getAttribute("data-si"), 10);
+        var c = document.getElementById("rwPBConfirm"); if(c) c.disabled = false;
+        v.querySelectorAll(".rw-slot-pick").forEach(function(b){ b.classList.remove("rw-slot-selected"); });
+        btn.classList.add("rw-slot-selected");
+      });
+    });
+    document.getElementById("rwPBConfirm").onclick = function(){
+      if (RW.bannedSlots[RW.cur] === null) return;
+      if (RW.cur < RW.numPlayers - 1){ RW.cur++; RW.posBanPassing = true; }
+      else {
+        RW.cur = 0; RW.posBanPassing = false;
+        if (RW.features.captain){ RW.phase = "captain"; RW.captainPassing = false; }
+        else { RW.phase = "poolselect"; }
+      }
+      render();
+    };
+  }
+
+  /* ---------- captain pick (before build, each player designates one position) ---------- */
+  function renderCaptain(v){
+    var P = RW.players[RW.cur];
+    if (RW.captainPassing){
+      v.innerHTML =
+        "<div class='wrap'><div class='rw-handoff'>"+
+          "<h2 class='rw-title'>Pass the device</h2>"+
+          "<p class='rw-sub'><strong>"+esc(P.name)+"</strong>, it's your turn to secretly choose your Captain position.</p>"+
+          "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(P.name)+" — pick my Captain →</button>"+
+        "</div></div>";
+      document.getElementById("rwGo").onclick = function(){ RW.captainPassing = false; render(); };
+      return;
+    }
+    var html = "<div class='wrap'><div class='rw-phase-screen'>"+
+      "<h2 class='rw-title'>Captain</h2>"+
+      "<p class='rw-phase-sub'><strong>"+esc(P.name)+"</strong> — secretly pick your Captain slot. Win that position and earn +2 bonus points.</p>"+
+      "<div class='rw-slot-grid'>";
+    SLOTS.forEach(function(s, i){
+      var banned = RW.features.posBan && RW.bannedSlots[RW.cur] === i;
+      var sel = RW.captains[RW.cur] === i;
+      html += "<button class='rw-slot-pick"+(banned?" rw-slot-disabled":"")+(sel?" rw-slot-selected":"")+"' data-si='"+i+"'"+(banned?" disabled":"")+">"+
+        esc(s.k.trim())+(banned?" <span class='rw-ban-chip'>banned</span>":"")+
+      "</button>";
+    });
+    html += "</div>"+
+      "<button class='fl-btn rw-start' id='rwCapConfirm' "+(RW.captains[RW.cur]===null?"disabled":"")+">"+
+        (RW.cur < RW.numPlayers-1 ? "Confirm — pass to "+esc(RW.players[RW.cur+1].name)+" →" : "Confirm →")+
+      "</button></div></div>";
+    v.innerHTML = html;
+    v.querySelectorAll(".rw-slot-pick:not([disabled])").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        RW.captains[RW.cur] = parseInt(btn.getAttribute("data-si"), 10);
+        var c = document.getElementById("rwCapConfirm"); if(c) c.disabled = false;
+        v.querySelectorAll(".rw-slot-pick").forEach(function(b){ b.classList.remove("rw-slot-selected"); });
+        btn.classList.add("rw-slot-selected");
+      });
+    });
+    document.getElementById("rwCapConfirm").onclick = function(){
+      if (RW.captains[RW.cur] === null) return;
+      if (RW.cur < RW.numPlayers - 1){ RW.cur++; RW.captainPassing = true; }
+      else { RW.cur = 0; RW.captainPassing = false; RW.phase = "poolselect"; }
+      render();
+    };
+  }
+
+  /* ---------- blind swap (after all players lock, 30s to secretly swap 2 slots) ---------- */
+  function renderBlindSwap(v){
+    if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
+    var P = RW.players[RW.cur];
+
+    function finishSwap(){
+      if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
+      RW.swapDone[RW.cur] = true;
+      if (RW.cur < RW.numPlayers - 1){
+        RW.cur++; RW.blindSwapPassing = true; RW.swapSel = null; RW.swapTimeLeft = 30;
+      } else {
+        RW.phase = "reveal"; RW.revealStep = -1; computeResult();
+      }
+      render();
+    }
+
+    if (RW.blindSwapPassing){
+      v.innerHTML =
+        "<div class='wrap'><div class='rw-handoff'>"+
+          "<h2 class='rw-title'>Pass the device</h2>"+
+          "<p class='rw-sub'><strong>"+esc(P.name)+"</strong>, you have 30 seconds to secretly swap two positions in your XI.</p>"+
+          "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(P.name)+" — do my swap →</button>"+
+        "</div></div>";
+      document.getElementById("rwGo").onclick = function(){
+        RW.blindSwapPassing = false; RW.swapSel = null; render();
+      };
+      return;
+    }
+
+    if (!RW.swapTimeLeft || RW.swapTimeLeft <= 0) RW.swapTimeLeft = 30;
+    var timeLeft = RW.swapTimeLeft;
+
+    var html = "<div class='wrap'><div class='rw-phase-screen'>"+
+      "<div class='rw-swap-header'>"+
+        "<h2 class='rw-title'>Blind Swap</h2>"+
+        "<div class='rw-swap-timer"+(timeLeft<=10?" rw-timer-urgent":"")+"' id='rwSwapTimer'>"+timeLeft+"s</div>"+
+      "</div>"+
+      "<p class='rw-phase-sub'><strong>"+esc(P.name)+"</strong> — select two slots to swap them. Confirm when done, or skip.</p>"+
+      "<div class='rw-slot-grid rw-swap-grid'>";
+    P.picks.forEach(function(pick, i){
+      var sel = RW.swapSel === i ? " rw-slot-selected" : "";
+      html += "<button class='rw-slot-pick"+sel+"' data-si='"+i+"'>"+
+        "<span class='rw-swap-pos'>"+esc(SLOTS[i].k.trim())+"</span>"+
+        "<span class='rw-swap-player'>"+(pick ? esc(shortName(pick.n)) : "—")+"</span>"+
+      "</button>";
+    });
+    html += "</div>"+
+      "<div class='rw-swap-actions'>"+
+        "<button class='fl-btn rw-start' id='rwSwapSkip'>Skip →</button>"+
+      "</div></div></div>";
+    v.innerHTML = html;
+
+    RW._swapTimerInterval = setInterval(function(){
+      RW.swapTimeLeft--;
+      var el = document.getElementById("rwSwapTimer");
+      if (el){
+        el.textContent = RW.swapTimeLeft+"s";
+        if (RW.swapTimeLeft <= 10) el.classList.add("rw-timer-urgent");
+      }
+      if (RW.swapTimeLeft <= 0) finishSwap();
+    }, 1000);
+
+    v.querySelectorAll(".rw-slot-pick").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var idx = parseInt(btn.getAttribute("data-si"), 10);
+        if (RW.swapSel === null){
+          RW.swapSel = idx;
+          v.querySelectorAll(".rw-slot-pick").forEach(function(b){ b.classList.remove("rw-slot-selected"); });
+          btn.classList.add("rw-slot-selected");
+        } else if (RW.swapSel === idx){
+          RW.swapSel = null;
+          btn.classList.remove("rw-slot-selected");
+        } else {
+          var a = RW.swapSel, b = idx;
+          var tmp = P.picks[a]; P.picks[a] = P.picks[b]; P.picks[b] = tmp;
+          RW.swapSel = null;
+          finishSwap();
+        }
+      });
+    });
+
+    document.getElementById("rwSwapSkip").onclick = finishSwap;
+  }
+
   /* ---------- result computation ---------- */
   function computeResult(){
     var idxA = RW.curA!=null ? RW.curA : 0;
     var idxB = RW.curB!=null ? RW.curB : 1;
     var s1=0, s2=0, rows=[];
+    var f = RW.features;
     SLOTS.forEach(function(s,i){
       var a=RW.players[idxA].picks[i], b=RW.players[idxB].picks[i];
-      var ra=a?a.r:0, rb=b?b.r:0, win = ra>rb?1:(rb>ra?2:0);
-      if(win===1) s1++; else if(win===2) s2++;
-      rows.push({slot:s.k.trim(), line:s.line, a:a, b:b, win:win});
+      /* Position Ban: treat banned slot as missing pick */
+      var aBanned = f.posBan && RW.bannedSlots[idxA] === i;
+      var bBanned = f.posBan && RW.bannedSlots[idxB] === i;
+      var ra = (a && !aBanned) ? a.r : 0;
+      var rb = (b && !bBanned) ? b.r : 0;
+      var win = ra>rb ? 1 : (rb>ra ? 2 : 0);
+      var isXF = f.xfactor && RW.xfactorSlot === i;
+      var capA = f.captain && RW.captains[idxA] === i;
+      var capB = f.captain && RW.captains[idxB] === i;
+      var pts = isXF ? 2 : 1;
+      if(win===1){ s1 += pts; if(capA) s1 += 2; }
+      else if(win===2){ s2 += pts; if(capB) s2 += 2; }
+      rows.push({slot:s.k.trim(), line:s.line, a:a, b:b, win:win, xfactor:isXF, capA:capA, capB:capB, aBanned:aBanned, bBanned:bBanned, pts:pts});
     });
     RW.rows = rows; RW.score=[s1,s2];
   }
@@ -693,19 +966,32 @@
   function renderReveal(v){
     var step = RW.revealStep;
     var shown = RW.rows.slice(0, Math.max(0, step+1));
-    var s1=0,s2=0; shown.forEach(function(r){ if(r.win===1)s1++; else if(r.win===2)s2++; });
+    var s1=0,s2=0;
+    shown.forEach(function(r){
+      var p = r.pts || 1;
+      if(r.win===1){ s1+=p; if(r.capA) s1+=2; }
+      else if(r.win===2){ s2+=p; if(r.capB) s2+=2; }
+    });
     var done = step >= RW.rows.length-1;
     var cards = shown.slice().reverse().map(function(r){
       var aw = r.win===1, bw = r.win===2;
-      return "<div class='rw-rev-row "+(r.win===0?"draw":"")+"'>"+
+      var badges = "";
+      if(r.xfactor) badges += "<span class='rw-badge xf'>×2</span>";
+      if(r.capA)    badges += "<span class='rw-badge cap-a'>C</span>";
+      if(r.capB)    badges += "<span class='rw-badge cap-b'>C</span>";
+      var aName = r.aBanned ? "<span class='rw-ban'>banned</span>" : esc(shortName(r.a?r.a.n:"—"));
+      var bName = r.bBanned ? "<span class='rw-ban'>banned</span>" : esc(shortName(r.b?r.b.n:"—"));
+      var aRat  = r.aBanned ? "—" : (r.a?r.a.r:"–");
+      var bRat  = r.bBanned ? "—" : (r.b?r.b.r:"–");
+      return "<div class='rw-rev-row "+(r.win===0?"draw":"")+(r.xfactor?" xfactor-row":"")+"'>"+
         "<div class='rw-rev-side "+(aw?"win":"")+"'>"+
-          "<span class='rw-rev-name'>"+esc(shortName(r.a?r.a.n:"—"))+"</span>"+
-          "<span class='rw-rev-rating"+(r.a?ratingTierClass(r.a.r):"")+"'>"+(r.a?r.a.r:"–")+"</span></div>"+
-        "<div class='rw-rev-mid'><span class='pos "+r.line+"'>"+esc(r.slot)+"</span>"+
+          "<span class='rw-rev-name'>"+aName+"</span>"+
+          "<span class='rw-rev-rating"+(r.a&&!r.aBanned?ratingTierClass(r.a.r):"")+"'>"+aRat+"</span></div>"+
+        "<div class='rw-rev-mid'>"+badges+"<span class='pos "+r.line+"'>"+esc(r.slot)+"</span>"+
           (aw?"<span class='rw-rev-arrow l'>◀</span>":bw?"<span class='rw-rev-arrow r'>▶</span>":"<span class='rw-rev-eq'>=</span>")+"</div>"+
         "<div class='rw-rev-side right "+(bw?"win":"")+"'>"+
-          "<span class='rw-rev-rating"+(r.b?ratingTierClass(r.b.r):"")+"'>"+(r.b?r.b.r:"–")+"</span>"+
-          "<span class='rw-rev-name'>"+esc(shortName(r.b?r.b.n:"—"))+"</span></div>"+
+          "<span class='rw-rev-rating"+(r.b&&!r.bBanned?ratingTierClass(r.b.r):"")+"'>"+bRat+"</span>"+
+          "<span class='rw-rev-name'>"+bName+"</span></div>"+
         "</div>";
     }).join("");
     v.innerHTML =
