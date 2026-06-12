@@ -169,8 +169,11 @@
     joinCode: "",
     joinStatus: null,     // idle | loading | joining | connected
     joinError: null,
-    _netOnData: null      // per-mode network message handler
+    _netOnData: null,     // per-mode network message handler
+    _hostPoolKey: "wc",   // host's chosen pool for Duels
+    _guestPoolDataKey: null, _guestPoolNational: true, _guestPoolLabel: "World Cup"
   };
+  W._mpSt = st;
 
   /* ── Formation slot helpers ── */
   var MP_POS_FULL = {
@@ -294,6 +297,7 @@
       case "mp_join":         renderJoin();         break;
       case "mp_guestwait":    renderGuestWaitMode();break;
       case "mp_modeselect":   renderMpModeSelect(); break;
+      case "mp_hostsettings": renderHostSettings(); break;
       case "setup":           renderSetup();        break;
       case "player_setup":    renderPlayerSetup();  break;
       case "handoff_setup":   renderHandoffSetup(); break;
@@ -540,10 +544,23 @@
       if (msg.t === "mp_start"){
         st._netOnData = null;            // the per-mode handler takes over from here
         st.phase = "idle";
-        if (msg.mode === "duels" && window.startDuelsOnline){
-          window.startDuelsOnline("guest");
-        } else if (window.startDuelsOnline){
-          // Unknown/local-only mode online — Duels is the only synced game today.
+        if (msg.poolKey && window.RW_POOLS){
+          /* Apply the host's chosen pool before entering Duels */
+          var RW_POOLS = window.RW_POOLS;
+          for (var pi=0; pi<RW_POOLS.length; pi++){
+            if (RW_POOLS[pi].key === msg.poolKey){
+              var pool = RW_POOLS[pi];
+              if (window[pool.dataKey]) {
+                st._guestPoolKey = pool.key;
+                st._guestPoolDataKey = pool.dataKey;
+                st._guestPoolNational = pool.national;
+                st._guestPoolLabel = pool.label;
+              }
+              break;
+            }
+          }
+        }
+        if (window.startDuelsOnline){
           window.startDuelsOnline("guest");
         }
       }
@@ -562,6 +579,64 @@
     wrap.appendChild(wait);
     var back = mk("button","mp-ghost-btn","← Leave game");
     back.addEventListener("click", function(){ if(window.ElxiNet) window.ElxiNet.close(); st.online=false; st.netRole=null; st.phase="mp_connect"; _render(); });
+    wrap.appendChild(back);
+    root.appendChild(wrap);
+  }
+
+  /* ════════════════════════════════════════════════════
+     HOST SETTINGS — pick pool before Duels starts
+  ════════════════════════════════════════════════════ */
+  function renderHostSettings(){
+    var RW_POOLS = window.RW_POOLS || [
+      { key:"wc",         label:"World Cup",      hint:"93 nations · 1950–2026",  dataKey:"WORLD_CUP_DATA",   national:true  },
+      { key:"euro",       label:"Euros",          hint:"Euros 1980–2024",         dataKey:"EURO_DATA",        national:true  },
+      { key:"pl",         label:"Premier League", hint:"PL clubs · 1992–2025",    dataKey:"PL_DATA",          national:false },
+      { key:"laliga",     label:"La Liga",        hint:"La Liga · 1987–2024",     dataKey:"LALIGA_DATA",      national:false },
+      { key:"seriea",     label:"Serie A",        hint:"Serie A · 1987–2024",     dataKey:"SERIEA_DATA",      national:false },
+      { key:"bundesliga", label:"Bundesliga",     hint:"Bundesliga · 1990–2024",  dataKey:"BUNDESLIGA_DATA",  national:false }
+    ];
+    var selected = st._hostPoolKey || "wc";
+    var wrap = mk("div","mp-wrap");
+    wrap.innerHTML = '<h2 class="mp-title">Game Settings</h2>'+
+      '<p class="mp-sub">You\'re the host — pick the squad pool for Duels. Your opponent is waiting.</p>';
+    wrap.appendChild(mk("div","mp-online-tag","Online · code " + esc(st.netCode || (window.ElxiNet&&window.ElxiNet.code) || "")));
+
+    var grid = mk("div","rw-pool-grid");
+    RW_POOLS.forEach(function(pool){
+      var ok = window[pool.dataKey] && Object.keys(window[pool.dataKey]).length > 0;
+      var btn = mk("button","rw-pool-card"+(ok?"":" rw-pool-disabled")+(pool.key===selected?" rw-pool-selected":""));
+      btn.innerHTML = '<span class="rw-pool-name">'+esc(pool.label)+'</span><span class="rw-pool-hint">'+esc(pool.hint)+'</span>';
+      if (ok) btn.addEventListener("click", function(){
+        selected = pool.key; st._hostPoolKey = pool.key;
+        wrap.querySelectorAll(".rw-pool-card").forEach(function(b){ b.classList.remove("rw-pool-selected"); });
+        btn.classList.add("rw-pool-selected");
+      });
+      grid.appendChild(btn);
+    });
+    wrap.appendChild(grid);
+
+    var startBtn = mk("button","mp-start-btn","Start Duels →");
+    startBtn.style.marginTop = "20px";
+    startBtn.addEventListener("click", function(){
+      var poolKey = st._hostPoolKey || "wc";
+      if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"duels", poolKey:poolKey });
+      /* Apply pool to our own RW state before entering */
+      var chosenPool = null;
+      for (var pi=0;pi<RW_POOLS.length;pi++){ if(RW_POOLS[pi].key===poolKey){ chosenPool=RW_POOLS[pi]; break; } }
+      if (chosenPool && window[chosenPool.dataKey]){
+        st._guestPoolKey = chosenPool.key;
+        st._guestPoolDataKey = chosenPool.dataKey;
+        st._guestPoolNational = chosenPool.national;
+        st._guestPoolLabel = chosenPool.label;
+      }
+      st.phase = "idle";
+      if (window.startDuelsOnline) window.startDuelsOnline("host");
+    });
+    wrap.appendChild(startBtn);
+
+    var back = mk("button","mp-ghost-btn","← Back");
+    back.style.marginTop = "10px";
+    back.addEventListener("click", function(){ st.phase = "mp_modeselect"; _render(); });
     wrap.appendChild(back);
     root.appendChild(wrap);
   }
@@ -603,10 +678,7 @@
                  : "Two managers build blind — ratings hidden — then a position-by-position reveal decides each slot.")+'</span>';
     r.addEventListener("click", function(){
       if (st.online && window.startDuelsOnline){
-        // Host tells the guest which game to start, then enters it too.
-        if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"duels" });
-        st.phase = "idle";
-        window.startDuelsOnline(st.netRole);
+        st.phase = "mp_hostsettings"; _render();
       }
       else if (window.startDuels){ st.phase = "idle"; window.startDuels(); }
     });

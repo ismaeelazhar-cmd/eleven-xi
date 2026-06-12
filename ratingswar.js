@@ -211,6 +211,15 @@
   W.startDuelsOnline = function(role){
     buildPool();
     var myIdx = role === "host" ? 0 : 1, oppIdx = myIdx === 0 ? 1 : 0;
+    /* Apply pool chosen in the multiplayer lobby (host settings screen) */
+    var mpSt = W._mpSt; // reference to multiplayer state object
+    if (mpSt && mpSt._guestPoolDataKey && W[mpSt._guestPoolDataKey]){
+      RW_POOLS.forEach(function(p){ if(p.dataKey===mpSt._guestPoolDataKey){
+        var chosenPool = p;
+        /* will be applied below after RW is initialized */
+        W._pendingOnlinePool = chosenPool;
+      }});
+    }
     RW = {
       online:true, role:role, myIdx:myIdx, oppIdx:oppIdx,
       phase:"onintro", cur:myIdx, revealStep:-1,
@@ -219,6 +228,14 @@
       features: Object.assign({}, DEFAULT_FEATURES),
       players:[ {name:"Host", picks:newPicks(), rerollsUsed:0}, {name:"Guest", picks:newPicks(), rerollsUsed:0} ]
     };
+    if (W._pendingOnlinePool){
+      var op = W._pendingOnlinePool;
+      RW.poolDataCur = W[op.dataKey] || {};
+      RW.poolNationalCur = op.national;
+      RW.poolLabelCur = op.label;
+      RW._asyncPoolKey = op.key;
+      W._pendingOnlinePool = null;
+    }
     // Default display names until a hello arrives.
     RW.players[myIdx].name = myIdx === 0 ? "Host" : "Guest";
     RW.players[oppIdx].name = oppIdx === 0 ? "Host" : "Guest";
@@ -588,7 +605,7 @@
   }
 
   /* ── Available data pools for Duels ── */
-  var RW_POOLS = [
+  var RW_POOLS = W.RW_POOLS = [
     { key:"wc",         label:"World Cup",      hint:"93 nations · 1950–2026",  dataKey:"WORLD_CUP_DATA",   national:true  },
     { key:"euro",       label:"Euros",          hint:"Euros 1980–2024",         dataKey:"EURO_DATA",        national:true  },
     { key:"pl",         label:"Premier League", hint:"PL clubs · 1992–2025",    dataKey:"PL_DATA",          national:false },
@@ -603,7 +620,7 @@
     var html = "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
       "<div class='rw-build-head'>"+
         "<div class='rw-turn'>"+esc(P.name)+" — pick your squad pool</div>"+
-        "<div class='rw-prog-row'><span class='rw-blind'>● ratings hidden during build</span><button class='rw-rules-link rw-rules-inline' id='rwHTP2'>How to play</button></div>"+
+        "<div class='rw-prog-row'><button class='rw-rules-link rw-rules-inline' id='rwHTP2'>How to play</button></div>"+
       "</div>"+
       "<div class='rw-pool-grid'>";
     RW_POOLS.forEach(function(pool){
@@ -702,9 +719,14 @@
     squadPanel.style.display = "none";
     RW.currentSpin = null; RW.pendingRWPick = null;
 
+    /* Weighted random: bigger nations (more years) are more likely */
+    var weights = [], totalW = 0;
+    countries.forEach(function(c){ var w = Object.keys(DATA[c].years||{}).length||1; weights.push(w); totalW+=w; });
     var tries=0, pC, pY, pS;
     do {
-      pC = countries[Math.floor(Math.random()*countries.length)];
+      var rnd = Math.random()*totalW, cum = 0, idx = 0;
+      for (var wi=0; wi<weights.length; wi++){ cum+=weights[wi]; if(rnd<=cum){ idx=wi; break; } }
+      pC = countries[idx];
       var ys = Object.keys(DATA[pC].years || {});
       pY = ys[Math.floor(Math.random()*ys.length)];
       pS = (DATA[pC].years||{})[pY];
@@ -712,7 +734,7 @@
     } while (tries<80 && (!pS || pS.length < 5));
     if (!pS || !pS.length){ RW._spinning=false; spinBtn.disabled=false; spinBtn.textContent="SPIN"; return; }
 
-    var BLUR=10, IH=56;
+    var BLUR=10;
     var ci=[], yi=[];
     for (var i=0; i<BLUR; i++){
       ci.push(rwCItemHTML(countries[i%countries.length]));
@@ -722,6 +744,9 @@
     cStrip.innerHTML = ci.join(""); yStrip.innerHTML = yi.join("");
     cStrip.style.cssText = "transform:translateY(0);transition:none";
     yStrip.style.cssText = "transform:translateY(0);transition:none";
+    /* Measure actual item height after insertion */
+    void cStrip.offsetHeight;
+    var IH = (cStrip.firstElementChild && cStrip.firstElementChild.offsetHeight) || 96;
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
         var ease = "cubic-bezier(0.25,0.1,0.15,1)", dur = 420;
@@ -730,17 +755,26 @@
         yStrip.style.transition = "transform "+(dur+40)+"ms "+ease;
         yStrip.style.transform  = "translateY(-"+(BLUR*IH)+"px)";
         setTimeout(function(){
-          cStrip.style.cssText = "transform:translateY(0);transition:none";
+          /* Snap to single-item strip at translateY(0) without visible jump */
+          cStrip.style.transition = "none";
+          yStrip.style.transition = "none";
           cStrip.innerHTML = rwCItemHTML(pC);
-          yStrip.style.cssText = "transform:translateY(0);transition:none";
           yStrip.innerHTML = rwYItemHTML(pY);
+          cStrip.style.transform = "translateY(0)";
+          yStrip.style.transform = "translateY(0)";
           RW._spinning = false;
           RW.currentSpin = { country:pC, year:pY, squad:pS };
           /* Update spin button */
           var left = Math.max(0, 3-(P.rerollsUsed||0));
           spinBtn.disabled = (left===0);
           spinBtn.textContent = left===0 ? "No rerolls left — pick!" : "RESPIN ("+left+" left)";
-          showRWSquadPanel(squadPanel, RW.currentSpin, P);
+          /* Auto-respin if no players are draftable */
+          var allBlocked = pS.every(function(pl){ return rwEligibleSlots(pl, P).length===0; });
+          if (allBlocked && left>0){
+            setTimeout(function(){ doRWSpin(cStrip, yStrip, spinBtn, squadPanel, P); }, 400);
+          } else {
+            showRWSquadPanel(squadPanel, RW.currentSpin, P);
+          }
         }, dur+80);
       });
     });
@@ -785,7 +819,7 @@
     } while (tries<120 && (!pS || pS.length < 5));
     if (!pS || !pS.length){ P.wildcardUsed=false; RW._spinning=false; spinBtn.disabled=false; if(wcBtn) wcBtn.style.display=""; return; }
 
-    var BLUR=10, IH=56, ci=[], yi=[];
+    var BLUR=10, ci=[], yi=[];
     for (var i=0; i<BLUR; i++){
       ci.push(rwCItemHTML(countries[i%countries.length]));
       yi.push(rwYItemHTML(2024-i*2));
@@ -794,6 +828,8 @@
     cStrip.innerHTML = ci.join(""); yStrip.innerHTML = yi.join("");
     cStrip.style.cssText = "transform:translateY(0);transition:none";
     yStrip.style.cssText = "transform:translateY(0);transition:none";
+    void cStrip.offsetHeight;
+    var IH = (cStrip.firstElementChild && cStrip.firstElementChild.offsetHeight) || 96;
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
         var ease = "cubic-bezier(0.25,0.1,0.15,1)", dur = 420;
@@ -802,10 +838,12 @@
         yStrip.style.transition = "transform "+(dur+40)+"ms "+ease;
         yStrip.style.transform  = "translateY(-"+(BLUR*IH)+"px)";
         setTimeout(function(){
-          cStrip.style.cssText = "transform:translateY(0);transition:none";
+          cStrip.style.transition = "none";
+          yStrip.style.transition = "none";
           cStrip.innerHTML = rwCItemHTML(pC);
-          yStrip.style.cssText = "transform:translateY(0);transition:none";
           yStrip.innerHTML = rwYItemHTML(pY);
+          cStrip.style.transform = "translateY(0)";
+          yStrip.style.transform = "translateY(0)";
           RW._spinning = false;
           RW.currentSpin = { country:pC, year:pY, squad:pS };
           spinBtn.textContent = "No rerolls — pick!"; spinBtn.disabled = true;
@@ -824,7 +862,7 @@
     });
 
     var html = '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2></div>'+
-      '<div class="sub">'+(RW.poolNationalCur?"Nation":"Club")+' · Pick a player — ratings hidden</div>';
+      '<div class="sub">'+(RW.poolNationalCur?"Nation":"Club")+' · Pick a player</div>';
 
     /* Position chooser if a player has been tapped */
     if (RW.pendingRWPick){
@@ -841,16 +879,18 @@
       html += '</div><button class="mp-chooser-cancel">Cancel</button></div>';
     }
 
-    /* Squad list — no ratings (ratings hidden for blind build) */
+    /* Squad list */
     html += '<div class="players mp-players-grid">';
     sorted.forEach(function(pl){
       var pos = pl.gp||pl.p||"MID", line = LINE_OF[pos]||"MID";
       var noSlot = rwEligibleSlots(pl, P).length===0;
       var isPending = RW.pendingRWPick && RW.pendingRWPick._n===pl.n && RW.pendingRWPick._pos===pos;
+      var r = pl.r||75;
+      var rCls = r>=88?"mp-r-badge r-gold":r>=84?"mp-r-badge r-elite":r>=80?"mp-r-badge r-great":r>=77?"mp-r-badge r-good":"mp-r-badge r-amber";
       html += '<div class="player'+(noSlot?" noslot":"")+(isPending?" mp-player-pending":"")+'" data-rwn="'+esc(pl.n)+'" data-rwpos="'+esc(pos)+'">'+
         '<span class="pos '+line+'">'+esc(pos)+'</span>'+
         '<span class="pname">'+esc(pl.n)+'</span>'+
-        (noSlot ? '<span class="slot-tag">no slot</span>' : '')+
+        (noSlot ? '<span class="slot-tag">no slot</span>' : '<span class="'+rCls+'">'+r+'</span>')+
       '</div>';
     });
     html += '</div></div>';
@@ -920,7 +960,7 @@
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
       "<div class='rw-build-head'>"+
-        "<div class='rw-turn'>"+esc(P.name)+" — "+esc(RW.poolLabelCur||"World Cup")+" <span class='rw-blind'>● ratings hidden</span></div>"+
+        "<div class='rw-turn'>"+esc(P.name)+" — "+esc(RW.poolLabelCur||"World Cup")+"</div>"+
         "<div class='rw-prog-row'>"+
           "<span class='rw-prog'><span id='rwCount'>"+filled+"</span>/11</span>"+
           "<span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+

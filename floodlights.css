@@ -611,6 +611,7 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 .rw-pool-card:hover::after { opacity: .12; }
 .rw-pool-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .rw-pool-disabled { opacity: .42; cursor: not-allowed; pointer-events: none; }
+.rw-pool-selected { border-color: var(--positive); box-shadow: 0 0 0 2px var(--positive); }
 .rw-pool-name { font-family: var(--font-display); font-weight: 700; font-size: var(--t-body); line-height: 1.2; }
 .rw-pool-hint { color: var(--text-mute); font-size: var(--t-2xs); line-height: 1.4; }
 
