@@ -216,6 +216,7 @@
       phase:"onintro", cur:myIdx, revealStep:-1,
       myLocked:false, oppPicks:null, oppName:null, rematchMe:false, rematchOpp:false,
       currentSpin:null, pendingRWPick:null, _spinning:false,
+      features: Object.assign({}, DEFAULT_FEATURES),
       players:[ {name:"Host", picks:newPicks(), rerollsUsed:0}, {name:"Guest", picks:newPicks(), rerollsUsed:0} ]
     };
     // Default display names until a hello arrives.
