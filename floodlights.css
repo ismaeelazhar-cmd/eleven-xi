@@ -203,6 +203,22 @@ body.light .sound-toggle {
 }
 body.light .sound-toggle:hover { color: rgba(42,38,32,0.88); }
 
+/* ===== Group preview interstitial ===== */
+.group-preview { display: flex; flex-direction: column; gap: var(--sp-2); margin: var(--sp-5) 0; }
+.gp-row {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 14px var(--sp-4); border-radius: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+}
+.gp-row.gp-me {
+  background: rgba(124,92,252,0.14); border-color: rgba(124,92,252,0.4);
+}
+.gp-flag { font-size: 1.5rem; line-height: 1; min-width: 2rem; text-align: center; }
+.gp-name { flex: 1; font-size: 1rem; font-weight: 600; color: var(--text); }
+.gp-me .gp-name { color: var(--violet); }
+body.light .gp-row { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+body.light .gp-row.gp-me { background: rgba(124,92,252,0.10); border-color: rgba(124,92,252,0.3); }
+
 /* ============================================================
    Part 2 — GLOBAL COHESION
    Re-point every legacy CSS variable at a Floodlights token so

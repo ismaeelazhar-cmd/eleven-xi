@@ -1094,16 +1094,21 @@
     clearDraft();
     clearTimeout(revealTimer);
     lastSim = { type: type, userTeam: userTeam };
-    elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
+    elResultsBody.innerHTML = '<div class="loading">Drawing groups…</div>';
     showView("results");
     setTimeout(function () {
       if (type === "wc" || type === "euro") {
-        var wc = window.ENGINE.runWorldCup(userTeam);
         var compLabel = type === "euro" ? "Euro Championship" : "World Cup";
-        reveal = { wc: wc, userTeam: userTeam, label: whoLabel(userTeam, compLabel),
-          groupMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; }),
-          koMatches: wc.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; }),
-          shown: 0, stage: "groups", sc: wcScore(wc), saved: false, mode: type };
+        /* Draw groups first — show preview before simulating */
+        var field = window.ENGINE.buildField(userTeam);
+        var rawGroups = window.ENGINE.seedGroups(field);
+        var userRawGroup = null;
+        for (var gi = 0; gi < rawGroups.length; gi++) {
+          if (rawGroups[gi].teams.some(function (t) { return t.isUser; })) { userRawGroup = rawGroups[gi]; break; }
+        }
+        reveal = { field: field, rawGroups: rawGroups, userRawGroup: userRawGroup,
+          userTeam: userTeam, label: whoLabel(userTeam, compLabel), mode: type,
+          compLabel: compLabel, stage: "groupPreview" };
         renderWCStage();
       } else {
         var lg = window.ENGINE.runLeague(userTeam);
@@ -1197,7 +1202,44 @@
   // World Cup: group games revealed one-by-one → group tables → knockouts one-by-one → result.
   function standingsHTML(wc) { return wc.groups ? renderGroups(wc.groups) : leagueTableHTML(wc); }
   function renderWCStage() {
-    var r = reveal, wc = r.wc, html = '<h2 class="res-title">' + r.label + "</h2>";
+    var r = reveal;
+    /* ── Group preview interstitial ── */
+    if (r.stage === "groupPreview") {
+      var ug = r.userRawGroup;
+      var html = '<h2 class="res-title">' + r.label + "</h2>";
+      html += '<div class="stage-badge">Group Draw · Group ' + (ug ? ug.name : "?") + "</div>";
+      html += '<div class="group-preview">';
+      if (ug) {
+        ug.teams.forEach(function (t) {
+          var isMe = t.isUser;
+          var badge = (t.rating >= 90 ? "r-gold" : t.rating >= 85 ? "r-elite" : t.rating >= 80 ? "r-great" : t.rating >= 75 ? "r-good" : "r-amber");
+          html += '<div class="gp-row' + (isMe ? " gp-me" : "") + '">';
+          html += (t.flag ? '<span class="gp-flag">' + esc(t.flag) + "</span>" : "");
+          html += '<span class="gp-name">' + esc(t.name) + "</span>";
+          html += '<span class="mp-r-badge ' + badge + '">' + (isMe ? "Your XI" : t.rating) + "</span>";
+          html += "</div>";
+        });
+      }
+      html += "</div>";
+      html += '<p class="legend">Your squad is highlighted. Top 2 + best thirds advance.</p>';
+      html += '<div class="reveal-bar"><button class="start-btn" id="kickOff">Kick off! →</button></div>';
+      elResultsBody.innerHTML = html;
+      var ko = document.getElementById("kickOff");
+      if (ko) ko.onclick = function () {
+        elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
+        setTimeout(function () {
+          var wc2 = window.ENGINE.runWorldCupFromGroups(r.field, r.rawGroups, r.userTeam);
+          r.wc = wc2;
+          r.groupMatches = wc2.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; });
+          r.koMatches    = wc2.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; });
+          r.shown = 0; r.stage = "groups"; r.sc = wcScore(wc2); r.saved = false;
+          renderWCStage();
+        }, 30);
+      };
+      wireResults();
+      return;
+    }
+    var wc = r.wc, html = '<h2 class="res-title">' + r.label + "</h2>";
     var phase = r.phaseLabel || "Group stage";
     var advance = r.advanceText || "Top 2 of each + the 8 best thirds advance.";
     var standHdr = wc.groups ? "How the groups finished" : "League phase table";

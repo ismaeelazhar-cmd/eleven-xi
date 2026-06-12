@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-10 ALL COMPLETE. Cache wcxi-v126. Push to GitHub done. Next: Task 11 (DVC-3: Extra formations for DVC)._
+_Last checkpoint: Tasks 1-12 ALL COMPLETE. Cache wcxi-v127. Push to GitHub done. Next: Task 13 (CL improvements)._
 
 ---
 
@@ -307,15 +307,30 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v107 (sound-toggle CSS added)
-- game.js: v91 (modeLabel extended for dvc/duels)
+- floodlights.css: v108 (group preview CSS)
+- game.js: v92 (WC group preview interstitial)
+- engine.js: v73 (buildField/seedGroups exported, runWorldCupFromGroups added)
 - league.js: v80 (share card redesign with squad + GD)
 - multiplayer.js: v92
 - floodlights.js: v91 (home stats + HTP overlay)
 - draftvscomputer.js: v6 (CPU personality + rematch)
 - ratingswar.js: v101 (WCXI_addScore on completed duel/series)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v126
+- sw.js: wcxi-v127
+
+## 24. TASKS 11+12 — DVC FORMATIONS + WC IMPROVEMENTS ✅
+**Task 11 (DVC-3)**: ALREADY DONE — DVC_FORMATIONS already has 4 formations (4-3-3, 4-4-2, 4-2-3-1, 3-5-2) from a previous session.
+
+**Task 12 (WC improvements)**: 
+- WC-3 (extra formations): ALREADY DONE — game.js FORMATIONS has 9 entries (4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 3-4-1-2, 3-4-3, 5-3-2, 4-5-1, 5-4-1)
+- WC-4 (personal best on home): DONE in Task 5 (updateHomeCards)
+- WC-2 (animated bracket): DONE — staged reveal system already in place
+- WC-1 (group preview): DONE THIS SESSION
+  - engine.js: extracted `_finishWorldCup()` shared helper; exported `buildField`, `seedGroups`, added `runWorldCupFromGroups(field, rawGroups, userTeam)`
+  - game.js: `runSim()` draws groups first, sets `reveal.stage = "groupPreview"`, shows interstitial
+  - Interstitial shows 4 teams in user's group with flags + ratings, user highlighted in violet
+  - "Kick off!" button runs `runWorldCupFromGroups` with pre-drawn groups (same draw, actual match sim)
+  - CSS: `.group-preview`, `.gp-row`, `.gp-me`, `.gp-flag`, `.gp-name` in floodlights.css
 
 ## 23. TASK 10 — DVC-2 + DVC-4: CPU PERSONALITY + REMATCH ✅
 **CPU Personality (DVC-2):**

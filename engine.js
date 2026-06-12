@@ -185,12 +185,16 @@ window.ENGINE = (function () {
     return { name: group.name, table: rows, matches: matches };
   }
 
-  function runWorldCup(userTeam) {
+  /* runWorldCupFromGroups: accepts a pre-drawn rawGroups array so the group preview
+   * shown to the user matches what actually gets simulated. */
+  function runWorldCupFromGroups(field, rawGroups, userTeam) {
     activeTax = DIFFICULTY;
-    var field = buildField(userTeam);
     var userMatches = userTeam ? [] : null;
-    var groups = seedGroups(field).map(function (g) { return playGroup(g, userMatches); });
+    var groups = rawGroups.map(function (g) { return playGroup(g, userMatches); });
+    return _finishWorldCup(groups, userMatches, userTeam);
+  }
 
+  function _finishWorldCup(groups, userMatches, userTeam) {
     var qualified = [], thirds = [];
     groups.forEach(function (grp) {
       qualified.push(grp.table[0]); qualified.push(grp.table[1]); thirds.push(grp.table[2]);
@@ -221,7 +225,6 @@ window.ENGINE = (function () {
       roundTeams = next; rIdx++;
     }
     var champion = roundTeams[0];
-
     var out = { groups: groups, qualified: qualified, rounds: rounds, champion: champion };
     if (userTeam) {
       out.userMatches = userMatches;
@@ -240,6 +243,14 @@ window.ENGINE = (function () {
       }
     }
     return out;
+  }
+
+  function runWorldCup(userTeam) {
+    activeTax = DIFFICULTY;
+    var field = buildField(userTeam);
+    var userMatches = userTeam ? [] : null;
+    var groups = seedGroups(field).map(function (g) { return playGroup(g, userMatches); });
+    return _finishWorldCup(groups, userMatches, userTeam);
   }
 
   // ---- League ----
@@ -401,7 +412,10 @@ window.ENGINE = (function () {
   return {
     teamRatingFromXI: teamRatingFromXI,
     simulateMatch: simulateMatch,
+    buildField: buildField,
+    seedGroups: seedGroups,
     runWorldCup: runWorldCup,
+    runWorldCupFromGroups: runWorldCupFromGroups,
     runLeague: runLeague,
     runCLLeague: runCLLeague,
     runCLGroups: runCLGroups,
