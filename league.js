@@ -1023,11 +1023,26 @@
 
   /* Build a random surprise event */
   function _lgMakeEvent(){
-    if(LS.manager && LS.manager.id !== "none" && Math.random()<0.4){
-      var reasons=["has been SACKED after a poor run","has SShockingly resigned","was sacked by the board","walked out for a rival club"];
-      return { type:"manager", reason: reasons[Math.floor(Math.random()*reasons.length)].replace("SS","s") };
+    /* Manager replacement — only when player has a manager set */
+    if(LS.manager && LS.manager.id !== "none" && Math.random() < 0.35){
+      var reasons=["has been sacked after a poor run","has shocked everyone and resigned","was dismissed by the board","walked out for a rival club"];
+      return { type:"manager", reason: reasons[Math.floor(Math.random()*reasons.length)] };
     }
     var xi=LS.xi.filter(Boolean);
+    var r=Math.random();
+    /* ── Rare events (fired ~22% of the time) ── */
+    if(r > 0.78){
+      /* Cup run — dramatic narrative, no respin */
+      if(r > 0.94){ return { type:"cup" }; }
+      /* Transfer windfall — bonus respin: upgrade weakest player */
+      if(r > 0.87){ return { type:"windfall" }; }
+      /* Form surge — a player's rating jumps for the rest of the season */
+      var outfield=xi.filter(function(p){ return (p.slot||p.gp||p.p)!=="GK"; });
+      var star=outfield.length ? outfield[Math.floor(Math.random()*outfield.length)] : xi[0];
+      if(star) return { type:"boost", player:star, amount:4+Math.floor(Math.random()*4) };
+      /* fallthrough to player event if no valid target */
+    }
+    /* Default: player replacement event */
     var victim=xi[Math.floor(Math.random()*xi.length)];
     var rs=["has suffered a season-ending injury","has been SOLD on deadline day","has left — a release clause was triggered","is out injured for the rest of the run-in"];
     return { type:"player", reason: rs[Math.floor(Math.random()*rs.length)], victim:victim, stage:"announce" };
@@ -1218,6 +1233,159 @@
         });
       });
       eid("lgEvtRespin").addEventListener("click",function(){ ev.spin=_lgPickReplacementSquad(slot); renderLgEventModal(); });
+      return;
+    }
+
+    /* ── RARE: Form Surge — rating boost for a player ── */
+    if(ev.type==="boost"){
+      var bp=ev.player, bpos=(bp.slot||bp.gp||bp.p||"MID"), bline=LINE_OF[bpos]||"MID";
+      var boostPhrases=["is in the form of their life","has entered peak performance mode","has been named Player of the Month","is absolutely unstoppable right now"];
+      var bPhrase=boostPhrases[Math.floor(Math.random()*boostPhrases.length)];
+      var newRat=(bp.r||75)+ev.amount;
+      panel.innerHTML="<div class='lg-modal lg-event lg-event-rare'>"+
+        "<div class='lg-event-rare-badge'>FORM SURGE</div>"+
+        "<div class='lg-boost-hero'>"+
+          "<span class='pos "+bline+" lg-boost-pos'>"+esc(bpos)+"</span>"+
+          "<span class='lg-boost-name'>"+esc(bp.n)+"</span>"+
+          (LS.showRatings?"<span class='lg-boost-rating'>"+newRat+"</span>":"")+
+        "</div>"+
+        "<div class='lg-event-body'><strong>"+esc(bp.n)+"</strong> "+esc(bPhrase)+"!"+
+          (LS.showRatings?" Rating jumps to <strong>"+newRat+"</strong> for the rest of the season.":"")+
+        "</div>"+
+        "<button class='start-btn' id='lgEvtBoostDone'>Go get them →</button>"+
+        "</div>";
+      panel.className="lg-modal-overlay"; panel.style.display="";
+      eid("lgEvtBoostDone").addEventListener("click",function(){
+        /* Apply boost permanently for this season (season ends anyway) */
+        for(var bi=0;bi<LS.xi.length;bi++){
+          if(LS.xi[bi]&&LS.xi[bi].n===bp.n){ LS.xi[bi].r=(LS.xi[bi].r||75)+ev.amount; break; }
+        }
+        _lgResumeAfterEvent();
+      });
+      return;
+    }
+
+    /* ── RARE: Transfer Windfall — bonus respin to upgrade weakest player ── */
+    if(ev.type==="windfall"){
+      var wxi=LS.xi.filter(Boolean);
+      /* Identify weakest outfield player as the upgrade target */
+      var weakest=wxi.reduce(function(a,p){
+        var aIsGK=(a.slot||a.gp||a.p)==="GK", pIsGK=(p.slot||p.gp||p.p)==="GK";
+        if(pIsGK) return a;
+        if(aIsGK) return p;
+        return (p.r||75)<(a.r||75)?p:a;
+      },wxi[0]);
+      var wSlot=weakest?weakest.slot||weakest.gp||weakest.p||"MID":"MID";
+
+      if(!ev.stage){
+        panel.innerHTML="<div class='lg-modal lg-event lg-event-rare'>"+
+          "<div class='lg-event-rare-badge'>BONUS RESPIN</div>"+
+          "<div class='lg-event-title'>Transfer Windfall!</div>"+
+          "<div class='lg-event-body'>The board has approved emergency funds! Spin a squad to sign a replacement for your weakest link"+
+            (weakest?" — <strong>"+esc(weakest.n)+"</strong> ("+esc(wSlot)+")":" on the pitch")+".</div>"+
+          "<button class='start-btn' id='lgEvtWfSpin'>Spin a squad →</button>"+
+          "</div>";
+        panel.className="lg-modal-overlay"; panel.style.display="";
+        eid("lgEvtWfSpin").addEventListener("click",function(){
+          ev.stage="pick"; ev.weakest=weakest; ev.wSlot=wSlot;
+          ev.spin=_lgPickReplacementSquad(wSlot);
+          renderLgEventModal();
+        });
+        return;
+      }
+
+      if(ev.stage==="pick"){
+        var wSpin=ev.spin, wCompat=COMPAT[ev.wSlot]||[ev.wSlot];
+        var wElig=wSpin.squad.filter(function(p){
+          return wCompat.indexOf(p.gp||p.p)!==-1 && !LS.xi.some(function(x){return x&&x.n===p.n;});
+        });
+        wElig.sort(function(a,b){ return (b.r||0)-(a.r||0); });
+        var upgrades=wElig.filter(function(p){ return (p.r||75)>(ev.weakest?ev.weakest.r||75:75); });
+        if(!upgrades.length) upgrades=wElig;
+        var wRows=upgrades.map(function(p){
+          var line2=LINE_OF[p.gp||p.p]||"MID";
+          var isUp=(p.r||75)>(ev.weakest?ev.weakest.r||75:0);
+          return "<div class='lg-msel-row' data-pn='"+esc(p.n)+"'>"+
+            "<span class='pos "+line2+"'>"+esc(p.gp||p.p)+"</span>"+
+            "<span class='lg-msel-name'>"+esc(p.n)+"</span>"+
+            (LS.showRatings?"<span class='lg-msel-rat'>"+(p.r||"")+"</span>":"")+
+            (isUp?"<span class='lg-wf-up'>▲</span>":"")+
+            "</div>";
+        }).join("");
+        panel.innerHTML="<div class='lg-modal lg-event'>"+
+          "<div class='lg-event-rare-badge' style='margin-bottom:.6rem'>BONUS RESPIN</div>"+
+          "<div class='lg-modal-head'><div class='lg-modal-title'>"+esc(wSpin.club)+" <span class='lg-modal-yr'>"+seasonLabel(wSpin.year)+"</span></div></div>"+
+          "<div class='lg-modal-hint'>Sign a "+esc(ev.wSlot)+" to replace <strong>"+(ev.weakest?esc(ev.weakest.n):"your weakest player")+"</strong></div>"+
+          "<div class='lg-modal-list'>"+(wRows||"<div class='lg-modal-hint' style='padding:1rem'>No eligible players here — spin again.</div>")+"</div>"+
+          "<div class='lg-modal-foot'><button class='btn-ghost' id='lgEvtWfRespin'>🎲 Spin another squad</button></div>"+
+          "</div>";
+        panel.className="lg-modal-overlay"; panel.style.display="";
+        panel.querySelectorAll(".lg-msel-row").forEach(function(el){
+          el.addEventListener("click",function(){
+            var wName=el.getAttribute("data-pn");
+            var wPl=wSpin.squad.filter(function(p){return p.n===wName;})[0]; if(!wPl) return;
+            var wOldR=ev.weakest?ev.weakest.r||75:75, wNewR=wPl.r||75, wDelta=wNewR-wOldR;
+            if(ev.weakest) LS.xi=LS.xi.filter(function(x){return x&&x.n!==ev.weakest.n;});
+            LS.xi.push({n:wPl.n,p:wPl.p||"MID",r:wPl.r||75,gp:wPl.gp||wPl.p||"MID",slot:ev.wSlot,club:wSpin.club,year:wSpin.year});
+            function wDeltaBadge(d){ var c=d>0?"pos":d<0?"neg":"neu"; return '<span class="lge-delta '+c+'">'+(d>0?"+":"")+d+'</span>'; }
+            var wCmpHtml=
+              "<div class='lge-compare'>"+
+                "<div class='lge-before'><div class='lge-cl'>Out</div>"+
+                  "<div class='lge-cname'>"+(ev.weakest?esc(ev.weakest.n):"Previous player")+"</div>"+
+                  "<div class='lge-cstyle'>"+esc(ev.wSlot)+"</div>"+
+                  (LS.showRatings?"<div class='lge-cbonuses'>Rating <span class='lge-delta neu'>"+wOldR+"</span></div>":"")+
+                "</div>"+
+                "<div class='lge-arrow'>→</div>"+
+                "<div class='lge-after'><div class='lge-cl'>In</div>"+
+                  "<div class='lge-cname'>"+esc(wPl.n)+"</div>"+
+                  "<div class='lge-cstyle'>"+esc(ev.wSlot)+"</div>"+
+                  (LS.showRatings?"<div class='lge-cbonuses'>Rating "+wDeltaBadge(wDelta)+"</div>":"")+
+                "</div>"+
+              "</div>";
+            panel.innerHTML="<div class='lg-modal lg-event lg-event-rare'>"+
+              "<div class='lg-event-title'>Signing Complete!</div>"+
+              "<div class='lg-event-body'>"+wCmpHtml+"</div>"+
+              "<button class='start-btn' id='lgEvtWfDone'>Continue →</button>"+
+              "</div>";
+            eid("lgEvtWfDone").addEventListener("click",_lgResumeAfterEvent);
+          });
+        });
+        eid("lgEvtWfRespin").addEventListener("click",function(){ ev.spin=_lgPickReplacementSquad(ev.wSlot); renderLgEventModal(); });
+        return;
+      }
+    }
+
+    /* ── RARE: Cup Run — narrative cup match with simulated result ── */
+    if(ev.type==="cup"){
+      if(!ev.result){
+        /* Simulate a knockout cup match against a strong random opponent */
+        var cupOppStr=72+Math.floor(Math.random()*18); /* 72–89 */
+        var cupRes=simMatch(LS.userStr,cupOppStr);
+        var cWon=cupRes.h>cupRes.a, cDrew=cupRes.h===cupRes.a;
+        var penWin=cDrew?Math.random()>0.45:false; /* slightly favour user in pens */
+        var cupNames=["League Cup","Domestic Cup","National Cup","Challenge Cup"];
+        var cupOppLabels=["the league leaders","a fierce rival","the defending champions","a surprise finalist"];
+        ev.result={
+          gf:cupRes.h, ga:cupRes.a, won:cWon||penWin, drew:cDrew,
+          cupName:cupNames[Math.floor(Math.random()*cupNames.length)],
+          oppLabel:cupOppLabels[Math.floor(Math.random()*cupOppLabels.length)]
+        };
+      }
+      var cr=ev.result, cCls=cr.won?"W":"L";
+      var cTitle=cr.won?"Cup Winners!":"Valiant Effort";
+      var cScore=esc(LS.teamName)+" "+cr.gf+" – "+cr.ga+" "+cr.oppLabel+(cr.drew?" ("+cr.gf+"-"+cr.ga+" AET)":"");
+      var cBody=cr.won
+        ? "Your team beat "+cr.oppLabel+" to lift the "+cr.cupName+"! The dressing room is electric."
+        : "Your team gave everything in the "+cr.cupName+" final but couldn't get the result. Heads up — the league is what matters.";
+      panel.innerHTML="<div class='lg-modal lg-event lg-event-rare'>"+
+        "<div class='lg-event-rare-badge'>"+esc(cr.cupName.toUpperCase())+"</div>"+
+        "<div class='lg-event-title'>"+cTitle+"</div>"+
+        "<div class='lg-cup-result "+cCls+"'>"+cScore+"</div>"+
+        "<div class='lg-event-body'>"+esc(cBody)+"</div>"+
+        "<button class='start-btn' id='lgEvtCupDone'>Back to the league →</button>"+
+        "</div>";
+      panel.className="lg-modal-overlay"; panel.style.display="";
+      eid("lgEvtCupDone").addEventListener("click",_lgResumeAfterEvent);
       return;
     }
   }
