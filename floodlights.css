@@ -378,7 +378,12 @@ body.light {
   box-shadow: var(--sh-glow-primary); cursor: pointer; font-family: var(--font-body);
   transform: translateY(8px); opacity: 0; transition: transform var(--dur-2) var(--ease-spring), opacity var(--dur-2) var(--ease-out), filter var(--dur-1) var(--ease-out);
 }
-.fl-squad-fab.show { display: inline-flex; transform: translateY(0); opacity: 1; }
+/* FAB only allowed on draft (mobile only) and results pages */
+.fl-squad-fab.show { display: none; }
+body[data-view="results"] .fl-squad-fab.show { display: inline-flex; transform: translateY(0); opacity: 1; }
+@media (max-width: 720px) {
+  body[data-view="draft"] .fl-squad-fab.show { display: inline-flex; transform: translateY(0); opacity: 1; }
+}
 .fl-squad-fab:hover { filter: brightness(1.06); }
 .fl-squad-fab svg { width: 20px; height: 20px; }
 .fl-squad-fab-n { font-variant-numeric: tabular-nums; opacity: .85; }

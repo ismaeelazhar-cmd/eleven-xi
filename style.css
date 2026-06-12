@@ -806,10 +806,6 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
   .draft-right { display: none; }
 }
 
-/* Desktop: squad list is inline — suppress the global FAB on the draft page */
-@media (min-width: 721px) {
-  body[data-view="draft"] .fl-squad-fab { display: none !important; }
-}
 
 /* ---------- Position chooser ---------- */
 .chooser {
