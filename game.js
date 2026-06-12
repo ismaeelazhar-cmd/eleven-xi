@@ -629,16 +629,30 @@
         }).join("") + '<button class="choose-cancel">cancel</button></div>';
     }
 
-    inner += '<div class="players">';
+    // Sort players into position groups: GK → DEF → MID → FWD
+    var lineOrder = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
+    var lineLabels = { GK: "Goalkeeper", DEF: "Defenders", MID: "Midfielders", FWD: "Attackers" };
+    var groups = { GK: [], DEF: [], MID: [], FWD: [] };
     players.forEach(function (pl) {
-      var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
-      var open = openEligiblePositions(pl);
-      var noSlot = open.length === 0;
-      if (!isTaken && !noSlot) draftable++;
-      var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
-      var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
-      inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
-        '<span class="pname">' + esc(pl.n) + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
+      var line = LINE_OF[pl.p] || "MID";
+      (groups[line] || groups.MID).push(pl);
+    });
+
+    inner += '<div class="players">';
+    ["GK","DEF","MID","FWD"].forEach(function (line) {
+      var grp = groups[line];
+      if (!grp.length) return;
+      inner += '<div class="squad-group-label ' + line + '">' + lineLabels[line] + '</div>';
+      grp.forEach(function (pl) {
+        var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
+        var open = openEligiblePositions(pl);
+        var noSlot = open.length === 0;
+        if (!isTaken && !noSlot) draftable++;
+        var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
+        var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
+        inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
+          '<span class="pname">' + esc(pl.n) + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
+      });
     });
     inner += "</div></div>"; // close .players + .squad-card
 

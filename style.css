@@ -342,10 +342,21 @@ button.spin:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.4)
 .squad .sub, .squad-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
 
 .players {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
+/* Position group headers inside squad picker */
+.squad-group-label {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
+  padding: 10px 2px 4px; margin-top: 4px;
+}
+.squad-group-label.GK  { color: #FFD700; }
+.squad-group-label.DEF { color: #4FC96A; }
+.squad-group-label.MID { color: #4FC3F7; }
+.squad-group-label.FWD { color: #FF6B7A; }
+.squad-group-label:first-child { margin-top: 0; padding-top: 2px; }
 
 .player {
   position: relative;
@@ -359,7 +370,7 @@ button.spin:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.4)
   cursor: pointer;
   transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
 }
-.player:hover { transform: translateY(-2px); border-color: rgba(124,92,252,0.5); background: var(--card2); }
+.player:hover { transform: translateY(-2px); border-color: rgba(79,195,247,0.45); background: var(--card2); }
 .player.taken { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 .player .pos {
   flex: 0 0 auto;
@@ -368,10 +379,10 @@ button.spin:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.4)
   border-radius: 8px;
   font-size: 11px; font-weight: 800;
 }
-.pos.GK { background: rgba(255, 209, 102, 0.18); color: var(--gold); }
-.pos.DEF { background: rgba(6, 214, 160, 0.16); color: var(--green); }
-.pos.MID { background: rgba(108, 162, 255, 0.18); color: #6ca2ff; }
-.pos.FWD { background: rgba(239, 71, 111, 0.18); color: var(--red); }
+.pos.GK  { background: rgba(255, 215, 0, 0.18);   color: #FFD700; }   /* gold */
+.pos.DEF { background: rgba(79, 201, 106, 0.16);  color: #4FC96A; }   /* green */
+.pos.MID { background: rgba(79, 195, 247, 0.18);  color: #4FC3F7; }   /* sky blue */
+.pos.FWD { background: rgba(255, 107, 122, 0.18); color: #FF6B7A; }   /* coral/red */
 .player .pname { flex: 1; font-size: 13.5px; font-weight: 600; line-height: 1.25; word-break: break-word; }
 
 .empty-note { color: var(--muted); font-size: 14px; padding: 8px 0; }

@@ -745,13 +745,14 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
   font-weight: 800; font-size: var(--t-xs); font-variant-numeric: tabular-nums;
   background: var(--surface-3); color: var(--text-mute);
 }
-body .mp-r-badge.r-gold   { background: color-mix(in srgb, var(--champion) 22%, var(--surface-2)); color: var(--champion); }
-body .mp-r-badge.r-elite  { background: color-mix(in srgb, var(--positive) 18%, var(--surface-2)); color: var(--positive); }
-body .mp-r-badge.r-great  { background: color-mix(in srgb, #5BA4FF 18%, var(--surface-2)); color: #5BA4FF; }
-body .mp-r-badge.r-good   { background: color-mix(in srgb, #ECF1FF 10%, var(--surface-2)); color: #ECF1FF; }
-body .mp-r-badge.r-amber  { background: color-mix(in srgb, #E8A020 18%, var(--surface-2)); color: #E8A020; }
-body .mp-r-badge.r-orange { background: color-mix(in srgb, #FF8C42 18%, var(--surface-2)); color: #FF8C42; }
-body .mp-r-badge.r-red    { background: color-mix(in srgb, #E04040 18%, var(--surface-2)); color: #E04040; }
+/* Rating badge colours — no purple anywhere */
+body .mp-r-badge.r-gold   { background: color-mix(in srgb, #FFD700 22%, var(--surface-2)); color: #FFD700; }   /* gold  ≥90 */
+body .mp-r-badge.r-elite  { background: color-mix(in srgb, #00E0C0 18%, var(--surface-2)); color: #00E0C0; }   /* teal  ≥85 */
+body .mp-r-badge.r-great  { background: color-mix(in srgb, #4FC3F7 18%, var(--surface-2)); color: #4FC3F7; }   /* sky   ≥80 */
+body .mp-r-badge.r-good   { background: color-mix(in srgb, #81C784 18%, var(--surface-2)); color: #81C784; }   /* green ≥75 */
+body .mp-r-badge.r-amber  { background: color-mix(in srgb, #FFB74D 18%, var(--surface-2)); color: #FFB74D; }   /* amber ≥70 */
+body .mp-r-badge.r-orange { background: color-mix(in srgb, #FF8C42 18%, var(--surface-2)); color: #FF8C42; }   /* orange≥60 */
+body .mp-r-badge.r-red    { background: color-mix(in srgb, #E04040 18%, var(--surface-2)); color: #E04040; }   /* red   <60  */
 
 /* Player names in squad pop-outs must be full brightness — no inheritance ambiguity */
 .player .pname { color: var(--text); }
