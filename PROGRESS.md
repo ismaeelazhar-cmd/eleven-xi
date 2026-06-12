@@ -318,6 +318,235 @@ _All pop-out panels, all game modes._
 - Staging environment (deferred — needs GitHub branch config)
 - Undo last pick (medium effort, high player value)
 - Reroll count tooltip / explanation
-- Theme persistence (localStorage, 10 min)
+- Theme persistence (localStorage) — NOTE: already done (wcxi_theme in localStorage)
 - Squad dock FAB detection for DVC mode
 - Self-host PeerJS to remove CDN dependency (minor security improvement)
+
+---
+
+## 13. GAME IMPROVEMENT SUGGESTIONS — REVIEW LIST
+
+> Research-only snapshot. No code changes. Prioritise from this list.
+> Each item: what, where, impact (H/M/L), effort (H/M/L).
+
+---
+
+### OVERALL GAME
+
+**OG-1. No meta-game / progression hook**
+There is no career record, no trophy cabinet, no personal bests visible at a glance. The leaderboard exists but is localStorage-only, anonymous by default, and invisible until you click into it. After a WC win there is no persistent marker — the next session starts identical to the first.
+- Impact: **High** | Effort: **High**
+- Fix: Add persistent stats to the home screen — total games played, tournaments won, best WC score. Even one number on a mode card ("Your best: 1,240") would increase return rate.
+
+**OG-2. Home screen has no hierarchy or signal for new users**
+All 5 mode cards look equal. There is no "start here" path, no badge showing a saved score on a card, no visual weight difference between the primary mode and secondary ones.
+- Impact: **Medium** | Effort: **Low**
+- Fix: Visually distinguish one or two "headline" modes. Add a small score badge overlay on mode cards when the user has played that mode.
+
+**OG-3. No onboarding or contextual help**
+No explanation of how the spin draft works, what managers do, what rerolls cost, or how scoring works. Hint text exists on some screens but is minimal. Players cannot discover the manager bonus system or difficulty difference without trial and error.
+- Impact: **Medium** | Effort: **Low–Medium**
+- Fix: Add a collapsible "How to play" panel on the setup/draft screen. One paragraph max — spin to get a player, pick your XI, unlock run. Managers section: a chip tooltip showing bonus values before you start.
+
+**OG-4. No audio**
+No sound effects anywhere — no spin click, no goal whoosh, no bracket advance sound. Sound effects add energy without requiring complex implementation. This is entirely absent.
+- Impact: **Medium** | Effort: **Low**
+- Fix: Three sounds is enough to transform feel: (1) spin tick/click, (2) pick-confirmed thud, (3) goal/tournament-win fanfare. Web Audio API, short buffers, opt-in only.
+
+**OG-5. No scoring system for DVC or Duels**
+WC, CL, and League contribute to the leaderboard. DVC and Duels contribute nothing. Both modes feel transient — win or lose, nothing is recorded.
+- Impact: **Medium** | Effort: **Low**
+- Fix: Add a DVC W/L/D record to localStorage. Add a Duels head-to-head history (last 5 results). Add a DVC tab to the leaderboard screen.
+
+**OG-6. Manager bonus not surfaced clearly before drafting**
+You spin a manager, see their name and style icon, and proceed. The numeric bonus (+4 atk, -2 def, etc.) is not shown explicitly on the manager chip or setup screen. Players who don't know the system miss it entirely.
+- Impact: **Low** | Effort: **Low**
+- Fix: Show the numeric bonus alongside the manager style chip: "Attack (+4 ATK / -2 DEF)". One line, always visible during draft.
+
+**OG-7. ~5 MB cold load (all data files load on every visit)**
+All 15 data scripts are loaded eagerly on first page load regardless of which mode the user wants. On fast connections this is invisible. On mobile/3G it can delay the first meaningful paint.
+- Impact: **Low** (desktop/WiFi), **Medium** (mobile/3G) | Effort: **High**
+- Fix: Mode-specific dynamic imports. Deferred — significant architecture change. Flag for if the app targets mobile-first.
+
+**OG-8. Share XI PNG only works well for WC/CL draft**
+The canvas share image shows the squad on a pitch, which is great. League mode has richer data (mini table, top scorer) that never appears in a shareable format.
+- Impact: **Medium** | Effort: **Medium**
+- Fix: Add a League-specific share card — squad + final position + top scorer + GD. Small canvas variant, consistent with existing share style.
+
+---
+
+### WORLD CUP
+
+**WC-1. No group stage preview before simulation runs**
+You select your era and difficulty, draft your XI, hit "Run" — and the results are immediately displayed. There is no moment of anticipation where you see your group before the simulation.
+- Impact: **Medium** | Effort: **Low**
+- Fix: Add a "Your Group" interstitial screen (1 tap to continue) showing the 3 opponent nations with their ratings before the simulation runs.
+
+**WC-2. Bracket reveal is passive — no tension**
+After drafting, results are a list of score lines and bracket states. There is no gradual reveal, no countdown, no beat-by-beat. One screen with all results.
+- Impact: **Medium** | Effort: **Medium**
+- Fix: Animate bracket results round by round — show group stage results first, pause, then R32, etc. Button-gated so the user controls the pace. Minimal JS change.
+
+**WC-3. Only 3 formations**
+4-3-3, 4-4-2, 3-5-2. No 4-2-3-1, no 3-4-3, no 5-3-2. Given the quality players available in WC data, different formations would enable different build identities.
+- Impact: **Low** | Effort: **Low**
+- Fix: Add 4-2-3-1 and 4-1-4-1 formation definitions to FORMATIONS map in game.js. Pure data — no logic change needed.
+
+**WC-4. Personal best not visible on home screen**
+After winning a WC, the score is in the leaderboard (if you click through) but nothing on the home screen reflects it. No badge, no record, no incentive to try beating it.
+- Impact: **Medium** | Effort: **Low**
+- Fix: Show best WC score as a small overlay on the WC home card, pulled from localStorage board data.
+
+---
+
+### CHAMPIONS LEAGUE
+
+**CL-1. Draftable squad pool is only ~9 clubs**
+The CL mode claims "153 clubs · 768 seasons" — this refers to opponent simulation data, not draftable squads. Players can only draft from the ~9 historically complete squads in cl_data.js + cl_data2.js. This is the biggest structural gap in CL.
+- Impact: **High** | Effort: **High**
+- Fix: Add real squad data (goalkeeper through forwards) for 20–40 more historically significant CL clubs. The data structure is already established in cl_data.js.
+
+**CL-2. No format explanation for new users**
+"Swiss," "Groups," "League Phase" are three buttons with no explanation. The Swiss format in particular (8 games, then knockouts) is not intuitive.
+- Impact: **Low** | Effort: **Low**
+- Fix: Add a one-sentence tooltip or sub-label under each format button explaining the structure.
+
+**CL-3. Same results screen as WC**
+CL has multi-round history (up to 8 group/league games + 4 knockout rounds) but the summary collapses to the same static screen as WC. CL's richer history is discarded.
+- Impact: **Low** | Effort: **Medium**
+- Fix: CL-specific results screen showing all game scores grouped by phase, not just the final round.
+
+---
+
+### LEAGUE
+
+**L-1. No Premier League in League mode**
+La Liga, Serie A, Bundesliga are available. The most globally-recognised league (PL) is absent from the solo mode — it only appears in Multiplayer. `data_pl_history.js` already exists.
+- Impact: **High** | Effort: **Medium**
+- Fix: Add Premier League as a fourth option in the League mode data picker. Wire up the existing PL history data.
+
+**L-2. Surprise events are shallow — no lasting impact**
+Manager sacked: you get a new manager and continue. Player injured: random replacement, game continues. Neither event changes anything meaningfully — no stat impact, no reflection on what changed.
+- Impact: **Medium** | Effort: **Medium**
+- Fix: Show a before/after panel for surprise events. Manager change: "Old manager: Attack. New manager: Defence — your squad builds differently now." Player injury: show who came off and who replaced them, with a rating delta.
+
+**L-3. No cup competition alongside the league**
+A single domestic cup (2-round knockout, no draft required) mid-season would break monotony. One-game knockout: your XI vs a random club from the same era.
+- Impact: **Medium** | Effort: **High**
+- Fix: Mid-season cup interrupt (after game 10 of 34). Optional on/off. One match, separate score bonus if won. New event type in the surprise engine.
+
+---
+
+### EURO (currently hidden inside Multiplayer)
+
+**EU-1. No dedicated home screen card**
+Euro is the only major competition with no home card. It is reachable only via Multiplayer → data picker → Euros. Most users will never find it. 12 tournaments of data (1980–2024), 8–24 nations each — this is hidden content that would increase engagement if surfaced.
+- Impact: **High** | Effort: **Low**
+- Fix: Add a "Euros" home card. On click: open Multiplayer pre-set to Euro data + solo (1 player) mode. No new logic needed — just a shortcut entry point.
+
+**EU-2. Cannot play Euro as solo single-player tournament**
+Even if you find Euro data in Multiplayer, you must play it as a multiplayer draft game. There is no standalone solo "Euros" mode equivalent to the solo World Cup experience.
+- Impact: **High** | Effort: **Low–Medium**
+- Fix: The WC simulation engine works for any set of nations. A solo Euro mode needs: (a) the home card from EU-1, (b) a data source selector defaulting to Euro, (c) the same WC flow with Euro nations pool. Shared code path, ~50-100 lines of wiring.
+
+---
+
+### MULTIPLAYER
+
+**MP-1. No visibility of opponent squads during the tournament**
+In a 4-player game, all players draft, the tournament simulates, and results appear. Nobody sees what the other built. Revealing squads before or after simulation would create discussion and social engagement — which is the point of local MP.
+- Impact: **Medium** | Effort: **Low**
+- Fix: After simulation, add a "Reveal All Squads" step before the final leaderboard. Each squad shown on a pitch, player clicks through.
+
+**MP-2. Draft scales poorly at 6–8 players**
+8 players × 11 picks = 88 spins at ~5 seconds each = 7+ minutes of draft time. No auto-fill option once you hit a threshold. Late picks in a 8-player draft are low-stakes but still require manual attention.
+- Impact: **Medium** | Effort: **Low**
+- Fix: Add "Auto-fill remaining" button once 9/11 are picked. Uses the existing autoFill() logic. Optional — player keeps manual control but has an escape hatch.
+
+**MP-3. No cross-session win tracking for regular groups**
+Friends who play MP regularly have no persistent record. No "all-time standings," no head-to-head history. Everything resets after each game.
+- Impact: **Medium** | Effort: **Medium**
+- Fix: localStorage-based session history with player names. Last 10 sessions, winner + score. Shown on a "History" tab in the leaderboard screen.
+
+---
+
+### DUELS (Ratingswar)
+
+**D-1. 10 feature toggles with no presets — overwhelming for new players**
+10 checkboxes in a flat list is the most complex UI in the game. Nobody reads 10 toggles. There is no "quick game" path for new players.
+- Impact: **High** | Effort: **Low**
+- Fix: Add 3 preset buttons at the top: "Quick" (Positional Ban + Captain only), "Standard" (5 core features), "Full Rules" (all 10). Each button sets the checkboxes. New players hit "Quick" and start immediately.
+
+**D-2. Strategy has limited impact on outcome — pure rating average wins**
+Positional bans and captain bonus add mild strategy, but the final score comparison is based on total team rating average. A squad of 11 × 87s beats 11 × 82s regardless of strategic choices. The skill ceiling is low.
+- Impact: **Medium** | Effort: **High**
+- Fix: Requires a structural rule rework. Options: (a) add formation matchup bonuses (high-press vs counter), (b) weight player ratings by position-specific relevance (CDM doesn't score), (c) add a "tactics" phase post-draft. Big investment.
+
+**D-3. Best-of-3 series state is lost if the session ends**
+If either player closes their tab or phone locks, the series state is gone. No way to resume a series.
+- Impact: **Medium** | Effort: **Medium**
+- Fix: Store series state in localStorage keyed by session. On return, prompt "Resume series?" with the current score. Auto-expire after 4 hours.
+
+**D-4. No history of past Duels results**
+No record of previous Duels outcomes. Who won last time? What was the score? Nothing is saved.
+- Impact: **Low** | Effort: **Low**
+- Fix: Store last 5 Duels results (player names, ratings, winner, date) in localStorage. Show on a "History" tab.
+
+---
+
+### DRAFT VS COMPUTER (DVC)
+
+**DVC-1. No score system — results are not recorded anywhere**
+DVC has no W/L/D record, no leaderboard entry, no personal best. Every game is completely disposable. This is the mode that most directly benefits from a record because it has clear difficulty tiers.
+- Impact: **High** | Effort: **Low**
+- Fix: Add localStorage W/L/D record per difficulty level. Show on the DVC setup screen ("Your record on Hard: 3W 7L 2D"). Add a DVC tab to the main leaderboard.
+
+**DVC-2. CPU has no identity or strategic character**
+"The Algorithm" is the only CPU persona. It picks the best available player by rating (or random on Easy). No personality, no strategic bias. Replays feel identical regardless of CPU settings.
+- Impact: **Medium** | Effort: **Medium**
+- Fix: Create 3 CPU personas with different pick strategies: "The Defender" (prioritises GK/DEF, drags you into a low-scoring game), "The Scorer" (prioritises FWD/MID, always picks the highest striker available), "The Balanced Build" (current behaviour, renamed). Each uses existing difficulty levels but picks by position preference first.
+
+**DVC-3. Only 2 formations**
+4-3-3 and 4-4-2. The 3-5-2 exists in other modes and DVC's slot system supports it.
+- Impact: **Low** | Effort: **Low**
+- Fix: Add `"3-5-2": { slots: ["GK","RB","CB","CB","LB","RM","CM","CDM","CM","LM","ST"] }` to DVC_FORMATIONS.
+
+**DVC-4. No "rematch with same pool" after result**
+"Play Again" after a DVC result discards the pool and starts fresh. If a player wants a rematch with the same player pool (to test a different build), they can't.
+- Impact: **Low** | Effort: **Low**
+- Fix: Store the draft pool from the last game. Add a "Rematch" button alongside "Play Again" that pre-loads the stored pool.
+
+---
+
+### PRIORITY SUMMARY (quick wins first)
+
+| ID | Suggestion | Impact | Effort |
+|---|---|---|---|
+| EU-1 | Add Euro home card | High | Low |
+| EU-2 | Solo Euro tournament mode | High | Low–Med |
+| DVC-1 | DVC W/L/D record + leaderboard tab | High | Low |
+| D-1 | Duels preset buttons (Quick/Standard/Full) | High | Low |
+| OG-2 | Home card score badges + hierarchy | Med | Low |
+| OG-4 | Sound effects (3 basic sounds) | Med | Low |
+| OG-5 | Scoring for DVC + Duels | Med | Low |
+| OG-6 | Manager bonus shown numerically | Low | Low |
+| WC-4 | WC personal best on home card | Med | Low |
+| WC-1 | Group stage preview before run | Med | Low |
+| L-1 | Premier League in League mode | High | Med |
+| MP-2 | Auto-fill at 9/11 in MP draft | Med | Low |
+| CL-2 | Format explanation tooltip | Low | Low |
+| WC-3 | Extra formations (4-2-3-1, 4-1-4-1) | Low | Low |
+| DVC-3 | Add 3-5-2 to DVC | Low | Low |
+| DVC-4 | Rematch with same pool | Low | Low |
+| OG-3 | Onboarding / how to play panel | Med | Low–Med |
+| L-2 | Deeper surprise event feedback | Med | Med |
+| MP-1 | Reveal opponent squads post-tournament | Med | Low |
+| WC-2 | Animated bracket reveal | Med | Med |
+| D-3 | Duels series state persistence | Med | Med |
+| OG-8 | League season share card | Med | Med |
+| DVC-2 | CPU personas with pick strategy | Med | Med |
+| MP-3 | Cross-session MP win tracking | Med | Med |
+| CL-1 | Expand CL draftable squad pool | High | High |
+| OG-7 | Lazy-load data per mode | Med | High |
+| L-3 | Mid-season cup competition | Med | High |
+| D-2 | Duels strategy depth rework | Med | High |
