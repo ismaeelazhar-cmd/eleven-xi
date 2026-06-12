@@ -464,7 +464,7 @@ window.startDraftVsComputer = (function (W) {
 
     var html = '<div class="squad-card">';
     html += '<div class="squad-head"><h2>' + esc(team) + ' &middot; ' + year + '</h2>';
-    html += '<button class="squad-close" id="dvcSquadClose" title="Dismiss and spin again">&#10005;</button></div>';
+    html += '</div>';
     if (!hasDraftable) {
       html += '<div class="sub" style="color:var(--warning)">No pickable players in this squad &#8212; spin again for free.</div>';
     } else {
@@ -491,23 +491,6 @@ window.startDraftVsComputer = (function (W) {
     panel.innerHTML = html;
     panel.style.display = "flex";
 
-    /* Close / dismiss — free re-spin */
-    var closeBtn = panel.querySelector("#dvcSquadClose");
-    if (closeBtn) closeBtn.addEventListener("click", function() {
-      panel.style.display = "none";
-      DVC.spinResult = null;
-      DVC.awaitingPick = false;
-      var spinBtn = document.getElementById("dvcSpinBtn");
-      if (spinBtn) { spinBtn.disabled = false; spinBtn.textContent = "SPIN"; }
-    });
-
-    /* Backdrop click also dismisses */
-    panel.addEventListener("click", function(e) {
-      if (e.target === panel) {
-        var cb = panel.querySelector("#dvcSquadClose");
-        if (cb) cb.click();
-      }
-    });
 
     /* Player pick handlers */
     panel.querySelectorAll(".player:not(.taken):not(.noslot)").forEach(function(el) {

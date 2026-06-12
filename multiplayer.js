@@ -292,6 +292,7 @@
       case "mp_lobby":        renderLobby();        break;
       case "mp_host":         renderHostWait();     break;
       case "mp_join":         renderJoin();         break;
+      case "mp_guestwait":    renderGuestWaitMode();break;
       case "mp_modeselect":   renderMpModeSelect(); break;
       case "setup":           renderSetup();        break;
       case "player_setup":    renderPlayerSetup();  break;
@@ -398,8 +399,8 @@
     }
 
     if (status === "connected"){
-      wrap.appendChild(mk("p","mp-sub","Connected! Choose what to play."));
-      var go = mk("button","mp-start-btn","Continue →");
+      wrap.appendChild(mk("p","mp-sub","Your friend's in. You're the host — pick the game for both of you."));
+      var go = mk("button","mp-start-btn","Choose the game →");
       go.addEventListener("click", function(){ st.phase="mp_modeselect"; _render(); });
       wrap.appendChild(go);
       root.appendChild(wrap); return;
@@ -459,11 +460,8 @@
       var w = mk("div","mp-wait"); w.innerHTML = '<span class="mp-spinner"></span><span>Connecting…</span>';
       wrap.appendChild(w);
     } else if (status === "connected"){
-      wrap.appendChild(mk("p","mp-sub","Connected! Choose what to play."));
-      var go = mk("button","mp-start-btn","Continue →");
-      go.addEventListener("click", function(){ st.phase="mp_modeselect"; _render(); });
-      wrap.appendChild(go);
-      root.appendChild(wrap); return;
+      // Host drives the game choice — hand off to the waiting screen.
+      st.phase = "mp_guestwait"; _render(); return;
     } else {
       var connect = mk("button","mp-start-btn","Connect →");
       connect.addEventListener("click", doJoin);
@@ -508,11 +506,16 @@
         else if (state === "error"){ st.hostStatus = "error"; st.hostMsg = (info&&info.message)||"Something went wrong."; }
       } else if (st.netRole === "guest"){
         if (state === "loading" || state === "joining") st.joinStatus = state;
-        else if (state === "connected") st.joinStatus = "connected";
+        else if (state === "connected"){
+          st.joinStatus = "connected";
+          // Arm the host-choice listener the instant we connect, so an early
+          // mp_start from the host is never dropped between renders.
+          armGuestModeWait();
+        }
         else if (state === "error"){ st.joinStatus = "idle"; st.joinError = (info&&info.message)||"Couldn't connect."; }
       }
       // Only re-render if we're still inside a lobby screen.
-      if (st.phase === "mp_host" || st.phase === "mp_join") _render();
+      if (st.phase === "mp_host" || st.phase === "mp_join" || st.phase === "mp_guestwait") _render();
     };
     Net.onPeerLeave = function(){
       if (typeof window.flToast === "function") window.flToast("Your friend disconnected.");
@@ -526,7 +529,47 @@
   }
 
   /* ════════════════════════════════════════════════════
+     GUEST: wait for the host to choose the game
+     The host is in full control of the mode pick. The guest
+     sits on a waiting screen until an {t:"mp_start"} arrives,
+     then drops into the same game.
+  ════════════════════════════════════════════════════ */
+  function armGuestModeWait(){
+    st._netOnData = function(msg){
+      if (!msg || !msg.t) return;
+      if (msg.t === "mp_start"){
+        st._netOnData = null;            // the per-mode handler takes over from here
+        st.phase = "idle";
+        if (msg.mode === "duels" && window.startDuelsOnline){
+          window.startDuelsOnline("guest");
+        } else if (window.startDuelsOnline){
+          // Unknown/local-only mode online — Duels is the only synced game today.
+          window.startDuelsOnline("guest");
+        }
+      }
+    };
+  }
+
+  function renderGuestWaitMode(){
+    // Keep the listener armed even across re-renders.
+    armGuestModeWait();
+    var wrap = mk("div","mp-wrap mp-lobby");
+    wrap.innerHTML = '<h2 class="mp-title">You\'re in!</h2>'+
+      '<p class="mp-sub">The host is choosing the game. Hang tight — it\'ll start automatically.</p>';
+    wrap.appendChild(mk("div","mp-online-tag", "Online · code " + esc(st.netCode || (window.ElxiNet&&window.ElxiNet.code) || "")));
+    var wait = mk("div","mp-wait");
+    wait.innerHTML = '<span class="mp-spinner"></span><span>Waiting for the host…</span>';
+    wrap.appendChild(wait);
+    var back = mk("button","mp-ghost-btn","← Leave game");
+    back.addEventListener("click", function(){ if(window.ElxiNet) window.ElxiNet.close(); st.online=false; st.netRole=null; st.phase="mp_connect"; _render(); });
+    wrap.appendChild(back);
+    root.appendChild(wrap);
+  }
+
+  /* ════════════════════════════════════════════════════
      PHASE 0 — MULTIPLAYER MODE SELECT (Tournament vs Duels)
+     Online: host-only. The chosen mode is broadcast to the
+     guest via {t:"mp_start"} so both drop into it together.
   ════════════════════════════════════════════════════ */
   function renderMpModeSelect(){
     var wrap = mk("div","mp-wrap");
@@ -559,7 +602,12 @@
       (st.online ? "Each of you builds blind on your own device, then the reveal decides it slot by slot."
                  : "Two managers build blind — ratings hidden — then a position-by-position reveal decides each slot.")+'</span>';
     r.addEventListener("click", function(){
-      if (st.online && window.startDuelsOnline){ st.phase = "idle"; window.startDuelsOnline(st.netRole); }
+      if (st.online && window.startDuelsOnline){
+        // Host tells the guest which game to start, then enters it too.
+        if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"duels" });
+        st.phase = "idle";
+        window.startDuelsOnline(st.netRole);
+      }
       else if (window.startDuels){ st.phase = "idle"; window.startDuels(); }
     });
     grid.appendChild(r);

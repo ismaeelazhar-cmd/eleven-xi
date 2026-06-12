@@ -616,8 +616,7 @@
 
     // Modal card header
     var inner = '<div class="squad-card">';
-    inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2>' +
-      '<button class="squad-close" aria-label="Close">✕</button></div>';
+    inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2></div>';
     inner += '<div class="sub">Pick a player, then choose where they play.</div>';
 
     if (pendingPick) {
@@ -643,12 +642,6 @@
     elSquadPanel.innerHTML = inner;
     elSquadPanel.style.display = "flex";
 
-    // Close button — dismisses without picking
-    var closeBtn = elSquadPanel.querySelector(".squad-close");
-    if (closeBtn) closeBtn.addEventListener("click", function () { current = null; awaitingPick = false; pendingPick = null; elSquadPanel.style.display = "none"; updateControls(); elHint.textContent = "Spin for another squad."; });
-
-    // Backdrop click closes
-    elSquadPanel.addEventListener("click", function (e) { if (e.target === elSquadPanel) closeBtn && closeBtn.click(); });
 
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".player"), function (n) {
       n.addEventListener("click", function () {
