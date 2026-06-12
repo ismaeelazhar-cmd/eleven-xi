@@ -489,10 +489,9 @@
       return la!==lb ? la-lb : (b.r||0)-(a.r||0);
     });
 
-    var html = '<div class="mp-sq-head">'+
-      '<span class="mp-sq-title">'+esc(spin.country)+' &middot; '+spin.year+'</span>'+
-      '<span class="mp-sq-hint">'+(RW.poolNationalCur?"Nation":"Club")+" · Pick a player — ratings hidden"+'</span>'+
-    '</div>';
+    var html = '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2>'+
+      '<button class="squad-close" id="rwSqClose" aria-label="Close">&#x2715;</button></div>'+
+      '<div class="sub">'+(RW.poolNationalCur?"Nation":"Club")+' · Pick a player — ratings hidden</div>';
 
     /* Position chooser if a player has been tapped */
     if (RW.pendingRWPick){
@@ -521,10 +520,14 @@
         (noSlot ? '<span class="slot-tag">no slot</span>' : '')+
       '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
 
     panel.innerHTML = html;
     panel.style.display = "";
+
+    /* Close button */
+    var sqClose = panel.querySelector("#rwSqClose");
+    if (sqClose) sqClose.onclick = function() { panel.style.display = "none"; RW.pendingRWPick = null; };
 
     /* Wire up position chooser buttons */
     if (RW.pendingRWPick){

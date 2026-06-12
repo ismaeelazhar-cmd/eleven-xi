@@ -117,8 +117,9 @@ header h1 {
 .m-mp   { --mode-accent: var(--p-violet-300); }
 .m-rw   { --mode-accent: var(--warning); }
 
+.home-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .home-board-link {
-  display: block; margin: 0 auto; background: transparent; border: 1px solid var(--line);
+  background: transparent; border: 1px solid var(--line);
   color: var(--text-dim); border-radius: var(--r-pill); padding: 11px 24px; font-weight: 600;
   font-size: var(--t-sm); cursor: pointer; transition: all var(--dur-1) var(--ease-out);
 }

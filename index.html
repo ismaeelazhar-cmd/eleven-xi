@@ -20,14 +20,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=77" />
-  <link rel="stylesheet" href="tokens.css?v=73" />
-  <link rel="stylesheet" href="floodlights.css?v=90" />
+  <link rel="stylesheet" href="style.css?v=79" />
+  <link rel="stylesheet" href="tokens.css?v=74" />
+  <link rel="stylesheet" href="floodlights.css?v=91" />
 </head>
 <body>
   <div class="theme-toggle" id="themeToggle" aria-label="Theme">
-    <button data-theme="light" title="Light">☀</button>
-    <button data-theme="dark" title="Dark">🌙</button>
+    <button data-theme="light" title="Light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button>
+    <button data-theme="dark" title="Dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
     <span class="theme-pill" aria-hidden="true"></span>
   </div>
   <div class="wrap">
@@ -67,7 +67,10 @@
           <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
         </button>
       </div>
-      <button class="home-board-link" id="homeBoard">Leaderboards</button>
+      <div class="home-links">
+        <button class="home-board-link" id="homeBoard">Leaderboards</button>
+        <button class="home-board-link" id="homeShare">Share game</button>
+      </div>
     </section>
 
     <!-- ===== SETUP ===== -->
@@ -188,8 +191,8 @@
         <div class="done-banner" id="doneBanner" style="display:none;"></div>
         <div class="xi-actions">
           <button class="btn-accent" id="autoFillBtn">Auto-fill XI</button>
-          <button class="btn-primary" id="goWorldCup" disabled>World Cup with my XI</button>
-          <button class="btn-primary" id="goLeague" disabled>League with my XI</button>
+          <button class="btn-primary" id="goWorldCup" disabled hidden>World Cup with my XI</button>
+          <button class="btn-primary" id="goLeague" disabled hidden>League with my XI</button>
           <button class="btn-primary" id="goCL" disabled hidden>Enter the Champions League</button>
           <button class="btn-ghost" id="shareBtn" disabled>Copy XI</button>
           <button class="btn-ghost" id="clearBtn">New game</button>
@@ -202,6 +205,7 @@
     <section id="resultsView" style="display:none;">
       <div class="results-head">
         <div class="results-head-right">
+          <button class="btn-ghost" id="shareXIBtn">Share XI</button>
           <button class="btn-ghost" id="boardBtn">Leaderboards</button>
           <button class="btn-primary" id="newGameBtn">New Game</button>
         </div>
@@ -278,11 +282,11 @@
   <script src="data_ligue1_history.js?v=71"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=72"></script>
-  <script src="game.js?v=83"></script>
+  <script src="game.js?v=85"></script>
   <script src="net.js?v=84"></script>
-  <script src="multiplayer.js?v=88"></script>
+  <script src="multiplayer.js?v=89"></script>
   <script src="league.js?v=77"></script>
-  <script src="floodlights.js?v=85" defer></script>
-  <script src="ratingswar.js?v=93" defer></script>
+  <script src="floodlights.js?v=86" defer></script>
+  <script src="ratingswar.js?v=94" defer></script>
 </body>
 </html>

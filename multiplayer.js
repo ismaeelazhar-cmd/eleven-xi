@@ -1172,10 +1172,9 @@
     });
 
     var html =
-      '<div class="mp-sq-head">'+
-        '<span class="mp-sq-title">'+esc(spin.country)+' &middot; '+spin.year+'</span>'+
-        '<span class="mp-sq-hint">Tap a player to place them</span>'+
-      '</div>';
+      '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2>'+
+        '<button class="squad-close" id="mpSqClose" aria-label="Close">&#x2715;</button></div>'+
+      '<div class="sub">Tap a player to place them</div>';
 
     /* ── Position chooser (shows when a player has been tapped) ── */
     if(st.pendingPick && st.pendingPick.spin === spin){
@@ -1221,10 +1220,14 @@
           )+
         '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
 
     panel.innerHTML = html;
     panel.style.display = "";
+
+    /* Close button */
+    var mpClose = panel.querySelector("#mpSqClose");
+    if (mpClose) mpClose.onclick = function() { panel.style.display = "none"; st.pendingPick = null; };
 
     /* Position chooser button handlers */
     if(st.pendingPick && st.pendingPick.spin===spin){

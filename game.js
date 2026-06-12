@@ -81,14 +81,23 @@
     "Rodrygo": ["FWD", "MID"], "Raphinha": ["FWD", "MID"], "Bernardo Silva": ["MID", "FWD"]
   };
 
+  var MGR_ICONS = {
+    none:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l3-6h3a3 3 0 0 0 6 0h3l3 6-3 1.5V21H6V10.5z"/></svg>',
+    attack:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6 2 2-6 6z"/><path d="M2 21l4-4"/><path d="M15.5 6.5l1.5 1.5"/></svg>',
+    defence:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    press:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-7 8-7 13a7 7 0 0 0 14 0c0-5-7-7-7-13z"/><path d="M9 18a3 3 0 0 0 6 0"/></svg>',
+    cup:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg>',
+    motivator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+    counter:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'
+  };
   var MANAGERS = [
-    { id: "none",      emoji: "🎽", name: "No manager",     atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
-    { id: "attack",    emoji: "⚔️", name: "Total Football",  atk: 4,  def: -2, ko: 0, desc: "+4 attack, −2 defence — all-out attack." },
-    { id: "defence",   emoji: "🛡️", name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
-    { id: "press",     emoji: "🔥", name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
-    { id: "cup",       emoji: "🏆", name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
-    { id: "motivator", emoji: "🗣️", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." },
-    { id: "counter",   emoji: "⚡", name: "Counter-Attack",  atk: 3,  def: 1,  ko: 0, desc: "+3 attack, +1 defence — lethal on the break." }
+    { id: "none",      name: "No manager",     atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
+    { id: "attack",    name: "Total Football",  atk: 4,  def: -2, ko: 0, desc: "+4 attack, −2 defence — all-out attack." },
+    { id: "defence",   name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
+    { id: "press",     name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
+    { id: "cup",       name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
+    { id: "motivator", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." },
+    { id: "counter",   name: "Counter-Attack",  atk: 3,  def: 1,  ko: 0, desc: "+3 attack, +1 defence — lethal on the break." }
   ];
   // Legacy/iconic managers linked to a tactical style (the bonus comes from the style above).
   var MANAGERS_DB = [
@@ -137,6 +146,29 @@
   var revealTimer = null; // game-by-game auto-reveal timer
   var deferredPrompt = null;
   var LB_KEY = "wcxi_leaderboard_v1";
+  var DRAFT_KEY = "wcxi_draft_v1";
+
+  function saveDraft() {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        mode: mode, squad: squad, formation: formation,
+        managerId: managerId, managerName: managerName, nextId: nextId
+      }));
+    } catch (e) {}
+  }
+  function loadDraft() {
+    try {
+      var s = sessionStorage.getItem(DRAFT_KEY);
+      if (!s) return false;
+      var d = JSON.parse(s);
+      if (!d || d.mode !== mode || !d.squad || !d.squad.length) return false;
+      squad = d.squad; formation = d.formation || formation;
+      managerId = d.managerId || managerId; managerName = d.managerName || "";
+      nextId = d.nextId || (squad.length + 1);
+      return true;
+    } catch (e) { return false; }
+  }
+  function clearDraft() { try { sessionStorage.removeItem(DRAFT_KEY); } catch (e) {} }
 
   function currentManager() {
     for (var i = 0; i < MANAGERS.length; i++) if (MANAGERS[i].id === managerId) return MANAGERS[i];
@@ -286,7 +318,7 @@
     var mgr = currentManager();
     if (elPitchTitle) elPitchTitle.textContent = formation;
     if (elDraftTeam) elDraftTeam.textContent = teamDisplayName();
-    if (elDraftMeta) elDraftMeta.textContent = formation + " · " + mgr.emoji + " " + mgr.name;
+    if (elDraftMeta) elDraftMeta.textContent = formation + " · " + mgr.name;
   }
 
   // ---- setup controls ----
@@ -294,12 +326,12 @@
   function managerItemHTML(name, styleId) {
     var st = styleById(styleId);
     return '<div class="reel-item mgr-item"><span class="mgr-name-big">' + esc(name) +
-      '</span><span class="mgr-style-tag">' + st.emoji + " " + st.name + "</span></div>";
+      '</span><span class="mgr-style-tag"><span class="mgr-icon">' + (MGR_ICONS[st.id] || "") + '</span>' + esc(st.name) + "</span></div>";
   }
   function renderManagerStyles() {
     elManagerStyles.innerHTML = MANAGERS.map(function (m) {
       return '<button class="manager-opt' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
-        '" title="' + esc(m.desc) + '"><span class="mgr-emoji">' + m.emoji + '</span><span class="mgr-name">' + m.name + "</span></button>";
+        '" title="' + esc(m.desc) + '"><span class="mgr-icon">' + (MGR_ICONS[m.id] || "") + '</span><span class="mgr-name">' + esc(m.name) + "</span></button>";
     }).join("");
     Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".manager-opt"), function (b) {
       b.addEventListener("click", function () {
@@ -318,10 +350,10 @@
       if (managerName) {
         elManagerStrip.innerHTML = managerItemHTML(managerName, managerId);
       } else {
-        elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">' + st.emoji + " " + st.name +
+        elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big"><span class="mgr-icon">' + (MGR_ICONS[st.id] || "") + '</span>' + esc(st.name) +
           '</span><span class="mgr-style-tag">tactical style</span></div>';
       }
-      elManagerDesc.textContent = st.emoji + " " + st.name + " — " + st.desc;
+      elManagerDesc.textContent = st.name + " — " + st.desc;
     }
   }
   function saveManagerPref(){
@@ -603,6 +635,7 @@
       var eligible = [];
       list.forEach(function (pl) {
         if (taken.indexOf(pk.c + "|" + pk.y + "|" + pl.n) !== -1) return;
+        if ((pl.r || 0) < 75) return;
         var opts = openEligiblePositions(pl);
         if (opts.length) eligible.push({ pl: pl, pos: preferredSlot(pl, opts) });
       });
@@ -647,9 +680,10 @@
     });
 
     var full = squad.length >= XI_SIZE;
-    $("goWorldCup").disabled = !full;
-    $("goLeague").disabled = !full;
-    $("goCL").disabled = !full;
+    var cl = mode === "cl";
+    $("goWorldCup").disabled = !full; $("goWorldCup").hidden = !full || cl;
+    $("goLeague").disabled = !full;   $("goLeague").hidden   = !full || cl;
+    $("goCL").disabled     = !full;   $("goCL").hidden       = !full || !cl;
     $("shareBtn").disabled = squad.length < 1;
     $("autoFillBtn").disabled = full;
     elDone.style.display = full ? "block" : "none";
@@ -657,10 +691,11 @@
 
     if (squad.length) {
       var t = userTeamFromSquad(), mgr = currentManager();
-      elRatingNote.textContent = teamDisplayName() + " · " + formation + " · " + mgr.emoji + " " + mgr.name +
+      elRatingNote.textContent = teamDisplayName() + " · " + formation + " · " + mgr.name +
         (showRatings ? " · ATK " + Math.round(t.atk) + " / DEF " + Math.round(t.def) + (mgr.ko ? " · +" + mgr.ko + " KO" : "") : " · ratings hidden") +
         (full ? "" : "  — all 11 must be picked to enter");
-    } else elRatingNote.textContent = "";
+      saveDraft();
+    } else { elRatingNote.textContent = ""; clearDraft(); }
   }
 
   function avgRating() { if (!squad.length) return 80; var s = 0; squad.forEach(function (p) { s += p.r; }); return s / squad.length; }
@@ -676,6 +711,90 @@
       koBonus: mgr.ko, isUser: true, formation: formation, manager: (managerId === "none" ? "No manager" : (managerName ? managerName + " (" + mgr.name + ")" : mgr.name)),
       players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; })
     };
+  }
+
+  function shareXIPNG(btn) {
+    var a = assignByLines();
+    var lines = [a.gk].concat(a.lines);
+    var CW = 900, CH = 1200, PAD = 48;
+    var c = document.createElement("canvas"); c.width = CW; c.height = CH;
+    var ctx = c.getContext("2d"); if (!ctx) return;
+    var FS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+    // Background
+    var bg = ctx.createLinearGradient(0, 0, 0, CH);
+    bg.addColorStop(0, "#0B1020"); bg.addColorStop(1, "#121830");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+    // Pitch area
+    var pitchY = 140, pitchH = CH - pitchY - 80;
+    var pg = ctx.createLinearGradient(0, pitchY, 0, pitchY + pitchH);
+    pg.addColorStop(0, "#0d1f14"); pg.addColorStop(1, "#091510");
+    ctx.fillStyle = pg; ctx.fillRect(PAD, pitchY, CW - PAD * 2, pitchH);
+    ctx.strokeStyle = "rgba(34,224,200,0.18)"; ctx.lineWidth = 1.5;
+    ctx.strokeRect(PAD, pitchY, CW - PAD * 2, pitchH);
+    // Penalty box
+    var pbW = (CW - PAD * 2) * 0.56, pbH = pitchH * 0.3, pbX = PAD + (CW - PAD * 2 - pbW) / 2, pbY = pitchY + pitchH - pbH;
+    ctx.strokeRect(pbX, pbY, pbW, pbH);
+    // Header
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("ELEVEN XI", CW / 2, 38);
+    ctx.fillStyle = "#ECF1FF"; ctx.font = "800 32px " + FS; ctx.fillText(teamDisplayName(), CW / 2, 78);
+    ctx.fillStyle = "rgba(236,241,255,0.5)"; ctx.font = "500 17px " + FS;
+    ctx.fillText(formation + "  ·  " + currentManager().name, CW / 2, 110);
+    // Result line from lastSim
+    if (lastSim && lastSim.userTeam && lastSim.userTeam.result) {
+      ctx.fillStyle = "#F5B43C"; ctx.font = "700 15px " + FS;
+      ctx.fillText(String(lastSim.userTeam.result), CW / 2, 132);
+    }
+    // Players on pitch
+    var lineColors = { GK: "#F5B43C", DEF: "#22E0C8", MID: "#7C5CFC", FWD: "#FF7A59" };
+    var lineKeys = { GK: "GK", DEF: "DEF", MID: "MID", FWD: "FWD" };
+    lines.forEach(function (row, rowIdx) {
+      var n = row.length, rowFrac = (rowIdx + 0.6) / (lines.length);
+      var y = pitchY + pitchH * (0.95 - rowFrac * 0.88);
+      row.forEach(function (cell, colIdx) {
+        if (!cell) return;
+        var x = PAD + (CW - PAD * 2) * ((colIdx + 0.5) / n);
+        var line = rowIdx === 0 ? "GK" : (rowIdx === lines.length - 1 ? "FWD" : (rowIdx <= 1 ? "DEF" : "MID"));
+        var col = lineColors[line] || "#ECF1FF";
+        // Dot
+        ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(11,16,32,0.85)"; ctx.fill();
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+        // Position label
+        ctx.fillStyle = col; ctx.font = "700 10px " + FS; ctx.textAlign = "center";
+        ctx.fillText(cell.pos, x, y - 7);
+        // Player name (abbreviate if long)
+        if (cell.pick) {
+          var name = cell.pick.n.split(" ").pop(); // last name
+          ctx.fillStyle = "#ECF1FF"; ctx.font = "600 11px " + FS;
+          ctx.fillText(name.length > 10 ? name.slice(0, 9) + "." : name, x, y + 6);
+          if (showRatings) {
+            ctx.fillStyle = col; ctx.font = "700 9px " + FS;
+            ctx.fillText(cell.pick.r, x, y + 18);
+          }
+        }
+        ctx.textAlign = "center";
+      });
+    });
+    // Footer
+    ctx.fillStyle = "rgba(236,241,255,0.25)"; ctx.font = "500 14px " + FS;
+    ctx.fillText("ismaeelazhar-cmd.github.io/eleven-xi", CW / 2, CH - 24);
+    // Export
+    c.toBlob(function (blob) {
+      if (!blob) return;
+      var fname = "eleven-xi.png";
+      try {
+        var file = new File([blob], fname, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: "My Eleven XI", text: teamDisplayName() + " · " + formation }).catch(function () {});
+          return;
+        }
+      } catch (e) {}
+      var url = URL.createObjectURL(blob), el = document.createElement("a");
+      el.href = url; el.download = fname; document.body.appendChild(el); el.click(); el.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      if (btn) { btn.textContent = "Saved!"; setTimeout(function () { btn.textContent = "Share XI"; }, 1800); }
+    }, "image/png");
   }
 
   function shareTeam() {
@@ -717,7 +836,6 @@
     var cw = $("continentWrap"); if (cw) cw.style.display = cl ? "none" : "block";
     var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Player pool — Champions League seasons" : "Player pool — World Cup eras";
     var cl2 = $("countryLabel"); if (cl2) cl2.textContent = cl ? "Club" : "Country";
-    $("goWorldCup").hidden = cl; $("goLeague").hidden = cl; $("goCL").hidden = !cl;
     renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra();
     renderContinent(); renderDifficultyBar(); renderClFormat();
     paintPitches(); renderXI(); updateControls(); showView("setup");
@@ -726,7 +844,9 @@
   function startDraft() {
     showView("draft");
     current = null; awaitingPick = false; spinning = false; rerollsLeft = diffRerolls();
-    elSquadPanel.style.display = "none"; elHint.textContent = "";
+    elSquadPanel.style.display = "none";
+    var restored = loadDraft();
+    elHint.textContent = restored ? "Draft restored from your last session." : "";
     elCountryStrip.innerHTML = countryItemHTML(rand(poolPairs().map(function (p) { return p.c; })));
     elYearStrip.innerHTML = yearItemHTML(poolPairs()[0].y);
     paintPitches(); renderXI(); updateControls();
@@ -759,7 +879,7 @@
   }
   function renderBracket(rounds) {
     var html = '<div class="bracket">';
-    rounds.forEach(function (rd) {
+    rounds.forEach(function (rd, rdIdx) {
       html += '<div class="round"><div class="round-name">' + rd.name + "</div>";
       rd.ties.forEach(function (t) {
         var aw = t.winner === t.a, bw = t.winner === t.b;
@@ -768,6 +888,10 @@
         html += '<div class="tie' + userTie + '"><div class="side ' + (aw ? "win" : "") + '">' + teamCell(t.a) + "<b>" + t.res.a + "</b></div>" +
           '<div class="side ' + (bw ? "win" : "") + '">' + teamCell(t.b) + "<b>" + t.res.b + "</b></div>" + pens + "</div>";
       });
+      if (rdIdx === rounds.length - 1 && rd.ties.length === 1 && rd.ties[0].winner) {
+        var champ = rd.ties[0].winner;
+        html += '<div class="bracket-champion">' + (champ.flag ? esc(champ.flag) + " " : "") + "<b>" + esc(champ.name) + "</b></div>";
+      }
       html += "</div>";
     });
     return html + "</div>";
@@ -789,7 +913,7 @@
   function renderWorldCup(result, label) {
     var champ = result.champion;
     var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">Champions: <b>' + esc(champ.name) + "</b></div>";
+    html += '<div class="champion">Champions: <b>' + (champ.flag ? esc(champ.flag) + " " : "") + esc(champ.name) + "</b></div>";
     html += '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds);
     html += '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups);
     return html;
@@ -948,6 +1072,7 @@
   }
 
   function runSim(type, userTeam) {
+    clearDraft();
     clearTimeout(revealTimer);
     lastSim = { type: type, userTeam: userTeam };
     elResultsBody.innerHTML = '<div class="loading">Simulating…</div>';
@@ -1173,6 +1298,7 @@
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("wc", userTeamFromSquad()); });
   $("goLeague").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim("league", userTeamFromSquad()); });
   $("newGameBtn").addEventListener("click", newGame);
+  var _sxib = $("shareXIBtn"); if (_sxib) _sxib.addEventListener("click", function () { shareXIPNG(this); });
   $("boardBtn").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("boardBack").addEventListener("click", function () { showView("home"); });
   $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
@@ -1182,6 +1308,20 @@
   var _bm = document.getElementById("boardModes");
   if (_bm) Array.prototype.forEach.call(_bm.querySelectorAll(".seg-opt"), function (b) {
     b.addEventListener("click", function () { boardMode = b.getAttribute("data-mode"); renderBoard(); });
+  });
+
+  // ---- Keyboard navigation on spin wheel ----
+  document.addEventListener("keydown", function (e) {
+    var inDraft = document.getElementById("draftView") && document.getElementById("draftView").style.display !== "none";
+    if (!inDraft) return;
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      if (elSpin && !elSpin.disabled) elSpin.click();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (elAutoPick && !elAutoPick.disabled) elAutoPick.click();
+    }
   });
 
   // ---- PWA ----

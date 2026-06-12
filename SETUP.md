@@ -113,17 +113,48 @@ git config user.name "Your Name"
 git config user.email "your@email.com"
 ```
 
-## 9. Temporary live link (Cloudflare tunnel)
+## 9. Production deployment (GitHub Pages)
 
-To share a live link without deploying, use the Cloudflare quick tunnel binary already downloaded at `/tmp/cloudflared`:
+The game is permanently live at **https://ismaeelazhar-cmd.github.io/eleven-xi/**
 
+It auto-deploys on every push to `main`. No manual deploy step needed.
+
+**Check deployment status:**
 ```bash
-# Make sure the local server is running first (step 3 above), then:
-/tmp/cloudflared tunnel --url http://localhost:8777
+# See if your latest push deployed successfully
+gh run list --limit 5
+# Or check the live URL directly
+curl -sI https://ismaeelazhar-cmd.github.io/eleven-xi/ | grep -E "HTTP|last-modified"
 ```
 
-It will print a unique URL like `https://something.trycloudflare.com`. This URL changes every time you restart the tunnel and dies if your Mac sleeps. It is not a permanent hosting solution.
+## 10. Rollback a bad deployment
 
-## 10. Permanent hosting
+If a push breaks the live game, roll back to the last known-good commit:
 
-The project is ready to deploy to GitHub Pages, Netlify, or Cloudflare Pages — all free. No build step is needed; just point the host at the repo root and set `index.html` as the entry point.
+```bash
+# Find the last good commit hash
+git log --oneline -10
+
+# Revert to it (replace HASH with the commit you want)
+git revert HEAD          # reverts the last commit cleanly (preferred)
+git push                 # live site updates within ~60 seconds
+
+# Or if you need to go back further:
+git revert HEAD~2..HEAD  # reverts last 2 commits as separate reverts
+git push
+```
+
+**Hard reset (use with caution — rewrites history):**
+```bash
+git reset --hard <HASH>
+git push --force-with-lease
+```
+
+## 11. Cache version bump checklist
+
+Any time you edit a CSS or JS file, bump the cache in TWO places:
+
+1. `sw.js` — increment the cache name: `var CACHE = "wcxi-vNN";`
+2. `index.html` — update the `?v=NN` on the changed file's `<script>` or `<link>` tag
+
+Both must match or browsers will serve stale assets.

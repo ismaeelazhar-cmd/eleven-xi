@@ -603,6 +603,8 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
   box-shadow: 0 2px 10px rgba(249, 156, 0, 0.2);
 }
 .mgr-emoji { font-size: 18px; line-height: 1; }
+.mgr-icon { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex-shrink: 0; }
+.mgr-icon svg { width: 18px; height: 18px; }
 .mgr-name { font-size: 12px; font-weight: 700; text-align: left; line-height: 1.2; }
 .manager-desc { color: var(--green2); font-size: 13px; font-weight: 600; min-height: 16px; }
 
@@ -811,7 +813,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 /* ---------- Stats summary ---------- */
 .stats-summary { background: linear-gradient(180deg, var(--card2), var(--card3)); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 18px; }
 .stats-summary .sec { margin-top: 0; }
-.stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; justify-content: center; }
 .stat-pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 13px; color: var(--muted); }
 .stat-pill b { color: var(--text); font-size: 15px; margin-left: 4px; }
 .stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -953,6 +955,8 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 /* position badge in the picker fits granular labels (e.g. LW/LM) */
 .player .pos { width: auto; min-width: 34px; padding: 0 7px; }
 
+.bracket-champion { font-size: 13px; color: var(--gold); font-weight: 600; margin-top: 4px; padding: 6px 8px; background: rgba(245,180,60,0.10); border: 1px solid rgba(245,180,60,0.30); border-radius: 6px; }
+
 /* highlight the user's ties in the knockout bracket */
 .tie.user-tie {
   border-color: var(--gold);
@@ -1071,7 +1075,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 }
 .pitch {
   background:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%2322E0C8' stroke-opacity='0.14' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%2322E0C8' stroke-opacity='0.12' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='1.2' fill='%2322E0C8' fill-opacity='0.15'/%3E%3Crect x='25' y='3' width='50' height='16' fill='none' stroke='%2322E0C8' stroke-opacity='0.10' stroke-width='0.35'/%3E%3Crect x='36' y='3' width='28' height='7' fill='none' stroke='%2322E0C8' stroke-opacity='0.07' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='14' r='0.9' fill='%2322E0C8' fill-opacity='0.12'/%3E%3Crect x='25' y='81' width='50' height='16' fill='none' stroke='%2322E0C8' stroke-opacity='0.10' stroke-width='0.35'/%3E%3Crect x='36' y='90' width='28' height='7' fill='none' stroke='%2322E0C8' stroke-opacity='0.07' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='86' r='0.9' fill='%2322E0C8' fill-opacity='0.12'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='2' x2='100' y2='2' stroke='%2322E0C8' stroke-opacity='0.18' stroke-width='0.45'/%3E%3Cpath d='M 31 2 A 19 19 0 0 1 69 2' fill='none' stroke='%2322E0C8' stroke-opacity='0.15' stroke-width='0.45'/%3E%3Ccircle cx='50' cy='2' r='1.2' fill='%2322E0C8' fill-opacity='0.2'/%3E%3Crect x='22' y='68' width='56' height='30' fill='none' stroke='%2322E0C8' stroke-opacity='0.13' stroke-width='0.4'/%3E%3Crect x='36' y='83' width='28' height='15' fill='none' stroke='%2322E0C8' stroke-opacity='0.09' stroke-width='0.28'/%3E%3Ccircle cx='50' cy='78' r='1.2' fill='%2322E0C8' fill-opacity='0.2'/%3E%3Cpath d='M 34 68 A 19 19 0 0 1 66 68' fill='none' stroke='%2322E0C8' stroke-opacity='0.13' stroke-width='0.4'/%3E%3C/svg%3E"),
     linear-gradient(180deg, #101820 0%, #090f18 100%);
   border: 1px solid rgba(34, 224, 200, 0.14);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 60px rgba(0,0,0,0.6), 0 8px 32px rgba(0,0,0,0.5);
@@ -1129,7 +1133,7 @@ body.light .pdot.filled.DEF { background: rgba(34,224,200,0.15) !important; bord
 body.light .pdot.filled.MID { background: rgba(124,92,252,0.18) !important; border-color: rgba(124,92,252,0.5) !important; }
 body.light .pdot.filled.FWD { background: rgba(255,122,89,0.18) !important; border-color: rgba(255,122,89,0.5) !important; }
 body.light .pdot.filled .dot-init { color: #0B1020; text-shadow: none; }
-body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%230B7C6E' stroke-opacity='0.18' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%230B7C6E' stroke-opacity='0.16' stroke-width='0.4'/%3E%3Ccircle cx='50' cy='50' r='1.2' fill='%230B7C6E' fill-opacity='0.18'/%3E%3Crect x='25' y='3' width='50' height='16' fill='none' stroke='%230B7C6E' stroke-opacity='0.13' stroke-width='0.35'/%3E%3Crect x='36' y='3' width='28' height='7' fill='none' stroke='%230B7C6E' stroke-opacity='0.09' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='14' r='0.9' fill='%230B7C6E' fill-opacity='0.15'/%3E%3Crect x='25' y='81' width='50' height='16' fill='none' stroke='%230B7C6E' stroke-opacity='0.13' stroke-width='0.35'/%3E%3Crect x='36' y='90' width='28' height='7' fill='none' stroke='%230B7C6E' stroke-opacity='0.09' stroke-width='0.25'/%3E%3Ccircle cx='50' cy='86' r='0.9' fill='%230B7C6E' fill-opacity='0.15'/%3E%3C/svg%3E"), linear-gradient(180deg, #e8f0f8 0%, #d6e2f0 100%) !important; border-color: rgba(11,124,110,0.22) !important; }
+body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='0' y1='2' x2='100' y2='2' stroke='%230B7C6E' stroke-opacity='0.22' stroke-width='0.45'/%3E%3Cpath d='M 31 2 A 19 19 0 0 1 69 2' fill='none' stroke='%230B7C6E' stroke-opacity='0.18' stroke-width='0.45'/%3E%3Ccircle cx='50' cy='2' r='1.2' fill='%230B7C6E' fill-opacity='0.22'/%3E%3Crect x='22' y='68' width='56' height='30' fill='none' stroke='%230B7C6E' stroke-opacity='0.16' stroke-width='0.4'/%3E%3Crect x='36' y='83' width='28' height='15' fill='none' stroke='%230B7C6E' stroke-opacity='0.11' stroke-width='0.28'/%3E%3Ccircle cx='50' cy='78' r='1.2' fill='%230B7C6E' fill-opacity='0.22'/%3E%3Cpath d='M 34 68 A 19 19 0 0 1 66 68' fill='none' stroke='%230B7C6E' stroke-opacity='0.16' stroke-width='0.4'/%3E%3C/svg%3E"), linear-gradient(180deg, #e8f0f8 0%, #d6e2f0 100%) !important; border-color: rgba(11,124,110,0.22) !important; }
 @media (prefers-reduced-motion: reduce) {
   .pdot.filled { animation: none; }
 }

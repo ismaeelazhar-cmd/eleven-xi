@@ -26,6 +26,19 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
+    // Share game link button
+    var shareBtn = document.getElementById("homeShare");
+    if (shareBtn) {
+      shareBtn.addEventListener("click", function () {
+        var url = "https://ismaeelazhar-cmd.github.io/eleven-xi/";
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            W.flToast("Link copied — send it to a friend!");
+          }, function () { window.prompt("Copy the link:", url); });
+        } else { window.prompt("Copy the link:", url); }
+      });
+    }
+
     // Logo click → home from any screen
     var brand = document.getElementById("brandLogo");
     if (brand && !brand._wired) {
