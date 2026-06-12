@@ -1187,7 +1187,7 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 /* ===== Manager spin wheel ===== */
 .mgr-wheel { display: flex; gap: 10px; align-items: center; }
 .mgr-reel { flex: 1; height: 60px; }
-.mgr-item { gap: 4px; }
+.mgr-item { gap: 4px; justify-content: center; align-items: center; text-align: center; }
 .mgr-name-big { font-size: 15px; font-weight: 800; color: var(--text); text-align: center; padding: 0 8px; }
 .mgr-style-tag { font-size: 11px; color: var(--gold); font-weight: 700; }
 #managerSpin { white-space: nowrap; align-self: center; }
