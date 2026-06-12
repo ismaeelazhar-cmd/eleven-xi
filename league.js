@@ -35,6 +35,7 @@
 
   /* ── Leagues ── */
   var LEAGUES = {
+    pl:         { label:"Premier League", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", games:38, getData:function(){ return W.PL_DATA; } },
     laliga:     { label:"La Liga",    flag:"🇪🇸", games:38, getData:function(){ return W.LALIGA_DATA; } },
     seriea:     { label:"Serie A",    flag:"🇮🇹", games:38, getData:function(){ return W.SERIEA_DATA; } },
     bundesliga: { label:"Bundesliga", flag:"🇩🇪", games:34, getData:function(){ return W.BUNDESLIGA_DATA; } },
@@ -1086,10 +1087,13 @@
     var ev=LS.reveal.event, MGRS=W.WCXI_MANAGERS||[], MGRS_DB=W.WCXI_MANAGERS_DB||[];
 
     if(ev.type==="manager"){
+      var prevMgrStyle = (LS.manager && LS.manager.name) || "No style";
+      var prevMgrName  = LS.mgrName || (LS.manager && LS.manager.name) || "Your manager";
+      var prevAtk = (LS.mgrBonus && LS.mgrBonus.attack) || 0;
+      var prevDef = (LS.mgrBonus && LS.mgrBonus.defend) || 0;
       var html="<div class='lg-modal lg-event'>"+
-        ""+
         "<div class='lg-event-title'>Manager out!</div>"+
-        "<div class='lg-event-body'><strong>"+esc(LS.mgrName||(LS.manager&&LS.manager.name)||"Your manager")+"</strong> "+esc(ev.reason)+". Spin to appoint a replacement.</div>"+
+        "<div class='lg-event-body'><strong>"+esc(prevMgrName)+"</strong> "+esc(ev.reason)+". Spin to appoint a replacement.</div>"+
         "<div class='reel mgr-reel lg-event-reel'><div class='reel-strip' id='lgEvtStrip'></div></div>"+
         "<button class='start-btn' id='lgEvtSpin'>Spin for new manager</button>"+
         "</div>";
@@ -1105,7 +1109,22 @@
           var s=MGRS.filter(function(m){return m.id===pick.s;})[0]||MGRS[0];
           LS.manager=s; LS.mgrName=pick.n; LS.mgrBonus={attack:s.atk||0,defend:s.def||0};
           try{ localStorage.setItem("wcxi_manager",JSON.stringify({id:s.id,name:pick.n})); }catch(e){}
-          b.outerHTML="<button class='start-btn' id='lgEvtDone'>"+esc(pick.n)+" appointed — continue →</button>";
+          /* Before/after comparison */
+          var newAtk=s.atk||0, newDef=s.def||0;
+          function bonusBadge(v){ return '<span class="lge-delta '+(v>0?"pos":v<0?"neg":"neu")+'">'+(v>0?"+":"")+v+'</span>'; }
+          var compareHtml=
+            "<div class='lge-compare'>"+
+              "<div class='lge-before'><div class='lge-cl'>Before</div><div class='lge-cname'>"+esc(prevMgrName)+"</div>"+
+                "<div class='lge-cstyle'>"+esc(prevMgrStyle)+"</div>"+
+                "<div class='lge-cbonuses'>ATK "+bonusBadge(prevAtk)+" DEF "+bonusBadge(prevDef)+"</div>"+
+              "</div>"+
+              "<div class='lge-arrow'>→</div>"+
+              "<div class='lge-after'><div class='lge-cl'>After</div><div class='lge-cname'>"+esc(pick.n)+"</div>"+
+                "<div class='lge-cstyle'>"+esc(s.name)+"</div>"+
+                "<div class='lge-cbonuses'>ATK "+bonusBadge(newAtk)+" DEF "+bonusBadge(newDef)+"</div>"+
+              "</div>"+
+            "</div>";
+          b.outerHTML=compareHtml+"<button class='start-btn' id='lgEvtDone'>"+esc(pick.n)+" appointed — continue →</button>";
           eid("lgEvtDone").addEventListener("click",_lgResumeAfterEvent);
         });
       });
@@ -1148,9 +1167,34 @@
         el.addEventListener("click",function(){
           var name=el.getAttribute("data-pn"), pl=spin.squad.filter(function(p){return p.n===name;})[0]; if(!pl) return;
           /* swap: remove victim, add replacement in same slot */
+          var oldR=ev.victim.r||75, newR=pl.r||75, delta=newR-oldR;
           LS.xi=LS.xi.filter(function(x){ return x&&x.n!==ev.victim.n; });
           LS.xi.push({n:pl.n,p:pl.p||"MID",r:pl.r||75,gp:pl.gp||pl.p||"MID",slot:slot,club:spin.club,year:spin.year});
-          _lgResumeAfterEvent();
+          /* Show before/after comparison before resuming */
+          function rDeltaBadge(d){
+            var cls=d>0?"pos":d<0?"neg":"neu";
+            return '<span class="lge-delta '+cls+'">'+(d>0?"+":"")+d+'</span>';
+          }
+          var compareHtml=
+            "<div class='lge-compare'>"+
+              "<div class='lge-before'><div class='lge-cl'>Out</div>"+
+                "<div class='lge-cname'>"+esc(ev.victim.n)+"</div>"+
+                "<div class='lge-cstyle'>"+esc(slot)+"</div>"+
+                (LS.showRatings?"<div class='lge-cbonuses'>Rating <span class='lge-delta neu'>"+oldR+"</span></div>":"")+
+              "</div>"+
+              "<div class='lge-arrow'>→</div>"+
+              "<div class='lge-after'><div class='lge-cl'>In</div>"+
+                "<div class='lge-cname'>"+esc(pl.n)+"</div>"+
+                "<div class='lge-cstyle'>"+esc(slot)+"</div>"+
+                (LS.showRatings?"<div class='lge-cbonuses'>Rating "+rDeltaBadge(delta)+"</div>":"")+
+              "</div>"+
+            "</div>";
+          panel.innerHTML="<div class='lg-modal lg-event'>"+
+            "<div class='lg-event-title'>Transfer done</div>"+
+            "<div class='lg-event-body'>"+compareHtml+"</div>"+
+            "<button class='start-btn' id='lgEvtDone2'>Continue →</button>"+
+            "</div>";
+          eid("lgEvtDone2").addEventListener("click",_lgResumeAfterEvent);
         });
       });
       eid("lgEvtRespin").addEventListener("click",function(){ ev.spin=_lgPickReplacementSquad(slot); renderLgEventModal(); });

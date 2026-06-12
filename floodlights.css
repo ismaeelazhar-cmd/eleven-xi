@@ -219,6 +219,29 @@ body.light .sound-toggle:hover { color: rgba(42,38,32,0.88); }
 body.light .gp-row { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
 body.light .gp-row.gp-me { background: rgba(124,92,252,0.10); border-color: rgba(124,92,252,0.3); }
 
+/* ── League event before/after comparison panel ─────────────── */
+.lge-compare {
+  display: flex; align-items: stretch; gap: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+.lge-before, .lge-after {
+  flex: 1; padding: var(--sp-3) var(--sp-4); border-radius: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  display: flex; flex-direction: column; gap: 4px; text-align: center;
+}
+.lge-after { background: rgba(124,92,252,0.12); border-color: rgba(124,92,252,0.35); }
+.lge-arrow { display:flex; align-items:center; font-size:1.25rem; color:var(--txt-muted); padding: 0 2px; }
+.lge-cl { font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; color:var(--txt-muted); }
+.lge-cname { font-size:.95rem; font-weight:700; color:var(--txt); }
+.lge-cstyle { font-size:.78rem; color:var(--txt-sub); }
+.lge-cbonuses { font-size:.82rem; color:var(--txt-sub); display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.lge-delta { font-weight:700; padding:1px 6px; border-radius:999px; font-size:.78rem; }
+.lge-delta.pos { color:#22E0C8; background:rgba(34,224,200,.15); }
+.lge-delta.neg { color:#FF7A59; background:rgba(255,122,89,.15); }
+.lge-delta.neu { color:var(--txt-sub); background:rgba(255,255,255,.08); }
+body.light .lge-before { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.08); }
+body.light .lge-after  { background:rgba(124,92,252,0.10); border-color:rgba(124,92,252,0.3); }
+
 /* ============================================================
    Part 2 — GLOBAL COHESION
    Re-point every legacy CSS variable at a Floodlights token so

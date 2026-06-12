@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-13 ALL COMPLETE. Cache wcxi-v128. Push to GitHub done. Next: Task 14 (League improvements: Premier League, surprise events, cup)._
+_Last checkpoint: Tasks 1-14 ALL COMPLETE. Cache wcxi-v129. Push to GitHub done. Next: Task 15 (Multiplayer improvements)._
 
 ---
 
@@ -307,16 +307,24 @@ _All pop-out panels, all game modes._
 - ✅ DVC XI list + result (draftvscomputer.js): `.dvc-xi-name` already had `color: var(--text)` + `mp-r-badge` tier
 
 ## 12. CURRENT FILE VERSIONS
-- floodlights.css: v108 (group preview CSS)
+- floodlights.css: v109 (lge-compare before/after panel CSS)
 - game.js: v93 (journey section in WC/CL result screen)
 - engine.js: v73 (buildField/seedGroups exported, runWorldCupFromGroups added)
-- league.js: v80 (share card redesign with squad + GD)
+- league.js: v81 (Premier League + surprise event before/after panels)
 - multiplayer.js: v92
 - floodlights.js: v91 (home stats + HTP overlay)
 - draftvscomputer.js: v6 (CPU personality + rematch)
 - ratingswar.js: v101 (WCXI_addScore on completed duel/series)
 - audio.js: v1 (Web Audio API module)
-- sw.js: wcxi-v128
+- sw.js: wcxi-v129
+
+## 26. TASK 14 — LEAGUE IMPROVEMENTS ✅
+- L-1 (Premier League): DONE — Premier League added to LEAGUES object in league.js. Uses `W.PL_DATA` (data_pl_history.js, 616KB, already loaded in index.html and sw.js ASSETS). 38-game season.
+- L-2 (Deeper surprise event feedback): DONE THIS SESSION
+  - Manager change event: saves old manager name/style/bonuses before spin; after appointment shows `.lge-compare` before/after panel. Left col (Before) = old manager name, style, ATK/DEF bonuses. Right col (After, violet highlight) = new manager name, style, ATK/DEF bonuses. Delta badges: cyan=positive, coral=negative.
+  - Player replacement event: after pick, shows "Transfer done" panel with Out/In comparison. Shows old player name/slot and new player name/slot. If `LS.showRatings` is true, shows rating delta badge (±N) in appropriate colour. "Continue →" button calls `_lgResumeAfterEvent()`.
+  - CSS added to floodlights.css: `.lge-compare`, `.lge-before`, `.lge-after`, `.lge-arrow`, `.lge-cl`, `.lge-cname`, `.lge-cstyle`, `.lge-cbonuses`, `.lge-delta` (with `.pos`/`.neg`/`.neu` variants)
+- L-3 (Mid-season cup): DEFERRED — high effort, noted for future session
 
 ## 25. TASK 13 — CL IMPROVEMENTS ✅
 - CL-1 (real squads): DEFERRED — high effort, needs extensive data addition
