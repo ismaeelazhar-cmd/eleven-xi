@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: Bug fixes (commit 9096e13). Cache wcxi-v110. game.js v85, style.css v79, tokens.css v74, floodlights.css v97, floodlights.js v86, multiplayer.js v90, ratingswar.js v100. All 10 Duels feature toggles done. Rating badge contrast + X button respin exploit fixed._
+_Living document — update after every significant change. Last updated: Tasks 0-7 complete. Cache wcxi-v114. floodlights.css v100, draftvscomputer.js v2, game.js v86, multiplayer.js v91, ratingswar.js v100. All 10 Duels feature toggles done. DVC mode added + LINE_OF bug fixed. 3D buttons pass complete. Full game review, 6 new mode ideas, security audit, data audit all documented in PROGRESS.md._
 
 ---
 
@@ -45,6 +45,7 @@ _Living document — update after every significant change. Last updated: Bug fi
 3. **League** — La Liga/Serie A/Bundesliga/Ligue 1; draft XI, simulate a full season game-by-game with surprise events (manager sacked, injuries), then the `lgs-*` premium summary (hero with huge position number, W-D-L strip, mini table highlighted with user, awards, player stats); **compact** wheel; scrollable squad modal. Distinct identity from the WC/CL summary. Widened layout: results 800px, setup 660px.
 4. **Multiplayer** — entry splits **Local** (pass-and-play; 2–8 draft then knockout) vs **Online** (create/join a game code, then play). **compact** wheel.
 5. **Duels** (`ratingswar.js`) — local (pass-and-play) **or online** (each builds blind on their own device, XIs synced over WebRTC, identical reveal both sides with a "(you)" perspective label + rematch handshake). Two players build an XI **blind** (ratings never in the DOM during build), pass-and-play handoff, then **head-to-head position-by-position reveal** (higher rating wins each slot) with sticky scorebar + winner arrows → verdict/rematch. Reachable from BOTH the home bento card AND a native **Multiplayer mode-select** (Draft Tournament vs Duels) — Task 3 done.
+6. **Draft vs Computer** (`draftvscomputer.js`) — player and CPU alternate picks from a shared pool of ~55 players drawn from 12 random team-years. CPU is position-aware and prefers high-rated players with slight randomness (top-3 pick from scored candidates). Both XIs shown side by side on the result screen with ratings comparison and ENGINE simulation. Entry: "vs Computer" home card → `#dvcView`.
 - **Universal squad dock:** FAB ("Squad N/11") appears on every mode; opens a slide-in panel grouped GK/DEF/MID/FWD. Names now **wrap in full** (no ellipsis) and the dock **strips ratings** (RW-safe). Verified on all 5 modes — Task 4 done.
 
 ## 5. Features completed (confirmed working)
@@ -63,6 +64,7 @@ _Living document — update after every significant change. Last updated: Bug fi
 - **T7:** Autofill genuinely random (Fisher-Yates shuffle across all years/clubs) — fixed the previous sequential bias.
 - **T8:** League mode overhaul — layout wider (results 800px, setup 660px), injury replacement spin verified (2.5%/game), complete new `lgs-*` summary design with hero position number + W-D-L strip + mini table + awards + player stats. Ligue 1 data audited (removed Metz + Clermont Foot, now exactly 18 teams for 34-game season).
 - **T9:** Summary page audit — added `Play Again` + `← Home` buttons at bottom of WC and CL result pages (`renderWCStage`, `renderLeagueStage`). League/MP/RW already had end-of-page navigation.
+- **Session (Tasks 0-7):** Full catch-up audit (16 items verified). X button reverted to pure close (no cost). Rating tier badges extended to 7 tiers (r-amber/r-orange/r-red) in all three badge locations. Draft vs Computer mode added (`draftvscomputer.js`) — alternating picks, smart CPU, both XIs on half-pitch, ratings comparison result. 3D button + animation pass (box-shadow depth, hover lift, active press, staggered entrance animations, reduced-motion support). dock-x button fixed to 44×44px touch target. **DVC LINE_OF bug fixed** — DEF/MID/FWD positions were falling through to "MID" in the draft pool; added broad position passthrough to the LINE_OF map. Game review, 6 new mode ideas, security audit, data audit all written to PROGRESS.md sections 7-10.
 
 ## 6. Catch-up audit — completed ✅
 All 16 checklist items addressed (13 done, 3 deferred). Committed 7423850.
@@ -121,15 +123,20 @@ All 16 checklist items addressed (13 done, 3 deferred). Committed 7423850.
 - **T5:** chose **PeerJS public broker + WebRTC** for online (only viable zero-backend P2P; verified the broker is reachable before building). Online is lazy-loaded so the offline game never touches the network. Game code = 4 chars from an unambiguous alphabet, namespaced `elxi-<code>` on the broker. **Scoped online gameplay to Duels** (natural 1v1, each builds on own device then XIs sync) — a synced live draft pool is a larger build, deferred; online Draft Tournament is steered to Local for now. Fixed a message-ordering race (XI sent before peer's handler was ready) with a hello-triggered re-send.
 - **T4:** dock names changed from `text-overflow:ellipsis/nowrap` to `overflow-wrap:anywhere` (wrap). Wrapping exposed a pre-existing scrape bug where the rating chip (`.xi-rate`) bled into the name; fixed `scrape()` to strip rating chips + a stray trailing rating number, so the dock stays rating-free (and Duels-safe) on every mode.
 
-## 8b. Recent bug fixes (commit 9096e13)
+## 8b. Recent bug fixes
 - **Rating badge contrast** — `mp-r-badge` (player pop-out in multiplayer draft) now has solid background + 7-tier color system. `ratingTierClass()` extended in both `multiplayer.js` and `ratingswar.js` with `r-amber` (70–74), `r-orange` (60–69), `r-red` (<60). `xi-rate` and `rw-rev-rating` also updated with lower-tier styles for full consistency.
-- **X button respin exploit** — Closing the squad panel via X now costs one respin (increments `p.rerollsUsed`, updates spin button label). At 0 rerolls, X shows a toast "No respins left — pick a player from this squad" and does NOT close the panel, forcing the player to pick.
+- **X button** — was incorrectly changed to cost a respin in a previous session. REVERTED in Task 1. X is now a pure close with zero side effects on any mode.
+- **DVC LINE_OF bug** — `lineOf("DEF")` returned "MID" (undefined fallthrough). All data files use broad positions (DEF/MID/FWD/GK), not granular ones. Fixed by adding `DEF:"DEF"`, `MID:"MID"`, `FWD:"FWD"` to LINE_OF in draftvscomputer.js v2.
+- **dock-x touch target** — was 34×34px. Fixed to 44×44px minimum in floodlights.css v100.
 
 ## 9. Known issues
 - **Honour-system leaderboard** (client-side; editable via dev tools) — Supabase migration deferred.
 - **Manual cache versioning** — easy to forget; ship-stale risk.
 - **Online needs internet + the PeerJS public broker** — if the broker is down or a restrictive NAT/firewall blocks WebRTC, Online won't connect (Local always works offline). Online Draft Tournament not yet synced.
 - **~5 MB eager data load** — sluggish cold load on mid-range phones (lazy-load outstanding).
+- **Squad dock FAB doesn't show during DVC mode** — DVC renders its own list elements (`.dvc-xi-row`) not the `.xi-list/.pdot` elements the dock scraper reads. Minor friction.
+- **r-orange/r-red CSS tiers are dead code** — no player in any data file has rating < 73. Rules exist defensively.
+- **PeerJS loaded from CDN without SRI hash** — minor supply chain risk; self-hosting would eliminate it.
 
 ## 10. Player ratings (audit status)
 - Current ratings are **heuristic**: order-based baselines + a legends bump list + club/nation **tier calibration** (`data_fixups.js` pulls weak WC sides down so minnows aren't near-elite). Positions for history data are line-derived (or curated in `positions.js`).

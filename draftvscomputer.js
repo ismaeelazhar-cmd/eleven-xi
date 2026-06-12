@@ -7,9 +7,9 @@ window.startDraftVsComputer = (function (W) {
 
   var LINE_OF = {
     GK:"GK",
-    CB:"DEF", RB:"DEF", LB:"DEF", RWB:"DEF", LWB:"DEF",
-    CDM:"MID", CM:"MID", CAM:"MID", RM:"MID", LM:"MID",
-    RW:"FWD", LW:"FWD", ST:"FWD", CF:"FWD"
+    CB:"DEF", RB:"DEF", LB:"DEF", RWB:"DEF", LWB:"DEF", DEF:"DEF",
+    CDM:"MID", CM:"MID", CAM:"MID", RM:"MID", LM:"MID", MID:"MID",
+    RW:"FWD", LW:"FWD", ST:"FWD", CF:"FWD", FWD:"FWD"
   };
 
   var DVC_FORMATIONS = {

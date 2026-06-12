@@ -300,7 +300,7 @@ body.light {
 .fl-dock.show .fl-dock-panel { transform: translateX(0); }
 .fl-dock-head { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-4) var(--sp-4) var(--sp-3); border-bottom: 1px solid var(--line); }
 .fl-dock-head h3 { margin: 0; font-family: var(--font-display); font-size: var(--t-h3); }
-.fl-dock-x { background: var(--surface-2); border: 1px solid var(--line); color: var(--text); width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 15px; }
+.fl-dock-x { background: var(--surface-2); border: 1px solid var(--line); color: var(--text); width: 44px; height: 44px; border-radius: 9px; cursor: pointer; font-size: 15px; }
 .fl-dock-body { flex: 1; overflow-y: auto; padding: var(--sp-3) var(--sp-4) var(--sp-5); -webkit-overflow-scrolling: touch; }
 .fl-dock-line { font-size: var(--t-2xs); text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--text-mute); margin: var(--sp-3) 0 var(--sp-2); }
 .fl-dock-row { display: flex; align-items: flex-start; gap: var(--sp-2); padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
