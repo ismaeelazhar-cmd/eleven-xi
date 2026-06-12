@@ -1192,7 +1192,7 @@
         poolLabelCur: d.pool ? (d.pool.label||"") : "World Cup",
         _asyncPoolKey: poolKey,
         players:[
-          {name:d.p1n||"Player 1", picks:p1picks, rerollsUsed:0, wildcardUsed:false},
+          {name:String(d.p1n||"Player 1").slice(0,14), picks:p1picks, rerollsUsed:0, wildcardUsed:false},
           {name:"Player 2",         picks:newPicks(), rerollsUsed:0, wildcardUsed:false}
         ]
       };

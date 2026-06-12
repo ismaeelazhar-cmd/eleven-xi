@@ -281,7 +281,7 @@
   var LINE_OF = { GK:"GK",CB:"DEF",RB:"DEF",LB:"DEF",RWB:"DEF",LWB:"DEF",
     CDM:"MID",CM:"MID",CAM:"MID",RM:"MID",LM:"MID",RW:"FWD",LW:"FWD",ST:"FWD" };
   function lineOf(p){ return LINE_OF[(p||"").trim()] || "MID"; }
-  function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
   // Read an element's text WITHOUT any embedded rating chips, so the dock never
   // shows ratings (design decision + keeps it Duels safe). Falls back to

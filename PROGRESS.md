@@ -4,7 +4,7 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Tasks 1-17 ALL COMPLETE. Cache wcxi-v132. Push to GitHub done. Next: Task 18 (New rare surprise events with bonus respins)._
+_Last checkpoint: ALL 20 TASKS COMPLETE. Cache wcxi-v135. Push to GitHub done. All tasks done._
 
 ---
 
@@ -13,8 +13,8 @@ _Last checkpoint: Tasks 1-17 ALL COMPLETE. Cache wcxi-v132. Push to GitHub done.
 - **Run locally:** `python3 -m http.server 8778` from project root → http://localhost:8778/index.html
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
-- **Cache version:** `wcxi-v114`
-- **Current file versions:** style.css v79, tokens.css v74, floodlights.css v100, game.js v86, multiplayer.js v91, floodlights.js v87, ratingswar.js v100, draftvscomputer.js v2, sw.js wcxi-v114
+- **Cache version:** `wcxi-v135`
+- **Current file versions:** style.css v79, tokens.css v74, floodlights.css v114, game.js v96, multiplayer.js v94, floodlights.js v93, ratingswar.js v103, draftvscomputer.js v7, league.js v83, sw.js wcxi-v135
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`
@@ -765,3 +765,131 @@ DVC has no W/L/D record, no leaderboard entry, no personal best. Every game is c
 | OG-7 | Lazy-load data per mode | Med | High |
 | L-3 | Mid-season cup competition | Med | High |
 | D-2 | Duels strategy depth rework | Med | High |
+
+---
+
+## §30. Task 18 — New rare surprise events + bonus respins (League mode)
+
+**Status: COMPLETE** | Files: `league.js v83`, `floodlights.css v113`, `index.html`, `sw.js wcxi-v133`
+
+### New event types in `_lgMakeEvent()`
+
+Three new rare event types added (fire ~22% of the time; existing manager/player events reduced proportionally):
+
+**`boost`** (9% of events) — Form Surge
+- A random outfield player enters peak form
+- Rating boosted by +4 to +7 for the rest of the season
+- Boost persists via `LS.xi[i].r` modification, flows into `_lgRecomputeUserStr()` + `_lgResimFrom()`
+- Shows: gold `.lg-event-rare` modal with featured player card + new rating
+
+**`windfall`** (8% of events) — Transfer Windfall (the "bonus respin")
+- "Board approves emergency transfer funds!"
+- Stage 1: announcement with "Spin a squad →" button
+- Stage 2: pick player list (same `_lgPickReplacementSquad` machinery); eligible upgrades shown with `▲` badge
+- Stage 3: before/after comparison panel → Continue
+- Targets weakest non-GK player in current XI
+
+**`cup`** (5% of events) — Cup Run
+- Simulates a one-off domestic cup final using `simMatch(LS.userStr, randomOppStr)`
+- Win/loss narrative with styled `.lg-cup-result.W/.L` score line
+- Pure narrative — no league pts side-effects (clean)
+
+### Distribution
+| Manager set? | Manager% | Player% | Boost% | Windfall% | Cup% |
+|---|---|---|---|---|---|
+| Yes | 35 | ~43 | ~13 | ~6 | ~3 |
+| No | 0 | ~78 | ~13 | ~6 | ~3 |
+
+### CSS additions (floodlights.css v113)
+- `.lg-event-rare` — gold top-border + warm gradient tint on event modal
+- `.lg-event-rare-badge` — gold pill chip (FORM SURGE / BONUS RESPIN / cup name)
+- `.lg-boost-hero` — featured player card with large rating number
+- `.lg-wf-up` — cyan ▲ upgrade indicator in windfall player list
+- `.lg-cup-result.W/.L` — styled score line matching W/L colour system
+
+---
+
+## §31. Task 19 — Spin wheel redesign
+
+**Status: COMPLETE** | Files: `game.js v95`, `multiplayer.js v94`, `floodlights.css v114`, `index.html`, `sw.js wcxi-v134`
+
+### Animation improvements
+
+**`spinReel()` (game.js)**
+- BLUR: 10 → 14 items (more visual travel through the strip)
+- Dynamic item height: `stripEl.firstElementChild.offsetHeight` instead of hardcoded 96 — correctly handles CL mode (58px items)
+- Easing: `cubic-bezier(0.12,0.05,0.05,1)` vs old `cubic-bezier(0.25,0.1,0.15,1)` — sharper deceleration gives slot-machine snap feel
+- Duration: 380ms → 560ms (country), 420ms → 620ms (year)
+- Settle flash: `.reel--settled` added to `.reel` element on finish; removed after 950ms
+
+**`doSpin()` (game.js)**
+- Button text: `"SPIN"` → `"SPINNING…"` → `"SPIN"` for clear state feedback
+
+**`doSpinDraft()` (multiplayer.js)**
+- Same easing, BLUR 10→12, duration 420→520ms
+- Same settle flash via `cStrip.parentElement` / `yStrip.parentElement`
+- Dynamic `renderedIH` for correct scroll distance
+
+### Visual redesign (floodlights.css v114)
+
+- `.machine::before` — 3px rainbow gradient bar at top of machine (violet→cyan→gold→coral)
+- `@keyframes reelSettle` — outer gold glow flash on `.reel` when strip settles (peaks at 16%, fades over 0.95s)
+- `.reel--settled` — triggers the animation; in reduced-motion block → `animation: none`
+
+---
+
+## §32. Task 20 — Security review + domain suggestions
+
+**Status: COMPLETE** | Files: `game.js v96`, `floodlights.js v93`, `ratingswar.js v103`, `draftvscomputer.js v7`, `index.html`, `sw.js wcxi-v135`
+
+### Security audit findings + fixes
+
+**Fixed (code changes):**
+1. `esc()` inconsistency across modules — standardised to escape `&`, `<`, `>`, `"` in all 6 modules:
+   - `game.js`: was missing `>` escape → added
+   - `floodlights.js`: was missing `"` escape → added
+   - `draftvscomputer.js`: was missing `"` escape → added
+   - `league.js`, `multiplayer.js`, `ratingswar.js`: already complete ✅
+
+2. `d.p1n` length limit in `ratingswar.js` (async URL challenge):
+   - Player name decoded from URL hash was not length-limited (unlike online mode which uses `.slice(0,14)`)
+   - Fixed: `String(d.p1n||"Player 1").slice(0,14)` at line 1195
+
+**No action needed (OK):**
+- No `eval()`, `new Function()`, or `document.write()` anywhere ✅
+- No hardcoded API keys, secrets, or tokens ✅
+- All user-entered team names escaped via `esc()` before DOM insertion ✅
+- All player names from data files escaped before DOM insertion ✅
+- Leaderboard names escaped at render time (`e.name` in `renderBoard()`) ✅
+- JSON.parse from localStorage always wrapped in try/catch ✅
+- Async URL atob decode wrapped in try/catch; malformed base64 safely handled ✅
+- Service worker: correct origin scope, versioned cache, network-first fallback ✅
+
+**Accepted risks (documented):**
+- **PeerJS CDN (unpkg.com)**: loaded dynamically in `net.js` via `loadPeerJS()` only when user opens online mode. No SRI possible for dynamic script tags. Mitigation: self-host PeerJS. Low risk since PeerJS is only used for signalling; game data flows P2P.
+- **Google Fonts CDN**: `fonts.googleapis.com` and `fonts.gstatic.com`. Privacy consideration (Google sees visitor IPs). Mitigation: self-host fonts. Acceptable for current scale.
+- **No CSP headers**: GitHub Pages doesn't support custom HTTP response headers. Meta CSP tag omitted because: (a) app uses many `style=""` attributes requiring `'unsafe-inline'`, (b) PeerJS CDN would need to be allowlisted, reducing CSP benefit. Revisit if moving to Netlify/Vercel.
+- **LocalStorage data**: all player-controlled data (team names, results) stored locally. No data leaves the device except via WebRTC P2P when using online mode.
+
+### Domain suggestions
+
+Current URL: `https://ismaeelazhar-cmd.github.io/eleven-xi/`
+
+Recommended domains (check availability at Namecheap/Cloudflare):
+
+| Domain | Notes |
+|---|---|
+| `elevenxi.app` | Best match — clean, modern `.app` TLD, exact app name |
+| `elevenxi.io` | Techy feel, popular for games/tools |
+| `elevenxi.com` | Most memorable but likely taken |
+| `eleven-xi.com` | Matches GitHub repo name exactly |
+| `myelevenxi.com` | Adds user ownership feel, likely available |
+| `elevenxi.co` | Short, available alternative |
+| `spinxi.app` | Plays on the core spin mechanic |
+
+**Setup on GitHub Pages with custom domain:**
+1. Register domain, point DNS A records to GitHub IPs: `185.199.108.153`, `.109.153`, `.110.153`, `.111.153`
+2. Add `CNAME` file in repo root: contents = `elevenxi.app`
+3. In GitHub repo Settings → Pages → Custom domain → enter domain
+4. GitHub auto-provisions HTTPS via Let's Encrypt
+5. Update `manifest.webmanifest` `start_url` and `scope` to use the new domain

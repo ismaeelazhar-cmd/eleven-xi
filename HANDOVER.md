@@ -3,7 +3,7 @@
 > **NEW SESSION? PASTE THIS TO ORIENT INSTANTLY:**
 > You are continuing development on **Eleven XI**, a premium football squad-builder and league-simulation web game (vanilla HTML/CSS/JS, no build step) inspired by but deliberately distinct from 38-0. Read **HANDOVER.md** and **PROGRESS.md** in full before doing anything else, then continue from the last checkpoint. The full brief, the locked "Floodlights" design system, architecture, completed features, decisions, and outstanding tasks are all documented in those two files. Do not restart from scratch, do not re-skin finished screens, and do not re-open locked decisions. Run locally with `python3 -m http.server 8777` from the project root; rebuild the offline `eleven-xi.html` and bump the cache version after each change.
 
-_Living document — update after every significant change. Last updated: Tasks 0-7 complete. Cache wcxi-v114. floodlights.css v100, draftvscomputer.js v2, game.js v86, multiplayer.js v91, ratingswar.js v100. All 10 Duels feature toggles done. DVC mode added + LINE_OF bug fixed. 3D buttons pass complete. Full game review, 6 new mode ideas, security audit, data audit all documented in PROGRESS.md._
+_Living document — update after every significant change. Last updated: ALL 20 TASKS COMPLETE. Cache wcxi-v135. floodlights.css v114, game.js v96, multiplayer.js v94, floodlights.js v93, ratingswar.js v103, draftvscomputer.js v7, league.js v83. Tasks 18-20: Rare events + bonus respins, spin wheel redesign, security audit. Full details in PROGRESS.md §30-32._
 
 ---
 

@@ -264,7 +264,7 @@
   var elDiffBar = $("difficultyBar"), elDiffDesc = $("difficultyDesc");
 
   function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+  function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function shortName(n) { var p = String(n).split(" "); var l = p[p.length - 1]; return l.length > 10 ? l.slice(0, 9) + "…" : l; }
   function initials(n) {
     var p = String(n).split(" ").filter(Boolean);
