@@ -1274,10 +1274,31 @@ body.light .lg-event-rare { background: linear-gradient(160deg, rgba(245,180,60,
 body.light .lg-cup-result.W { background: rgba(34,224,200,.08); }
 body.light .lg-cup-result.L { background: rgba(255,122,89,.07); }
 
+/* ── Spin wheel redesign (Task 19) ──────────────────────────── */
+/* Gradient accent bar pinned to the top of every .machine card */
+.machine { position: relative; }
+.machine::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--violet) 0%, var(--cyan) 28%, var(--gold) 62%, var(--coral) 100%);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  opacity: 0.82;
+  pointer-events: none;
+  z-index: 1;
+}
+/* Flash the reel border gold when the strip settles */
+@keyframes reelSettle {
+  0%   { box-shadow: none; }
+  16%  { box-shadow: 0 0 0 2px var(--gold), 0 0 28px rgba(245,180,60,.65), inset 0 0 14px rgba(245,180,60,.14); }
+  100% { box-shadow: none; }
+}
+.reel--settled { animation: reelSettle 0.95s cubic-bezier(.15,.08,.12,1) both; }
+
 /* ── Reduced-motion: strip all extras cleanly ── */
 @media (prefers-reduced-motion: reduce) {
   .fl-mode, .setup, .machine, .squad-card, .xi, .stat-grid,
   .lgr2-ptable, .lgr2-xi, .lgr2-break, .lgr2-narr, .lgr2-card,
   .score-banner, #setupView, #draftView, #resultsView, #leagueView, #boardView,
-  .pdot.filled { animation: none !important; }
+  .pdot.filled, .reel--settled { animation: none !important; }
 }

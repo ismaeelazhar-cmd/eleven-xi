@@ -544,14 +544,18 @@
   }
   function yearItemHTML(y) { return '<div class="reel-item"><span class="year">' + y + "</span></div>"; }
   function spinReel(stripEl, randomItem, finalHTML, duration) {
+    var reelEl = stripEl.parentElement;
     return new Promise(function (resolve) {
-      var BLUR = 10, html = "";
+      var BLUR = 14, html = "";
       for (var i = 0; i < BLUR; i++) html += randomItem();
       html += finalHTML;
       stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)";
       stripEl.innerHTML = html; void stripEl.offsetHeight;
-      stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.25,0.1,0.15,1)";
-      stripEl.style.transform = "translateY(" + (-(BLUR * ITEM_H)) + "px)";
+      /* Dynamic item height — safe for CL (58px items) and WC/league (96px) */
+      var itemH = (stripEl.firstElementChild && stripEl.firstElementChild.offsetHeight) || ITEM_H;
+      /* Sharper deceleration = slot-machine snap feel */
+      stripEl.style.transition = "transform " + duration + "ms cubic-bezier(0.12,0.05,0.05,1)";
+      stripEl.style.transform = "translateY(" + (-(BLUR * itemH)) + "px)";
       var done = false;
       function finish(e) {
         /* Only fire on the strip's own transform transition, not bubbled child events */
@@ -560,6 +564,11 @@
         stripEl.style.transition = "none";
         stripEl.style.transform = "translateY(0)";
         stripEl.innerHTML = finalHTML;
+        /* Settle flash: add class, remove after animation completes */
+        if (reelEl) {
+          reelEl.classList.add("reel--settled");
+          setTimeout(function () { reelEl.classList.remove("reel--settled"); }, 950);
+        }
         resolve();
       }
       stripEl.addEventListener("transitionend", finish, { once: true });
@@ -585,9 +594,11 @@
     var pairs = poolPairs(), pick = rand(pairs);
     current = { country: pick.c, year: pick.y };
     var pc = pairs.map(function (p) { return p.c; }), py = pairs.map(function (p) { return p.y; });
-    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 380);
-    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 420);
-    Promise.all([p1, p2]).then(function () { spinning = false; elHint.textContent = ""; renderSquadPicker(); });
+    elSpin.textContent = "SPINNING…";
+    /* Longer durations make the deceleration more satisfying */
+    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 560);
+    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 620);
+    Promise.all([p1, p2]).then(function () { spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = ""; renderSquadPicker(); });
   }
 
   function ratingBadge(p) { return showRatings ? '<span class="mp-r-badge' + ratingTierClass(p.r) + '">' + p.r + '</span>' : ""; }

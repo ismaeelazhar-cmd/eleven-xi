@@ -1240,7 +1240,7 @@
       tries++;
     } while(tries<80 && (!pS || pS.length < 11));
 
-    var BLUR=10, IH=56;
+    var BLUR=12, IH=56;
     var citems=[], yitems=[];
     for (var i=0;i<BLUR;i++){
       citems.push(cItemHTML(countries[i%countries.length]));
@@ -1256,12 +1256,14 @@
 
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
-        var ease = "cubic-bezier(0.25,0.1,0.15,1)";
-        var dur = 420;
+        var ease = "cubic-bezier(0.12,0.05,0.05,1)"; /* sharper decel = snap feel */
+        var dur = 520;
+        /* Use actual item height after render if available */
+        var renderedIH = (cStrip.firstElementChild && cStrip.firstElementChild.offsetHeight) || IH;
         cStrip.style.transition = "transform "+dur+"ms "+ease;
-        cStrip.style.transform = "translateY(-"+(BLUR*IH)+"px)";
-        yStrip.style.transition = "transform "+(dur+40)+"ms "+ease;
-        yStrip.style.transform = "translateY(-"+(BLUR*IH)+"px)";
+        cStrip.style.transform = "translateY(-"+(BLUR*renderedIH)+"px)";
+        yStrip.style.transition = "transform "+(dur+50)+"ms "+ease;
+        yStrip.style.transform = "translateY(-"+(BLUR*renderedIH)+"px)";
 
         /* Snap both strips to just the landed item after animation */
         function finishSpin(){
@@ -1271,6 +1273,10 @@
           yStrip.style.transition = "none";
           yStrip.style.transform = "translateY(0)";
           yStrip.innerHTML = yItemHTML(pY);
+          /* Settle flash */
+          var cReel = cStrip.parentElement, yReel = yStrip.parentElement;
+          if(cReel){ cReel.classList.add("reel--settled"); setTimeout(function(){ cReel.classList.remove("reel--settled"); }, 950); }
+          if(yReel){ yReel.classList.add("reel--settled"); setTimeout(function(){ yReel.classList.remove("reel--settled"); }, 950); }
           _draftSpinning = false;
           st.currentSpin = { country:pC, year:pY, squad:pS };
           updateSpinBtn(spinBtn);
