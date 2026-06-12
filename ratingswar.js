@@ -562,6 +562,75 @@
     });
   }
 
+  function buildWildcardPool(){
+    var combined = {};
+    [W.WORLD_CUP_DATA, W.EURO_DATA, W.PL_DATA, W.LALIGA_DATA, W.SERIEA_DATA, W.BUNDESLIGA_DATA].forEach(function(d){
+      if (!d) return;
+      Object.keys(d).forEach(function(team){
+        if (!combined[team]) combined[team] = { years: {} };
+        var ys = (d[team] && d[team].years) || {};
+        Object.keys(ys).forEach(function(y){
+          if (!combined[team].years[y]) combined[team].years[y] = ys[y];
+        });
+      });
+    });
+    return combined;
+  }
+
+  function doWildcardSpin(cStrip, yStrip, spinBtn, squadPanel, P){
+    if (RW._spinning || P.wildcardUsed) return;
+    var DATA = buildWildcardPool();
+    var countries = Object.keys(DATA);
+    if (!countries.length) return;
+
+    P.wildcardUsed = true;
+    RW._spinning = true;
+    spinBtn.disabled = true;
+    var wcBtn = document.getElementById("rwWildcard");
+    if (wcBtn) wcBtn.style.display = "none";
+    squadPanel.style.display = "none";
+    RW.currentSpin = null; RW.pendingRWPick = null;
+
+    var tries=0, pC, pY, pS;
+    do {
+      pC = countries[Math.floor(Math.random()*countries.length)];
+      var ys = Object.keys(DATA[pC].years || {});
+      pY = ys[Math.floor(Math.random()*ys.length)];
+      pS = (DATA[pC].years||{})[pY];
+      tries++;
+    } while (tries<120 && (!pS || pS.length < 5));
+    if (!pS || !pS.length){ P.wildcardUsed=false; RW._spinning=false; spinBtn.disabled=false; if(wcBtn) wcBtn.style.display=""; return; }
+
+    var BLUR=10, IH=56, ci=[], yi=[];
+    for (var i=0; i<BLUR; i++){
+      ci.push(rwCItemHTML(countries[i%countries.length]));
+      yi.push(rwYItemHTML(2024-i*2));
+    }
+    ci.push(rwCItemHTML(pC)); yi.push(rwYItemHTML(pY));
+    cStrip.innerHTML = ci.join(""); yStrip.innerHTML = yi.join("");
+    cStrip.style.cssText = "transform:translateY(0);transition:none";
+    yStrip.style.cssText = "transform:translateY(0);transition:none";
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        var ease = "cubic-bezier(0.25,0.1,0.15,1)", dur = 420;
+        cStrip.style.transition = "transform "+dur+"ms "+ease;
+        cStrip.style.transform  = "translateY(-"+(BLUR*IH)+"px)";
+        yStrip.style.transition = "transform "+(dur+40)+"ms "+ease;
+        yStrip.style.transform  = "translateY(-"+(BLUR*IH)+"px)";
+        setTimeout(function(){
+          cStrip.style.cssText = "transform:translateY(0);transition:none";
+          cStrip.innerHTML = rwCItemHTML(pC);
+          yStrip.style.cssText = "transform:translateY(0);transition:none";
+          yStrip.innerHTML = rwYItemHTML(pY);
+          RW._spinning = false;
+          RW.currentSpin = { country:pC, year:pY, squad:pS };
+          spinBtn.textContent = "No rerolls — pick!"; spinBtn.disabled = true;
+          showRWSquadPanel(squadPanel, RW.currentSpin, P);
+        }, dur+80);
+      });
+    });
+  }
+
   function showRWSquadPanel(panel, spin, P){
     var lineOrder = {GK:0,DEF:1,MID:2,FWD:3};
     var sorted = spin.squad.slice().sort(function(a,b){
@@ -690,6 +759,8 @@
           "<button class='spin' id='rwSpinBtn'>"+
             (isRespin ? (rerollsLeft>0 ? "RESPIN ("+rerollsLeft+" left)" : "No rerolls — pick!") : "SPIN")+
           "</button>"+
+          (RW.features.wildcard && !P.wildcardUsed && !isRespin ?
+            "<button class='rw-wildcard-btn' id='rwWildcard'>Wildcard Spin</button>" : "")+
         "</div>"+
       "</div>"+
       "<section class='squad' id='rwSquadPanel' style='display:none;'></section>"+
@@ -712,6 +783,12 @@
     spinBtn.addEventListener("click", function(){
       doRWSpin(document.getElementById("rwCS"), document.getElementById("rwYS"),
                spinBtn, document.getElementById("rwSquadPanel"), P);
+    });
+
+    var wcBtn = document.getElementById("rwWildcard");
+    if (wcBtn) wcBtn.addEventListener("click", function(){
+      doWildcardSpin(document.getElementById("rwCS"), document.getElementById("rwYS"),
+                     spinBtn, document.getElementById("rwSquadPanel"), P);
     });
 
     if (RW.currentSpin){
@@ -1023,36 +1100,69 @@
     var winnerIdx = s1>s2?idxA : s2>s1?idxB : -1;
     var isTourn = RW.numPlayers > 2;
     var matchLabel = isTourn && RW.matches[RW.matchIdx] ? RW.matches[RW.matchIdx].label : null;
+
+    /* ── Best of 3 series state ── */
+    var isBo3 = RW.features.bestOf3 && RW.numPlayers === 2 && !isTourn && !RW.online;
+    var sw = [0, 0]; /* series wins for idxA / idxB */
+    if (isBo3){
+      RW.matchResults.forEach(function(r){
+        var w = matchWinner(r);
+        if (w===idxA) sw[0]+=1; else if(w===idxB) sw[1]+=1; else { sw[0]+=0.5; sw[1]+=0.5; }
+      });
+      if (s1>s2) sw[0]+=1; else if(s2>s1) sw[1]+=1; else { sw[0]+=0.5; sw[1]+=0.5; }
+    }
+    var totalPlayed = RW.matchResults.length + 1;
+    var seriesDone = !isBo3 || sw[0]>=2 || sw[1]>=2 || totalPlayed>=3;
+    var seriesWinnerIdx = seriesDone && isBo3 ? (sw[0]>sw[1]?idxA:sw[1]>sw[0]?idxB:-1) : -1;
+
     var title;
-    if (winnerIdx === -1) title = matchLabel ? matchLabel+" — draw" : "It's a stalemate";
+    if (isBo3 && seriesDone && seriesWinnerIdx>=0)
+      title = esc(RW.players[seriesWinnerIdx].name)+" wins the series";
+    else if (isBo3 && seriesDone && seriesWinnerIdx===-1)
+      title = "Series tied";
+    else if (winnerIdx === -1) title = matchLabel ? matchLabel+" — draw" : "It's a stalemate";
     else if (RW.online) title = (winnerIdx===RW.myIdx ? "You win the duel" : esc(RW.players[winnerIdx].name)+" wins the duel");
-    else title = esc(RW.players[winnerIdx].name)+(isTourn ? " wins "+(matchLabel||"the match") : " wins the duel");
-    var emoji = winnerIdx>=0 ? "🏆" : "";
+    else title = esc(RW.players[winnerIdx].name)+(isTourn ? " wins "+(matchLabel||"the match") : (isBo3 && !seriesDone ? " wins match "+totalPlayed : " wins the duel"));
+
+    var emoji = (seriesWinnerIdx>=0 || (winnerIdx>=0 && !isBo3)) ? "🏆" : "";
     var best = RW.rows.slice().filter(function(r){return r.a&&r.b;}).sort(function(x,y){
       return (Math.max(y.a.r,y.b.r)) - (Math.max(x.a.r,x.b.r)); })[0];
-    var moreMatches = isTourn && (RW.matchIdx < RW.matches.length - 1 ||
-      (RW.numPlayers===4 && RW.matchIdx < 1)); /* 4-player: final/3rd added dynamically */
     var nextMatch = isTourn ? RW.matches[RW.matchIdx+1] : null;
     var nextLabel = nextMatch ? (nextMatch.label || "Match "+(RW.matchIdx+2)) : "";
     var rematchLabel = RW.online ? (RW.rematchMe ? "Waiting for rematch…" : "Rematch") : "Rematch";
-    var btns = isTourn
-      ? "<button class='fl-btn' id='rwNext'>"+esc(nextLabel ? nextLabel+" →" : "See standings →")+"</button>"+
-        "<button class='btn-ghost' id='rwHome'>Home</button>"
-      : "<button class='fl-btn' id='rwAgain' "+(RW.online&&RW.rematchMe?"disabled":"")+">"+rematchLabel+"</button>"+
-        "<button class='btn-ghost' id='rwHome'>Home</button>";
+    var btns;
+    if (isTourn){
+      btns = "<button class='fl-btn' id='rwNext'>"+esc(nextLabel ? nextLabel+" →" : "See standings →")+"</button>"+
+             "<button class='btn-ghost' id='rwHome'>Home</button>";
+    } else if (isBo3 && !seriesDone){
+      btns = "<button class='fl-btn' id='rwSeriesNext'>Match "+(totalPlayed+1)+" →</button>"+
+             "<button class='btn-ghost' id='rwHome'>Home</button>";
+    } else {
+      btns = "<button class='fl-btn' id='rwAgain' "+(RW.online&&RW.rematchMe?"disabled":"")+">"+rematchLabel+"</button>"+
+             "<button class='btn-ghost' id='rwHome'>Home</button>";
+    }
+    var seriesBar = isBo3 ? "<div class='rw-series-bar'>"+
+      "<span>"+esc(RW.players[idxA].name)+" "+sw[0]+"</span>"+
+      "<span class='rw-series-sep'>series</span>"+
+      "<span>"+sw[1]+" "+esc(RW.players[idxB].name)+"</span>"+
+    "</div>" : "";
     v.innerHTML =
       "<div class='wrap'>"+
       "<div class='rw-result-card'>"+
         (matchLabel ? "<div class='rw-result-matchlabel'>"+esc(matchLabel)+"</div>" : "")+
+        (isBo3 && !seriesDone ? "<div class='rw-result-matchlabel'>Match "+totalPlayed+" of 3</div>" : "")+
         "<div class='rw-result-emoji'>"+emoji+"</div>"+
         "<div class='rw-result-score'>"+s1+" <span>–</span> "+s2+"</div>"+
         "<h2 class='rw-title'>"+title+"</h2>"+
+        seriesBar+
         "<p class='rw-sub'>"+nm(idxA)+" "+s1+" · "+nm(idxB)+" "+s2+
           (best?" &middot; star slot: "+esc(best.slot)+" ("+esc(shortName(best[best.a.r>=best.b.r?'a':'b'].n))+" "+Math.max(best.a.r,best.b.r)+")":"")+"</p>"+
         "<div class='rw-result-btns'>"+btns+"</div>"+
       "</div></div>";
     var nxt=document.getElementById("rwNext");
     if(nxt) nxt.onclick = function(){ advanceMatch(); };
+    var snxt=document.getElementById("rwSeriesNext");
+    if(snxt) snxt.onclick = function(){ rwSeriesNextMatch(); };
     var ag=document.getElementById("rwAgain");
     if(ag) ag.onclick = function(){
       if (RW.online){
@@ -1062,7 +1172,19 @@
       } else { W.startDuels(); }
     };
     document.getElementById("rwHome").onclick = goHome;
-    if (winnerIdx>=0 && typeof W.triggerConfetti === "function") W.triggerConfetti();
+    if ((seriesWinnerIdx>=0 || (winnerIdx>=0 && !isBo3)) && typeof W.triggerConfetti === "function") W.triggerConfetti();
+  }
+
+  function rwSeriesNextMatch(){
+    /* Save this match result then reset picks, keeping feature state */
+    RW.matchResults.push({a:RW.curA, b:RW.curB, score:[RW.score[0],RW.score[1]]});
+    RW.seriesMatch = (RW.seriesMatch||0) + 1;
+    RW.players.forEach(function(p){ p.picks = newPicks(); p.rerollsUsed = 0; p.wildcardUsed = false; });
+    RW.currentSpin = null; RW.pendingRWPick = null; RW._spinning = false;
+    RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
+    if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
+    /* Don't re-run posban/captain — those are set for the whole series */
+    RW.cur = 0; RW.phase = "poolselect"; render();
   }
 
   /* ---------- match-next transition (tournament) ---------- */

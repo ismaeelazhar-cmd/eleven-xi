@@ -702,3 +702,11 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin { padding: 10px 22px; font-
 .rw-badge.cap-a { background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); }
 .rw-badge.cap-b { background: color-mix(in srgb, var(--positive) 20%, transparent); color: var(--positive); border: 1px solid color-mix(in srgb, var(--positive) 35%, transparent); }
 .rw-ban { font-size: var(--t-2xs); color: var(--text-mute); font-style: italic; }
+
+/* Wildcard spin button (during build) */
+.rw-wildcard-btn { background: transparent; border: 1px dashed color-mix(in srgb, var(--champion) 50%, var(--line)); border-radius: var(--r-md); color: var(--champion); font-size: var(--t-xs); font-weight: 700; padding: var(--sp-2) var(--sp-4); cursor: pointer; letter-spacing: .04em; margin-top: var(--sp-2); transition: background var(--dur-1), border-color var(--dur-1); }
+.rw-wildcard-btn:hover { background: color-mix(in srgb, var(--champion) 10%, transparent); border-style: solid; }
+
+/* Best of 3 series score bar */
+.rw-series-bar { display: flex; align-items: center; justify-content: center; gap: var(--sp-4); margin: var(--sp-3) 0; font-size: var(--t-sm); font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.rw-series-sep { font-size: var(--t-2xs); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--text-mute); }
