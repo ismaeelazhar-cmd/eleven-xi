@@ -721,7 +721,7 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 /* Rating tier on xi-rate (squad list) and rw-rev-rating (Duels reveal) */
 .xi-rate { font-weight: 800; font-size: 13px; border-radius: 4px; padding: 1px 5px; }
 .xi-rate.r-gold   { color: var(--champion); background: color-mix(in srgb, var(--champion) 15%, transparent); }
-.xi-rate.r-elite  { color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
+.xi-rate.r-elite  { color: #FF4D8B; background: color-mix(in srgb, #FF4D8B 12%, transparent); }
 .xi-rate.r-great  { color: #FF9800; background: color-mix(in srgb, #FF9800 12%, transparent); }
 .xi-rate.r-good   { color: #C6E040; background: color-mix(in srgb, #C6E040 10%, transparent); }
 .xi-rate.r-amber  { color: #E8A020; background: color-mix(in srgb, #E8A020 12%, transparent); }
@@ -730,7 +730,7 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 
 /* Duels reveal row rating — tier colors */
 .rw-rev-rating.r-gold   { color: var(--champion) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--champion) 55%, transparent); }
-.rw-rev-rating.r-elite  { color: var(--positive) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--positive) 50%, transparent); }
+.rw-rev-rating.r-elite  { color: #FF4D8B !important; text-shadow: 0 0 8px color-mix(in srgb, #FF4D8B 50%, transparent); }
 .rw-rev-rating.r-great  { color: #FF9800 !important; text-shadow: 0 0 8px color-mix(in srgb, #FF9800 50%, transparent); }
 .rw-rev-rating.r-good   { color: #C6E040 !important; text-shadow: 0 0 6px color-mix(in srgb, #C6E040 30%, transparent); }
 .rw-rev-rating.r-amber  { color: #E8A020 !important; text-shadow: 0 0 6px color-mix(in srgb, #E8A020 45%, transparent); }
@@ -747,7 +747,7 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 }
 /* Rating badge colours — no purple anywhere */
 body .mp-r-badge.r-gold   { background: color-mix(in srgb, #FFD700 22%, var(--surface-2)); color: #FFD700; }   /* gold  ≥90 */
-body .mp-r-badge.r-elite  { background: color-mix(in srgb, #00E0C0 18%, var(--surface-2)); color: #00E0C0; }   /* teal  ≥85 */
+body .mp-r-badge.r-elite  { background: color-mix(in srgb, #FF4D8B 18%, var(--surface-2)); color: #FF4D8B; }   /* rose  ≥85 */
 body .mp-r-badge.r-great  { background: color-mix(in srgb, #FF9800 18%, var(--surface-2)); color: #FF9800; }   /* orange ≥80 */
 body .mp-r-badge.r-good   { background: color-mix(in srgb, #C6E040 18%, var(--surface-2)); color: #C6E040; }   /* lime   ≥75 */
 body .mp-r-badge.r-amber  { background: color-mix(in srgb, #FFB74D 18%, var(--surface-2)); color: #FFB74D; }   /* amber ≥70 */
