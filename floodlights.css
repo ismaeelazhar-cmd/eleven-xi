@@ -722,8 +722,8 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 .xi-rate { font-weight: 800; font-size: 13px; border-radius: 4px; padding: 1px 5px; }
 .xi-rate.r-gold   { color: var(--champion); background: color-mix(in srgb, var(--champion) 15%, transparent); }
 .xi-rate.r-elite  { color: var(--positive); background: color-mix(in srgb, var(--positive) 12%, transparent); }
-.xi-rate.r-great  { color: #5BA4FF; background: color-mix(in srgb, #5BA4FF 12%, transparent); }
-.xi-rate.r-good   { color: #ECF1FF; background: color-mix(in srgb, #ECF1FF 10%, transparent); }
+.xi-rate.r-great  { color: #FF9800; background: color-mix(in srgb, #FF9800 12%, transparent); }
+.xi-rate.r-good   { color: #C6E040; background: color-mix(in srgb, #C6E040 10%, transparent); }
 .xi-rate.r-amber  { color: #E8A020; background: color-mix(in srgb, #E8A020 12%, transparent); }
 .xi-rate.r-orange { color: #FF8C42; background: color-mix(in srgb, #FF8C42 12%, transparent); }
 .xi-rate.r-red    { color: #E04040; background: color-mix(in srgb, #E04040 12%, transparent); }
@@ -731,8 +731,8 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 /* Duels reveal row rating — tier colors */
 .rw-rev-rating.r-gold   { color: var(--champion) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--champion) 55%, transparent); }
 .rw-rev-rating.r-elite  { color: var(--positive) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--positive) 50%, transparent); }
-.rw-rev-rating.r-great  { color: #5BA4FF !important; text-shadow: 0 0 8px color-mix(in srgb, #5BA4FF 50%, transparent); }
-.rw-rev-rating.r-good   { color: #ECF1FF !important; text-shadow: 0 0 6px color-mix(in srgb, #ECF1FF 30%, transparent); }
+.rw-rev-rating.r-great  { color: #FF9800 !important; text-shadow: 0 0 8px color-mix(in srgb, #FF9800 50%, transparent); }
+.rw-rev-rating.r-good   { color: #C6E040 !important; text-shadow: 0 0 6px color-mix(in srgb, #C6E040 30%, transparent); }
 .rw-rev-rating.r-amber  { color: #E8A020 !important; text-shadow: 0 0 6px color-mix(in srgb, #E8A020 45%, transparent); }
 .rw-rev-rating.r-orange { color: #FF8C42 !important; text-shadow: 0 0 6px color-mix(in srgb, #FF8C42 45%, transparent); }
 .rw-rev-rating.r-red    { color: #E04040 !important; text-shadow: 0 0 6px color-mix(in srgb, #E04040 45%, transparent); }
@@ -748,8 +748,8 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
 /* Rating badge colours — no purple anywhere */
 body .mp-r-badge.r-gold   { background: color-mix(in srgb, #FFD700 22%, var(--surface-2)); color: #FFD700; }   /* gold  ≥90 */
 body .mp-r-badge.r-elite  { background: color-mix(in srgb, #00E0C0 18%, var(--surface-2)); color: #00E0C0; }   /* teal  ≥85 */
-body .mp-r-badge.r-great  { background: color-mix(in srgb, #4FC3F7 18%, var(--surface-2)); color: #4FC3F7; }   /* sky   ≥80 */
-body .mp-r-badge.r-good   { background: color-mix(in srgb, #81C784 18%, var(--surface-2)); color: #81C784; }   /* green ≥75 */
+body .mp-r-badge.r-great  { background: color-mix(in srgb, #FF9800 18%, var(--surface-2)); color: #FF9800; }   /* orange ≥80 */
+body .mp-r-badge.r-good   { background: color-mix(in srgb, #C6E040 18%, var(--surface-2)); color: #C6E040; }   /* lime   ≥75 */
 body .mp-r-badge.r-amber  { background: color-mix(in srgb, #FFB74D 18%, var(--surface-2)); color: #FFB74D; }   /* amber ≥70 */
 body .mp-r-badge.r-orange { background: color-mix(in srgb, #FF8C42 18%, var(--surface-2)); color: #FF8C42; }   /* orange≥60 */
 body .mp-r-badge.r-red    { background: color-mix(in srgb, #E04040 18%, var(--surface-2)); color: #E04040; }   /* red   <60  */
@@ -758,10 +758,10 @@ body .mp-r-badge.r-red    { background: color-mix(in srgb, #E04040 18%, var(--su
 .player .pname { color: var(--text); }
 
 /* Light mode overrides — re-darken r-good/r-great text so they read on light cards */
-body.light .mp-r-badge.r-great { background: color-mix(in srgb, #3A7FDD 18%, var(--surface-2)); color: #2266CC; }
-body.light .mp-r-badge.r-good  { background: color-mix(in srgb, #8895B0 14%, var(--surface-2)); color: #4A5568; }
-body.light .xi-rate.r-great    { color: #2266CC; background: color-mix(in srgb, #2266CC 12%, transparent); }
-body.light .xi-rate.r-good     { color: #4A5568; background: color-mix(in srgb, #4A5568 10%, transparent); }
+body.light .mp-r-badge.r-great { background: color-mix(in srgb, #D97706 18%, var(--surface-2)); color: #D97706; }
+body.light .mp-r-badge.r-good  { background: color-mix(in srgb, #7A9E10 18%, var(--surface-2)); color: #7A9E10; }
+body.light .xi-rate.r-great    { color: #D97706; background: color-mix(in srgb, #D97706 12%, transparent); }
+body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, #7A9E10 10%, transparent); }
 
 /* Spin wheel machine — remap legacy green glow to Floodlights cyan */
 .machine {

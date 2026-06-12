@@ -1162,7 +1162,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
 .pdot.filled .dot-init      { color: #e8eeff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
 .pdot.filled.r-gold  .dot-init { color: #F5B43C; text-shadow: 0 0 8px rgba(245,180,60,0.7); }
 .pdot.filled.r-elite .dot-init { color: #22E0C8; text-shadow: 0 0 8px rgba(34,224,200,0.6); }
-.pdot.filled.r-great .dot-init { color: #b09fff; text-shadow: 0 0 8px rgba(124,92,252,0.6); }
+.pdot.filled.r-great .dot-init { color: #FF9800; text-shadow: 0 0 8px rgba(255,152,0,0.6); }
 .pdot.filled.r-good  .dot-init { color: #FF7A59; text-shadow: 0 0 6px rgba(255,122,89,0.5); }
 /* Light mode overrides */
 body.light .pdot { background: rgba(240,245,255,0.75) !important; border-color: rgba(100,130,200,0.4) !important; }
