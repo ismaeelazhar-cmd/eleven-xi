@@ -61,6 +61,11 @@
           <span class="fl-mode-hint">93 nations · every tournament 1950–2026</span>
           <span class="fl-mode-stat" id="wcBestScore"></span>
         </button>
+        <button class="fl-mode m-mp" id="homeMP">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19a6 6 0 0 1 12 0M14.5 19a5 5 0 0 1 6.5-4.8"/></svg></span>
+          <span class="fl-mode-name">Multiplayer</span>
+          <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
+        </button>
         <button class="fl-mode m-cl" id="homeCL">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
           <span class="fl-mode-name">Champions League</span>
@@ -73,22 +78,17 @@
           <span class="fl-mode-hint">La Liga · Serie A · Bundesliga · Ligue 1</span>
           <span class="fl-mode-stat" id="lgBestScore"></span>
         </button>
-        <button class="fl-mode m-mp" id="homeMP">
-          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19a6 6 0 0 1 12 0M14.5 19a5 5 0 0 1 6.5-4.8"/></svg></span>
-          <span class="fl-mode-name">Multiplayer</span>
-          <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
+        <button class="fl-mode m-euro" id="homeEuro">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="fl-mode-name">Euros</span>
+          <span class="fl-mode-hint">1980–2024 · 12 tournaments · solo &amp; multiplayer</span>
+          <span class="fl-mode-stat" id="euroBestScore"></span>
         </button>
         <button class="fl-mode m-dvc" id="homeDVC">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
           <span class="fl-mode-name">vs Computer</span>
           <span class="fl-mode-hint">Alternating draft · outsmart the CPU</span>
           <span class="fl-mode-stat" id="dvcHomeRecord"></span>
-        </button>
-        <button class="fl-mode m-euro" id="homeEuro">
-          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
-          <span class="fl-mode-name">Euros</span>
-          <span class="fl-mode-hint">1980–2024 · 12 tournaments · solo &amp; multiplayer</span>
-          <span class="fl-mode-stat" id="euroBestScore"></span>
         </button>
       </div>
       <div class="home-links">
@@ -337,7 +337,7 @@
   <!-- data_pl_history.js / laliga / seriea / bundesliga / ligue1 are lazy-loaded on demand by league.js -->
   <script src="data_euro_history.js?v=71"></script>
   <script src="data_history.js?v=71"></script>
-  <script src="data_league.js?v=74"></script>
+  <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=81"></script>
   <script src="game.js?v=113"></script>
@@ -346,7 +346,7 @@
   <script src="league.js?v=85"></script>
   <script src="audio.js?v=1" defer></script>
   <script src="floodlights.js?v=95" defer></script>
-  <script src="ratingswar.js?v=110" defer></script>
+  <script src="ratingswar.js?v=112" defer></script>
   <script src="draftvscomputer.js?v=11" defer></script>
 </body>
 </html>

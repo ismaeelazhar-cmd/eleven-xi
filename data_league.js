@@ -515,6 +515,27 @@ window.LIGUE1_DATA = {
  * User's drafted XI overrides their club's entry during simulation.
  */
 window.LEAGUE_TEAM_STRENGTHS = {
+  pl: [
+    { n:"Manchester City",    s:90 },
+    { n:"Arsenal",            s:88 },
+    { n:"Liverpool",          s:88 },
+    { n:"Chelsea",            s:83 },
+    { n:"Manchester United",  s:82 },
+    { n:"Tottenham",          s:82 },
+    { n:"Newcastle",          s:81 },
+    { n:"Aston Villa",        s:82 },
+    { n:"West Ham",           s:79 },
+    { n:"Brighton",           s:79 },
+    { n:"Brentford",          s:77 },
+    { n:"Fulham",             s:77 },
+    { n:"Crystal Palace",     s:76 },
+    { n:"Wolves",             s:76 },
+    { n:"Nottm Forest",       s:75 },
+    { n:"Everton",            s:74 },
+    { n:"Burnley",            s:72 },
+    { n:"Sheffield Utd",      s:71 },
+    { n:"Luton",              s:70 }
+  ],
   laliga: [
     { n:"Real Madrid",      s:88 },
     { n:"Barcelona",        s:87 },

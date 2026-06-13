@@ -1012,8 +1012,11 @@
             });
             xiList.innerHTML = newHtml;
           }
-          var countEl = document.querySelector(".draft-right .count");
-          if(countEl) countEl.textContent = P.picks.filter(Boolean).length+"/11";
+          var newCount = P.picks.filter(Boolean).length;
+          var countEl = document.getElementById("rwXiCount") || document.querySelector(".draft-right .count");
+          var headerCount = document.getElementById("rwPickCount");
+          if(countEl) countEl.textContent = newCount+"/11";
+          if(headerCount) headerCount.textContent = newCount;
           var lockBtn = document.getElementById("rwLock");
           if(lockBtn) lockBtn.disabled = P.picks.filter(Boolean).length < 11;
           panel.style.display = "none";
@@ -1042,7 +1045,7 @@
 
   function renderRWXiListHTML(P){
     var html = '<section class="xi"><div class="xi-head"><h2>Your XI</h2>'+
-      '<div><span class="count">'+P.picks.filter(Boolean).length+'/11</span></div></div>'+
+      '<div><span class="count" id="rwXiCount">'+P.picks.filter(Boolean).length+'/11</span></div></div>'+
       '<div class="xi-list" id="rwXiList">';
     SLOTS.forEach(function(slot, i){
       var pk = P.picks[i], line = slot.line, key = slot.k.trim();
@@ -1077,7 +1080,7 @@
         "<div class='draft-left'>"+
           "<div class='draft-pitch-header'>"+
             "<div class='draft-team'>"+esc(P.name)+"</div>"+
-            "<div class='draft-meta'>Pick <strong>"+filled+"</strong>/11 · "+esc(RW.poolLabelCur||"World Cup")+
+            "<div class='draft-meta'>Pick <strong id='rwPickCount'>"+filled+"</strong>/11 · "+esc(RW.poolLabelCur||"World Cup")+
               " · <span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+rerollsLeft+"/3 rerolls</span></div>"+
           "</div>"+
           "<div class='draft-pitch-wrap rw-pitch-wrap' id='rwPitchWrap'>"+buildRWPitch(P)+"</div>"+
