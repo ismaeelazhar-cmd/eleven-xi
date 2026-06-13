@@ -5102,3 +5102,233 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
   .dvc-three-col { flex-direction: column; }
   .dvc-pitch-col { flex: none; width: 100%; }
 }
+
+/* ============================================================
+   RESPONSIVE OVERHAUL — all game modes, all screen sizes
+   v1 — covers mobile (≤480px), small (≤600px), tablet (≤768px)
+   ============================================================ */
+
+/* ── 1. Fixed nav buttons: don't overlap logo on narrow screens ─── */
+@media (max-width: 600px) {
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+  }
+  .sound-toggle {
+    top: 10px;
+    right: 88px; /* keep clear of theme toggle (2×34px + gap + right:10px) */
+    width: 36px;
+    height: 36px;
+  }
+  /* Give brand / header extra right-side padding so buttons don't cover it */
+  header {
+    padding-top: 56px; /* push content below fixed nav row */
+    margin-bottom: 10px;
+  }
+  /* Home hero title — smaller on very narrow screens */
+  header h1 {
+    font-size: clamp(22px, 7vw, 34px);
+  }
+}
+
+/* ── 2. Spin row (all modes) ─── */
+@media (max-width: 480px) {
+  /* Make reels shorter on phone so whole row fits */
+  .spin-reel, .spin-reel::after, .spin-reel .reel-item {
+    height: 48px !important;
+  }
+  .spin-col-label { font-size: 9px !important; }
+  .spin-col-btn button.spin {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* ── 3. Draft layout (World Cup + Euros) ─── */
+@media (max-width: 720px) {
+  /* Already stacks to 1col — just make pitch smaller */
+  .draft-pitch-wrap .pitch {
+    max-height: 230px !important;
+    padding: 6px 8px !important;
+  }
+  .draft-pitch-wrap .pdot {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .draft-pitch-wrap .pdot .dot-pos { font-size: 8px !important; }
+}
+@media (max-width: 480px) {
+  .draft-pitch-wrap .pitch {
+    max-height: 190px !important;
+  }
+  .draft-pitch-wrap .pdot {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+/* ── 4. vs Computer three-column draft ─── */
+@media (max-width: 700px) {
+  /* Already set to flex-direction:column — ensure all children go full width */
+  .dvc-center-col {
+    width: 100%;
+    align-self: stretch;
+  }
+  .dvc-pitch-col {
+    width: 100%;
+    flex: none;
+  }
+  /* Hide CPU pitch on mobile to save space (user can see their own) */
+  .dvc-left-col { display: none; }
+  .dvc-combo-reel { height: 80px !important; }
+  .dvc-combo-item { height: 80px !important; }
+}
+@media (max-width: 480px) {
+  .dvc-reel-btn {
+    font-size: 13px !important;
+    padding: 12px !important;
+  }
+  .dvc-squad-inline {
+    max-height: 260px;
+  }
+  /* Compact pitch on mobile in vs Computer right column */
+  .dvc-right-col .pitch { max-height: 180px !important; padding: 4px 6px !important; }
+  .dvc-right-col .pdot  { width: 22px !important; height: 22px !important; }
+}
+
+/* ── 5. vs Computer draft header banner ─── */
+@media (max-width: 600px) {
+  .dvc-turn-banner {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+  .dvc-draft-progress { flex-wrap: wrap; gap: 4px; }
+  .dvc-last-cpu-pick { font-size: 12px; }
+}
+
+/* ── 6. League mode ─── */
+@media (max-width: 680px) {
+  /* lg-draft-cols already has a media query — ensure machine fits */
+  #leagueView .machine { padding: 10px; }
+  #leagueView .spin-row { gap: 6px; }
+}
+@media (max-width: 480px) {
+  #leagueView .machine { padding: 8px; }
+  #leagueView .spin-reel, #leagueView .spin-reel::after, #leagueView .spin-reel .reel-item {
+    height: 44px !important;
+  }
+}
+
+/* ── 7. Multiplayer draft ─── */
+@media (max-width: 680px) {
+  #mpView .spin-row { gap: 6px; }
+  #mpView .machine { padding: 10px; }
+  /* Player panels: wrap to 2 cols on tablet, 1 col on phone */
+  .mp-players-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .mp-players-grid { grid-template-columns: 1fr !important; }
+  #mpView .spin-reel, #mpView .spin-reel::after, #mpView .spin-reel .reel-item {
+    height: 44px !important;
+  }
+  /* Multiplayer header buttons row */
+  .mp-header { flex-wrap: wrap; gap: 6px; }
+}
+
+/* ── 8. Euros / Floodlights mode ─── */
+@media (max-width: 600px) {
+  /* Group stage grid */
+  .grid-groups { grid-template-columns: 1fr !important; }
+  /* KO bracket */
+  .ko-bracket { overflow-x: auto; }
+}
+
+/* ── 9. Squad picker overlay ─── */
+@media (max-width: 480px) {
+  .squad-card { padding: 12px; }
+  .squad-head h2 { font-size: 16px; }
+  .player { padding: 8px 10px; }
+  .pname { font-size: 13px; }
+}
+
+/* ── 10. Results / match sim screens ─── */
+@media (max-width: 600px) {
+  .stat-cols { grid-template-columns: 1fr 1fr; }
+  .res-scores { font-size: clamp(28px, 10vw, 48px); }
+  .res-teams  { font-size: clamp(11px, 3vw, 14px); }
+  .ko-line    { font-size: 12px; padding: 6px 8px; }
+}
+@media (max-width: 400px) {
+  .stat-cols { grid-template-columns: 1fr; }
+}
+
+/* ── 11. Setup screens (formation/difficulty pickers) ─── */
+@media (max-width: 480px) {
+  .formation-options { flex-wrap: wrap; gap: 6px; }
+  .formation-opt { flex: 1 1 40%; text-align: center; }
+  .diff-row { flex-wrap: wrap; gap: 6px; }
+  .diff-opt { flex: 1 1 28%; text-align: center; }
+  .setup { padding: 16px; }
+  .start-btn { width: 100%; }
+}
+
+/* ── 12. Home screen cards ─── */
+@media (max-width: 420px) {
+  .mode-card { padding: 16px; }
+  .mode-icon { width: 44px; height: 44px; }
+  .mode-title { font-size: 17px; }
+}
+
+/* ── 13. Leaderboard / board view ─── */
+@media (max-width: 600px) {
+  .board-row { padding: 8px 10px; gap: 8px; font-size: 13px; }
+  .bname { font-size: 13px; }
+}
+
+/* ── 14. Tablet tweaks (768px) ─── */
+@media (max-width: 768px) and (min-width: 601px) {
+  header { padding-top: 48px; }
+  .theme-toggle { top: 12px; right: 12px; }
+  .sound-toggle { top: 12px; right: 90px; }
+  /* vs Computer: keep 3 col but compress pitches */
+  .dvc-pitch-col { flex: 0 0 160px; }
+  .dvc-pitch-col .pitch { max-height: 220px !important; }
+  .dvc-pitch-col .pdot  { width: 22px !important; height: 22px !important; }
+}
+
+/* ── 15. Safe-area insets (iPhone notch / home indicator) ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ── 16. Touch targets — ensure all interactive elements ≥44px ─── */
+@media (max-width: 768px) {
+  button, a.btn, .choose-pos, .formation-opt, .diff-opt,
+  .mp-choose-pos, .player:not(.taken):not(.noslot) {
+    min-height: 40px;
+  }
+  /* Back button on game screens */
+  .back { min-height: 38px; padding: 8px 16px; }
+}
+
+/* ── 17. Prevent horizontal overflow ─── */
+* { box-sizing: border-box; }
+@media (max-width: 600px) {
+  .machine, .squad-card, .setup, .dvc-draft-wrap,
+  .dvc-squad-inline, .spin-row {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+/* ── 18. Typography scale on small phones ─── */
+@media (max-width: 380px) {
+  body { font-size: 14px; }
+  .rw-title, h2 { font-size: clamp(18px, 6vw, 24px) !important; }
+  .rw-sub, .sub, .seg-desc { font-size: 13px !important; }
+  .spin-col-label { display: none; } /* hide labels — save vertical space */
+}
