@@ -71,30 +71,27 @@
     if (W.scrollTo) W.scrollTo(0,0);
   }
 
-  /* ── Feature definitions (10 Duels toggles) ── */
+  /* ── Feature definitions (house rule toggles — posBan, bestOf3, asyncOnline removed) ── */
   var DUEL_FEATURES = [
     { key:"xfactor",       label:"X-Factor Slot",        desc:"One random position is secretly chosen as the X-Factor. Winning that slot counts double." },
     { key:"captain",       label:"Captain",               desc:"Each player designates one position as Captain before building. Winning your Captain's slot earns +2 bonus points." },
-    { key:"posBan",        label:"Position Ban",          desc:"Before building, each player secretly bans one slot. That position is excluded from your own XI at reveal." },
     { key:"steal",         label:"Steal Power-Up",        desc:"Once per match, after the reveal starts, you may steal your opponent's highest-rated revealed player into your XI." },
     { key:"blindSwap",     label:"Blind Swap",            desc:"After locking your XI, you have 30 seconds to secretly swap any two positions before the reveal begins." },
     { key:"wildcard",      label:"Wildcard Spin",         desc:"Each player gets one bonus spin from the entire global pool — any nation, any era, any position." },
-    { key:"bestOf3",       label:"Best of 3 Series",      desc:"Play 3 matches. First player to win 2 takes the series. Ties count as half a win each." },
     { key:"sharedPool",    label:"Draft from Shared Pool",desc:"Both players draft from the same displayed pool in alternating pick order. No duplicate players." },
-    { key:"asyncOnline",   label:"Async Online Mode",     desc:"Get a shareable link. Build your XI in your own time — your opponent picks up the link and builds theirs. Reveal when both are done." },
     { key:"formationDraft",label:"Formation Draft",       desc:"Before the reveal, each player secretly picks a formation. Your formation sets which positions get a tactical bonus." }
   ];
 
-  var DEFAULT_FEATURES = { xfactor:false, captain:false, posBan:false, steal:false, blindSwap:false, wildcard:false, bestOf3:false, sharedPool:false, asyncOnline:false, formationDraft:false };
+  var DEFAULT_FEATURES = { xfactor:false, captain:false, steal:false, blindSwap:false, wildcard:false, sharedPool:false, formationDraft:false };
 
   /* ── D-1: Feature presets ────────────────────────────────────────── */
   var DUEL_PRESETS = [
     { id:"quick",    label:"Quick",    desc:"Just the essentials",
-      f:{ posBan:true, captain:true, xfactor:false, steal:false, blindSwap:false, wildcard:false, bestOf3:false, sharedPool:false, asyncOnline:false, formationDraft:false } },
+      f:{ captain:true, xfactor:false, steal:false, blindSwap:false, wildcard:false, sharedPool:false, formationDraft:false } },
     { id:"standard", label:"Standard", desc:"Balanced house rules",
-      f:{ posBan:true, captain:true, xfactor:true, steal:false, blindSwap:false, wildcard:true, bestOf3:false, sharedPool:true, asyncOnline:false, formationDraft:false } },
+      f:{ captain:true, xfactor:true, steal:false, blindSwap:false, wildcard:true, sharedPool:true, formationDraft:false } },
     { id:"full",     label:"Full Rules", desc:"All features on",
-      f:{ posBan:true, captain:true, xfactor:true, steal:true, blindSwap:true, wildcard:true, bestOf3:true, sharedPool:true, asyncOnline:false, formationDraft:true } }
+      f:{ captain:true, xfactor:true, steal:true, blindSwap:true, wildcard:true, sharedPool:true, formationDraft:true } }
   ];
   function activePresetId(){
     for(var i=0;i<DUEL_PRESETS.length;i++){
@@ -158,6 +155,8 @@
       swapDone: [],
       seriesWins: [],
       seriesMatch: 0,
+      seriesMode: "1",   /* "1" = single match, "bo3" = best of 3 */
+      poolKey: "wc",     /* chosen on intro page, shared by all players */
       players:[ {name:"Player 1", picks:newPicks(), rerollsUsed:0}, {name:"Player 2", picks:newPicks(), rerollsUsed:0} ]
     };
     hideOthers(); view().style.display=""; if(W.scrollTo) W.scrollTo(0,0);
@@ -466,6 +465,25 @@
       histHTML += "</div>";
     }
 
+    /* ── Pool selection HTML ── */
+    var poolHTML = "<div class='rw-section'><div class='rw-section-label'>Player Pool</div><div class='rw-pool-grid rw-pool-grid-sm'>";
+    RW_POOLS.forEach(function(pool){
+      var ok = W[pool.dataKey] && Object.keys(W[pool.dataKey]).length > 0;
+      poolHTML += '<button class="rw-pool-card'+(ok?"":" rw-pool-disabled")+(pool.key===(RW.poolKey||"wc")?" rw-pool-selected":"")+(ok?"":" rw-pool-disabled")+'" data-rwpool-intro="'+pool.key+'">'+
+        '<span class="rw-pool-name">'+esc(pool.label)+'</span>'+
+        '<span class="rw-pool-hint">'+esc(pool.hint)+'</span>'+
+      '</button>';
+    });
+    poolHTML += "</div></div>";
+
+    /* ── Series / format HTML ── */
+    var seriesMode = RW.seriesMode || "1";
+    var seriesHTML = "<div class='rw-section'><div class='rw-section-label'>Format</div>"+
+      "<div class='rw-pc-btns'>"+
+        '<button class="rw-pc-btn'+(seriesMode==="1"?" rw-pc-active":"")+'" data-series="1">1 Match</button>'+
+        '<button class="rw-pc-btn'+(seriesMode==="bo3"?" rw-pc-active":"")+'" data-series="bo3">Best of 3</button>'+
+      "</div></div>";
+
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Multiplayer</div>"+
@@ -473,7 +491,7 @@
       "<p class='rw-sub'>Managers build an XI <strong>blind</strong> — no ratings shown. "+
       "Then it's head-to-head: position by position, higher-rated player wins the slot.</p>"+
       resumeHTML+
-      "<div class='rw-player-count'><span class='rw-pc-label'>Players</span>"+
+      "<div class='rw-section'><div class='rw-section-label'>Players</div>"+
         "<div class='rw-pc-btns'>"+
           '<button class="rw-pc-btn'+(n===2?' rw-pc-active':'')+'" data-pc="2">2</button>'+
           '<button class="rw-pc-btn'+(n===3?' rw-pc-active':'')+'" data-pc="3">3</button>'+
@@ -482,6 +500,8 @@
         "<span class='rw-pc-hint'>"+esc(formatHint)+"</span>"+
       "</div>"+
       "<div class='rw-names' id='rwNamesWrap'>"+nameFields+"</div>"+
+      poolHTML+
+      seriesHTML+
       featHTML+
       "<button class='fl-btn rw-start' id='rwStart'>"+esc(RW.players[0]?RW.players[0].name:defaultName(0))+" — build your XI →</button>"+
       "<button class='rw-rules-link' id='rwHowToPlay'>How to play</button>"+
@@ -489,10 +509,11 @@
       "</div></div>";
     document.getElementById("rwBack").onclick = goHome;
     document.getElementById("rwHowToPlay").onclick = showRWRules;
-    v.querySelectorAll(".rw-pc-btn").forEach(function(btn){
+
+    /* Player count buttons */
+    v.querySelectorAll("[data-pc]").forEach(function(btn){
       btn.addEventListener("click", function(){
         var pc = parseInt(btn.getAttribute("data-pc"),10);
-        /* Rebuild players array to the new count, preserving existing names */
         var newPlayers = [];
         for (var i=0; i<pc; i++){
           var inp = document.getElementById("rwN"+i);
@@ -503,6 +524,28 @@
         render();
       });
     });
+
+    /* Pool selection */
+    v.querySelectorAll("[data-rwpool-intro]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if(btn.classList.contains("rw-pool-disabled")) return;
+        var key = btn.getAttribute("data-rwpool-intro");
+        RW.poolKey = key;
+        v.querySelectorAll("[data-rwpool-intro]").forEach(function(b){ b.classList.remove("rw-pool-selected"); });
+        btn.classList.add("rw-pool-selected");
+      });
+    });
+
+    /* Series format buttons */
+    v.querySelectorAll("[data-series]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        RW.seriesMode = btn.getAttribute("data-series");
+        v.querySelectorAll("[data-series]").forEach(function(b){ b.classList.remove("rw-pc-active"); });
+        btn.classList.add("rw-pc-active");
+      });
+    });
+
+    /* Feature toggles */
     v.querySelectorAll(".rw-feat-toggle").forEach(function(btn){
       btn.addEventListener("click", function(){
         var fk = btn.getAttribute("data-fkey");
@@ -522,17 +565,35 @@
     document.addEventListener("click", function handler(e){
       if (!e.target.closest(".rw-feat-info")){ v.querySelectorAll(".rw-tip-show").forEach(function(el){ el.classList.remove("rw-tip-show"); }); }
     }, { capture:true, once:false });
+
+    /* Start: apply pool from intro selection, skip individual pool select */
     document.getElementById("rwStart").onclick = function(){
       for (var i=0; i<n; i++){
         var inp = document.getElementById("rwN"+i);
-        RW.players[i].name = inp ? (inp.value.trim()||defaultName(i)) : defaultName(i);
+        if(RW.players[i]) RW.players[i].name = inp ? (inp.value.trim()||defaultName(i)) : defaultName(i);
+      }
+      /* Apply selected pool globally */
+      var chosenKey = RW.poolKey || "wc";
+      var pool = null;
+      for(var pi=0;pi<RW_POOLS.length;pi++){ if(RW_POOLS[pi].key===chosenKey){ pool=RW_POOLS[pi]; break; } }
+      if(pool){
+        RW.poolDataCur = W[pool.dataKey] || {};
+        RW.poolNationalCur = pool.national;
+        RW.poolLabelCur = pool.label;
+        RW._asyncPoolKey = pool.key;
       }
       _clearDuelSeries();
       initFeatures();
       RW.cur = 0;
-      if (RW.features.posBan){ RW.phase = "posban"; }
-      else if (RW.features.captain){ RW.phase = "captain"; }
-      else { RW.phase = "poolselect"; }
+      /* bestOf3 now driven by seriesMode */
+      if(RW.seriesMode === "bo3"){ RW.features.bestOf3 = true; RW.seriesWins=[0,0]; RW.seriesMatch=0; }
+      else { RW.features.bestOf3 = false; }
+      if (RW.features.captain){ RW.phase = "captain"; }
+      else if (RW.features.sharedPool && !RW.online){
+        RW.sharedPool = generateSharedPool(RW.poolDataCur);
+        RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
+        RW.phase = "sharedpick";
+      } else { RW.phase = "build"; }
       render();
     };
 
@@ -552,7 +613,6 @@
     if(resumeBtn) resumeBtn.addEventListener("click",function(){
       var s = _loadDuelSeries();
       if(!s) return;
-      /* Restore series state */
       RW.features = Object.assign({}, DEFAULT_FEATURES, s.features||{});
       RW.numPlayers = 2;
       RW.players = (s.players||[]).map(function(p,i){ return { name:p.name||defaultName(i), picks:newPicks(), rerollsUsed:0 }; });
@@ -560,11 +620,10 @@
       RW.seriesMatch = s.seriesMatch||0;
       RW.captains = (s.captains||[]).slice();
       RW.bannedSlots = (s.bannedSlots||[]).slice();
-      /* Restore other series-scoped state */
       RW.seriesWins = [0,0];
       RW.xfactorSlot = RW.features.xfactor ? Math.floor(Math.random()*SLOTS.length) : null;
       RW.swapDone = RW.players.map(function(){ return false; });
-      RW.posBanPassing = false; RW.captainPassing = false; RW.blindSwapPassing = false;
+      RW.captainPassing = false; RW.blindSwapPassing = false;
       RW.swapSel = null; RW._swapTimerInterval = null; RW.swapTimeLeft = 30;
       RW.sharedPool = null; RW.sharedPicked = {}; RW.sharedPickTurn = 0; RW.sharedPendingPick = null;
       RW.formations = RW.players.map(function(){ return null; }); RW.formationPassing = false;
@@ -572,7 +631,7 @@
       RW.wildcardUsed = false; RW._savedToBoard = false;
       RW.currentSpin = null; RW.pendingRWPick = null; RW._spinning = false;
       RW.cur = 0;
-      RW.phase = "poolselect";
+      RW.phase = "build";
       render();
     });
     var discardBtn = document.getElementById("rwDiscardSeries");
@@ -584,7 +643,7 @@
     var f = RW.features;
     RW.xfactorSlot = f.xfactor ? Math.floor(Math.random() * SLOTS.length) : null;
     RW.captains = RW.players.map(function(){ return null; });
-    RW.bannedSlots = RW.players.map(function(){ return null; });
+    RW.bannedSlots = RW.players.map(function(){ return null; }); /* kept for compat even though posBan removed */
     RW.swapDone = RW.players.map(function(){ return false; });
     RW.posBanPassing = false;
     RW.captainPassing = false;
@@ -861,7 +920,12 @@
       return la!==lb ? la-lb : (b.r||0)-(a.r||0);
     });
 
-    var html = '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2></div>'+
+    var rerollsLeft = Math.max(0, 3-(P.rerollsUsed||0));
+    var html = '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2>'+
+      (rerollsLeft > 0
+        ? '<button class="squad-respin-btn" id="rwSqRespin">Respin ('+rerollsLeft+' left)</button>'
+        : '<span class="squad-respin-empty">No respins left</span>'
+      )+'</div>'+
       '<div class="sub">'+(RW.poolNationalCur?"Nation":"Club")+' · Pick a player</div>';
 
     /* Position chooser if a player has been tapped */
@@ -898,6 +962,20 @@
     panel.innerHTML = html;
     panel.style.display = "";
 
+    /* Respin button */
+    var rwRespin = panel.querySelector("#rwSqRespin");
+    if(rwRespin) rwRespin.onclick = function(){
+      if((P.rerollsUsed||0) >= 3) return;
+      P.rerollsUsed = (P.rerollsUsed||0) + 1;
+      RW.currentSpin = null; RW.pendingRWPick = null;
+      panel.style.display = "none";
+      var spinBtn2 = document.getElementById("rwSpinBtn");
+      var cS = document.getElementById("rwCS"), yS = document.getElementById("rwYS");
+      if(spinBtn2 && cS && yS){
+        initRWStrips(cS, yS, null);
+        doRWSpin(cS, yS, spinBtn2, panel, P);
+      }
+    };
 
     /* Wire up position chooser buttons */
     if (RW.pendingRWPick){
@@ -907,7 +985,24 @@
           var pp = RW.pendingRWPick;
           P.picks[idx] = { n:pp.n, r:pp.r||75, gp:SLOTS[idx].k.trim(), club:spin.country, year:spin.year };
           RW.pendingRWPick = null; RW.currentSpin = null;
-          render();
+          /* Refresh pitch without full re-render */
+          var pw = document.getElementById("rwPitchWrap");
+          if(pw) pw.innerHTML = buildRWPitch(P);
+          var xiList = document.getElementById("rwXiList");
+          if(xiList){
+            var newHtml = "";
+            SLOTS.forEach(function(slot,i){
+              var pk2=P.picks[i], l=slot.line, k=slot.k.trim();
+              if(pk2) newHtml += '<div class="xi-row"><span class="pos '+l+'">'+esc(k)+'</span><span class="info"><span class="pn">'+esc(pk2.n)+'</span><span class="meta">'+esc(pk2.club||"")+(pk2.year?' &middot; '+pk2.year:'')+'</span></span></div>';
+              else newHtml += '<div class="xi-row empty"><span class="pos '+l+'">'+esc(k)+'</span><span class="info"><span class="pn slot-empty">'+esc(k)+' — empty</span></span></div>';
+            });
+            xiList.innerHTML = newHtml;
+          }
+          var countEl = document.querySelector(".draft-right .count");
+          if(countEl) countEl.textContent = P.picks.filter(Boolean).length+"/11";
+          var lockBtn = document.getElementById("rwLock");
+          if(lockBtn) lockBtn.disabled = P.picks.filter(Boolean).length < 11;
+          panel.style.display = "none";
         });
       });
       var cancel = panel.querySelector(".mp-chooser-cancel");
@@ -950,48 +1045,52 @@
     return html;
   }
 
-  /* ---------- build (blind): spin wheel picks a squad, player picks without seeing ratings ---------- */
+  /* ---------- build (blind): WC-style layout — pitch + wheel left, XI list right ---------- */
   function renderBuild(v){
     var P = RW.players[RW.cur];
     var filled = P.picks.filter(Boolean).length;
     var rerollsLeft = Math.max(0, 3-(P.rerollsUsed||0));
     var isRespin = !!RW.currentSpin;
+    var lockLabel = RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
+                  : RW.cur < RW.numPlayers-1 ? "Lock XI — pass to "+esc(RW.players[RW.cur+1].name)+" →"
+                  : RW.numPlayers>2 ? "Lock XI — start matches" : "Lock XI — reveal";
 
+    /* Home button + draft-layout wrapper */
     v.innerHTML =
-      "<div class='wrap'><button class='back' id='rwBack'>← Quit</button>"+
-      "<div class='rw-build-head'>"+
-        "<div class='rw-turn'>"+esc(P.name)+" — "+esc(RW.poolLabelCur||"World Cup")+"</div>"+
-        "<div class='rw-prog-row'>"+
-          "<span class='rw-prog'><span id='rwCount'>"+filled+"</span>/11</span>"+
-          "<span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+
-            "Rerolls: "+rerollsLeft+"/3"+
-          "</span>"+
+      "<button class='draft-corner-home' id='rwBack'>← Home</button>"+
+      "<div class='draft-layout rw-draft-layout'>"+
+        /* LEFT */
+        "<div class='draft-left'>"+
+          "<div class='draft-pitch-header'>"+
+            "<div class='draft-team'>"+esc(P.name)+"</div>"+
+            "<div class='draft-meta'>Pick <strong>"+filled+"</strong>/11 · "+esc(RW.poolLabelCur||"World Cup")+
+              " · <span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+rerollsLeft+"/3 rerolls</span></div>"+
+          "</div>"+
+          "<div class='draft-pitch-wrap rw-pitch-wrap' id='rwPitchWrap'>"+buildRWPitch(P)+"</div>"+
+          "<div class='machine'>"+
+            "<div class='reels'>"+
+              "<div class='reel-box'><div class='reel-label'>"+(RW.poolNationalCur?"Nation":"Club")+"</div>"+
+                "<div class='reel'><div class='reel-strip' id='rwCS'></div></div></div>"+
+              "<div class='reel-box'><div class='reel-label'>Year</div>"+
+                "<div class='reel'><div class='reel-strip' id='rwYS'></div></div></div>"+
+            "</div>"+
+            "<div class='controls'>"+
+              "<button class='spin' id='rwSpinBtn'>"+
+                (isRespin ? (rerollsLeft>0 ? "RESPIN ("+rerollsLeft+" left)" : "No rerolls — pick!") : "SPIN")+
+              "</button>"+
+              (RW.features.wildcard && !P.wildcardUsed && !isRespin ?
+                "<button class='rw-wildcard-btn' id='rwWildcard'>Wildcard Spin</button>" : "")+
+            "</div>"+
+          "</div>"+
+          "<section class='squad' id='rwSquadPanel' style='display:none;'></section>"+
         "</div>"+
-      "</div>"+
-      "<div class='machine'>"+
-        "<div class='reels'>"+
-          "<div class='reel-box'><div class='reel-label'>"+(RW.poolNationalCur?"Nation":"Club")+"</div>"+
-            "<div class='reel'><div class='reel-strip' id='rwCS'></div></div></div>"+
-          "<div class='reel-box'><div class='reel-label'>Year</div>"+
-            "<div class='reel'><div class='reel-strip' id='rwYS'></div></div></div>"+
+        /* RIGHT */
+        "<div class='draft-right'>"+
+          renderRWXiListHTML(P)+
+          "<div class='xi-actions'>"+
+            "<button class='btn-primary rw-lock-btn' id='rwLock' "+(filled<11?"disabled":"")+">"+lockLabel+"</button>"+
+          "</div>"+
         "</div>"+
-        "<div class='controls'>"+
-          "<button class='spin' id='rwSpinBtn'>"+
-            (isRespin ? (rerollsLeft>0 ? "RESPIN ("+rerollsLeft+" left)" : "No rerolls — pick!") : "SPIN")+
-          "</button>"+
-          (RW.features.wildcard && !P.wildcardUsed && !isRespin ?
-            "<button class='rw-wildcard-btn' id='rwWildcard'>Wildcard Spin</button>" : "")+
-        "</div>"+
-      "</div>"+
-      "<section class='squad' id='rwSquadPanel' style='display:none;'></section>"+
-      renderRWXiListHTML(P)+
-      "<div class='xi-actions'>"+
-        "<button class='btn-primary rw-lock-btn' id='rwLock' "+(filled<11?"disabled":"")+">"+
-          (RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
-                     : (RW.cur < RW.numPlayers-1 ? "Lock XI — pass to "+esc(RW.players[RW.cur+1].name)+" →"
-                                                  : (RW.numPlayers>2 ? "Lock XI — start matches" : "Lock XI — reveal")))+
-        "</button>"+
-      "</div>"+
       "</div>";
 
     document.getElementById("rwBack").onclick = function(){ if(confirm("Quit Duels?")) goHome(); };
@@ -1025,24 +1124,9 @@
         maybeStartReveal();
         return;
       }
-      /* Async mode: player 1 locks → generate share URL */
-      if (RW.features.asyncOnline && !RW.online && RW.cur===0 && RW.numPlayers===2){
-        var aData = {
-          v:1, p1n:RW.players[0].name, p1p:RW.players[0].picks,
-          feat:RW.features,
-          pool:{key:RW._asyncPoolKey||"wc", national:RW.poolNationalCur, label:RW.poolLabelCur},
-          xfs:RW.xfactorSlot,
-          bans:[RW.bannedSlots?RW.bannedSlots[0]:null],
-          caps:[RW.captains?RW.captains[0]:null],
-          forms:[RW.formations?RW.formations[0]:null]
-        };
-        try { RW._asyncShareURL = location.href.split('#')[0]+'#async='+btoa(JSON.stringify(aData)); } catch(e){ RW._asyncShareURL = ""; }
-        RW.phase = "asyncshare"; render(); return;
-      }
       if (RW.cur < RW.numPlayers - 1){
         RW.cur++; RW.phase = "handoff";
       } else {
-        /* All players built — schedule matches */
         RW.matches = buildMatchSchedule(RW.numPlayers);
         RW.matchIdx = 0;
         RW.curA = RW.matches[0].a; RW.curB = RW.matches[0].b;
@@ -1057,6 +1141,34 @@
       render();
     };
   }
+
+  /* Build a formation pitch for Duels (fixed 4-3-3 slots) */
+  function buildRWPitch(P){
+    /* SLOTS: GK / RB CB CB LB / CDM CM CM / RW ST LW */
+    var rows = [
+      [{idx:0,  k:"GK",  line:"GK" }],
+      [{idx:1,  k:"RB",  line:"DEF"},{idx:2,k:"CB",line:"DEF"},{idx:3,k:"CB",line:"DEF"},{idx:4,k:"LB",line:"DEF"}],
+      [{idx:5,  k:"CDM", line:"MID"},{idx:6,k:"CM",line:"MID"},{idx:7,k:"CM",line:"MID"}],
+      [{idx:8,  k:"RW",  line:"FWD"},{idx:9,k:"ST",line:"FWD"},{idx:10,k:"LW",line:"FWD"}]
+    ];
+    var html = "<div class='pitch rw-pitch'>";
+    rows.forEach(function(row){
+      html += "<div class='prow'>";
+      row.forEach(function(s){
+        var pk = P.picks[s.idx];
+        html += "<div class='pdot "+(pk?"filled ":"")+s.line+"'>"+
+          "<div class='dot-inner'>"+
+            "<span class='dot-postag'>"+esc(s.k)+"</span>"+
+            (pk ? "<span class='dot-name'>"+esc(shortRWName(pk.n))+"</span>" : "")+
+          "</div>"+
+        "</div>";
+      });
+      html += "</div>";
+    });
+    html += "</div>";
+    return html;
+  }
+  function shortRWName(n){ var p=String(n||"").split(" "); return p.length>1?p[p.length-1]:n; }
 
   /* ---------- shared pool draft: both players draft from same pool, alternating picks ---------- */
   function generateSharedPool(data){

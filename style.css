@@ -4206,3 +4206,51 @@ button, a, .seg-opt { touch-action: manipulation; }
   animation: pulse-teal 1s ease infinite alternate;
 }
 @keyframes pulse-teal { from { opacity:.7; } to { opacity:1; } }
+
+/* ══════════════════════════════════════════════
+   DUELS (ratingswar) — intro page & build layout
+══════════════════════════════════════════════ */
+
+/* Force white text throughout the duels view */
+#rwView, #rwView * { color: var(--text, #ECF1FF); }
+#rwView .rw-feat-label { color: var(--text, #ECF1FF) !important; }
+#rwView .rw-feat-title, #rwView .rw-feat-sub { color: var(--text, #ECF1FF) !important; }
+#rwView .rw-preset-label { color: var(--text, #ECF1FF) !important; }
+#rwView .rw-preset-desc { color: var(--text-mute, #828DAD) !important; }
+#rwView .rw-section-label { color: var(--text-mute, #828DAD) !important; }
+#rwView .rw-pc-hint { color: var(--text-mute, #828DAD) !important; }
+
+/* Section wrapper for intro */
+.rw-section {
+  margin-bottom: 18px;
+}
+.rw-section-label {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-mute, #828DAD);
+  margin-bottom: 10px;
+}
+
+/* Compact pool grid on intro page */
+.rw-pool-grid-sm {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.rw-pool-grid-sm .rw-pool-card {
+  padding: 10px 8px !important;
+}
+.rw-pool-grid-sm .rw-pool-name { font-size: .8rem !important; }
+.rw-pool-grid-sm .rw-pool-hint { font-size: .65rem !important; }
+
+/* Build phase — WC-style layout */
+.rw-draft-layout { min-height: 100vh; padding-top: 48px; }
+.rw-pitch-wrap .pitch { max-height: 300px !important; overflow: hidden; }
+.rw-pitch-wrap .pdot { width: 34px !important; height: 34px !important; }
+.rw-pitch-wrap .dot-postag { font-size: 8px !important; }
+.rw-pitch-wrap .dot-name { font-size: 7px !important; }
+
+/* RW pitch: same as draft-pitch styles */
+.rw-pitch { width: 100%; aspect-ratio: 3/4; }
