@@ -495,8 +495,19 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 2
 .rating-note { margin-top: 12px; color: var(--green); font-size: 13px; font-weight: 700; min-height: 16px; }
 
 /* ---------- Results ---------- */
-.results-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.results-head { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; }
 .res-title { margin: 6px 0 14px; font-size: 22px; }
+
+/* Results + board: Home button fixed top-left like draft */
+#resultsHomeBtn, #boardBack {
+  position: fixed; top: 18px; left: 20px;
+  background: transparent; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 14px; font-size: 12px; font-weight: 700;
+  cursor: pointer; z-index: 200;
+  transition: color 0.15s, border-color 0.15s;
+}
+#resultsHomeBtn:hover, #boardBack:hover { color: var(--text); border-color: var(--line-strong); }
+#resultsView, #boardView { padding-top: 52px; }
 .loading { padding: 40px; text-align: center; color: var(--muted); font-size: 16px; }
 .champion {
   background: linear-gradient(90deg, rgba(255,209,102,0.18), rgba(6,214,160,0.18));
@@ -877,8 +888,10 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; justify-content: center; }
 .stat-pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 13px; color: var(--muted); }
 .stat-pill b { color: var(--text); font-size: 15px; margin-left: 4px; }
-.stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.stat-h { font-size: 13px; font-weight: 800; color: var(--gold); margin-bottom: 8px; }
+.stat-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+.stat-h { font-size: 13px; font-weight: 800; color: var(--gold); margin-bottom: 8px; text-align: center; }
+.stat-row { border-radius: 8px; padding: 5px 8px; }
+.stat-row:not(:first-of-type) { border-top: 1px solid var(--line); }
 .stat-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); }
 .stat-row .sp { width: 30px; font-size: 10px; font-weight: 800; padding: 2px 0; text-align: center; border-radius: 5px; }
 .stat-row .sp.GK { background: rgba(249,156,0,0.18); color: var(--gold); }
@@ -942,8 +955,31 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 /* ===== Results header buttons ===== */
 .results-head-right { display: flex; gap: 8px; }
 
-/* Buttons injected under the summary stats block */
-.result-under-summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 8px; }
+/* Buttons injected under the summary stats block — 50/50 grid */
+.result-under-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+.result-under-summary #shareXIBtn {
+  background: rgba(0,187,127,0.14) !important;
+  color: var(--green2) !important;
+  border: 1px solid rgba(0,187,127,0.5) !important;
+  border-radius: 12px !important;
+  font-weight: 700;
+  min-height: 48px;
+}
+.result-under-summary #shareXIBtn:hover { background: rgba(0,187,127,0.24) !important; }
+.result-under-summary #boardBtn {
+  background: rgba(249,156,0,0.14) !important;
+  color: var(--gold) !important;
+  border: 1px solid rgba(249,156,0,0.5) !important;
+  border-radius: 12px !important;
+  font-weight: 700;
+  min-height: 48px;
+}
+.result-under-summary #boardBtn:hover { background: rgba(249,156,0,0.24) !important; }
 
 /* Bottom CTA: Home left, Leaderboards right */
 .result-bottom-cta { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 2.5rem; padding-bottom: 3rem; }
@@ -3950,6 +3986,37 @@ button, a, .seg-opt { touch-action: manipulation; }
   .reel-item-noflag .name { font-size: 15px; }
   .machine { padding: 16px; }
 }
+
+/* ===== Multiplayer setup: compact, single-screen ===== */
+.mp-wrap { padding: 0 16px 20px !important; }
+.mp-title { font-size: clamp(18px, 4vw, 26px) !important; margin: 10px 0 2px !important; }
+.mp-sub { margin: 0 0 14px !important; font-size: 13px !important; }
+.mp-section { margin-bottom: 16px !important; }
+.mp-label { margin-bottom: 6px !important; }
+/* Player count circles */
+.mp-nplayers-row { gap: 8px !important; }
+.mp-n-btn { width: 36px !important; height: 36px !important; font-size: 15px !important; }
+/* Name inputs */
+.mp-name-inp { padding: 8px 12px !important; font-size: 14px !important; }
+/* Pool buttons */
+.mp-mode-grid { gap: 6px !important; }
+.mp-mode-btn { padding: 7px 14px !important; font-size: 13px !important; }
+/* Format pills */
+.mp-pill-btn { padding: 7px 14px !important; font-size: 13px !important; }
+.mp-fmt-info { font-size: 12px !important; margin: 6px 0 12px !important; }
+/* Start button */
+.mp-start-btn { padding: 14px 22px !important; font-size: 16px !important; }
+/* Player setup: smaller pitch preview */
+.mp-setup-pitch-wrap .pitch { max-height: 200px !important; aspect-ratio: unset !important; overflow: hidden; }
+.mp-setup-pitch-wrap .pdot { width: 34px !important; height: 34px !important; }
+/* Formation grid: tighter */
+.mp-formation-grid { gap: 6px !important; }
+.mp-f-btn { padding: 8px 12px !important; font-size: 13px !important; }
+/* Manager style row */
+.mp-mgr-style-row { gap: 6px !important; }
+.mp-mgr-style-btn { padding: 7px 12px !important; font-size: 12px !important; }
+/* Confirm button */
+.mp-confirm-btn { padding: 14px 22px !important; font-size: 16px !important; margin-top: 14px !important; }
 
 /* ===== Draft layout v2: bigger natural pitch + compact wheel ===== */
 /* Bigger, properly proportioned pitch */

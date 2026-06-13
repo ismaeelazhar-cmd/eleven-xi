@@ -58,7 +58,7 @@
     cl:           { label:"Champions League",    get: function(){ return window.CL_DATA; } },
     pl:           { label:"Premier League",       get: function(){ return window.PL_DATA; } },
     championship: { label:"Championship",         get: function(){ return window.CHAMPIONSHIP_DATA; } },
-    euro:         { label:"Euros (1980–2024)",    get: function(){ return window.EURO_DATA; } },
+    euro:         { label:"Euros",                get: function(){ return window.EURO_DATA; } },
     laliga:       { label:"La Liga",              get: function(){ return window.LALIGA_DATA; } },
     seriea:       { label:"Serie A",              get: function(){ return window.SERIEA_DATA; } },
     bundesliga:   { label:"Bundesliga",           get: function(){ return window.BUNDESLIGA_DATA; } }
@@ -780,28 +780,51 @@
     root.appendChild(wrap);
   }
 
+  /* Lazy-load per-pool history files so multiplayer has full multi-season data */
+  var POOL_LAZY = {
+    pl:         { src:"./data_pl_history.js?v=71",     key:"PL_DATA" },
+    laliga:     { src:"./data_laliga_history.js?v=71", key:"LALIGA_DATA" },
+    seriea:     { src:"./data_seriea_history.js?v=71", key:"SERIEA_DATA" },
+    bundesliga: { src:"./data_bundesliga_history.js?v=71", key:"BUNDESLIGA_DATA" }
+  };
+  function ensurePoolData(mode, cb){
+    var lazy = POOL_LAZY[mode];
+    if (!lazy || !window.lazyLoad){ cb(); return; }
+    var data = window[lazy.key];
+    /* check if we have more than just the current season */
+    var years = data ? Object.keys(data) : [];
+    var firstClub = years[0] && data[years[0]] ? data[years[0]].years : {};
+    var hasHistory = Object.keys(firstClub).length > 1;
+    if (hasHistory){ cb(); return; }
+    window.lazyLoad(lazy.src, lazy.key, cb);
+  }
+
   function beginSetup(){
     /* Collect names from inputs */
     var inputs = root.querySelectorAll(".mp-name-inp");
-    st.players = [];
+    var players = [];
     for (var i=0;i<st.numPlayers;i++){
       var raw = inputs[i] ? inputs[i].value.trim() : "";
-      st.players.push({ name: raw||("Player "+(i+1)), formation:"", manager:null, mgrSpun:false, picks:[], rerollsUsed:0 });
+      players.push({ name: raw||("Player "+(i+1)), formation:"", manager:null, mgrSpun:false, picks:[], rerollsUsed:0 });
     }
-    st.setupIdx = 0;
-    st.handoffFrom = 0;
-    st.usedFormations = {};
-    st.lockedNames = {};
-    st.currentSpin = null;
-    st.pendingPick = null;
-    st.pendingHandoff = null;
-    st.simData = null;
-    st.simStep = -1;
-    st.revealIdx = -1;
-    st.cur = 0;
-    st.mgrSpinResult = null;
-    st.phase = "player_setup";
-    _render();
+    /* Lazy-load full squad data before entering setup */
+    ensurePoolData(st.mpMode, function(){
+      st.players = players;
+      st.setupIdx = 0;
+      st.handoffFrom = 0;
+      st.usedFormations = {};
+      st.lockedNames = {};
+      st.currentSpin = null;
+      st.pendingPick = null;
+      st.pendingHandoff = null;
+      st.simData = null;
+      st.simStep = -1;
+      st.revealIdx = -1;
+      st.cur = 0;
+      st.mgrSpinResult = null;
+      st.phase = "player_setup";
+      _render();
+    });
   }
 
   /* ════════════════════════════════════════════════════
@@ -825,7 +848,7 @@
 
     /* ── Formation ── */
     var fSec = mk("div","mp-section");
-    fSec.innerHTML = '<div class="mp-label">Formation <span class="mp-label-note">(each can only be chosen once)</span></div>';
+    fSec.innerHTML = '<div class="mp-label">Formation</div>';
 
     /* Pitch preview — updates live when formation changes */
     var pitchPreviewWrap = mk("div","setup-pitch-wrap mp-setup-pitch-wrap");
@@ -841,29 +864,20 @@
 
     var fGrid = mk("div","mp-formation-grid");
     Object.keys(MP_FORMATIONS).forEach(function(f){
-      var takenBy = st.usedFormations.hasOwnProperty(f) ? st.usedFormations[f] : -1;
       var isMine = p.formation === f;
-      var isTaken = takenBy >= 0 && takenBy !== st.setupIdx;
-      var cls = "mp-f-btn" + (isMine?" selected":"") + (isTaken?" taken":"");
+      var cls = "mp-f-btn" + (isMine?" selected":"");
       var b = mk("button", cls);
-      b.innerHTML = '<span class="mp-f-name">'+f+'</span>' +
-        (isTaken ? '<span class="mp-f-taken">'+esc(st.players[takenBy].name)+'</span>' : '');
-      if (!isTaken) {
-        b.addEventListener("click",function(){
-          if (p.formation && st.usedFormations[p.formation]===st.setupIdx) delete st.usedFormations[p.formation];
-          p.formation = f;
-          st.usedFormations[f] = st.setupIdx;
-          /* Update pitch preview inline without full re-render */
-          var pt=eid("mpSetupPitchTitle"); if(pt) pt.textContent=f;
-          var pe=eid("mpSetupPitch"); if(pe) pe.innerHTML=buildWCPitch(p);
-          fGrid.querySelectorAll(".mp-f-btn").forEach(function(x){ x.classList.remove("selected"); });
-          b.classList.add("selected");
-          /* Still need re-render to enable Confirm button */
-          _render();
-        });
-      } else {
-        b.disabled = true;
-      }
+      b.innerHTML = '<span class="mp-f-name">'+f+'</span>';
+      b.addEventListener("click",function(){
+        p.formation = f;
+        /* Update pitch preview inline without full re-render */
+        var pt=eid("mpSetupPitchTitle"); if(pt) pt.textContent=f;
+        var pe=eid("mpSetupPitch"); if(pe) pe.innerHTML=buildWCPitch(p);
+        fGrid.querySelectorAll(".mp-f-btn").forEach(function(x){ x.classList.remove("selected"); });
+        b.classList.add("selected");
+        /* Still need re-render to enable Confirm button */
+        _render();
+      });
       fGrid.appendChild(b);
     });
     fSec.appendChild(fGrid);
