@@ -538,10 +538,7 @@
 
   // ---- slot machine ----
   function countryItemHTML(c) {
-    if (mode === "wc") {
-      return '<div class="reel-item"><span class="flag">' + DATA[c].flag + '</span><span class="name">' + c + "</span></div>";
-    }
-    return '<div class="reel-item"><span class="name">' + c + "</span></div>";
+    return '<div class="reel-item reel-item-noflag"><span class="name">' + c + "</span></div>";
   }
   function yearItemHTML(y) { return '<div class="reel-item"><span class="year">' + y + "</span></div>"; }
   function spinReel(stripEl, randomItem, finalHTML, duration) {

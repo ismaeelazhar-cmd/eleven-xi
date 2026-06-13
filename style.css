@@ -245,7 +245,7 @@ header p {
   max-width: 100%;
   word-break: break-word;
 }
-.reel-item .name { font-size: 18px; }
+.reel-item .name { font-size: 18px; text-align: center; width: 100%; display: block; font-weight: 800; letter-spacing: 0.5px; }
 .reel-item .year { font-size: 34px; color: var(--green); letter-spacing: 2px; }
 
 .controls {
@@ -787,7 +787,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
   display: grid;
   grid-template-columns: 3fr 2fr;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 .draft-left { display: flex; flex-direction: column; gap: 10px; }
 .draft-right { position: sticky; top: 8px; max-height: calc(100vh - 80px); overflow-y: auto; }
@@ -805,11 +805,11 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .draft-team { font-size: 20px; font-weight: 900; }
 .draft-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
 
-.draft-pitch-wrap { flex: 0 0 auto; }
-.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; max-height: 260px; padding: 6px 8px; aspect-ratio: unset; }
-.draft-pitch-wrap .pdot { width: 28px; height: 28px; border-width: 1.5px; border-style: solid; }
+.draft-pitch-wrap { flex: 1 1 auto; }
+.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; height: 100%; max-height: none; padding: 10px 8px; aspect-ratio: unset; }
+.draft-pitch-wrap .pdot { width: 32px; height: 32px; border-width: 1.5px; border-style: solid; margin-bottom: 14px; }
 .draft-pitch-wrap .pdot .dot-rate { font-size: 8px; }
-.draft-pitch-wrap .pdot .dot-name { display: none; }
+.draft-pitch-wrap .pdot .dot-name { display: block; font-size: 8px; max-width: 52px; }
 .draft-pitch-wrap .pdot .dot-pos { font-size: 8px; }
 .draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
 
@@ -908,10 +908,10 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .pdot .dot-postag { font-size: 8px; font-weight: 900; line-height: 1; color: rgba(10, 10, 15, 0.72); letter-spacing: 0.3px; margin-bottom: 1px; }
 .draft-pitch-wrap .pdot .dot-postag { font-size: 7px; }
 .draft-pitch-wrap { align-self: stretch; width: 100%; }
-.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; max-height: 260px; padding: 6px 10px; margin: 0; aspect-ratio: unset; }
-.draft-pitch-wrap .pdot { width: 28px; height: 28px; border-width: 1.5px; border-style: solid; }
+.draft-pitch-wrap .pitch { width: 100%; max-width: 100%; max-height: none; height: 100%; padding: 10px; margin: 0; aspect-ratio: unset; }
+.draft-pitch-wrap .pdot { width: 32px; height: 32px; border-width: 1.5px; border-style: solid; margin-bottom: 14px; }
 .draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
-.draft-pitch-wrap .pdot .dot-name { display: none; }
+.draft-pitch-wrap .pdot .dot-name { display: block; font-size: 8px; max-width: 52px; }
 .draft-pitch-wrap .pdot .dot-pos { font-size: 8px; }
 .draft-team { font-size: 22px; }
 
@@ -1120,10 +1120,10 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .pdot.filled .dot-init { color: #0a0a0f; font-size: 15px; }
 .pdot.filled .dot-postag { color: rgba(10,10,15,0.7); }
 .pdot .dot-name { font-size: 9.5px; max-width: 64px; }
-.draft-pitch-wrap .pitch { max-width: 100%; max-height: 260px; padding: 6px 10px; aspect-ratio: unset; }
-.draft-pitch-wrap .pdot { width: 28px; height: 28px; border-style: solid; }
+.draft-pitch-wrap .pitch { max-width: 100%; max-height: none; height: 100%; padding: 10px; aspect-ratio: unset; }
+.draft-pitch-wrap .pdot { width: 32px; height: 32px; border-style: solid; margin-bottom: 14px; }
 .draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
-.draft-pitch-wrap .pdot .dot-name { display: none; }
+.draft-pitch-wrap .pdot .dot-name { display: block; font-size: 8px; max-width: 52px; }
 
 /* ===== Year / era selector ===== */
 .year-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
@@ -2243,10 +2243,12 @@ body.light .mp-sub-hint { color: rgba(0,0,0,0.38); }
   height: 48px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 0 14px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
 }

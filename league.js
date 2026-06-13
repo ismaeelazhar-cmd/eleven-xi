@@ -286,22 +286,18 @@
     });
 
     /* Manager reel helpers */
-    function mgrItemHTML(name, styleId){
-      var s=MGRS.filter(function(m){ return m.id===styleId; })[0]||MGRS[0];
-      return '<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(name)+'</span>'+
-             '<span class="mgr-style-tag">'+(s.emoji||'')+' '+s.name+'</span></div>';
+    function mgrItemHTML(name){
+      return '<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(name)+'</span></div>';
     }
     function refreshMgrStrip(){
       var strip=eid("lgMgrStrip"); if(!strip) return;
       var m=LS.manager||MGRS[0];
       if(LS.mgrName){
-        strip.innerHTML=mgrItemHTML(LS.mgrName,m.id);
+        strip.innerHTML=mgrItemHTML(LS.mgrName);
       } else if(!m||m.id==="none"){
-        strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span>'+
-          '<span class="mgr-style-tag">pick a style or spin</span></div>';
+        strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span></div>';
       } else {
-        strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+(m.emoji||'')+' '+m.name+
-          '</span><span class="mgr-style-tag">tactical style</span></div>';
+        strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(m.name)+'</span></div>';
       }
     }
     function mgrBonusHTML(m){
@@ -338,8 +334,7 @@
         for(var i=0;i<BLUR;i++){
           var d2=db[i%db.length];
           var s2=MGRS.filter(function(x){ return x.id===d2.s; })[0]||MGRS[0];
-          items.push('<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(d2.n)+'</span>'+
-            '<span class="mgr-style-tag">'+s2.emoji+' '+s2.name+'</span></div>');
+          items.push('<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(d2.n)+'</span></div>');
         }
         var ps=MGRS.filter(function(x){ return x.id===pick.s; })[0]||MGRS[0];
         strip.innerHTML=items.join("");
@@ -349,8 +344,7 @@
           strip.style.transform="translateY(-"+(BLUR*IH)+"px)";
           setTimeout(function(){
             strip.style.transition="none"; strip.style.transform="translateY(0)";
-            strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(pick.n)+'</span>'+
-              '<span class="mgr-style-tag">'+ps.emoji+' '+ps.name+'</span></div>';
+            strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(pick.n)+'</span></div>';
             LS.manager=ps; LS.mgrName=pick.n; curMgr=ps; mgrSpinDone=true;
             LS.mgrBonus={attack:ps.atk||0,defend:ps.def||0};
             mgrSpinBtn.textContent="Manager appointed"; mgrSpinBtn.disabled=true;

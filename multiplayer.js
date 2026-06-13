@@ -956,7 +956,7 @@
     /* If this player already spun, lock the reel on the result */
     if(player && player.mgrSpun && player.manager){
       var s = styleById(player.manager.id);
-      stripEl.innerHTML = '<div class="mp-mgr-item highlight">'+s.emoji+' <span>'+esc(player.manager.name)+'</span></div>';
+      stripEl.innerHTML = '<div class="mp-mgr-item highlight"><span>'+esc(player.manager.name)+'</span></div>';
       stripEl.style.transform = "translateY(0)";
       stripEl.style.transition = "none";
       return;
@@ -966,7 +966,7 @@
     for (var i=0;i<24;i++){
       var m = db[i%db.length];
       var s = styleById(m.s);
-      items.push('<div class="mp-mgr-item">'+s.emoji+' <span>'+esc(m.n)+'</span></div>');
+      items.push('<div class="mp-mgr-item"><span>'+esc(m.n)+'</span></div>');
     }
     stripEl.innerHTML = items.join("");
     stripEl.style.transform = "translateY(0)";
@@ -988,9 +988,9 @@
     for (var i=0;i<BLUR;i++){
       var m = db[i%db.length];
       var ms = styleById(m.s);
-      items.push('<div class="mp-mgr-item">'+ms.emoji+' <span>'+esc(m.n)+'</span></div>');
+      items.push('<div class="mp-mgr-item"><span>'+esc(m.n)+'</span></div>');
     }
-    items.push('<div class="mp-mgr-item highlight">'+style.emoji+' <span>'+esc(picked.n)+'</span></div>');
+    items.push('<div class="mp-mgr-item highlight"><span>'+esc(picked.n)+'</span></div>');
     stripEl.innerHTML = items.join("");
     stripEl.style.transition = "none";
     stripEl.style.transform = "translateY(0)";
