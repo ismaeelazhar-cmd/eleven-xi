@@ -4254,3 +4254,191 @@ button, a, .seg-opt { touch-action: manipulation; }
 
 /* RW pitch: same as draft-pitch styles */
 .rw-pitch { width: 100%; aspect-ratio: 3/4; }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE SYSTEM — ALL GAME MODES
+   Mobile (≤767px) · Tablet (768–900px) · Desktop (≥1200px)
+   World Cup draft mode is the visual gold standard.
+══════════════════════════════════════════════ */
+
+/* ─── DESKTOP (≥1200px): wider, centred layouts ─── */
+@media (min-width: 1200px) {
+  .draft-layout {
+    grid-template-columns: 3fr 2fr;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .draft-left .spin {
+    font-size: 1.1rem !important;
+    padding: 14px 32px !important;
+  }
+  .mp-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .rw-draft-layout {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+}
+
+/* ─── TABLET (768px – 900px): balanced two-column ─── */
+@media (max-width: 900px) and (min-width: 768px) {
+  .draft-layout {
+    grid-template-columns: 55% 45%;
+  }
+  .draft-pitch-wrap .pitch {
+    max-height: 280px !important;
+  }
+  .rw-pitch-wrap .pitch {
+    max-height: 260px !important;
+  }
+}
+
+/* ─── MOBILE (≤767px): single-column stacked layouts ─── */
+@media (max-width: 767px) {
+
+  /* Draft layout: stack vertically */
+  .draft-layout {
+    display: block !important;
+  }
+  .draft-left {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+  .draft-right {
+    width: 100% !important;
+    margin-top: 16px !important;
+    position: static !important;
+  }
+
+  /* Pitch: smaller on mobile */
+  .draft-pitch-wrap .pitch {
+    max-height: 200px !important;
+  }
+  .draft-pitch-wrap .pdot {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Spin reel */
+  .draft-left .reel {
+    height: 40px !important;
+  }
+  .draft-left .reel::after {
+    height: 40px !important;
+  }
+  .draft-left .reel-item {
+    height: 40px !important;
+  }
+  .draft-left .spin {
+    font-size: 14px !important;
+    padding: 10px 20px !important;
+  }
+  .machine {
+    padding: 8px !important;
+  }
+
+  /* Squad picker modal: full-screen on mobile */
+  .squad {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 500 !important;
+    overflow-y: auto !important;
+    border-radius: 0 !important;
+  }
+  .squad-card {
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+    border-radius: 0 !important;
+  }
+
+  /* Corner home button: smaller */
+  .draft-corner-home {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* XI list: natural scroll */
+  .xi-list {
+    max-height: none !important;
+  }
+
+  /* Multiplayer view */
+  #mpView .mp-wrap {
+    padding: 0 12px 80px !important;
+  }
+  .mp-section {
+    margin-bottom: 12px !important;
+  }
+  .mp-team-strip {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+  .mp-names-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .mp-name-inp,
+  .rw-names {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Standings table: horizontal scroll */
+  .mp-table {
+    overflow-x: auto !important;
+    display: block !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Tournament featured scoreboard */
+  .mp-feat-scoreboard {
+    gap: 6px !important;
+    padding: 14px 12px 10px !important;
+  }
+  .mp-feat-tname {
+    font-size: 0.9rem !important;
+  }
+  .mp-feat-g {
+    font-size: 2rem !important;
+  }
+
+  /* Duels / Ratings War */
+  .rw-draft-layout {
+    padding-top: 44px !important;
+  }
+  .rw-pitch-wrap .pitch {
+    max-height: 180px !important;
+  }
+  .rw-pool-grid-sm {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .rw-pool-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .rw-presets {
+    flex-wrap: wrap !important;
+  }
+
+  /* Home mode cards: 2-column on mobile, not <400px override */
+  .fl-modes,
+  .home-modes {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Results page summary grid: 1 column */
+  .result-under-summary {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── SMALL PHONES (≤400px): single-column home cards ─── */
+@media (max-width: 400px) {
+  .fl-modes,
+  .home-modes {
+    grid-template-columns: 1fr !important;
+  }
+}
