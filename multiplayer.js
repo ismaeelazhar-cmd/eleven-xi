@@ -286,9 +286,12 @@
   function _render(){
     root.innerHTML = "";
 
-    var back = mk("button","mp-back","← Home");
-    back.addEventListener("click", goHome);
-    root.appendChild(back);
+    /* Draft phase has its own fixed home button; skip the generic one */
+    if(st.phase !== "draft"){
+      var back = mk("button","mp-back","← Home");
+      back.addEventListener("click", goHome);
+      root.appendChild(back);
+    }
 
     switch(st.phase){
       case "mp_connect":      renderConnectChoice();break;
@@ -1086,25 +1089,33 @@
     var pickNum = p.picks.length + 1;
     var draftRound = Math.min.apply(null, st.players.map(function(pl){return pl.picks.length;})) + 1;
 
-    var wrap = mk("div","mp-wrap mp-draft-wrap");
+    /* ── Home button (fixed top-left like WC/CL) ── */
+    var homeBtn = mk("button","draft-corner-home","← Home");
+    homeBtn.addEventListener("click", goHome);
+    root.appendChild(homeBtn);
 
-    /* ── WC-style header: name/meta left + small pitch right ── */
-    var head = mk("div","draft-head");
-    var headInfo = mk("div","draft-head-info");
+    var wrap = mk("div","draft-layout");
+
+    /* ══ LEFT COLUMN: pitch + machine ══ */
+    var draftLeft = mk("div","draft-left");
+
+    /* Pitch header */
+    var pitchHeader = mk("div","draft-pitch-header");
     var rerollsRemaining = Math.max(0, 3 - (p.rerollsUsed||0));
-    headInfo.innerHTML =
+    pitchHeader.innerHTML =
       '<div class="draft-team">'+esc(p.name)+'</div>'+
       '<div class="draft-meta">'+
         'Pick <strong>'+pickNum+'</strong>/11 · Round '+draftRound+' · '+
         esc(p.formation)+' · '+(p.manager?p.manager.emoji+' '+esc(p.manager.name):'No manager')+
         ' · <span class="mp-reroll-badge'+(rerollsRemaining===0?' mp-reroll-empty':'')+'">'+rerollsRemaining+'/3 rerolls</span>'+
       '</div>';
-    head.appendChild(headInfo);
-    var pitchWrapHead = mk("div","draft-pitch-wrap");
-    pitchWrapHead.id = "mpPitchWrap";
-    pitchWrapHead.innerHTML = buildWCPitch(p);
-    head.appendChild(pitchWrapHead);
-    wrap.appendChild(head);
+    draftLeft.appendChild(pitchHeader);
+
+    /* Pitch */
+    var pitchWrapLeft = mk("div","draft-pitch-wrap");
+    pitchWrapLeft.id = "mpPitchWrap";
+    pitchWrapLeft.innerHTML = buildWCPitch(p);
+    draftLeft.appendChild(pitchWrapLeft);
 
     /* ── Spin machine (WC-style .machine) ── */
     var machine = mk("div","machine");
@@ -1126,25 +1137,29 @@
     spinBtn.id = "mpDraftSpin";
     controls.appendChild(spinBtn);
     machine.appendChild(controls);
-    wrap.appendChild(machine);
+    draftLeft.appendChild(machine);
 
     /* ── Squad panel (hidden until spin lands) ── */
     var squadPanel = mk("section","squad mp-squad-panel");
     squadPanel.id = "mpSquadPanel";
     squadPanel.style.display = "none";
-    wrap.appendChild(squadPanel);
+    draftLeft.appendChild(squadPanel);
 
-    /* ── XI list (WC-style .xi) ── */
+    wrap.appendChild(draftLeft);
+
+    /* ══ RIGHT COLUMN: XI list ══ */
+    var draftRight = mk("div","draft-right");
+
     var xiSec = mk("section","xi");
     xiSec.innerHTML =
-      '<div class="xi-head"><h2>Your XI</h2>'+
+      '<div class="xi-head"><h2>'+esc(p.name)+'\'s XI</h2>'+
         '<div><span class="count" id="mpXiCount">'+p.picks.length+'/11</span>'+
         ' <span class="formation">· '+esc(p.formation)+'</span></div>'+
       '</div>';
     var xiList = mk("div","xi-list"); xiList.id="mpXiList";
     xiSec.appendChild(xiList);
 
-    /* MP-2: Auto-fill button when 9+ slots filled */
+    /* Auto-fill button when 9+ slots filled */
     if(p.picks.length >= 9 && p.picks.length < 11){
       var remaining = 11 - p.picks.length;
       var afBtn = mk("button","btn-ghost mp-autofill-btn",
@@ -1155,7 +1170,8 @@
       xiSec.appendChild(afBtn);
     }
 
-    wrap.appendChild(xiSec);
+    draftRight.appendChild(xiSec);
+    wrap.appendChild(draftRight);
 
     root.appendChild(wrap);
 
@@ -1432,9 +1448,13 @@
       return la!==lb ? la-lb : (b.r||0)-(a.r||0);
     });
 
+    var rerollsRem = Math.max(0, 3 - (player.rerollsUsed||0));
     var html =
       '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2>'+
-        '<button class="squad-close" id="mpSqClose" aria-label="Close">&#x2715;</button></div>'+
+        (rerollsRem > 0
+          ? '<button class="squad-respin-btn" id="mpSqRespin">Respin ('+rerollsRem+' left)</button>'
+          : '<span class="squad-respin-empty">No respins left</span>'
+        )+'</div>'+
       '<div class="sub">Tap a player to place them</div>';
 
     /* ── Position chooser (shows when a player has been tapped) ── */
@@ -1454,41 +1474,63 @@
         '</div>';
     }
 
-    /* ── Player cards ── */
-    html += '<div class="players mp-players-grid">';
+    /* ── Player cards grouped by GK / DEF / MID / FWD ── */
+    var lineLabels = {GK:"Goalkeeper",DEF:"Defenders",MID:"Midfielders",FWD:"Attackers"};
+    var groups = {GK:[],DEF:[],MID:[],FWD:[]};
     sorted.forEach(function(pl){
-      var locked = st.lockedNames.hasOwnProperty(pl.n);
-      var pos = pl.gp||pl.p||"MID";
-      var lineCls = MP_LINE_OF[pos]||"MID";
-      var lockedByIdx = locked ? st.lockedNames[pl.n] : -1;
-      var lockedByName = (lockedByIdx>=0&&st.players[lockedByIdx]) ? st.players[lockedByIdx].name : "";
-      /* Check if this player has open slots in this formation */
-      var noSlot = !locked && eligibleSlots(pl, player).length===0;
-      var isPending = st.pendingPick && st.pendingPick.spin===spin && st.pendingPick.squadPlayer.n===pl.n;
-      var cls = "player"+
-        (locked?" taken":"")+
-        (noSlot?" noslot":"")+
-        (isPending?" mp-player-pending":"");
-      html +=
-        '<div class="'+cls+'" data-pl-n="'+esc(pl.n)+'">'+
-          '<span class="pos '+lineCls+'">'+esc(pos)+'</span>'+
-          '<span class="pname">'+esc(pl.n)+'</span>'+
-          (locked
-            ? '<span class="mp-locked-badge">'+esc(lockedByName||"✓")+'</span>'
-            : noSlot
-              ? '<span class="slot-tag">no slot</span>'
-              : '<span class="mp-r-badge'+ratingTierClass(pl.r)+'">'+pl.r+'</span>'
-          )+
-        '</div>';
+      var line = MP_LINE_OF[pl.gp||pl.p]||"MID";
+      (groups[line]||groups.MID).push(pl);
+    });
+    html += '<div class="players mp-players-grid">';
+    ["GK","DEF","MID","FWD"].forEach(function(line){
+      var grp = groups[line];
+      if(!grp.length) return;
+      html += '<div class="squad-group-label '+line+'">'+lineLabels[line]+'</div>';
+      grp.forEach(function(pl){
+        var locked = st.lockedNames.hasOwnProperty(pl.n);
+        var pos = pl.gp||pl.p||"MID";
+        var lineCls = MP_LINE_OF[pos]||"MID";
+        var lockedByIdx = locked ? st.lockedNames[pl.n] : -1;
+        var lockedByName = (lockedByIdx>=0&&st.players[lockedByIdx]) ? st.players[lockedByIdx].name : "";
+        var noSlot = !locked && eligibleSlots(pl, player).length===0;
+        var isPending = st.pendingPick && st.pendingPick.spin===spin && st.pendingPick.squadPlayer.n===pl.n;
+        var cls = "player"+
+          (locked?" taken":"")+
+          (noSlot?" noslot":"")+
+          (isPending?" mp-player-pending":"");
+        html +=
+          '<div class="'+cls+'" data-pl-n="'+esc(pl.n)+'">'+
+            '<span class="pos '+lineCls+'">'+esc(pos)+'</span>'+
+            '<span class="pname">'+esc(pl.n)+'</span>'+
+            (locked
+              ? '<span class="mp-locked-badge">'+esc(lockedByName||"✓")+'</span>'
+              : noSlot
+                ? '<span class="slot-tag">no slot</span>'
+                : '<span class="mp-r-badge'+ratingTierClass(pl.r)+'">'+pl.r+'</span>'
+            )+
+          '</div>';
+      });
     });
     html += '</div></div>';
 
     panel.innerHTML = html;
     panel.style.display = "";
 
-    /* Close button — pure dismiss, no side effects on spin state or reroll count */
-    var mpClose = panel.querySelector("#mpSqClose");
-    if (mpClose) mpClose.onclick = function() { panel.style.display = "none"; st.pendingPick = null; };
+    /* Respin button — costs 1 reroll, triggers new spin */
+    var mpRespin = panel.querySelector("#mpSqRespin");
+    if (mpRespin) mpRespin.onclick = function(){
+      if ((player.rerollsUsed||0) >= 3) return;
+      player.rerollsUsed = (player.rerollsUsed||0) + 1;
+      st.currentSpin = null;
+      st.pendingPick = null;
+      panel.style.display = "none";
+      var spinBtn = eid("mpDraftSpin");
+      var cStrip = eid("mpCS"), yStrip = eid("mpYS");
+      if(spinBtn && cStrip && yStrip){
+        initDraftStrips(cStrip, yStrip, null);
+        doSpinDraft(cStrip, yStrip, spinBtn, panel, player);
+      }
+    };
 
     /* Position chooser button handlers */
     if(st.pendingPick && st.pendingPick.spin===spin){

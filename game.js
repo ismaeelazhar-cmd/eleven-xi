@@ -582,7 +582,7 @@
     var full = squad.length >= XI_SIZE;
     elSpin.disabled = spinning || awaitingPick || full;
     elRerollCount.textContent = rerollsLeft;
-    elReroll.hidden = !(awaitingPick && rerollsLeft > 0 && !full);
+    elReroll.hidden = true; /* Respin button is now inside the squad panel */
     elReroll.disabled = spinning;
     elAutoPick.hidden = !(awaitingPick && !full);
     elAutoPick.disabled = spinning;
@@ -625,7 +625,13 @@
 
     // Modal card header
     var inner = '<div class="squad-card">';
-    inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2></div>';
+    inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2>';
+    if (awaitingPick && rerollsLeft > 0) {
+      inner += '<button class="squad-respin-btn" id="squadRespinBtn">Respin (' + rerollsLeft + ' left)</button>';
+    } else if (awaitingPick) {
+      inner += '<span class="squad-respin-empty">No respins left</span>';
+    }
+    inner += '</div>';
     inner += '<div class="sub">Pick a player, then choose where they play.</div>';
 
     if (pendingPick) {
@@ -665,6 +671,16 @@
     elSquadPanel.innerHTML = inner;
     elSquadPanel.style.display = "flex";
 
+    var respinBtn = elSquadPanel.querySelector("#squadRespinBtn");
+    if (respinBtn) {
+      respinBtn.addEventListener("click", function () {
+        if (rerollsLeft <= 0 || spinning) return;
+        rerollsLeft--;
+        pendingPick = null;
+        elSquadPanel.style.display = "none";
+        doSpin();
+      });
+    }
 
     Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".player"), function (n) {
       n.addEventListener("click", function () {

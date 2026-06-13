@@ -4060,3 +4060,31 @@ button, a, .seg-opt { touch-action: manipulation; }
   filter: brightness(1.06) !important;
   box-shadow: 0 8px 22px rgba(249,156,0,0.45) !important;
 }
+
+/* ── Squad picker: Respin button inside modal ── */
+.squad-respin-btn {
+  background: linear-gradient(180deg, #ffe99a 0%, #f99c00 100%);
+  color: #1a1206;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(249,156,0,0.3);
+}
+.squad-respin-btn:hover { filter: brightness(1.07); }
+.squad-respin-empty {
+  font-size: 11px;
+  color: var(--text-mute, #828DAD);
+  padding: 4px 8px;
+}
+.squad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+/* Multiplayer draft: squad panel inside draft-left */
+.draft-left .mp-squad-panel { margin-top: 10px; }
