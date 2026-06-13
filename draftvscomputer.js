@@ -12,6 +12,13 @@ window.startDraftVsComputer = (function (W) {
     RW:"FWD", LW:"FWD", ST:"FWD", CF:"FWD", FWD:"FWD"
   };
 
+  /* Lateral order for left-to-right pitch display */
+  var LATERAL_ORDER = { LB:0,LWB:0,LM:0,LW:0, CB:1,CDM:1,CM:1,CAM:1,ST:1,CF:1, RB:2,RWB:2,RM:2,RW:2 };
+  function lateralSort(a,b){ return (LATERAL_ORDER[a.slot]||1)-(LATERAL_ORDER[b.slot]||1); }
+
+  /* Position group order for squad picker */
+  var POS_ORDER = {GK:0,CB:1,RB:1,LB:1,RWB:1,LWB:1,DEF:1,CDM:2,CM:2,RM:2,LM:2,CAM:2,MID:2,RW:3,LW:3,ST:3,CF:3,FWD:3};
+
   var DVC_FORMATIONS = {
     "4-3-3":   { slots:["GK","RB","CB","CB","LB","CM","CDM","CM","RW","ST","LW"] },
     "4-4-2":   { slots:["GK","RB","CB","CB","LB","RM","CM","CM","LM","ST","ST"] },
@@ -62,7 +69,7 @@ window.startDraftVsComputer = (function (W) {
   }
 
   /* State */
-  var DVC = {};
+  var DVC = { formation:"4-3-3", difficulty:"medium", personality:"balanced", maxRerolls:3, rerollsLeft:3 };
 
   function lineOf(pos){ return LINE_OF[(pos||"").trim()] || "MID"; }
 
@@ -243,16 +250,22 @@ window.startDraftVsComputer = (function (W) {
     slots.forEach(function(s){ var l=lineOf(s); var p=byLine[l].shift()||null; filled.push({slot:s,line:l,player:p}); });
     var lineMap = {GK:[],DEF:[],MID:[],FWD:[]};
     filled.forEach(function(f){ lineMap[f.line].push(f); });
+    /* Sort each row left-to-right */
+    Object.keys(lineMap).forEach(function(k){ lineMap[k].sort(lateralSort); });
     var rows = [lineMap.FWD, lineMap.MID, lineMap.DEF, lineMap.GK];
     var html = '<div class="pitch dvc-pitch">';
     rows.forEach(function(row){
       if (!row.length) return;
       html += '<div class="pitch-row">';
       row.forEach(function(f){
-        html += '<div class="pdot'+(f.player?" filled "+f.line:" "+f.line)+'">' +
-          '<span class="dot-pos">'+esc(f.slot)+'</span>' +
-          (f.player ? '<span class="dot-name">'+esc(f.player.n.split(" ").pop())+'</span>' : '') +
-        '</div>';
+        if (f.player) {
+          html += '<div class="pdot filled '+f.line+'">' +
+            '<span class="dot-init">'+(f.player.r||'?')+'</span>' +
+            '<span class="dot-name">'+esc(f.player.n.split(" ").pop())+'</span>' +
+          '</div>';
+        } else {
+          html += '<div class="pdot '+f.line+'"><span class="dot-pos">'+esc(f.slot)+'</span></div>';
+        }
       });
       html += '</div>';
     });
@@ -289,6 +302,12 @@ window.startDraftVsComputer = (function (W) {
     html += '<div class="seg-desc" id="dvcDiffDesc">'+(DVC.difficulty==="easy"?"CPU picks with lower priority — easier to outbuild.":DVC.difficulty==="hard"?"CPU always takes the best available player — tough competition.":"CPU plays sensibly but isn\'t perfect.")+'</div>';
     html += '<div class="dvc-record" id="dvcRecord">'+renderRecordHtml(DVC.difficulty)+'</div>';
     html += '</div>';
+    html += '<div class="setup-row setup-row-col"><span class="setup-label">Rerolls per spin</span>';
+    html += '<div class="diff-row" id="dvcRerollBar">';
+    [{id:1,label:"1 — Decisive"},{id:3,label:"3 — Balanced"},{id:5,label:"5 — Flexible"}].forEach(function(r){
+      html += '<button class="diff-opt'+(DVC.maxRerolls===r.id?" active":"")+'" data-r="'+r.id+'">'+esc(r.label)+'</button>';
+    });
+    html += '</div></div>';
     html += '<div class="setup-row setup-row-col"><span class="setup-label">CPU Style</span>';
     html += '<div class="diff-row" id="dvcPersonBar">';
     [{id:"balanced",label:"Balanced",desc:"No obvious weakness — CPU builds a complete side."},{id:"scorer",label:"The Scorer",desc:"CPU hunts strikers — expect a high-scoring game."},{id:"defender",label:"The Defender",desc:"CPU prioritises defence — it will be a battle to break down."}].forEach(function(p){
@@ -335,6 +354,14 @@ window.startDraftVsComputer = (function (W) {
       };
     });
 
+    document.querySelectorAll("#dvcRerollBar .diff-opt").forEach(function(btn){
+      btn.onclick = function(){
+        DVC.maxRerolls = parseInt(btn.getAttribute("data-r"), 10);
+        document.querySelectorAll("#dvcRerollBar .diff-opt").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+      };
+    });
+
     var startBtn = document.getElementById("dvcStart");
     if (startBtn) startBtn.onclick = function(){
       DVC.teamPool = buildTeamPool();
@@ -352,6 +379,7 @@ window.startDraftVsComputer = (function (W) {
       DVC.spinBusy = false;
       DVC.awaitingPick = false;
       DVC.spinResult = null;
+      DVC.rerollsLeft = DVC.maxRerolls;
       render();
     };
   }
@@ -400,7 +428,7 @@ window.startDraftVsComputer = (function (W) {
     }
     html += '</div>';
 
-    /* ── Three-column layout ── */
+    /* ── Two-column layout: pitches on sides, reel in center ── */
     html += '<div class="dvc-three-col">';
 
     /* LEFT — CPU pitch */
@@ -409,17 +437,21 @@ window.startDraftVsComputer = (function (W) {
     html += '<div id="dvcCpuPitch">' + pitchHTML(DVC.cpuPicks, DVC.formation) + '</div>';
     html += '</div>';
 
-    /* CENTER — reel + squad picker + spin button */
+    /* CENTER — reel + squad picker + buttons */
     html += '<div class="dvc-center-col">';
+    /* Mini reel */
     html += '<div class="dvc-combo-reel-wrap">';
     html += '<div class="reel dvc-combo-reel" id="dvcCountryReel">';
-    html += '<div class="reel-strip" id="dvcCS"><div class="reel-item dvc-combo-item"><span class="dvc-item-flag">🎰</span><span class="dvc-item-team">SPIN THE REEL</span><span class="dvc-item-year">to reveal a squad</span></div></div>';
-    html += '</div>';
-    html += '</div>';
+    html += '<div class="reel-strip" id="dvcCS"><div class="reel-item dvc-combo-item"><span class="dvc-item-team">SPIN THE REEL</span><span class="dvc-item-year">to reveal a squad</span></div></div>';
+    html += '</div></div>';
     /* Inline squad picker */
     html += '<div id="dvcSquadPanel" class="dvc-squad-inline" style="display:none"></div>';
-    /* Spin button */
+    /* Action buttons row */
+    html += '<div class="dvc-action-row">';
     html += '<button class="spin dvc-reel-btn" id="dvcSpinBtn"' + (isPlayerTurn ? '' : ' disabled') + '>SPIN THE REEL</button>';
+    var rerollsLeft = DVC.rerollsLeft !== undefined ? DVC.rerollsLeft : (DVC.maxRerolls || 3);
+    html += '<button class="dvc-reroll-btn" id="dvcRerollBtn" style="display:none"' + (rerollsLeft <= 0 ? ' disabled' : '') + '>Reroll (' + rerollsLeft + ' left)</button>';
+    html += '</div>';
     html += '</div>';
 
     /* RIGHT — Player pitch */
@@ -439,6 +471,20 @@ window.startDraftVsComputer = (function (W) {
 
     var spinBtn = document.getElementById("dvcSpinBtn");
     if (spinBtn) spinBtn.addEventListener("click", doDvcSpin);
+
+    var rerollBtn = document.getElementById("dvcRerollBtn");
+    if (rerollBtn) rerollBtn.addEventListener("click", function() {
+      if (DVC.rerollsLeft <= 0 || DVC.spinBusy) return;
+      DVC.rerollsLeft--;
+      DVC.spinResult = null;
+      DVC.awaitingPick = false;
+      var panel = document.getElementById("dvcSquadPanel");
+      if (panel) panel.style.display = "none";
+      rerollBtn.style.display = "none";
+      var spinBtn2 = document.getElementById("dvcSpinBtn");
+      if (spinBtn2) { spinBtn2.disabled = false; spinBtn2.style.display = ""; }
+      doDvcSpin();
+    });
 
     /* Sync button enabled state after render — belt-and-suspenders */
     updateDraftUI();
@@ -479,7 +525,11 @@ window.startDraftVsComputer = (function (W) {
 
     var team = DVC.spinResult.team;
     var year = DVC.spinResult.year;
-    var squad = DVC.spinResult.squad.slice().sort(function(a,b){ return (b.r||0)-(a.r||0); });
+    /* Sort by position group (GK→DEF→MID→FWD) then by rating desc */
+    var squad = DVC.spinResult.squad.slice().sort(function(a,b){
+      var pa = POS_ORDER[a.gp||a.p||"MID"]||2, pb = POS_ORDER[b.gp||b.p||"MID"]||2;
+      return pa !== pb ? pa - pb : (b.r||0)-(a.r||0);
+    });
     var annotated = annotateSquad(squad, DVC.playerPicks, DVC.cpuPicks);
     var hasDraftable = annotated.some(function(item){ return !item.taken && !item.noSlot; });
 
@@ -512,6 +562,17 @@ window.startDraftVsComputer = (function (W) {
     panel.innerHTML = html;
     panel.style.display = "block";
 
+    /* Show reroll button, hide spin button */
+    var rerollsLeft = DVC.rerollsLeft !== undefined ? DVC.rerollsLeft : 0;
+    var rerollBtn = document.getElementById("dvcRerollBtn");
+    var spinBtn = document.getElementById("dvcSpinBtn");
+    if (rerollBtn) {
+      rerollBtn.style.display = rerollsLeft > 0 ? "" : "none";
+      rerollBtn.disabled = rerollsLeft <= 0;
+      rerollBtn.textContent = "Reroll (" + rerollsLeft + " left)";
+    }
+    if (spinBtn) spinBtn.style.display = "none";
+
 
     /* Player pick handlers */
     panel.querySelectorAll(".player:not(.taken):not(.noslot)").forEach(function(el) {
@@ -525,6 +586,13 @@ window.startDraftVsComputer = (function (W) {
         panel.style.display = "none";
         DVC.awaitingPick = false;
         DVC.spinResult = null;
+        /* Restore spin button visibility */
+        var sb = document.getElementById("dvcSpinBtn");
+        var rb = document.getElementById("dvcRerollBtn");
+        if (sb) sb.style.display = "";
+        if (rb) rb.style.display = "none";
+        /* Reset rerolls for next turn */
+        DVC.rerollsLeft = DVC.maxRerolls || 3;
         doPlayerPickDvc({ n: found.n, r: found.r || 75, pos: pos, line: l });
       });
     });
@@ -805,6 +873,8 @@ window.startDraftVsComputer = (function (W) {
       formation: "4-3-3",
       difficulty: "medium",
       personality: "balanced",
+      maxRerolls: 3,
+      rerollsLeft: 3,
       teamPool: [],
       playerPicks: [],
       cpuPicks: [],
