@@ -143,8 +143,7 @@ window.startDraftVsComputer = (function (W) {
     var avg = entry.squad.reduce(function(s,p){ return s+(p.r||75); }, 0) / Math.max(1, entry.squad.length);
     var starCount = avg >= 88 ? 5 : avg >= 83 ? 4 : avg >= 78 ? 3 : avg >= 73 ? 2 : 1;
     for (var i=0; i<starCount; i++) stars += "★";
-    return '<div class="reel-item dvc-combo-item">' +
-      '<span class="dvc-item-flag">' + esc(entry.flag || "🏳") + '</span>' +
+    return '<div class="reel-item dvc-combo-item reel-item-noflag">' +
       '<span class="dvc-item-team">' + esc(entry.team) + '</span>' +
       '<span class="dvc-item-year">' + esc(entry.year) + ' <span class="dvc-stars">' + stars + '</span></span>' +
       '</div>';

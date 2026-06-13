@@ -265,9 +265,9 @@ button.spin {
   letter-spacing: 1px;
   padding: 14px 34px;
   border-radius: 999px;
-  color: #1a1206;
-  background: linear-gradient(180deg, #ffe08a, var(--gold));
-  box-shadow: 0 8px 22px rgba(255, 209, 102, 0.35), inset 0 1px 0 rgba(255,255,255,0.6);
+  color: var(--btn-primary-fg, #fff);
+  background: var(--btn-primary-bg, linear-gradient(180deg, #9A82FF, #6A47ED));
+  box-shadow: 0 8px 22px rgba(124,92,252,0.38), inset 0 1px 0 rgba(255,255,255,0.25);
   transition: transform 0.06s ease, filter 0.2s ease;
 }
 button.spin:hover { filter: brightness(1.05); }
@@ -1548,10 +1548,10 @@ header h1 {
    ═══════════════════════════════════════ */
 @keyframes spin-idle {
   0%, 100% {
-    box-shadow: 0 8px 22px rgba(249,156,0,0.38), 0 0 0 0 rgba(249,156,0,0.25);
+    box-shadow: 0 8px 22px rgba(124,92,252,0.38), 0 0 0 0 rgba(124,92,252,0.25);
   }
   55% {
-    box-shadow: 0 10px 30px rgba(249,156,0,0.55), 0 0 0 10px rgba(249,156,0,0);
+    box-shadow: 0 10px 30px rgba(124,92,252,0.55), 0 0 0 10px rgba(124,92,252,0);
   }
 }
 button.spin {
@@ -1559,8 +1559,9 @@ button.spin {
   padding: 15px 38px;
   border-radius: var(--radius-pill);
   letter-spacing: 2px;
-  background: linear-gradient(180deg, #ffe99a 0%, #f99c00 100%);
-  box-shadow: 0 8px 22px rgba(249,156,0,0.38), inset 0 1px 0 rgba(255,255,255,0.55);
+  background: var(--btn-primary-bg, linear-gradient(180deg, #9A82FF 0%, #6A47ED 100%));
+  color: var(--btn-primary-fg, #fff);
+  box-shadow: 0 8px 22px rgba(124,92,252,0.38), inset 0 1px 0 rgba(255,255,255,0.22);
   transition: filter 0.15s ease, transform 0.08s ease;
 }
 button.spin:not(:disabled) {
@@ -4064,8 +4065,8 @@ button, a, .seg-opt { touch-action: manipulation; }
 
 /* ── Squad picker: Respin button inside modal ── */
 .squad-respin-btn {
-  background: linear-gradient(180deg, #ffe99a 0%, #f99c00 100%);
-  color: #1a1206;
+  background: var(--btn-primary-bg, linear-gradient(180deg, #9A82FF 0%, #6A47ED 100%));
+  color: var(--btn-primary-fg, #fff);
   border: none;
   border-radius: 8px;
   font-weight: 700;
@@ -4073,7 +4074,7 @@ button, a, .seg-opt { touch-action: manipulation; }
   padding: 5px 12px;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(249,156,0,0.3);
+  box-shadow: 0 3px 10px rgba(124,92,252,0.32);
 }
 .squad-respin-btn:hover { filter: brightness(1.07); }
 .squad-respin-empty {
@@ -4913,7 +4914,7 @@ body.light .mp-free-respin {
   border-top-color: rgba(10, 124, 110, 0.2);
 }
 body.light .squad-respin-btn {
-  box-shadow: 0 3px 10px rgba(200, 134, 10, 0.25);
+  box-shadow: 0 3px 10px rgba(124, 92, 252, 0.25);
 }
 
 /* ═══════════════════════════

@@ -4,7 +4,22 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Cross-mode polish pass (T5) complete. Cache wcxi-v140._
+_Last checkpoint: Cross-mode polish + gold→indigo button migration complete. Cache wcxi-v142._
+
+## §35. Task 6 — Finish the transcript's outstanding items (button colour migration, manager/flag consistency)
+
+**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v124`, `league.js v87`, `draftvscomputer.js v15`, `sw.js wcxi-v142`
+
+Re-read the full transcript; the parallel session had landed most items but two were unfinished and one design migration was incomplete:
+
+1. **Primary button gold→indigo (the big unfinished one)** — `--btn-primary-bg` token was still a gold gradient, so every primary/spin/confirm/start button rendered gold despite `--primary` being violet. Completed the migration:
+   - `tokens.css`: `--btn-primary-bg` → violet gradient (`--p-violet-400`→`--p-violet-600`), `--btn-primary-fg` → `#fff`, `--sh-glow-primary` → violet glow.
+   - `floodlights.css`: 3D button base shadow `#c87800` (amber) → dark violet (`color-mix --p-violet-600`).
+   - `style.css`: both `button.spin` rules (higher specificity, were overriding with gold), `.squad-respin-btn`, the `spin-idle` keyframe glow, and the light-mode respin shadow all → violet/token-driven. Semantic gold (GK dots, champion/top-row highlights) intentionally kept.
+2. **Manager wheel name-only (all modes)** — League surprise-event manager reel (`mgrHTML`) still appended a `mgr-style-tag`; removed it so it matches WC/League/MP (name only, no style tag).
+3. **Spin reel no-flags (all modes)** — vs Computer combo reel still showed a flag emoji (`dvc-item-flag`); removed it and added `reel-item-noflag`, matching every other mode.
+
+Verified already-done (by parallel session, kept): squad-list spacing, summary scorers/assists fit, position-order pickers, pitch rating+name, local Duels alternating draft, FAB visibility (offsetParent check), DVC pool selection, reroll system, two-column Duels build layout, shared pool + series-mode on intro.
 
 ## §34. Task 5 — Cross-mode polish (squad spacing, position order, pitch ratings, local Duels alternating draft)
 
@@ -35,7 +50,7 @@ _Last checkpoint: Cross-mode polish pass (T5) complete. Cache wcxi-v140._
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v136`
-- **Current file versions:** style.css v81, tokens.css v74, floodlights.css v117, game.js v99, multiplayer.js v96, floodlights.js v94, ratingswar.js v104, draftvscomputer.js v11, league.js v84, sw.js wcxi-v140
+- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v124, game.js v116, multiplayer.js v103, floodlights.js v95, ratingswar.js v113, draftvscomputer.js v15, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v142
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`

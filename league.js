@@ -1132,7 +1132,7 @@
       panel.innerHTML=html; panel.className="lg-modal-overlay"; panel.style.display="";
       var strip=eid("lgEvtStrip");
       var pick=MGRS_DB[Math.floor(Math.random()*MGRS_DB.length)];
-      function mgrHTML(d){ var s=MGRS.filter(function(m){return m.id===d.s;})[0]||MGRS[0]||{emoji:"",name:""}; return "<div class='reel-item mgr-item'><span class='mgr-name-big'>"+esc(d.n)+"</span><span class='mgr-style-tag'>"+s.name+"</span></div>"; }
+      function mgrHTML(d){ return "<div class='reel-item mgr-item'><span class='mgr-name-big'>"+esc(d.n)+"</span></div>"; }
       var items=MGRS_DB.slice(0,14).map(mgrHTML); items.push(mgrHTML(pick));
       if(strip) strip.innerHTML=mgrHTML(MGRS_DB[0]);
       eid("lgEvtSpin").addEventListener("click",function(){
