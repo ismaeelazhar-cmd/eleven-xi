@@ -147,6 +147,7 @@
     mpMode: "wc",
     numPlayers: 2,
     tournamentFormat: "auto",
+    maxRerolls: 3,        // rerolls per player (0 / 1 / 3), chosen on the setup page
     players: [],
     setupIdx: 0,
     handoffFrom: 0,
@@ -768,11 +769,24 @@
     fmtWrap.appendChild(fmtRow);
     wrap.appendChild(fmtWrap);
 
+    /* ── Rerolls per player (0 / 1 / 3) ── */
+    var rrWrap = mk("div","mp-section");
+    rrWrap.innerHTML = '<div class="mp-label">Rerolls per player</div>';
+    var rrRow = mk("div","mp-btn-row");
+    [0,1,3].forEach(function(o){
+      var b = mk("button","mp-pill-btn"+(o===st.maxRerolls?" active":""), String(o));
+      b.addEventListener("click",function(){ st.maxRerolls=o; _render(); });
+      rrRow.appendChild(b);
+    });
+    rrWrap.appendChild(rrRow);
+    wrap.appendChild(rrWrap);
+
     /* ── Summary line ── */
     var fmtDesc  = st.tournamentFormat==="auto" ? autoLabel :
                    st.tournamentFormat==="h2h"  ? "Head-to-head" :
                    st.tournamentFormat==="group" ? "Group stage → Final" : "Group → Semis → Final";
-    var infoEl = mk("div","mp-fmt-info","3 rerolls per player &nbsp;·&nbsp; "+fmtDesc+" &nbsp;·&nbsp; Round-robin draft · 11 picks each");
+    var rrN = (st.maxRerolls!=null?st.maxRerolls:3);
+    var infoEl = mk("div","mp-fmt-info",rrN+" reroll"+(rrN===1?"":"s")+" per player &nbsp;·&nbsp; "+fmtDesc+" &nbsp;·&nbsp; Round-robin draft · 11 picks each");
     wrap.appendChild(infoEl);
 
     /* ── Start ── */
@@ -1104,13 +1118,13 @@
 
     /* Pitch header */
     var pitchHeader = mk("div","draft-pitch-header");
-    var rerollsRemaining = Math.max(0, 3 - (p.rerollsUsed||0));
+    var rerollsRemaining = Math.max(0, (st.maxRerolls!=null?st.maxRerolls:3) - (p.rerollsUsed||0));
     pitchHeader.innerHTML =
       '<div class="draft-team">'+esc(p.name)+'</div>'+
       '<div class="draft-meta">'+
         'Pick <strong>'+pickNum+'</strong>/11 · Round '+draftRound+' · '+
         esc(p.formation)+' · '+(p.manager?p.manager.emoji+' '+esc(p.manager.name):'No manager')+
-        ' · <span class="mp-reroll-badge'+(rerollsRemaining===0?' mp-reroll-empty':'')+'">'+rerollsRemaining+'/3 rerolls</span>'+
+        ' · <span class="mp-reroll-badge'+(rerollsRemaining===0?' mp-reroll-empty':'')+'">'+rerollsRemaining+'/'+(st.maxRerolls!=null?st.maxRerolls:3)+' rerolls</span>'+
       '</div>';
     draftLeft.appendChild(pitchHeader);
 
@@ -1353,7 +1367,7 @@
   function rerollsLeft(){
     if(!st.currentSpin) return -1; /* free spin — not a reroll */
     var p = st.players[st.cur];
-    return Math.max(0, 3 - (p ? p.rerollsUsed||0 : 0));
+    return Math.max(0, (st.maxRerolls!=null?st.maxRerolls:3) - (p ? p.rerollsUsed||0 : 0));
   }
 
   function updateSpinBtn(spinBtn){
@@ -1453,7 +1467,7 @@
       return la!==lb ? la-lb : (b.r||0)-(a.r||0);
     });
 
-    var rerollsRem = Math.max(0, 3 - (player.rerollsUsed||0));
+    var rerollsRem = Math.max(0, (st.maxRerolls!=null?st.maxRerolls:3) - (player.rerollsUsed||0));
     var html =
       '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2>'+
         (rerollsRem > 0
@@ -1550,7 +1564,7 @@
     /* Respin button — costs 1 reroll, triggers new spin */
     var mpRespin = panel.querySelector("#mpSqRespin");
     if (mpRespin) mpRespin.onclick = function(){
-      if ((player.rerollsUsed||0) >= 3) return;
+      if ((player.rerollsUsed||0) >= (st.maxRerolls!=null?st.maxRerolls:3)) return;
       player.rerollsUsed = (player.rerollsUsed||0) + 1;
       st.currentSpin = null;
       st.pendingPick = null;

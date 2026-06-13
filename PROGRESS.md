@@ -4,11 +4,23 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Online Duels build fixes + 6-min timer. Cache wcxi-v143._
+_Last checkpoint: Timeout autofill + configurable rerolls (0/1/3). Cache wcxi-v144._
+
+## §37. Task 8 — Online build timeout autofill + configurable rerolls (0/1/3)
+
+**Status: COMPLETE** | Files: `ratingswar.js v115`, `multiplayer.js v104`, `draftvscomputer.js v16`, `floodlights.css v126`, `sw.js wcxi-v144`
+
+- **Timer autofill (online Duels)**: when the 6-minute build clock hits 0:00, `rwOnlineAutoLock` now calls `rwAutoFillRemaining(P)` to fill every empty slot from the current pool (position-eligible, no duplicates) before locking + sending — the reveal always gets a complete XI instead of gaps.
+- **Configurable rerolls 0 / 1 / 3, applied in-game**:
+  - Duels: `RW.maxRerolls` (default 3) via `rwMax()`; all hardcoded `3` reroll caps replaced. Selector added to the local Duels intro and the online intro. Online is host-controlled — host picks, value synced to guest via `rw_settings` + included in `rw_hello`; guest sees it locked ("set by host").
+  - Multiplayer: `st.maxRerolls` (default 3); selector on the MP setup page; all MP draft reroll caps + the badge/summary now use it.
+  - vs Computer: reroll options changed from 1/3/5 to **0/1/3**.
+- CSS: disabled/locked `.rw-pc-btn` styling for the guest's read-only reroll buttons.
+- "Fix all online modes": online play is Duels-only (Tournament stays local-only by design), so the §36 build-phase fixes + this autofill cover every online flow.
 
 ## §36. Task 7 — Online Duels build: simultaneous 6-min timer + fix self-spinning / can't-select
 
-**Status: COMPLETE** | Files: `ratingswar.js v114`, `floodlights.css v125`, `sw.js wcxi-v143`
+**Status: COMPLETE** | Files: `ratingswar.js v115`, `floodlights.css v126`, `sw.js wcxi-v144`
 
 Reported: in online Duels, the wheel sometimes spins by itself and sometimes players can't be selected; wanted a 6-minute simultaneous build with auto-lock (host still owns settings).
 
@@ -23,7 +35,7 @@ Fixes:
 Note (unchanged, by request): host still chooses settings; online is Duels-only (Draft Tournament stays local-only).
 ## §35. Task 6 — Finish the transcript's outstanding items (button colour migration, manager/flag consistency)
 
-**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v125`, `league.js v87`, `draftvscomputer.js v15`, `sw.js wcxi-v143`
+**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v126`, `league.js v87`, `draftvscomputer.js v16`, `sw.js wcxi-v144`
 
 Re-read the full transcript; the parallel session had landed most items but two were unfinished and one design migration was incomplete:
 
@@ -65,7 +77,7 @@ Verified already-done (by parallel session, kept): squad-list spacing, summary s
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v136`
-- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v125, game.js v116, multiplayer.js v103, floodlights.js v95, ratingswar.js v114, draftvscomputer.js v15, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v143
+- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v126, game.js v116, multiplayer.js v104, floodlights.js v95, ratingswar.js v115, draftvscomputer.js v16, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v144
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`

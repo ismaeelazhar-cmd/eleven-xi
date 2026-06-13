@@ -303,7 +303,7 @@ window.startDraftVsComputer = (function (W) {
     html += '</div>';
     html += '<div class="setup-row setup-row-col"><span class="setup-label">Rerolls per spin</span>';
     html += '<div class="diff-row" id="dvcRerollBar">';
-    [{id:1,label:"1 — Decisive"},{id:3,label:"3 — Balanced"},{id:5,label:"5 — Flexible"}].forEach(function(r){
+    [{id:0,label:"0 — None"},{id:1,label:"1 — One shot"},{id:3,label:"3 — Balanced"}].forEach(function(r){
       html += '<button class="diff-opt'+(DVC.maxRerolls===r.id?" active":"")+'" data-r="'+r.id+'">'+esc(r.label)+'</button>';
     });
     html += '</div></div>';

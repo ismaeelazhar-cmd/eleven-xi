@@ -29,6 +29,9 @@
   function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
   function shortName(n){ var p=String(n).split(" "); return p.length>1?p[p.length-1]:n; }
   function ratingTierClass(r){ if(!r) return ""; return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red"; }
+  /* Configurable rerolls per player (0 / 1 / 3), chosen on the Duels settings page. */
+  var RW_REROLL_OPTS = [0, 1, 3];
+  function rwMax(){ return (RW && RW.maxRerolls != null) ? RW.maxRerolls : 3; }
 
   function buildPool(){
     if (POOL) return POOL;
@@ -79,9 +82,11 @@
   function rwOnlineAutoLock(){
     rwClearBuildTimer();
     if (!RW || !RW.online || RW.myLocked) return;
+    var P = RW.players[RW.myIdx];
+    rwAutoFillRemaining(P);                 /* complete the XI rather than locking gaps */
     RW.myLocked = true; RW.currentSpin = null; RW.pendingRWPick = null;
-    rwSend({ t:"rw_xi", name:RW.players[RW.myIdx].name, picks:RW.players[RW.myIdx].picks });
-    if (typeof W.flToast === "function") W.flToast("Time's up — your XI is locked in.");
+    rwSend({ t:"rw_xi", name:RW.players[RW.myIdx].name, picks:P.picks });
+    if (typeof W.flToast === "function") W.flToast("Time's up — squad auto-completed and locked in.");
     maybeStartReveal();
   }
   function rwStartBuildTimer(){
@@ -182,6 +187,7 @@
       seriesMatch: 0,
       seriesMode: "1",   /* "1" = single match, "bo3" = best of 3 */
       poolKey: "wc",     /* chosen on intro page, shared by all players */
+      maxRerolls: 3,
       players:[ {name:"Player 1", picks:newPicks(), rerollsUsed:0}, {name:"Player 2", picks:newPicks(), rerollsUsed:0} ]
     };
     hideOthers(); view().style.display=""; if(W.scrollTo) W.scrollTo(0,0);
@@ -250,6 +256,7 @@
       myLocked:false, oppPicks:null, oppName:null, rematchMe:false, rematchOpp:false,
       currentSpin:null, pendingRWPick:null, _spinning:false,
       features: Object.assign({}, DEFAULT_FEATURES),
+      maxRerolls: 3,
       players:[ {name:"Host", picks:newPicks(), rerollsUsed:0}, {name:"Guest", picks:newPicks(), rerollsUsed:0} ]
     };
     if (W._pendingOnlinePool){
@@ -277,8 +284,17 @@
 
   function rwNet(msg){
     if(!RW || !RW.online || !msg || !msg.t) return;
+    if(msg.t === "rw_settings"){
+      // Host-controlled settings (guest applies). Only honour before locking.
+      if(RW.role !== "host" && !RW.myLocked && msg.maxRerolls != null){
+        RW.maxRerolls = msg.maxRerolls;
+        if(RW.phase === "onintro") render();
+      }
+      return;
+    }
     if(msg.t === "rw_hello"){
       RW.players[RW.oppIdx].name = String(msg.name||"").slice(0,14) || RW.players[RW.oppIdx].name;
+      if(RW.role !== "host" && !RW.myLocked && msg.maxRerolls != null) RW.maxRerolls = msg.maxRerolls;
       // If I locked before my opponent was ready, my XI may have been dropped on
       // their side — re-send it now that they've announced themselves.
       if(RW.myLocked) rwSend({ t:"rw_xi", name:RW.players[RW.myIdx].name, picks:RW.players[RW.myIdx].picks });
@@ -387,25 +403,42 @@
   /* ---------- online: name yourself, then build ---------- */
   function renderOnlineIntro(v){
     var me = RW.players[RW.myIdx], opp = RW.players[RW.oppIdx];
+    var isHost = RW.role === "host";
+    var rrCur = (RW.maxRerolls!=null?RW.maxRerolls:3);
+    var rerollHTML = "<div class='rw-section'><div class='rw-section-label'>Rerolls per player"+(isHost?"":" (set by host)")+"</div>"+
+      "<div class='rw-pc-btns'>"+
+        RW_REROLL_OPTS.map(function(o){ return '<button class="rw-pc-btn'+(rrCur===o?" rw-pc-active":"")+(isHost?"":" rw-pc-locked")+'" data-rwreroll="'+o+'"'+(isHost?"":" disabled")+'>'+o+'</button>'; }).join("")+
+      "</div></div>";
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Online · Duels</div>"+
       "<h2 class='rw-title'><span class='rw-accent'>Duels</span></h2>"+
-      "<p class='rw-sub'>You're connected. Build your XI <strong>blind</strong> on your own device — "+
-      "when you both lock in, the reveal decides it slot by slot.</p>"+
+      "<p class='rw-sub'>You're connected. You each have <strong>6 minutes</strong> to build your XI <strong>blind</strong> on your own device — "+
+      "when the timer ends your squad auto-completes and locks, then the reveal decides it slot by slot.</p>"+
       "<div class='rw-names'>"+
         "<label class='rw-name-field'><span>Your name</span><input id='rwMyName' class='rw-input' maxlength='14' placeholder='"+esc(me.name)+"' value=''></label>"+
         "<div class='rw-vs-badge'>VS</div>"+
         "<div class='rw-name-field'><span>Opponent</span><div class='rw-input rw-input-static' id='rwOppName'>"+esc(opp.name)+"</div></div>"+
       "</div>"+
+      rerollHTML+
       "<div class='mp-online-tag'>Connected — code "+esc((W.ElxiNet&&W.ElxiNet.code)||"")+"</div>"+
       "<button class='fl-btn rw-start' id='rwStart'>Build my XI →</button>"+
       "</div></div>";
     document.getElementById("rwBack").onclick = goHome;
+    if (isHost){
+      v.querySelectorAll("[data-rwreroll]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          RW.maxRerolls = parseInt(btn.getAttribute("data-rwreroll"),10);
+          v.querySelectorAll("[data-rwreroll]").forEach(function(b){ b.classList.remove("rw-pc-active"); });
+          btn.classList.add("rw-pc-active");
+          rwSend({ t:"rw_settings", maxRerolls: RW.maxRerolls });
+        });
+      });
+    }
     document.getElementById("rwStart").onclick = function(){
       var nm = (document.getElementById("rwMyName").value.trim()) || me.name;
       RW.players[RW.myIdx].name = nm;
-      rwSend({ t:"rw_hello", name:nm });
+      rwSend({ t:"rw_hello", name:nm, maxRerolls: (isHost ? RW.maxRerolls : undefined) });
       RW.cur = RW.myIdx; RW.phase = "onbuild";
       RW.buildDeadline = Date.now() + RW_BUILD_MS;
       render();
@@ -521,6 +554,13 @@
         '<button class="rw-pc-btn'+(seriesMode==="bo3"?" rw-pc-active":"")+'" data-series="bo3">Best of 3</button>'+
       "</div></div>";
 
+    /* ── Rerolls per player (0 / 1 / 3) ── */
+    var rrCur = (RW.maxRerolls!=null?RW.maxRerolls:3);
+    var rerollHTML = "<div class='rw-section'><div class='rw-section-label'>Rerolls per player</div>"+
+      "<div class='rw-pc-btns'>"+
+        RW_REROLL_OPTS.map(function(o){ return '<button class="rw-pc-btn'+(rrCur===o?" rw-pc-active":"")+'" data-rwreroll="'+o+'">'+o+'</button>'; }).join("")+
+      "</div></div>";
+
     v.innerHTML =
       "<div class='wrap'><button class='back' id='rwBack'>← Home</button>"+
       "<div class='rw-hero'><div class='rw-kicker'>Multiplayer</div>"+
@@ -539,6 +579,7 @@
       "<div class='rw-names' id='rwNamesWrap'>"+nameFields+"</div>"+
       poolHTML+
       seriesHTML+
+      rerollHTML+
       featHTML+
       "<button class='fl-btn rw-start' id='rwStart'>"+esc(RW.players[0]?RW.players[0].name:defaultName(0))+" — build your XI →</button>"+
       "<button class='rw-rules-link' id='rwHowToPlay'>How to play</button>"+
@@ -578,6 +619,15 @@
       btn.addEventListener("click", function(){
         RW.seriesMode = btn.getAttribute("data-series");
         v.querySelectorAll("[data-series]").forEach(function(b){ b.classList.remove("rw-pc-active"); });
+        btn.classList.add("rw-pc-active");
+      });
+    });
+
+    /* Rerolls-per-player buttons */
+    v.querySelectorAll("[data-rwreroll]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        RW.maxRerolls = parseInt(btn.getAttribute("data-rwreroll"),10);
+        v.querySelectorAll("[data-rwreroll]").forEach(function(b){ b.classList.remove("rw-pc-active"); });
         btn.classList.add("rw-pc-active");
       });
     });
@@ -777,6 +827,34 @@
     return eligible;
   }
 
+  /* Fill any empty slots from the current pool — used when the online build timer expires. */
+  function rwAutoFillRemaining(P){
+    if (P.picks.filter(Boolean).length >= 11) return;
+    var DATA = RW.poolDataCur || W.WORLD_CUP_DATA || {};
+    var used = {}; P.picks.forEach(function(pk){ if(pk) used[pk.n] = 1; });
+    var cands = [];
+    Object.keys(DATA).forEach(function(team){
+      var ys = (DATA[team] && DATA[team].years) || {};
+      Object.keys(ys).forEach(function(y){
+        (ys[y] || []).forEach(function(pl){
+          if (!pl || !pl.n || used[pl.n]) return;
+          cands.push({ n:pl.n, r:pl.r||75, gp:pl.gp||pl.p||"MID", club:team, year:y });
+        });
+      });
+    });
+    for (var i=cands.length-1; i>0; i--){ var j=Math.floor(Math.random()*(i+1)); var t=cands[i]; cands[i]=cands[j]; cands[j]=t; }
+    function fills(pos, sk){ var isBroad = RW_BROAD.hasOwnProperty(pos); return isBroad ? (RW_BROAD[pos]||[]).indexOf(sk)!==-1 : (RW_SLOT_FILLS[pos]||[pos]).indexOf(sk)!==-1; }
+    SLOTS.forEach(function(slot, idx){
+      if (P.picks[idx]) return;
+      var sk = slot.k.trim();
+      for (var c=0; c<cands.length; c++){
+        var cand = cands[c];
+        if (used[cand.n]) continue;
+        if (fills(cand.gp, sk)){ P.picks[idx] = { n:cand.n, r:cand.r, gp:cand.gp, club:cand.club, year:cand.year }; used[cand.n] = 1; break; }
+      }
+    });
+  }
+
   /* ── Reel item helpers (same markup as MP draft) ── */
   function rwCItemHTML(c){ return '<div class="reel-item reel-item-noflag"><span class="name">'+esc(c)+'</span></div>'; }
   function rwYItemHTML(y){ return '<div class="reel-item"><span class="year">'+y+'</span></div>'; }
@@ -805,7 +883,7 @@
   function doRWSpin(cStrip, yStrip, spinBtn, squadPanel, P){
     if (RW._spinning) return;
     var isRespin = !!RW.currentSpin;
-    if (isRespin && (P.rerollsUsed||0) >= 3) return;
+    if (isRespin && (P.rerollsUsed||0) >= rwMax()) return;
     var DATA = RW.poolDataCur || W.WORLD_CUP_DATA || {};
     var countries = Object.keys(DATA);
     if (!countries.length) return;
@@ -876,7 +954,7 @@
           RW._spinning = false;
           RW.currentSpin = { country:pC, year:pY, squad:pS };
           /* Update spin button */
-          var left = Math.max(0, 3-(P.rerollsUsed||0));
+          var left = Math.max(0, rwMax()-(P.rerollsUsed||0));
           spinBtn.disabled = (left===0);
           spinBtn.textContent = left===0 ? "No rerolls left — pick!" : "RESPIN ("+left+" left)";
           /* Auto-respin if no players are draftable (free — does not cost a reroll) */
@@ -974,7 +1052,7 @@
       return la!==lb ? la-lb : (b.r||0)-(a.r||0);
     });
 
-    var rerollsLeft = Math.max(0, 3-(P.rerollsUsed||0));
+    var rerollsLeft = Math.max(0, rwMax()-(P.rerollsUsed||0));
     var html = '<div class="squad-card"><div class="squad-head"><h2>'+esc(spin.country)+' &middot; '+spin.year+'</h2>'+
       (rerollsLeft > 0
         ? '<button class="squad-respin-btn" id="rwSqRespin">Respin ('+rerollsLeft+' left)</button>'
@@ -1019,7 +1097,7 @@
     /* Respin button */
     var rwRespin = panel.querySelector("#rwSqRespin");
     if(rwRespin) rwRespin.onclick = function(){
-      if((P.rerollsUsed||0) >= 3) return;
+      if((P.rerollsUsed||0) >= rwMax()) return;
       P.rerollsUsed = (P.rerollsUsed||0) + 1;
       RW.currentSpin = null; RW.pendingRWPick = null;
       panel.style.display = "none";
@@ -1110,7 +1188,7 @@
     var P = RW.players[RW.cur];
     if (RW.online && !RW.buildDeadline) RW.buildDeadline = Date.now() + RW_BUILD_MS;
     var filled = P.picks.filter(Boolean).length;
-    var rerollsLeft = Math.max(0, 3-(P.rerollsUsed||0));
+    var rerollsLeft = Math.max(0, rwMax()-(P.rerollsUsed||0));
     var isRespin = !!RW.currentSpin;
     var lockLabel = RW.online ? "Lock XI — send to "+esc(RW.players[RW.oppIdx].name)
                   : RW.cur < RW.numPlayers-1 ? "Lock XI — pass to "+esc(RW.players[RW.cur+1].name)+" →"
@@ -1127,7 +1205,7 @@
               (RW.online ? " <span class='rw-build-clock' id='rwBuildTimer'>"+rwFmtClock((RW.buildDeadline||0)-Date.now())+"</span>" : "")+"</div>"+
             "<div class='draft-meta'>Pick <strong id='rwPickCount'>"+filled+"</strong>/11 · "+esc(RW.poolLabelCur||"World Cup")+
               (RW.online ? " · vs <span id='rwOppNameLive'>"+esc(RW.players[RW.oppIdx].name)+"</span>" : "")+
-              " · <span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+rerollsLeft+"/3 rerolls</span></div>"+
+              " · <span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+rerollsLeft+"/"+rwMax()+" rerolls</span></div>"+
           "</div>"+
           "<div class='draft-pitch-wrap rw-pitch-wrap' id='rwPitchWrap'>"+buildRWPitch(P)+"</div>"+
           "<div class='machine'>"+

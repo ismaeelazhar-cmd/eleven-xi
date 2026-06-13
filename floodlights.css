@@ -690,6 +690,8 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
   transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 .rw-pc-btn:hover { background: var(--surface-3); color: var(--text); border-color: var(--line-strong); }
+.rw-pc-btn:disabled, .rw-pc-btn.rw-pc-locked { opacity: .5; cursor: not-allowed; }
+.rw-pc-btn:disabled:hover, .rw-pc-btn.rw-pc-locked:hover { background: var(--surface-2); color: var(--text-dim); border-color: var(--line); }
 .rw-pc-btn.rw-pc-active {
   background: color-mix(in srgb, var(--warning) 18%, transparent);
   border-color: color-mix(in srgb, var(--warning) 55%, transparent);
