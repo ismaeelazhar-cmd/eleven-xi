@@ -1395,7 +1395,7 @@
       RW.cur = 1;
       /* Route to captain pick for P2 if enabled (P2 hasn't picked yet) */
       if (RW.features.captain){ RW.phase = "captain"; RW.captainPassing = false; }
-      else { RW.phase = "poolselect"; }
+      else { RW.phase = (RW.poolDataCur && Object.keys(RW.poolDataCur).length > 0) ? "build" : "poolselect"; }
       render();
     };
     document.getElementById("rwDecline").onclick = goHome;
@@ -1413,7 +1413,11 @@
         esc(prev.name)+"'s XI is locked and hidden. Ratings stay secret until the reveal.</p>"+
         "<button class='fl-btn rw-start' id='rwGo'>I'm "+esc(cur.name)+" — build my XI →</button>"+
       "</div></div>";
-    document.getElementById("rwGo").onclick = function(){ RW.phase="poolselect"; render(); };
+    document.getElementById("rwGo").onclick = function(){
+      /* Pool is set globally on the intro page — skip poolselect if already chosen */
+      RW.phase = (RW.poolDataCur && Object.keys(RW.poolDataCur).length > 0) ? "build" : "poolselect";
+      render();
+    };
   }
 
   /* ---------- position ban (before build, each player secretly bans one slot) ---------- */
@@ -1456,7 +1460,7 @@
       else {
         RW.cur = 0; RW.posBanPassing = false;
         if (RW.features.captain){ RW.phase = "captain"; RW.captainPassing = false; }
-        else { RW.phase = "poolselect"; }
+        else { RW.phase = (RW.poolDataCur && Object.keys(RW.poolDataCur).length > 0) ? "build" : "poolselect"; }
       }
       render();
     };
@@ -1502,7 +1506,10 @@
     document.getElementById("rwCapConfirm").onclick = function(){
       if (RW.captains[RW.cur] === null) return;
       if (RW.cur < RW.numPlayers - 1){ RW.cur++; RW.captainPassing = true; }
-      else { RW.cur = 0; RW.captainPassing = false; RW.phase = "poolselect"; }
+      else {
+        RW.cur = 0; RW.captainPassing = false;
+        RW.phase = (RW.poolDataCur && Object.keys(RW.poolDataCur).length > 0) ? "build" : "poolselect";
+      }
       render();
     };
   }
@@ -1893,7 +1900,10 @@
     RW.formations = RW.players.map(function(){ return null; }); RW.formationPassing = false;
     RW.stealUsed = RW.players.map(function(){ return false; });
     /* Don't re-run posban/captain — those are set for the whole series */
-    RW.cur = 0; RW.phase = "poolselect"; render();
+    RW.cur = 0;
+    /* Pool already set globally on intro — skip poolselect */
+    RW.phase = (RW.poolDataCur && Object.keys(RW.poolDataCur).length > 0) ? "build" : "poolselect";
+    render();
   }
 
   /* ---------- match-next transition (tournament) ---------- */
