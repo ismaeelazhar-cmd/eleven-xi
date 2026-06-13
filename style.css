@@ -235,7 +235,7 @@ header p {
 .reel-item .flag { font-size: 40px; line-height: 1; }
 /* Flag-free reels (League / Multiplayer): give the club column more room and
    let the name fill the space the flag used to take, fitting long club names. */
-#leagueView .reels, #mpView .reels { grid-template-columns: 1.7fr 1fr; }
+#leagueView .reels, #mpView .reels { grid-template-columns: 1.45fr 1fr; }
 .reel-item-noflag .name {
   font-size: clamp(16px, 4.4vw, 26px);
   font-weight: 800;
@@ -4009,7 +4009,7 @@ button, a, .seg-opt { touch-action: manipulation; }
 /* Start button */
 .mp-start-btn { padding: 14px 22px !important; font-size: 16px !important; }
 /* Player setup: smaller pitch preview */
-.mp-setup-pitch-wrap .pitch { max-height: 200px !important; aspect-ratio: unset !important; overflow: hidden; }
+.mp-setup-pitch-wrap .pitch { max-height: 340px !important; aspect-ratio: 3 / 4 !important; overflow: visible; }
 .mp-setup-pitch-wrap .pdot { width: 34px !important; height: 34px !important; }
 /* Formation grid: tighter */
 .mp-formation-grid { gap: 6px !important; }
@@ -4351,11 +4351,25 @@ button, a, .seg-opt { touch-action: manipulation; }
     z-index: 500 !important;
     overflow-y: auto !important;
     border-radius: 0 !important;
+    align-items: flex-start !important;
+    padding: 0 !important;
   }
   .squad-card {
-    max-height: 100vh !important;
+    max-height: none !important;
+    min-height: 100% !important;
     overflow-y: auto !important;
     border-radius: 0 !important;
+    /* clear the iOS status bar / notch so the team name + Respin aren't cut off */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 18px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
+  }
+  /* keep the header (team name + respin) sticky so it's always readable while scrolling the list */
+  .squad-card .squad-head {
+    position: sticky;
+    top: 0;
+    background: var(--surface, #1b2340);
+    padding-bottom: 8px;
+    z-index: 2;
   }
 
   /* Corner home button: smaller */
@@ -4953,8 +4967,11 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
 .spin-col {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 }
+/* Give the year reel a sensible minimum so "2024" never looks cramped */
+.spin-row .spin-col:last-of-type { min-width: 92px; }
 .spin-col-btn {
   flex: 0 0 auto;
 }
@@ -5110,14 +5127,27 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
 /* ── 1. Fixed nav buttons: don't overlap logo on narrow screens ─── */
 @media (max-width: 600px) {
   .theme-toggle {
-    top: 10px;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
     right: 10px;
   }
   .sound-toggle {
-    top: 10px;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
     right: 88px; /* keep clear of theme toggle (2×34px + gap + right:10px) */
     width: 36px;
     height: 36px;
+  }
+  /* Home / back button: pin to the top-left so it stays reachable while scrolling */
+  .back, .mp-back {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    align-self: flex-start;
+    z-index: 150;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .draft-corner-home {
+    top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+    left: 12px !important;
   }
   /* Give brand / header extra right-side padding so buttons don't cover it */
   header {

@@ -949,7 +949,7 @@
     squad = []; current = null; pendingPick = null; awaitingPick = false;
     /* Reset manager so player can spin fresh each time they enter a mode */
     managerId = "none"; managerName = ""; managerSpun = false;
-    if (elManagerSpin) { elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin manager"; }
+    if (elManagerSpin) { elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin"; }
     var cl = (m === "cl");
     var euro = (m === "euro");
     var cw = $("continentWrap"); if (cw) cw.style.display = (cl || euro) ? "none" : "block";
@@ -974,7 +974,7 @@
     clearTimeout(revealTimer);
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
     teamName = ""; managerId = "none"; managerName = ""; managerSpun = false; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
-    elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin manager";
+    elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin";
     minIdx = 0; maxIdx = ALL_YEARS.length - 1; continent = "all";
     rerollsLeft = diffRerolls();
     elTeamName.value = ""; elSquadPanel.style.display = "none"; elHint.textContent = "";

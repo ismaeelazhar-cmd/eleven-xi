@@ -240,7 +240,7 @@
           "<div class='manager-options' id='lgMgrStyles'></div>"+
           "<div class='mgr-wheel'>"+
             "<div class='reel mgr-reel'><div class='reel-strip' id='lgMgrStrip'></div></div>"+
-            "<button class='btn-accent' id='lgMgrSpin'"+(mgrSpinDone?" disabled":"")+">"+(mgrSpinDone?"Manager appointed":"Spin manager")+"</button>"+
+            "<button class='btn-accent' id='lgMgrSpin'"+(mgrSpinDone?" disabled":"")+">"+(mgrSpinDone?"Manager appointed":"Spin")+"</button>"+
           "</div>"+
           "<div class='manager-desc' id='lgMgrDesc'></div>"+
         "</div>"+

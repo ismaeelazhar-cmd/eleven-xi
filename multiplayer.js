@@ -816,8 +816,9 @@
     var grid = mk("div","mp-modeselect");
 
     var t = mk("button","mp-ms-card m-mp");
-    t.innerHTML = '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>'+
-      '<span class="mp-ms-name">Draft Tournament</span><span class="mp-ms-hint">2–8 players each draft an all-time XI, then a knockout bracket decides the champion.</span>';
+    t.innerHTML = (st.online?'<span class="mp-ms-badge">Online</span>':'')+
+      '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>'+
+      '<span class="mp-ms-name">Draft Tournament</span><span class="mp-ms-hint">'+(st.online?'2 players · simultaneous draft, then a head-to-head match decides it.':'2–8 players each draft an all-time XI, then a knockout bracket decides the champion.')+'</span>';
     if (st.online){
       /* Online 2-player tournament: simultaneous build, host-authoritative sim */
       t.addEventListener("click", function(){ st._onlineMode = "tournament"; st.phase = "mp_hostsettings"; _render(); });
@@ -1083,7 +1084,7 @@
     stripEl.id = "mpMgrStrip";
     reelEl.appendChild(stripEl);
     spinWrap.appendChild(reelEl);
-    var spinBtn = mk("button","mp-spin-btn"+(p.mgrSpun?" disabled":""),p.mgrSpun?"Manager appointed":"Spin for manager");
+    var spinBtn = mk("button","mp-spin-btn"+(p.mgrSpun?" disabled":""),p.mgrSpun?"Manager appointed":"Spin");
     spinBtn.id = "mpMgrSpinBtn";
     if(p.mgrSpun) spinBtn.disabled = true;
     spinWrap.appendChild(spinBtn);
