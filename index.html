@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=99" />
+  <link rel="stylesheet" href="style.css?v=113" />
   <link rel="stylesheet" href="tokens.css?v=75" />
   <link rel="stylesheet" href="floodlights.css?v=122" />
 </head>
@@ -66,6 +66,12 @@
           <span class="fl-mode-name">Multiplayer</span>
           <span class="fl-mode-hint">2–8 players · draft &amp; knockout</span>
         </button>
+        <button class="fl-mode m-dvc" id="homeDVC">
+          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
+          <span class="fl-mode-name">vs Computer</span>
+          <span class="fl-mode-hint">Alternating draft · outsmart the CPU</span>
+          <span class="fl-mode-stat" id="dvcHomeRecord"></span>
+        </button>
         <button class="fl-mode m-cl" id="homeCL">
           <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
           <span class="fl-mode-name">Champions League</span>
@@ -83,12 +89,6 @@
           <span class="fl-mode-name">Euros</span>
           <span class="fl-mode-hint">1980–2024 · 12 tournaments · solo &amp; multiplayer</span>
           <span class="fl-mode-stat" id="euroBestScore"></span>
-        </button>
-        <button class="fl-mode m-dvc" id="homeDVC">
-          <span class="fl-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
-          <span class="fl-mode-name">vs Computer</span>
-          <span class="fl-mode-hint">Alternating draft · outsmart the CPU</span>
-          <span class="fl-mode-stat" id="dvcHomeRecord"></span>
         </button>
       </div>
       <div class="home-links">
@@ -181,18 +181,21 @@
           <div class="draft-pitch-wrap"><div id="draftPitch"></div></div>
 
           <div class="machine" aria-label="Slot machine">
-            <div class="reels">
-              <div class="reel-box">
-                <div class="reel-label" id="countryLabel">Country</div>
-                <div class="reel"><div class="reel-strip" id="countryStrip"></div></div>
+            <div class="spin-row">
+              <div class="spin-col">
+                <div class="spin-col-label" id="countryLabel">CLUB / NATION</div>
+                <div class="reel spin-reel"><div class="reel-strip" id="countryStrip"></div></div>
               </div>
-              <div class="reel-box">
-                <div class="reel-label">Year</div>
-                <div class="reel"><div class="reel-strip" id="yearStrip"></div></div>
+              <div class="spin-col">
+                <div class="spin-col-label">YEAR</div>
+                <div class="reel spin-reel"><div class="reel-strip" id="yearStrip"></div></div>
+              </div>
+              <div class="spin-col spin-col-btn">
+                <div class="spin-col-label">&nbsp;</div>
+                <button class="spin" id="spinBtn">SPIN</button>
               </div>
             </div>
-            <div class="controls">
-              <button class="spin" id="spinBtn">SPIN</button>
+            <div class="spin-sub-row">
               <button class="reroll" id="rerollBtn" hidden>Reroll (<span id="rerollCount">3</span>)</button>
               <button class="autopick" id="autoPickBtn" hidden>Auto-pick</button>
             </div>
@@ -347,6 +350,6 @@
   <script src="audio.js?v=1" defer></script>
   <script src="floodlights.js?v=95" defer></script>
   <script src="ratingswar.js?v=112" defer></script>
-  <script src="draftvscomputer.js?v=11" defer></script>
+  <script src="draftvscomputer.js?v=12" defer></script>
 </body>
 </html>

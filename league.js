@@ -526,18 +526,21 @@
         "</div>"+
         /* WC-style machine */
         "<div class='machine' aria-label='Slot machine'>"+
-          "<div class='reels'>"+
-            "<div class='reel-box'>"+
-              "<div class='reel-label'>Club</div>"+
-              "<div class='reel'><div class='reel-strip' id='lgCS'></div></div>"+
+          "<div class='spin-row'>"+
+            "<div class='spin-col'>"+
+              "<div class='spin-col-label'>CLUB</div>"+
+              "<div class='reel spin-reel'><div class='reel-strip' id='lgCS'></div></div>"+
             "</div>"+
-            "<div class='reel-box'>"+
-              "<div class='reel-label'>Season</div>"+
-              "<div class='reel'><div class='reel-strip' id='lgYS'></div></div>"+
+            "<div class='spin-col'>"+
+              "<div class='spin-col-label'>SEASON</div>"+
+              "<div class='reel spin-reel'><div class='reel-strip' id='lgYS'></div></div>"+
+            "</div>"+
+            "<div class='spin-col spin-col-btn'>"+
+              "<div class='spin-col-label'>&nbsp;</div>"+
+              "<button class='spin' id='lgSpinBtn'>SPIN</button>"+
             "</div>"+
           "</div>"+
-          "<div class='controls'>"+
-            "<button class='spin' id='lgSpinBtn'>SPIN</button>"+
+          "<div class='spin-sub-row'>"+
             "<button class='reroll' id='lgReroll' hidden>Reroll (<span id='lgRerollCount'>"+LS.rerolls+"</span>)</button>"+
           "</div>"+
         "</div>"+

@@ -4936,3 +4936,169 @@ body.light .pos.GK  { background: rgba(200, 134, 10, 0.14); color: #a06800; }
 body.light .pos.DEF { background: rgba(10, 124, 110, 0.14); color: #0a7c70; }
 body.light .pos.MID { background: rgba(100, 70, 200, 0.14); color: #5c3dc2; }
 body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
+
+/* ═══════════════════════════════════════════════════
+   SPIN ROW — horizontal layout: Club | Year | SPIN
+   Applied across all squad-creation modes
+   ═══════════════════════════════════════════════════ */
+
+/* Replace stacked reels with a single horizontal row */
+.spin-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.spin-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.spin-col-btn {
+  flex: 0 0 auto;
+}
+.spin-col-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-align: center;
+}
+/* Reuse .reel but compact height in the row */
+.spin-reel {
+  height: 58px !important;
+}
+.spin-reel::after {
+  height: 58px !important;
+}
+.spin-reel .reel-item {
+  height: 58px !important;
+}
+.spin-reel .reel-item .flag { font-size: 20px; }
+.spin-reel .reel-item .name { font-size: 12px; }
+.spin-reel .reel-item .year { font-size: 22px; }
+.spin-col-btn button.spin {
+  padding: 11px 22px;
+  font-size: 15px;
+  width: 100%;
+  white-space: nowrap;
+}
+.spin-sub-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+/* Bigger formation pitch in draft view */
+.draft-pitch-wrap .pitch {
+  max-height: 320px !important;
+  padding: 8px 10px !important;
+}
+.draft-pitch-wrap .pdot {
+  width: 34px !important;
+  height: 34px !important;
+}
+.draft-pitch-wrap .pdot .dot-pos { font-size: 9px !important; }
+.draft-pitch-wrap .pdot .dot-init { font-size: 10px !important; }
+
+/* Tighter machine box so everything fits on screen */
+.draft-left .machine { padding: 12px; }
+.draft-left .machine .spin-col-label { margin-bottom: 4px; }
+
+/* Compact under-spin buttons */
+.draft-under-spin { margin-top: 8px; padding-top: 8px; }
+
+/* League / Multiplayer: remove old grid override (now using spin-row flex) */
+#leagueView .spin-row, #mpView .spin-row { gap: 10px; }
+
+/* ===== vs Computer — three-column draft layout ===== */
+.dvc-three-col {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+.dvc-pitch-col {
+  flex: 0 0 200px;
+  min-width: 0;
+}
+.dvc-center-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+/* Combo reel — single scrolling strip showing flag+team+year+stars */
+.dvc-combo-reel-wrap {
+  width: 100%;
+}
+.dvc-combo-reel {
+  height: 100px !important;
+  width: 100%;
+}
+.dvc-combo-reel::after {
+  height: 100px !important;
+}
+.dvc-combo-item {
+  height: 100px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 0;
+}
+.dvc-item-flag {
+  font-size: 26px;
+  line-height: 1;
+}
+.dvc-item-team {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+.dvc-item-year {
+  font-size: 11px;
+  color: var(--gold);
+}
+.dvc-stars {
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+/* SPIN THE REEL button */
+.dvc-reel-btn {
+  width: 100%;
+  font-size: 15px;
+  padding: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+/* Inline squad picker (no full-screen overlay) */
+.dvc-squad-inline {
+  background: var(--card, #12121f);
+  border-radius: 10px;
+  padding: 10px 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.dvc-squad-inline .squad-card { padding: 0; box-shadow: none; background: none; }
+.dvc-squad-inline .squad-head h2 { font-size: 13px; margin: 0 0 4px; }
+.dvc-squad-inline .sub { font-size: 11px; margin-bottom: 6px; opacity: 0.7; }
+.dvc-squad-inline .players { display: flex; flex-direction: column; gap: 3px; }
+.dvc-squad-inline .player { padding: 5px 8px; border-radius: 6px; }
+/* Pitch columns in vs Computer */
+.dvc-pitch-col .pitch { max-height: 260px !important; padding: 6px 8px !important; }
+.dvc-pitch-col .pdot { width: 26px !important; height: 26px !important; }
+.dvc-pitch-col .pdot .dot-pos { font-size: 7px !important; }
+.dvc-pitch-col .pdot .dot-name { font-size: 7px !important; }
+.dvc-pitch-col .dvc-col-title { font-size: 11px; font-weight: 700; text-align: center; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+/* Responsive: stack on narrow screens */
+@media (max-width: 700px) {
+  .dvc-three-col { flex-direction: column; }
+  .dvc-pitch-col { flex: none; width: 100%; }
+}

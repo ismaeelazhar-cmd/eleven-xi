@@ -1122,24 +1122,26 @@
 
     /* ── Spin machine (WC-style .machine) ── */
     var machine = mk("div","machine");
-    var reels = mk("div","reels");
+    var spinRow = mk("div","spin-row");
 
-    var cBox = mk("div","reel-box");
-    cBox.innerHTML = '<div class="reel-label">Club / Nation</div>';
-    var cReel = mk("div","reel"); var cStrip = mk("div","reel-strip"); cStrip.id="mpCS";
-    cReel.appendChild(cStrip); cBox.appendChild(cReel); reels.appendChild(cBox);
+    var cCol = mk("div","spin-col");
+    cCol.innerHTML = '<div class="spin-col-label">CLUB / NATION</div>';
+    var cReel = mk("div","reel spin-reel"); var cStrip = mk("div","reel-strip"); cStrip.id="mpCS";
+    cReel.appendChild(cStrip); cCol.appendChild(cReel); spinRow.appendChild(cCol);
 
-    var yBox = mk("div","reel-box");
-    yBox.innerHTML = '<div class="reel-label">Year</div>';
-    var yReel = mk("div","reel"); var yStrip = mk("div","reel-strip"); yStrip.id="mpYS";
-    yReel.appendChild(yStrip); yBox.appendChild(yReel); reels.appendChild(yBox);
+    var yCol = mk("div","spin-col");
+    yCol.innerHTML = '<div class="spin-col-label">YEAR</div>';
+    var yReel = mk("div","reel spin-reel"); var yStrip = mk("div","reel-strip"); yStrip.id="mpYS";
+    yReel.appendChild(yStrip); yCol.appendChild(yReel); spinRow.appendChild(yCol);
 
-    machine.appendChild(reels);
-    var controls = mk("div","controls");
+    var btnCol = mk("div","spin-col spin-col-btn");
+    btnCol.innerHTML = '<div class="spin-col-label">&nbsp;</div>';
     var spinBtn = mk("button","spin","SPIN");
     spinBtn.id = "mpDraftSpin";
-    controls.appendChild(spinBtn);
-    machine.appendChild(controls);
+    btnCol.appendChild(spinBtn);
+    spinRow.appendChild(btnCol);
+
+    machine.appendChild(spinRow);
     draftLeft.appendChild(machine);
 
     /* ── Squad panel (hidden until spin lands) ── */

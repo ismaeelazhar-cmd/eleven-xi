@@ -131,6 +131,20 @@ window.startDraftVsComputer = (function (W) {
   function yearItemHTML(y) {
     return '<div class="reel-item"><span class="year">' + y + '</span></div>';
   }
+  function comboItemHTML(entry) {
+    var stars = "";
+    var avg = entry.squad.reduce(function(s,p){ return s+(p.r||75); }, 0) / Math.max(1, entry.squad.length);
+    var starCount = avg >= 88 ? 5 : avg >= 83 ? 4 : avg >= 78 ? 3 : avg >= 73 ? 2 : 1;
+    for (var i=0; i<starCount; i++) stars += "★";
+    return '<div class="reel-item dvc-combo-item">' +
+      '<span class="dvc-item-flag">' + esc(entry.flag || "🏳") + '</span>' +
+      '<span class="dvc-item-team">' + esc(entry.team) + '</span>' +
+      '<span class="dvc-item-year">' + esc(entry.year) + ' <span class="dvc-stars">' + stars + '</span></span>' +
+      '</div>';
+  }
+  function comboRandomHTML(pool) {
+    return comboItemHTML(pool[Math.floor(Math.random()*pool.length)]);
+  }
 
   /* ---- Position / slot helpers ---- */
 
@@ -370,14 +384,14 @@ window.startDraftVsComputer = (function (W) {
     var html = '<button class="back" id="dvcBack">&#8592; Home</button>';
     html += '<div class="dvc-draft-wrap">';
 
-    /* Progress header */
+    /* Progress bar + turn banner */
     html += '<div class="dvc-draft-header">';
     html += '<div class="dvc-draft-progress">';
     html += '<span class="dvc-round-badge" id="dvcRoundBadge">' + esc(roundLabel) + '</span>';
     html += '<div class="dvc-progress-bar"><div class="dvc-progress-fill" id="dvcProgressFill" style="width:' + Math.round(totalPicks / 22 * 100) + '%"></div></div>';
     html += '</div>';
     html += '<div class="dvc-turn-banner ' + (isPlayerTurn ? 'dvc-your-turn' : 'dvc-cpu-turn') + '" id="dvcTurnBanner">';
-    html += isPlayerTurn ? 'Your pick &#8212; hit SPIN' : esc(DVC.cpuName) + ' is spinning&#8230;';
+    html += isPlayerTurn ? 'ON THE CLOCK &mdash; Your turn &mdash; spin.' : esc(DVC.cpuName) + ' is spinning&#8230;';
     html += '</div>';
     if (DVC.lastCpuPick) {
       html += '<div class="dvc-last-cpu-pick" id="dvcLastCpu">' + esc(DVC.cpuName) + ' picked: <strong>' + esc(DVC.lastCpuPick.n) + '</strong> (' + esc(DVC.lastCpuPick.pos) + ', ' + DVC.lastCpuPick.r + ')</div>';
@@ -386,24 +400,35 @@ window.startDraftVsComputer = (function (W) {
     }
     html += '</div>';
 
-    /* Spin section */
-    html += '<div class="dvc-spin-section">';
-    html += '<div class="reels dvc-reels">';
-    html += '<div class="reel" id="dvcCountryReel"><div class="reel-strip" id="dvcCS"><div class="reel-item"><span class="name">&#8212;</span></div></div></div>';
-    html += '<div class="reel" id="dvcYearReel"><div class="reel-strip" id="dvcYS"><div class="reel-item"><span class="year">&#8212;</span></div></div></div>';
-    html += '</div>';
-    html += '<button class="spin" id="dvcSpinBtn"' + (isPlayerTurn ? '' : ' disabled') + '>SPIN</button>';
-    html += '</div>';
+    /* ── Three-column layout ── */
+    html += '<div class="dvc-three-col">';
 
-    /* Squad picker panel — uses .squad for the full-screen overlay backdrop */
-    html += '<div class="squad" id="dvcSquadPanel" style="display:none"></div>';
-
-    /* Both XIs */
-    html += '<div class="dvc-xi-panels">';
-    html += '<div class="dvc-xi-panel" id="dvcPlayerXI">' + renderXIList(DVC.playerPicks, "Your XI", false) + '</div>';
-    html += '<div class="dvc-xi-panel dvc-cpu-xi" id="dvcCpuXI">' + renderXIList(DVC.cpuPicks, DVC.cpuName, true) + '</div>';
+    /* LEFT — CPU pitch */
+    html += '<div class="dvc-pitch-col dvc-left-col">';
+    html += '<div class="dvc-col-title">' + esc(DVC.cpuName) + ' <span class="count">' + DVC.cpuPicks.length + '/11</span></div>';
+    html += '<div id="dvcCpuPitch">' + pitchHTML(DVC.cpuPicks, DVC.formation) + '</div>';
     html += '</div>';
 
+    /* CENTER — reel + squad picker + spin button */
+    html += '<div class="dvc-center-col">';
+    html += '<div class="dvc-combo-reel-wrap">';
+    html += '<div class="reel dvc-combo-reel" id="dvcCountryReel">';
+    html += '<div class="reel-strip" id="dvcCS"><div class="reel-item dvc-combo-item"><span class="dvc-item-flag">🎰</span><span class="dvc-item-team">SPIN THE REEL</span><span class="dvc-item-year">to reveal a squad</span></div></div>';
+    html += '</div>';
+    html += '</div>';
+    /* Inline squad picker */
+    html += '<div id="dvcSquadPanel" class="dvc-squad-inline" style="display:none"></div>';
+    /* Spin button */
+    html += '<button class="spin dvc-reel-btn" id="dvcSpinBtn"' + (isPlayerTurn ? '' : ' disabled') + '>SPIN THE REEL</button>';
+    html += '</div>';
+
+    /* RIGHT — Player pitch */
+    html += '<div class="dvc-pitch-col dvc-right-col">';
+    html += '<div class="dvc-col-title">Your XI <span class="count">' + DVC.playerPicks.length + '/11</span></div>';
+    html += '<div id="dvcPlayerPitch">' + pitchHTML(DVC.playerPicks, DVC.formation) + '</div>';
+    html += '</div>';
+
+    html += '</div>'; /* dvc-three-col */
     html += '</div>'; /* dvc-draft-wrap */
     return html;
   }
@@ -430,24 +455,20 @@ window.startDraftVsComputer = (function (W) {
     DVC.spinBusy = true;
 
     var cStrip = document.getElementById("dvcCS");
-    var yStrip = document.getElementById("dvcYS");
     var spinBtn = document.getElementById("dvcSpinBtn");
-    if (!cStrip || !yStrip) { DVC.spinBusy = false; showDvcSquadPicker(); return; }
+    if (!cStrip) { DVC.spinBusy = false; showDvcSquadPicker(); return; }
 
     if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = "SPINNING…"; }
     if (window.sfx) window.sfx.spin();
 
     var p1 = dvcSpinReel(cStrip,
-      function(){ return teamItemHTML(pool[Math.floor(Math.random()*pool.length)].team); },
-      teamItemHTML(pick.team), 520);
-    var p2 = dvcSpinReel(yStrip,
-      function(){ return yearItemHTML(pool[Math.floor(Math.random()*pool.length)].year); },
-      yearItemHTML(pick.year), 580);
+      function(){ return comboRandomHTML(pool); },
+      comboItemHTML(pick), 560);
 
-    Promise.all([p1, p2]).then(function() {
+    Promise.all([p1]).then(function() {
       DVC.spinBusy = false;
       DVC.awaitingPick = true;
-      if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = "SPIN"; }
+      if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = "SPIN THE REEL"; }
       showDvcSquadPicker();
     });
   }
@@ -489,7 +510,7 @@ window.startDraftVsComputer = (function (W) {
     html += '</div></div>';
 
     panel.innerHTML = html;
-    panel.style.display = "flex";
+    panel.style.display = "block";
 
 
     /* Player pick handlers */
@@ -519,8 +540,6 @@ window.startDraftVsComputer = (function (W) {
     var banner = document.getElementById("dvcTurnBanner");
     var lastCpu = document.getElementById("dvcLastCpu");
     var spinBtn = document.getElementById("dvcSpinBtn");
-    var playerXI = document.getElementById("dvcPlayerXI");
-    var cpuXI = document.getElementById("dvcCpuXI");
 
     if (badge) badge.textContent = roundLabel;
     if (fill) fill.style.width = Math.round(totalPicks / 22 * 100) + "%";
@@ -528,7 +547,7 @@ window.startDraftVsComputer = (function (W) {
     if (banner) {
       if (isPlayerTurn && !DVC.spinBusy && !DVC.awaitingPick) {
         banner.className = "dvc-turn-banner dvc-your-turn";
-        banner.innerHTML = "Your pick &#8212; hit SPIN";
+        banner.innerHTML = "ON THE CLOCK &mdash; Your turn &mdash; spin.";
       } else if (!isPlayerTurn || DVC.spinBusy) {
         banner.className = "dvc-turn-banner dvc-cpu-turn";
         banner.innerHTML = esc(DVC.cpuName) + " is spinning&#8230;";
@@ -546,9 +565,17 @@ window.startDraftVsComputer = (function (W) {
 
     if (spinBtn) {
       spinBtn.disabled = !isPlayerTurn || DVC.spinBusy || DVC.awaitingPick || DVC.playerPicks.length >= 11;
-      if (!spinBtn.disabled) spinBtn.textContent = "SPIN";
+      if (!spinBtn.disabled) spinBtn.textContent = "SPIN THE REEL";
     }
 
+    var playerPitch = document.getElementById("dvcPlayerPitch");
+    var cpuPitch = document.getElementById("dvcCpuPitch");
+    if (playerPitch) playerPitch.innerHTML = pitchHTML(DVC.playerPicks, DVC.formation);
+    if (cpuPitch) cpuPitch.innerHTML = pitchHTML(DVC.cpuPicks, DVC.formation);
+
+    /* legacy list IDs kept for compatibility */
+    var playerXI = document.getElementById("dvcPlayerXI");
+    var cpuXI = document.getElementById("dvcCpuXI");
     if (playerXI) playerXI.innerHTML = renderXIList(DVC.playerPicks, "Your XI", false);
     if (cpuXI) cpuXI.innerHTML = renderXIList(DVC.cpuPicks, DVC.cpuName, true);
   }
@@ -584,17 +611,13 @@ window.startDraftVsComputer = (function (W) {
     updateDraftUI();
 
     var cStrip = document.getElementById("dvcCS");
-    var yStrip = document.getElementById("dvcYS");
 
     /* CPU spin is quicker */
     var p1 = dvcSpinReel(cStrip,
-      function(){ return teamItemHTML(pool[Math.floor(Math.random()*pool.length)].team); },
-      teamItemHTML(pick.team), 340);
-    var p2 = dvcSpinReel(yStrip,
-      function(){ return yearItemHTML(pool[Math.floor(Math.random()*pool.length)].year); },
-      yearItemHTML(pick.year), 380);
+      function(){ return comboRandomHTML(pool); },
+      comboItemHTML(pick), 360);
 
-    Promise.all([p1, p2]).then(function() {
+    Promise.all([p1]).then(function() {
       var cpuPlayer = cpuPickFromSquad(pick.squad);
       if (!cpuPlayer) {
         /* No suitable player in this squad — spin again silently */
