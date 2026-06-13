@@ -19,9 +19,9 @@
   /* fixed shared XI so both squads compare slot-for-slot */
   var SLOTS = [
     {k:"GK",  line:"GK"},
-    {k:"RB",  line:"DEF"}, {k:"CB", line:"DEF"}, {k:"CB ", line:"DEF"}, {k:"LB", line:"DEF"},
-    {k:"CDM", line:"MID"}, {k:"CM", line:"MID"}, {k:"CM ", line:"MID"},
-    {k:"RW",  line:"FWD"}, {k:"ST", line:"FWD"}, {k:"LW", line:"FWD"}
+    {k:"RB",  line:"DEF"}, {k:"CB", line:"DEF"}, {k:"CB",  line:"DEF"}, {k:"LB", line:"DEF"},
+    {k:"CDM", line:"MID"}, {k:"CM", line:"MID"}, {k:"CM",  line:"MID"},
+    {k:"RW",  line:"FWD"}, {k:"ST", line:"FWD"}, {k:"LW",  line:"FWD"}
   ];
   var POOL = null, RW = null;
 
@@ -1153,14 +1153,12 @@
     ];
     var html = "<div class='pitch rw-pitch'>";
     rows.forEach(function(row){
-      html += "<div class='prow'>";
+      html += "<div class='pitch-row'>";
       row.forEach(function(s){
         var pk = P.picks[s.idx];
         html += "<div class='pdot "+(pk?"filled ":"")+s.line+"'>"+
-          "<div class='dot-inner'>"+
             "<span class='dot-postag'>"+esc(s.k)+"</span>"+
             (pk ? "<span class='dot-name'>"+esc(shortRWName(pk.n))+"</span>" : "")+
-          "</div>"+
         "</div>";
       });
       html += "</div>";

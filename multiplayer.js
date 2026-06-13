@@ -823,6 +823,7 @@
       st.simData = null;
       st.simStep = -1;
       st.revealIdx = -1;
+      st._histSaved = false;
       st.cur = 0;
       st.mgrSpinResult = null;
       st.phase = "player_setup";
@@ -1989,15 +1990,22 @@
       knockouts.push({stage:"🏆 Final",nameA:sorted[0].name,nameB:sorted[1].name,result:fin,evA:fin.evA,evB:fin.evB});
       champion=fin.winner;
     } else {
-      var sf1=simKO(sorted[0],sorted[3]);
-      var sf2=simKO(sorted[1],sorted[2]);
-      knockouts.push({stage:"Semi-Final",nameA:sorted[0].name,nameB:sorted[3].name,result:sf1,evA:sf1.evA,evB:sf1.evB});
-      knockouts.push({stage:"Semi-Final",nameA:sorted[1].name,nameB:sorted[2].name,result:sf2,evA:sf2.evA,evB:sf2.evB});
-      var finA=sf1.winner===sorted[0].name?sorted[0]:sorted[3];
-      var finB=sf2.winner===sorted[1].name?sorted[1]:sorted[2];
-      var finM=simKO(finA,finB);
-      knockouts.push({stage:"🏆 Final",nameA:finA.name,nameB:finB.name,result:finM,evA:finM.evA,evB:finM.evB});
-      champion=finM.winner;
+      /* Need at least 4 players for semis; if fewer, fall back to a direct final */
+      if (sorted.length < 4) {
+        var fin2=simKO(sorted[0],sorted[1]);
+        knockouts.push({stage:"🏆 Final",nameA:sorted[0].name,nameB:sorted[1].name,result:fin2,evA:fin2.evA,evB:fin2.evB});
+        champion=fin2.winner;
+      } else {
+        var sf1=simKO(sorted[0],sorted[3]);
+        var sf2=simKO(sorted[1],sorted[2]);
+        knockouts.push({stage:"Semi-Final",nameA:sorted[0].name,nameB:sorted[3].name,result:sf1,evA:sf1.evA,evB:sf1.evB});
+        knockouts.push({stage:"Semi-Final",nameA:sorted[1].name,nameB:sorted[2].name,result:sf2,evA:sf2.evA,evB:sf2.evB});
+        var finA=sf1.winner===sorted[0].name?sorted[0]:sorted[3];
+        var finB=sf2.winner===sorted[1].name?sorted[1]:sorted[2];
+        var finM=simKO(finA,finB);
+        knockouts.push({stage:"🏆 Final",nameA:finA.name,nameB:finB.name,result:finM,evA:finM.evA,evB:finM.evB});
+        champion=finM.winner;
+      }
     }
     st.simData = {format:format, groupMatches:gs.matches, standings:sorted, knockouts:knockouts, champion:champion};
     st.simStep = -1;
