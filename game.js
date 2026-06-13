@@ -401,15 +401,14 @@
 
   function renderManager() {
     if (managerId === "none") {
-      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span><span class="mgr-style-tag">pick a style or spin</span></div>';
+      elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span></div>';
       elManagerDesc.innerHTML = "Pick a tactical style above, or spin the wheel for a famous manager.";
     } else {
       var st = currentManager();
       if (managerName) {
         elManagerStrip.innerHTML = managerItemHTML(managerName, managerId);
       } else {
-        elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big"><span class="mgr-icon">' + (MGR_ICONS[st.id] || "") + '</span>' + esc(st.name) +
-          '</span><span class="mgr-style-tag">tactical style</span></div>';
+        elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big"><span class="mgr-icon">' + (MGR_ICONS[st.id] || "") + '</span>' + esc(st.name) + '</span></div>';
       }
       elManagerDesc.innerHTML = esc(st.name) + " — " + esc(st.desc) + mgrBonusHTML(st);
     }
