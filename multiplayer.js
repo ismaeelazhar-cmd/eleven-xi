@@ -148,6 +148,12 @@
     numPlayers: 2,
     tournamentFormat: "auto",
     maxRerolls: 3,        // rerolls per player (0 / 1 / 3), chosen on the setup page
+    /* ── Online 2-player tournament (simultaneous build, host-authoritative sim) ── */
+    mpOnline: false,      // true while in an online Draft Tournament
+    myIdx: 0, oppIdx: 1,  // host = 0, guest = 1 (same ordering on both devices)
+    mySent: false, oppReady: false,
+    myRematch: false, oppRematch: false,
+    _mpDeadline: 0, _mpTimerInt: null,
     players: [],
     setupIdx: 0,
     handoffFrom: 0,
@@ -273,12 +279,13 @@
   }
 
   function goHome(){
+    mpClearTimer();
     root.style.display = "none";
     var h = eid("homeView"); if(h) h.style.display = "";
     st.phase = "idle";
     // Drop any live online session when leaving Multiplayer entirely.
     if (window.ElxiNet && window.ElxiNet.isOnline()) window.ElxiNet.close();
-    st.online = false; st.netRole = null;
+    st.online = false; st.netRole = null; st.mpOnline = false;
   }
 
   /* ════════════════════════════════════════════════════
@@ -306,6 +313,7 @@
       case "player_setup":    renderPlayerSetup();  break;
       case "handoff_setup":   renderHandoffSetup(); break;
       case "draft":           renderDraft();        break;
+      case "mp_waitopp":      renderMpWaitOpp();    break;
       case "tournament":      renderTournament();   break;
     }
   }
@@ -548,6 +556,11 @@
       if (msg.t === "mp_start"){
         st._netOnData = null;            // the per-mode handler takes over from here
         st.phase = "idle";
+        if (msg.mode === "tournament"){
+          if (msg.maxRerolls != null) st.maxRerolls = msg.maxRerolls;
+          mpStartOnlineTournament("guest", msg.poolKey || "wc");
+          return;
+        }
         if (msg.poolKey && window.RW_POOLS){
           /* Apply the host's chosen pool before entering Duels */
           var RW_POOLS = window.RW_POOLS;
@@ -600,9 +613,10 @@
       { key:"bundesliga", label:"Bundesliga",     hint:"Bundesliga · 1990–2024",  dataKey:"BUNDESLIGA_DATA",  national:false }
     ];
     var selected = st._hostPoolKey || "wc";
+    var isTourn = st._onlineMode === "tournament";
     var wrap = mk("div","mp-wrap");
     wrap.innerHTML = '<h2 class="mp-title">Game Settings</h2>'+
-      '<p class="mp-sub">You\'re the host — pick the squad pool for Duels. Your opponent is waiting.</p>';
+      '<p class="mp-sub">You\'re the host — pick the squad pool for '+(isTourn?"the Tournament":"Duels")+'. Your opponent is waiting.</p>';
     wrap.appendChild(mk("div","mp-online-tag","Online · code " + esc(st.netCode || (window.ElxiNet&&window.ElxiNet.code) || "")));
 
     var grid = mk("div","rw-pool-grid");
@@ -619,14 +633,34 @@
     });
     wrap.appendChild(grid);
 
-    var startBtn = mk("button","mp-start-btn","Start Duels →");
+    /* Rerolls per player (tournament only — Duels picks rerolls on its own intro) */
+    if (isTourn){
+      var rrWrap = mk("div","mp-section"); rrWrap.style.marginTop = "16px";
+      rrWrap.innerHTML = '<div class="mp-label">Rerolls per player</div>';
+      var rrRow = mk("div","mp-btn-row");
+      [0,1,3].forEach(function(o){
+        var b = mk("button","mp-pill-btn"+(o===st.maxRerolls?" active":""), String(o));
+        b.addEventListener("click",function(){ st.maxRerolls=o; rrRow.querySelectorAll(".mp-pill-btn").forEach(function(x){x.classList.remove("active");}); b.classList.add("active"); });
+        rrRow.appendChild(b);
+      });
+      rrWrap.appendChild(rrRow);
+      wrap.appendChild(rrWrap);
+    }
+
+    var startBtn = mk("button","mp-start-btn", isTourn ? "Start Tournament →" : "Start Duels →");
     startBtn.style.marginTop = "20px";
     startBtn.addEventListener("click", function(){
       var poolKey = st._hostPoolKey || "wc";
-      if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"duels", poolKey:poolKey });
-      /* Apply pool to our own RW state before entering */
       var chosenPool = null;
       for (var pi=0;pi<RW_POOLS.length;pi++){ if(RW_POOLS[pi].key===poolKey){ chosenPool=RW_POOLS[pi]; break; } }
+      if (isTourn){
+        if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"tournament", poolKey:poolKey, maxRerolls:st.maxRerolls });
+        st.phase = "idle";
+        mpStartOnlineTournament("host", poolKey);
+        return;
+      }
+      if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"duels", poolKey:poolKey });
+      /* Apply pool to our own RW state before entering */
       if (chosenPool && window[chosenPool.dataKey]){
         st._guestPoolKey = chosenPool.key;
         st._guestPoolDataKey = chosenPool.dataKey;
@@ -642,6 +676,128 @@
     back.style.marginTop = "10px";
     back.addEventListener("click", function(){ st.phase = "mp_modeselect"; _render(); });
     wrap.appendChild(back);
+    root.appendChild(wrap);
+  }
+
+  /* ════════════════════════════════════════════════════
+     ONLINE 2-PLAYER DRAFT TOURNAMENT
+     Simultaneous build (6-min clock, autofill on timeout),
+     host-authoritative simulation (host sims once, sends the
+     result so both devices show identical scores). Duplicates
+     across the two squads are allowed (no live pick-lock).
+  ════════════════════════════════════════════════════ */
+  var MP_BUILD_MS = 6 * 60 * 1000;
+  function mpFmtClock(ms){ var s=Math.max(0,Math.ceil(ms/1000)); var m=Math.floor(s/60); var ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
+  function mpClearTimer(){ if(st._mpTimerInt){ clearInterval(st._mpTimerInt); st._mpTimerInt=null; } }
+  function mpStartTimer(){
+    if(!st.mpOnline) return; mpClearTimer();
+    st._mpTimerInt = setInterval(function(){
+      if(!st.mpOnline || st.phase!=="draft"){ mpClearTimer(); return; }
+      var rem=(st._mpDeadline||0)-Date.now();
+      var el=eid("mpBuildTimer"); if(el){ el.textContent=mpFmtClock(rem); if(rem<=60000) el.classList.add("rw-timer-urgent"); }
+      if(rem<=0) mpOnlineAutoLock();
+    },1000);
+  }
+  function mpOnlineAutoLock(){
+    mpClearTimer();
+    if(!st.mpOnline || st.mySent) return;
+    var me=st.players[st.myIdx];
+    if(typeof window.flToast==="function") window.flToast("Time's up — squad auto-completed and locked in.");
+    if(me.picks.length<11) mpAutoFill(me);   /* cascades through advanceDraft; lock guard below dedupes */
+    mpOnlineLockAndSend();
+  }
+  function mpSanitizePicks(arr){
+    if(!Array.isArray(arr)) return [];
+    return arr.filter(Boolean).slice(0,11).map(function(p){
+      return { n:String(p.n||"?").slice(0,40), r:Math.max(0,Math.min(99,parseInt(p.r,10)||75)),
+               p:String(p.p||p.gp||"MID").slice(0,6), gp:String(p.gp||p.p||"MID").slice(0,6),
+               slot:String(p.slot||p.gp||p.p||"MID").slice(0,6), country:String(p.country||"").slice(0,40), year:String(p.year||"").slice(0,12) };
+    });
+  }
+  function mpOnlineLockAndSend(){
+    if(!st.mpOnline || st.mySent) return;
+    mpClearTimer();
+    var me=st.players[st.myIdx];
+    st.currentSpin=null; st.pendingPick=null;
+    if(window.ElxiNet) window.ElxiNet.send({ t:"mp_xi", name:me.name, formation:me.formation, manager:me.manager, picks:me.picks });
+    st.mySent=true;
+    st.phase="mp_waitopp"; _render();
+    maybeStartMpSim();
+  }
+  function maybeStartMpSim(){
+    if(!st.mySent || !st.oppReady) return;
+    if(st.netRole==="host"){
+      st.numPlayers=2; st.tournamentFormat="h2h";
+      st.simData=null; _buildSimData();
+      if(window.ElxiNet) window.ElxiNet.send({ t:"mp_sim", simData: st.simData });
+      st.simStep=-1; st.revealIdx=-1; st._histSaved=false;
+      st.phase="tournament"; _render();
+    }
+    /* guest waits for mp_sim */
+  }
+  function mpTournNet(msg){
+    if(!msg||!msg.t) return;
+    if(msg.t==="mp_xi"){
+      var opp=st.players[st.oppIdx];
+      opp.name=String(msg.name||opp.name).slice(0,14);
+      opp.formation=msg.formation||opp.formation||"4-3-3";
+      opp.manager=msg.manager||null;
+      opp.picks=mpSanitizePicks(msg.picks);
+      st.oppReady=true;
+      maybeStartMpSim();
+    } else if(msg.t==="mp_sim"){
+      if(st.netRole==="guest" && msg.simData){
+        st.simData=msg.simData; st.simStep=-1; st.revealIdx=-1; st._histSaved=false;
+        st.phase="tournament"; _render();
+      }
+    } else if(msg.t==="mp_rematch"){
+      st.oppRematch=true; maybeMpRematch();
+    }
+  }
+  function mpStartOnlineTournament(role, poolKey){
+    st.mpMode = poolKey || "wc";
+    ensurePoolData(st.mpMode, function(){
+      st.mpOnline=true; st.online=true; st.netRole=role;
+      st.numPlayers=2; st.tournamentFormat="h2h";
+      st.myIdx = role==="host"?0:1; st.oppIdx = role==="host"?1:0;
+      st.lockedNames={};                  /* duplicates allowed across the two squads */
+      st.mySent=false; st.oppReady=false; st.myRematch=false; st.oppRematch=false;
+      st.currentSpin=null; st.pendingPick=null; st.pendingHandoff=null;
+      st.simData=null; st.simStep=-1; st.revealIdx=-1; st._histSaved=false; st.mgrSpinResult=null;
+      var meName = role==="host"?"Host":"Guest", oppName = role==="host"?"Guest":"Host";
+      st.players=[];
+      st.players[st.myIdx]={ name:meName, formation:"", manager:null, mgrSpun:false, picks:[], rerollsUsed:0 };
+      st.players[st.oppIdx]={ name:oppName, formation:"4-3-3", manager:null, mgrSpun:false, picks:[], rerollsUsed:0 };
+      st.setupIdx = st.myIdx;
+      st._netOnData = mpTournNet;
+      if(window.ElxiNet){ window.ElxiNet.onData = function(m){ mpTournNet(m); }; window.ElxiNet.onPeerLeave = function(){ mpOnPeerLeave(); }; }
+      st.phase="player_setup"; _render();
+    });
+  }
+  function mpOnPeerLeave(){
+    mpClearTimer();
+    if(typeof window.flToast==="function") window.flToast("Your opponent disconnected.");
+    st.mpOnline=false; st.online=false; st.netRole=null;
+    goHome();
+  }
+  function mpRematch(){
+    if(st.myRematch) return;
+    st.myRematch=true;
+    if(window.ElxiNet) window.ElxiNet.send({t:"mp_rematch"});
+    if(typeof window.flToast==="function") window.flToast("Rematch requested…");
+    maybeMpRematch(); _render();
+  }
+  function maybeMpRematch(){
+    if(st.myRematch && st.oppRematch) mpStartOnlineTournament(st.netRole, st.mpMode);
+  }
+  function renderMpWaitOpp(){
+    var opp=st.players[st.oppIdx];
+    var wrap=mk("div","mp-wrap");
+    wrap.innerHTML='<h2 class="mp-title">XI locked in</h2>'+
+      '<div class="mp-wait" style="justify-content:center"><span class="mp-spinner"></span>'+
+      '<span>Waiting for '+esc(opp.name)+' to finish…</span></div>'+
+      '<p class="mp-sub">Your squad is sealed. The match kicks off the moment your opponent locks in — or their timer runs out.</p>';
+    var q=mk("button","btn-ghost","Quit"); q.style.marginTop="16px"; q.addEventListener("click",goHome); wrap.appendChild(q);
     root.appendChild(wrap);
   }
 
@@ -663,12 +819,8 @@
     t.innerHTML = '<span class="mp-ms-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>'+
       '<span class="mp-ms-name">Draft Tournament</span><span class="mp-ms-hint">2–8 players each draft an all-time XI, then a knockout bracket decides the champion.</span>';
     if (st.online){
-      // Online draft (shared live pool sync) isn't built yet — be honest and steer to the local flow.
-      t.classList.add("mp-ms-soon");
-      t.addEventListener("click", function(){
-        if (typeof window.flToast === "function")
-          window.flToast("Draft Tournament is local-only for now — try Duels online, or switch to Local.");
-      });
+      /* Online 2-player tournament: simultaneous build, host-authoritative sim */
+      t.addEventListener("click", function(){ st._onlineMode = "tournament"; st.phase = "mp_hostsettings"; _render(); });
     } else {
       t.addEventListener("click", function(){ st.phase = "setup"; _render(); });
     }
@@ -682,7 +834,7 @@
                  : "Two managers build blind — ratings hidden — then a position-by-position reveal decides each slot.")+'</span>';
     r.addEventListener("click", function(){
       if (st.online && window.startDuelsOnline){
-        st.phase = "mp_hostsettings"; _render();
+        st._onlineMode = "duels"; st.phase = "mp_hostsettings"; _render();
       }
       else if (window.startDuels){ st.phase = "idle"; window.startDuels(); }
     });
@@ -1025,6 +1177,15 @@
   }
 
   function confirmPlayerSetup(){
+    if (st.mpOnline){
+      /* Online: only my own player is set up here — go to my draft against the clock */
+      st.cur = st.myIdx;
+      st.phase = "draft";
+      st._mpDeadline = Date.now() + MP_BUILD_MS;
+      _render();
+      mpStartTimer();
+      return;
+    }
     var nextIdx = st.setupIdx + 1;
     if (nextIdx >= st.numPlayers){
       /* All players set up — go straight to draft */
@@ -1120,9 +1281,10 @@
     var pitchHeader = mk("div","draft-pitch-header");
     var rerollsRemaining = Math.max(0, (st.maxRerolls!=null?st.maxRerolls:3) - (p.rerollsUsed||0));
     pitchHeader.innerHTML =
-      '<div class="draft-team">'+esc(p.name)+'</div>'+
+      '<div class="draft-team">'+esc(p.name)+
+        (st.mpOnline ? ' <span class="rw-build-clock" id="mpBuildTimer">'+mpFmtClock((st._mpDeadline||0)-Date.now())+'</span>' : '')+'</div>'+
       '<div class="draft-meta">'+
-        'Pick <strong>'+pickNum+'</strong>/11 · Round '+draftRound+' · '+
+        'Pick <strong>'+pickNum+'</strong>/11 · '+(st.mpOnline ? 'vs '+esc(st.players[st.oppIdx].name) : 'Round '+draftRound)+' · '+
         esc(p.formation)+' · '+(p.manager?p.manager.emoji+' '+esc(p.manager.name):'No manager')+
         ' · <span class="mp-reroll-badge'+(rerollsRemaining===0?' mp-reroll-empty':'')+'">'+rerollsRemaining+'/'+(st.maxRerolls!=null?st.maxRerolls:3)+' rerolls</span>'+
       '</div>';
@@ -1211,6 +1373,9 @@
     } else {
       updateSpinBtn(eid("mpDraftSpin"));
     }
+
+    /* keep the 6-minute online build clock alive across re-renders */
+    if (st.mpOnline) mpStartTimer();
   }
 
   /* Build WC-style XI list grouped by line */
@@ -1625,6 +1790,13 @@
   }
 
   function advanceDraft(){
+    if (st.mpOnline){
+      /* Online: no handoff — I keep drafting my own XI until it's full, then lock + send. */
+      st.currentSpin = null; st.pendingPick = null;
+      var me = st.players[st.myIdx];
+      if (me.picks.length >= 11){ mpOnlineLockAndSend(); return; }
+      _render(); return;
+    }
     var allDone = st.players.every(function(p){ return p.picks.length >= 11; });
     if (allDone){ st.phase = "tournament"; _render(); return; }
 
@@ -1823,6 +1995,18 @@
         '<span class="mp-champ-name">'+esc(sd.champion)+'</span>'+
         '<span class="mp-champ-sub">Champion!</span>';
       wrap.appendChild(banner);
+
+      /* Online rematch / home */
+      if (st.mpOnline) {
+        var oCta = mk("div","mp-section mp-reveal-cta");
+        var rmBtn = mk("button","mp-start-btn", st.myRematch ? "Waiting for rematch…" : "Rematch");
+        if (st.myRematch) rmBtn.disabled = true;
+        rmBtn.addEventListener("click", mpRematch);
+        var hmBtn = mk("button","btn-ghost","← Home");
+        hmBtn.addEventListener("click", goHome);
+        oCta.appendChild(rmBtn); oCta.appendChild(hmBtn);
+        wrap.appendChild(oCta);
+      }
 
       /* Squad reveal carousel */
       if(st.revealIdx < 0){

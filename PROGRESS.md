@@ -4,11 +4,28 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Timeout autofill + configurable rerolls (0/1/3). Cache wcxi-v144._
+_Last checkpoint: Online Draft Tournament (2p) shipped. Cache wcxi-v145._
+
+## §38. Task 9 — Online Draft Tournament (2-player, simultaneous, host-authoritative)
+
+**Status: COMPLETE (needs live 2-device test)** | Files: `multiplayer.js v105`, `sw.js wcxi-v145`
+
+Enabled the Multiplayer **Draft Tournament online** (was gated "local-only"). Design per user: simultaneous build + 6-min timer, duplicates allowed across squads, 2-player head-to-head.
+
+Flow:
+- Mode-select: online "Draft Tournament" → host settings (`st._onlineMode="tournament"`): pool + rerolls (0/1/3). Host sends `mp_start{mode:"tournament", poolKey, maxRerolls}`; guest's `armGuestModeWait` enters via `mpStartOnlineTournament("guest", poolKey)`.
+- `mpStartOnlineTournament(role)`: `st.mpOnline=true`, `myIdx`=host?0:1, `players[0]=host / players[1]=guest` on **both** devices (consistent ordering), `lockedNames={}` (dupes allowed), rebinds `ElxiNet.onData=mpTournNet`. → `player_setup` (reuses formation+manager screen).
+- `confirmPlayerSetup` online-guard → `draft` with a 6-min clock (`mpStartTimer`, chip `#mpBuildTimer`). `advanceDraft` online-guard: no handoff — you draft solo until 11, then `mpOnlineLockAndSend`. Auto-fill-at-9 and timeout both cascade to lock. Timeout autofills (`mpAutoFill`) then sends.
+- `mpOnlineLockAndSend` → `mp_xi{name,formation,manager,picks}` → `mp_waitopp` screen. `mpTournNet` stores opp XI on receive.
+- **Host-authoritative sim**: when both ready, host runs `_buildSimData` (h2h) once and sends `mp_sim{simData}`; guest renders the received `simData` (avoids divergent `Math.random()` scores). Both render the existing `renderTournament` reveal from the same data.
+- Disconnect → `mpOnPeerLeave` (toast + home). Rematch via `mp_rematch` (both must press). Timer cleared on lock/disconnect/home.
+
+Reuses: `renderPlayerSetup`, `renderDraft`/`doSpinDraft`/`showSquadPanel`/`mpAutoFill`, `_buildSimData`/`simMatch`, `renderTournament`. No new CSS (reuses `rw-build-clock`, `mp-pill-btn`, `mp-spinner`, etc.).
+Verified headlessly: parses/loads, connect renders, tournament engine h2h already validated (§ earlier 28-combo test). Live host↔guest WebRTC still needs a real 2-device run.
 
 ## §37. Task 8 — Online build timeout autofill + configurable rerolls (0/1/3)
 
-**Status: COMPLETE** | Files: `ratingswar.js v115`, `multiplayer.js v104`, `draftvscomputer.js v16`, `floodlights.css v126`, `sw.js wcxi-v144`
+**Status: COMPLETE** | Files: `ratingswar.js v115`, `multiplayer.js v105`, `draftvscomputer.js v16`, `floodlights.css v126`, `sw.js wcxi-v145`
 
 - **Timer autofill (online Duels)**: when the 6-minute build clock hits 0:00, `rwOnlineAutoLock` now calls `rwAutoFillRemaining(P)` to fill every empty slot from the current pool (position-eligible, no duplicates) before locking + sending — the reveal always gets a complete XI instead of gaps.
 - **Configurable rerolls 0 / 1 / 3, applied in-game**:
@@ -20,7 +37,7 @@ _Last checkpoint: Timeout autofill + configurable rerolls (0/1/3). Cache wcxi-v1
 
 ## §36. Task 7 — Online Duels build: simultaneous 6-min timer + fix self-spinning / can't-select
 
-**Status: COMPLETE** | Files: `ratingswar.js v115`, `floodlights.css v126`, `sw.js wcxi-v144`
+**Status: COMPLETE** | Files: `ratingswar.js v115`, `floodlights.css v126`, `sw.js wcxi-v145`
 
 Reported: in online Duels, the wheel sometimes spins by itself and sometimes players can't be selected; wanted a 6-minute simultaneous build with auto-lock (host still owns settings).
 
@@ -35,7 +52,7 @@ Fixes:
 Note (unchanged, by request): host still chooses settings; online is Duels-only (Draft Tournament stays local-only).
 ## §35. Task 6 — Finish the transcript's outstanding items (button colour migration, manager/flag consistency)
 
-**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v126`, `league.js v87`, `draftvscomputer.js v16`, `sw.js wcxi-v144`
+**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v126`, `league.js v87`, `draftvscomputer.js v16`, `sw.js wcxi-v145`
 
 Re-read the full transcript; the parallel session had landed most items but two were unfinished and one design migration was incomplete:
 
@@ -77,7 +94,7 @@ Verified already-done (by parallel session, kept): squad-list spacing, summary s
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v136`
-- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v126, game.js v116, multiplayer.js v104, floodlights.js v95, ratingswar.js v115, draftvscomputer.js v16, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v144
+- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v126, game.js v116, multiplayer.js v105, floodlights.js v95, ratingswar.js v115, draftvscomputer.js v16, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v145
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`
