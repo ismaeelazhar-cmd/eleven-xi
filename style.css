@@ -4249,7 +4249,7 @@ button, a, .seg-opt { touch-action: manipulation; }
 
 /* Build phase — WC-style layout */
 .rw-draft-layout { min-height: 100vh; padding-top: 48px; }
-.rw-pitch-wrap .pitch { max-height: 300px !important; overflow: hidden; }
+.rw-pitch-wrap .pitch { max-height: 340px !important; overflow: visible; }
 .rw-pitch-wrap .pdot { width: 34px !important; height: 34px !important; }
 .rw-pitch-wrap .dot-postag { font-size: 8px !important; }
 .rw-pitch-wrap .dot-name { font-size: 7px !important; }
