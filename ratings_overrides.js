@@ -160,6 +160,96 @@
     "Zlatan Ibrahimovic":        { def:91 }, /* ASCII fallback */
     "Sadio Mane":                { def:91 }, /* ASCII fallback */
     "Mohamed Salah":             { def:91 },
+
+    /* All-time legends missing from original list */
+    "Diego Maradona":            { def:97, by:{"1982":94,"1986":99,"1990":97,"1994":93} },
+    "Johan Cruyff":              { def:97, by:{"1974":99} },
+    "Garrincha":                 { def:96 },
+    "Gerd Müller":               { def:94 },
+    "Michel Platini":            { def:94, by:{"1982":93,"1986":95} },
+    "Eusébio":                   { def:95, by:{"1966":97} },
+    "Franz Beckenbauer":         { def:93 },
+    "Bobby Charlton":            { def:90 },
+    "Bobby Moore":               { def:88 },
+    "George Best":               { def:95 },
+    "Marco van Basten":          { def:94, by:{"1988":96} },
+    "Ruud Gullit":               { def:93, by:{"1988":95} },
+    "Frank Rijkaard":            { def:88 },
+    "Romário":                   { def:94, by:{"1994":97} },
+    "Gabriel Batistuta":         { def:91, by:{"1994":90,"1998":92,"2002":90} },
+    "Hernán Crespo":             { def:88, by:{"1998":85,"2002":87,"2006":85} },
+    "Javier Zanetti":            { def:88, by:{"1998":87,"2002":88,"2006":86} },
+    "Javier Mascherano":         { def:88, by:{"2006":85,"2010":87,"2014":88,"2018":85} },
+    "Sergio Agüero":             { def:89, by:{"2010":87,"2014":88,"2018":87} },
+    "Oliver Kahn":               { def:92, by:{"1998":89,"2002":95,"2006":91} },
+    "Karl-Heinz Rummenigge":     { def:93 },
+    "Mario Kempes":              { def:92, by:{"1978":95} },
+    "Daniel Passarella":         { def:88, by:{"1978":90,"1982":89} },
+    "Osvaldo Ardiles":           { def:87 },
+    "Ubaldo Fillol":             { def:88, by:{"1978":90} },
+    "Peter Schmeichel":          { def:92 },
+    "Michael Laudrup":           { def:91 },
+    "Brian Laudrup":             { def:88 },
+    "Hristo Stoichkov":          { def:91, by:{"1994":93} },
+    "Gheorghe Hagi":             { def:91, by:{"1994":92} },
+    "Oleg Blokhin":              { def:90 },
+    "Dino Zoff":                 { def:91 },
+    "Paolo Rossi":               { def:88, by:{"1982":93} },
+    "Roberto Baggio":            { def:92, by:{"1990":88,"1994":95,"1998":90} },
+    "Alessandro Del Piero":      { def:90, by:{"1998":88,"2002":88,"2006":90} },
+    "Francesco Totti":           { def:91, by:{"2002":88,"2006":91} },
+    "Luka Modrić":               { def:91, by:{"2014":88,"2016":90,"2017":91,"2018":93,"2019":91,"2020":91,"2022":91,"2023":90,"2026":88} },
+    "Ivan Perišić":              { def:85, by:{"2014":82,"2018":86,"2022":84} },
+    "Davor Šuker":               { def:89, by:{"1998":92} },
+    "Zvonimir Boban":            { def:90 },
+    "Goran Vlaović":             { def:84 },
+    "Dennis Bergkamp":           { def:91 },
+    "Patrick Kluivert":          { def:88 },
+    "Clarence Seedorf":          { def:89 },
+    "Edgar Davids":              { def:88 },
+    "Edwin van der Sar":         { def:90 },
+    "Henrik Larsson":            { def:89 },
+    "Zlatan Ibrahimović":        { def:91, by:{"2002":86,"2004":87,"2006":88,"2010":91,"2014":88,"2018":87} },
+    "Emmanuel Petit":            { def:87, by:{"1998":89} },
+    "David Trezeguet":           { def:88, by:{"1998":86,"2002":87,"2006":88} },
+    "Didier Deschamps":          { def:87, by:{"1998":88} },
+    "Just Fontaine":             { def:92, by:{"1958":97} },
+    "Gareth Bale":               { def:88, by:{"2014":88,"2016":88,"2022":85} },
+    "Aaron Ramsey":              { def:85 },
+    "Son Heung-min":             { def:89, by:{"2022":89,"2026":88} },
+    "Cha Bum-kun":               { def:90 },
+    "Dragan Džajić":             { def:90 },
+    "Dušan Vlahović":            { def:87, by:{"2022":87,"2026":88} },
+    "Alexis Sánchez":            { def:87, by:{"2014":87,"2022":83} },
+    "Arturo Vidal":              { def:87, by:{"2014":88,"2018":86} },
+    "Alexis Mac Allister":       { def:87, by:{"2022":86,"2023":87,"2026":88} },
+    "Rodrigo De Paul":           { def:86, by:{"2022":87} },
+    "Julián Álvarez":            { def:88, by:{"2022":89,"2023":88,"2026":89} },
+    "Lautaro Martínez":          { def:88, by:{"2022":89,"2023":89,"2026":90} },
+    "Emiliano Martínez":         { def:88, by:{"2022":90,"2023":89,"2026":89} },
+    "Cristian Romero":           { def:87, by:{"2022":87,"2026":88} },
+    "Lisandro Martínez":         { def:87, by:{"2022":86,"2023":88,"2026":88} },
+    "Enzo Fernández":            { def:87, by:{"2022":87,"2023":88,"2026":89} },
+    "Frenkie de Jong":           { def:88, by:{"2022":88,"2023":88} },
+    "Virgil van Dijk":           { def:90, by:{"2018":89,"2019":92,"2020":91,"2021":89,"2022":90,"2023":90,"2026":90} },
+    "Cody Gakpo":                { def:87, by:{"2022":87,"2026":88} },
+    "Daley Blind":               { def:85 },
+    "Memphis Depay":             { def:87, by:{"2022":87} },
+    "Nouri Feiler":              { def:72 }, /* prevent false positives */
+    "Martin Ødegaard":           { def:90, by:{"2022":87,"2023":89,"2024":91,"2026":91} },
+    "Antonio Rüdiger":           { def:88, by:{"2022":88,"2026":88} },
+    "Niclas Füllkrug":           { def:86, by:{"2022":86,"2026":87} },
+    "Leroy Sané":                { def:88, by:{"2018":87,"2022":88,"2026":88} },
+    "Florian Wirtz":             { def:91, by:{"2024":89,"2026":92} },
+    "Granit Xhaka":              { def:85, by:{"2022":85,"2026":85} },
+    "Xherdan Shaqiri":           { def:85, by:{"2014":86,"2018":85} },
+    "Remo Freuler":              { def:83 },
+    "João Félix":                { def:87, by:{"2022":87,"2026":86} },
+    "Rúben Dias":                { def:89, by:{"2022":89,"2023":89,"2026":89} },
+    "Diogo Dalot":               { def:85, by:{"2022":84,"2026":86} },
+    "Vitinha":                   { def:86, by:{"2022":85,"2026":87} },
+    "Gonçalo Ramos":             { def:86, by:{"2022":87,"2026":87} },
+    "Rafael Leão":               { def:88, by:{"2022":87,"2026":89} },
   };
 
   /* ── apply to a DATA dictionary ─────────────────────────────────── */
@@ -181,9 +271,27 @@
     });
   }
 
-  /* run on both datasets */
+  var ALL_KEYS = [
+    "WORLD_CUP_DATA","CL_DATA","PL_DATA","LALIGA_DATA","SERIEA_DATA",
+    "BUNDESLIGA_DATA","EURO_DATA","LIGUE1_DATA","CHAMPIONSHIP_DATA"
+  ];
+
+  /* run on all datasets that are already loaded */
   if (typeof window !== "undefined") {
-    if (window.WORLD_CUP_DATA) applyTo(window.WORLD_CUP_DATA);
-    if (window.CL_DATA)        applyTo(window.CL_DATA);
+    ALL_KEYS.forEach(function(k){ if (window[k]) applyTo(window[k]); });
+
+    /* Patch lazyLoad so ratings are applied whenever a new dataset loads */
+    var _origLazyLoad = window.lazyLoad;
+    window.lazyLoad = function(src, globalKey, cb) {
+      if (typeof _origLazyLoad === "function") {
+        _origLazyLoad(src, globalKey, function() {
+          if (window[globalKey]) applyTo(window[globalKey]);
+          if (typeof cb === "function") cb();
+        });
+      } else if (typeof cb === "function") cb();
+    };
+
+    /* Also expose applyTo so modules can call it after injecting data */
+    window.applyRatingOverrides = applyTo;
   }
 })();

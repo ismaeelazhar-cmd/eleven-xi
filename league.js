@@ -274,7 +274,7 @@
       b.className="manager-opt"+(curMgr.id===m.id?" active":"");
       b.setAttribute("data-style",m.id);
       b.title=m.desc;
-      b.innerHTML="<span class='mgr-emoji'>"+m.emoji+"</span><span class='mgr-name'>"+m.name+"</span>";
+      b.innerHTML="<span class='mgr-emoji'>"+(m.emoji||"")+"</span><span class='mgr-name'>"+m.name+"</span>";
       b.addEventListener("click",function(){
         LS.manager=m; LS.mgrName=""; LS.mgrBonus={attack:m.atk||0,defend:m.def||0};
         curMgr=m; mgrSpinDone=false;
@@ -289,7 +289,7 @@
     function mgrItemHTML(name, styleId){
       var s=MGRS.filter(function(m){ return m.id===styleId; })[0]||MGRS[0];
       return '<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(name)+'</span>'+
-             '<span class="mgr-style-tag">'+s.emoji+' '+s.name+'</span></div>';
+             '<span class="mgr-style-tag">'+(s.emoji||'')+' '+s.name+'</span></div>';
     }
     function refreshMgrStrip(){
       var strip=eid("lgMgrStrip"); if(!strip) return;
@@ -300,7 +300,7 @@
         strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span>'+
           '<span class="mgr-style-tag">pick a style or spin</span></div>';
       } else {
-        strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+m.emoji+' '+m.name+
+        strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+(m.emoji||'')+' '+m.name+
           '</span><span class="mgr-style-tag">tactical style</span></div>';
       }
     }
@@ -320,7 +320,7 @@
       if(!m||m.id==="none"){
         d.innerHTML="Pick a tactical style above, or spin for a famous manager.";
       } else {
-        d.innerHTML=esc(m.emoji+" "+m.name+" — "+m.desc)+mgrBonusHTML(m);
+        d.innerHTML=esc((m.emoji||"")+" "+m.name+" — "+m.desc)+mgrBonusHTML(m);
       }
     }
     refreshMgrStrip(); refreshMgrDesc();

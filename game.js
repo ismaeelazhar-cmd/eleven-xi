@@ -594,9 +594,17 @@
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
     var pairs = poolPairs();
-    // Weight top 9 nations (most WC appearances) 3× more likely to spin
-    var TOP9 = { "Brazil":1,"Germany":1,"Italy":1,"Argentina":1,"Mexico":1,"France":1,"Spain":1,"England":1,"Uruguay":1 };
-    var weights = pairs.map(function(p){ return TOP9[p.c] ? 3 : 1; });
+    // Weighted spin — big football nations are much more likely to appear
+    var SPIN_WEIGHTS = {
+      "Brazil":5,"Germany":5,"Italy":5,"Argentina":5,"France":5,"Spain":5,
+      "England":4,"Netherlands":4,"Portugal":4,"Belgium":3.5,"Croatia":3,
+      "Uruguay":3,"Mexico":3,"Colombia":2.5,"Chile":2.5,"Denmark":2.5,
+      "Sweden":2.5,"Poland":2.5,"Switzerland":2.5,"Serbia":2,"Czech Republic":2,
+      "Austria":2,"Hungary":2,"Russia":2,"Romania":2,"USA":2,"Japan":2,"South Korea":2,
+      "Cameroon":2,"Senegal":2,"Morocco":2,"Nigeria":2,"Ghana":2,"Tunisia":2,
+      "Australia":1.8,"Peru":1.8,"Ecuador":1.8,"Paraguay":1.8,"Bolivia":1.5
+    };
+    var weights = pairs.map(function(p){ return SPIN_WEIGHTS[p.c] || 1; });
     var totalW = 0; for (var wi=0;wi<weights.length;wi++) totalW+=weights[wi];
     var rnd = Math.random()*totalW, cum=0, pickIdx=0;
     for (var wj=0;wj<weights.length;wj++){ cum+=weights[wj]; if(rnd<=cum){ pickIdx=wj; break; } }
@@ -621,14 +629,21 @@
     if (!current) return;
     var c = current.country, y = current.year, players = DATA[c].years[y];
     var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
+
+    // Pre-compute draftable count so header can show respin button correctly
     var draftable = 0;
+    players.forEach(function (pl) {
+      var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
+      var open = openEligiblePositions(pl);
+      if (!isTaken && open.length > 0) draftable++;
+    });
 
     // Modal card header
     var inner = '<div class="squad-card">';
     inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2>';
-    if (awaitingPick && rerollsLeft > 0) {
+    if (draftable > 0 && rerollsLeft > 0) {
       inner += '<button class="squad-respin-btn" id="squadRespinBtn">Respin (' + rerollsLeft + ' left)</button>';
-    } else if (awaitingPick) {
+    } else if (draftable > 0) {
       inner += '<span class="squad-respin-empty">No respins left</span>';
     }
     inner += '</div>';
@@ -646,7 +661,7 @@
     var lineLabels = { GK: "Goalkeeper", DEF: "Defenders", MID: "Midfielders", FWD: "Attackers" };
     var groups = { GK: [], DEF: [], MID: [], FWD: [] };
     players.forEach(function (pl) {
-      var line = LINE_OF[pl.p] || "MID";
+      var line = LINE_OF[pl.p] || pl.p || "MID";
       (groups[line] || groups.MID).push(pl);
     });
 
@@ -1088,7 +1103,7 @@
     html += statsSummaryHTML(result.userStats);
     html += '<h3 class="sec">Your games <span class="legend-note">(' + result.userMatches.length + " shown · other " + (result.totalMatches - result.userMatches.length) + " simulated in the background)</span></h3>";
     html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
-    html += '<button class="btn-ghost" id="toggleTable" data-show="Show full 48-team table">Show full 48-team table</button>';
+    html += '<button class="btn-ghost" id="toggleTable" data-show="Show full ' + result.table.length + '-team table">Show full ' + result.table.length + '-team table</button>';
     html += '<div id="fullTableWrap" style="display:none;margin-top:14px;">' + leagueTableHTML(result) + "</div>";
     return html;
   }
@@ -1130,8 +1145,9 @@
   }
   function leagueScore(lg) {
     var ur = lg.userRow, s = lg.userStats;
+    var tableSize = (lg.table && lg.table.length) || 48;
     return tallyScore([
-      { label: "Finished " + ordinal(lg.userPos) + " (49−pos) × 30", value: (49 - lg.userPos) * 30 },
+      { label: "Finished " + ordinal(lg.userPos) + " (" + (tableSize + 1) + "−pos) × 30", value: ((tableSize + 1) - lg.userPos) * 30 },
       { label: ur.Pts + " points × 4", value: ur.Pts * 4 },
       { label: "Goal diff " + (ur.GD > 0 ? "+" : "") + ur.GD + " × 3", value: ur.GD * 3 },
       { label: s.cleanSheets + " clean sheets × 20", value: s.cleanSheets * 20 },

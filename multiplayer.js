@@ -826,6 +826,8 @@
       st._histSaved = false;
       st.cur = 0;
       st.mgrSpinResult = null;
+      _draftSpinning = false;
+      _mgrSpinning = false;
       st.phase = "player_setup";
       _render();
     });
@@ -1479,7 +1481,7 @@
     var lineLabels = {GK:"Goalkeeper",DEF:"Defenders",MID:"Midfielders",FWD:"Attackers"};
     var groups = {GK:[],DEF:[],MID:[],FWD:[]};
     sorted.forEach(function(pl){
-      var line = MP_LINE_OF[pl.gp||pl.p]||"MID";
+      var line = MP_LINE_OF[pl.gp||pl.p]||(pl.gp||pl.p)||"MID";
       (groups[line]||groups.MID).push(pl);
     });
     html += '<div class="players mp-players-grid">';

@@ -6,12 +6,15 @@
 window.ENGINE = (function () {
   "use strict";
 
-  var DIFFICULTY = 5;        // World Cup tax — reduced so advancing groups/R32 is more achievable
-  var LEAGUE_DIFFICULTY = -2; // League tax — gentler, so 1st is achievable (but 47-0 stays brutal)
-  var activeTax = DIFFICULTY; // set per competition
-  // Extra penalty applied to the user each knockout round — escalates sharply so winning the
-  // final (~0.1% of the time) stays extremely rare even with a good side.
-  var KO_ESCALATION = [0, 3, 7, 12, 20]; // R32, R16, QF, SF, Final
+  var DIFFICULTY = -10;         // WC/Euros: user gets a +10 bonus → easy to qualify & reach the Final; Final itself is near-impossible to win
+  var LEAGUE_DIFFICULTY = -8;  // League: user gets +8 bonus → winning the league is very achievable
+  var activeTax = DIFFICULTY;  // set per competition
+  // KO escalation applied ON TOP of DIFFICULTY each knockout round.
+  // R32/R16 are easy (reach QF roughly 50% of the time), SF is hard, Final is nearly impossible.
+  var KO_ESCALATION = [0, 0, 0, 5, 45]; // R32, R16, QF, SF, Final
+  // Upset variance for league: random chance of flipping a user win to draw/loss.
+  // Prevents unbeaten seasons (38-0-0 / 34-0-0) while keeping winning the league very achievable.
+  var LEAGUE_UPSET_CHANCE = 0.14; // 14% of user wins become draws/losses
   var ASSIST_CHANCE = 0.66;  // chance a goal has an assist
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -92,6 +95,27 @@ window.ENGINE = (function () {
       if (Math.random() < pA) { res.winner = "A"; res.pens = [ga + 1, gb]; res.pensWinner = "A"; }
       else { res.winner = "B"; res.pens = [ga, gb + 1]; res.pensWinner = "B"; }
     }
+
+    // League upset variance: if user won, apply a random chance to flip to draw/loss.
+    // This prevents 38-0-0 seasons while keeping winning the league very achievable.
+    if (activeTax === LEAGUE_DIFFICULTY && allowDraw && (A.isUser || B.isUser)) {
+      var userIsA = A.isUser;
+      var userGoals = userIsA ? res.a : res.b, oppGoals = userIsA ? res.b : res.a;
+      if (userGoals > oppGoals && Math.random() < LEAGUE_UPSET_CHANCE) {
+        // Turn the win into a draw or narrow loss
+        var flip = Math.random();
+        if (flip < 0.6) {
+          // Draw: lower the user's score to match opponent
+          if (userIsA) { res.a = res.b; } else { res.b = res.a; }
+          res.winner = null;
+        } else {
+          // Loss: give opponent one extra goal
+          if (userIsA) { res.a = Math.max(0, res.b - 1); } else { res.b = Math.max(0, res.a - 1); }
+          res.winner = userIsA ? "B" : "A";
+        }
+      }
+    }
+
     return res;
   }
 
@@ -212,7 +236,7 @@ window.ENGINE = (function () {
     var rounds = [], rIdx = 0;
     while (roundTeams.length > 1) {
       var ties = [], next = [], rname = roundNames[rIdx] || ("Round of " + roundTeams.length);
-      var pen = KO_ESCALATION[rIdx] || KO_ESCALATION[KO_ESCALATION.length - 1];
+      var pen = KO_ESCALATION[rIdx] != null ? KO_ESCALATION[rIdx] : KO_ESCALATION[KO_ESCALATION.length - 1];
       for (var m = 0; m < roundTeams.length; m += 2) {
         var A = roundTeams[m], B = roundTeams[m + 1];
         var res = simulateMatch(koTeam(A, pen), koTeam(B, pen), false);

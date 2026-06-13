@@ -778,9 +778,22 @@
     squadPanel.style.display = "none";
     RW.currentSpin = null; RW.pendingRWPick = null;
 
-    /* Weighted random: bigger nations (more years) are more likely */
+    /* Weighted random: bigger/more famous nations & clubs spin more often */
+    var RW_BIG = {
+      "Brazil":6,"Germany":6,"Italy":6,"Argentina":6,"France":6,"Spain":6,
+      "England":5,"Netherlands":5,"Portugal":5,"Belgium":4,"Croatia":3.5,
+      "Uruguay":3.5,"Mexico":3.5,"Colombia":3,"Chile":3,"Denmark":3,
+      "Sweden":3,"Poland":3,"Switzerland":3,"Russia":2.5,"USA":2.5,
+      "Japan":2.5,"South Korea":2.5,"Cameroon":2.5,"Senegal":2.5,
+      "Morocco":2.5,"Nigeria":2.5,"Australia":2,"Ecuador":2,"Peru":2,
+      "Barcelona":6,"Real Madrid":6,"Manchester United":6,"Manchester City":6,
+      "Liverpool":6,"Chelsea":6,"Arsenal":5,"Bayern Munich":6,"Juventus":6,
+      "AC Milan":6,"Inter Milan":5,"Borussia Dortmund":5,"Paris Saint-Germain":5,
+      "Atletico Madrid":5,"Ajax":4.5,"Porto":4,"Benfica":4,"Celtic":4,
+      "Roma":4,"Napoli":4,"Lazio":3.5,"Valencia":3.5,"Sevilla":3.5
+    };
     var weights = [], totalW = 0;
-    countries.forEach(function(c){ var w = Object.keys(DATA[c].years||{}).length||1; weights.push(w); totalW+=w; });
+    countries.forEach(function(c){ var baseW = Object.keys(DATA[c].years||{}).length||1; var w = baseW * (RW_BIG[c]||1); weights.push(w); totalW+=w; });
     var tries=0, pC, pY, pS;
     do {
       var rnd = Math.random()*totalW, cum = 0, idx = 0;
@@ -827,9 +840,10 @@
           var left = Math.max(0, 3-(P.rerollsUsed||0));
           spinBtn.disabled = (left===0);
           spinBtn.textContent = left===0 ? "No rerolls left — pick!" : "RESPIN ("+left+" left)";
-          /* Auto-respin if no players are draftable */
+          /* Auto-respin if no players are draftable (free — does not cost a reroll) */
           var allBlocked = pS.every(function(pl){ return rwEligibleSlots(pl, P).length===0; });
-          if (allBlocked && left>0){
+          if (allBlocked){
+            RW.currentSpin = null; /* clear so doRWSpin treats it as a free spin (isRespin=false) */
             setTimeout(function(){ doRWSpin(cStrip, yStrip, spinBtn, squadPanel, P); }, 400);
           } else {
             showRWSquadPanel(squadPanel, RW.currentSpin, P);
