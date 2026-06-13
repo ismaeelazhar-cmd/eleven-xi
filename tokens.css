@@ -8,7 +8,7 @@
 /* ---------- 1. PRIMITIVES (raw values, never used directly in components) ---------- */
 :root {
   /* colour ramp */
-  --p-midnight:   #0B1020;
+  --p-midnight:   #050508;
   --p-midnight-2: #0E1530;
   --p-slate-900:  #131A30;
   --p-slate-800:  #19223E;
@@ -68,7 +68,7 @@
   /* elevation */
   --sh-1: 0 2px 12px rgba(2,4,12,.35);
   --sh-2: 0 16px 40px rgba(2,4,12,.5);
-  --sh-glow-primary: 0 10px 30px rgba(124,92,252,.38);
+  --sh-glow-primary: 0 8px 24px rgba(249,156,0,.35);
   --sh-glow-cyan:    0 10px 30px rgba(34,224,200,.28);
 
   /* z-scale */
@@ -142,8 +142,8 @@ body.light {
 
 /* ---------- 3. COMPONENT TOKENS ---------- */
 :root {
-  --btn-primary-bg:   linear-gradient(180deg, var(--primary-hi), var(--primary));
-  --btn-primary-fg:   var(--on-primary);
+  --btn-primary-bg:   linear-gradient(180deg, #ffe99a 0%, #f99c00 100%);
+  --btn-primary-fg:   #1a1206;
   --card-bg:          linear-gradient(180deg, var(--surface), var(--surface-2));
   --card-border:      1px solid var(--line);
   --chip-bg:          rgba(124,92,252,.14);

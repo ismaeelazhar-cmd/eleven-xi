@@ -1,5 +1,5 @@
 :root {
-  --bg: #0a0a0f;        /* 38-0 base near-black */
+  --bg: #050508;        /* near-black, pure dark */
   --bg2: #12121f;       /* card / secondary */
   --panel: #12121f;
   --gold: #f99c00;      /* 38-0 amber */
@@ -3949,4 +3949,47 @@ button, a, .seg-opt { touch-action: manipulation; }
 @media (max-width: 360px){
   .reel-item-noflag .name { font-size: 15px; }
   .machine { padding: 16px; }
+}
+
+/* ===== Draft layout v2: bigger natural pitch + compact wheel ===== */
+/* Bigger, properly proportioned pitch */
+.draft-pitch-wrap .pitch {
+  max-height: 340px !important;
+  overflow: hidden;
+}
+.draft-pitch-wrap .pdot {
+  width: 36px !important;
+  height: 36px !important;
+}
+.draft-pitch-wrap .pdot .dot-init { font-size: 11px !important; }
+.draft-pitch-wrap .pdot .dot-pos  { font-size: 9px !important; }
+.draft-pitch-wrap .pdot .dot-postag { font-size: 8px !important; }
+
+/* Compact spin reels so everything fits on one screen */
+.draft-left .machine { padding: 10px !important; }
+.draft-left .reels { gap: 8px !important; }
+.draft-left .reel-box { padding: 6px !important; }
+.draft-left .reel-label { font-size: 10px !important; margin-bottom: 4px !important; letter-spacing: 1.5px !important; }
+.draft-left .reel { height: 44px !important; }
+.draft-left .reel::after { height: 44px !important; }
+.draft-left .reel-item { height: 44px !important; font-size: 12px !important; gap: 4px !important; }
+.draft-left .reel-item .flag { font-size: 22px !important; }
+.draft-left .reel-item .name { font-size: 12px !important; }
+.draft-left .reel-item .year { font-size: 18px !important; }
+.draft-left .controls { margin-top: 8px !important; gap: 8px !important; }
+.draft-left .spin { font-size: 15px !important; padding: 10px 26px !important; }
+.draft-left .hint { margin-top: 4px !important; font-size: 11px !important; min-height: 14px !important; }
+.draft-under-spin { margin-top: 8px !important; padding-top: 8px !important; gap: 6px !important; }
+
+/* Play competition buttons — gold, not purple */
+#goWorldCup, #goCL {
+  background: linear-gradient(180deg, #ffe99a 0%, #f99c00 100%) !important;
+  color: #1a1206 !important;
+  border: none !important;
+  box-shadow: 0 5px 16px rgba(249,156,0,0.35) !important;
+  font-weight: 800 !important;
+}
+#goWorldCup:hover:not(:disabled), #goCL:hover:not(:disabled) {
+  filter: brightness(1.06) !important;
+  box-shadow: 0 8px 22px rgba(249,156,0,0.45) !important;
 }

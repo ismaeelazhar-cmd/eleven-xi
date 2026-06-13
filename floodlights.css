@@ -1006,7 +1006,7 @@ body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, 
 .btn-primary, .start-btn, .spin, .fl-btn {
   box-shadow:
     var(--sh-glow-primary),
-    0 4px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 4px 0 0 color-mix(in srgb, #c87800 90%, #000),
     0 8px 20px rgba(0,0,0,.28);
   transition:
     transform 120ms var(--ease-spring),
@@ -1020,7 +1020,7 @@ body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, 
   transform: translateY(-4px);
   box-shadow:
     var(--sh-glow-primary),
-    0 8px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 8px 0 0 color-mix(in srgb, #c87800 90%, #000),
     0 16px 30px rgba(0,0,0,.32);
   filter: brightness(1.08);
 }
@@ -1031,7 +1031,7 @@ body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, 
   transform: translateY(3px);
   transition-duration: 50ms;
   box-shadow:
-    0 1px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 1px 0 0 color-mix(in srgb, #c87800 90%, #000),
     0 2px 8px rgba(0,0,0,.18);
   filter: brightness(.95);
 }
@@ -1044,7 +1044,7 @@ body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, 
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent),
     var(--sh-glow-primary),
-    0 5px 0 0 color-mix(in srgb, var(--primary-lo) 90%, #000),
+    0 5px 0 0 color-mix(in srgb, #c87800 90%, #000),
     0 10px 24px rgba(0,0,0,.3);
 }
 
