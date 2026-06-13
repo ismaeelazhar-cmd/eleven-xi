@@ -69,7 +69,7 @@ window.startDraftVsComputer = (function (W) {
   }
 
   /* State */
-  var DVC = { formation:"4-3-3", difficulty:"medium", personality:"balanced", maxRerolls:3, rerollsLeft:3 };
+  var DVC = { formation:"4-3-3", difficulty:"medium", personality:"balanced", maxRerolls:3, rerollsLeft:3, poolKey:"all" };
 
   function lineOf(pos){ return LINE_OF[(pos||"").trim()] || "MID"; }
 
@@ -78,11 +78,21 @@ window.startDraftVsComputer = (function (W) {
     return r>=90?" r-gold":r>=85?" r-elite":r>=80?" r-great":r>=75?" r-good":r>=70?" r-amber":r>=60?" r-orange":" r-red";
   }
 
-  /* ---- Team pool: all team-years from WC, CL, Euro data ---- */
+  /* ---- Team pool: build from chosen pool key or all defaults ---- */
   function buildTeamPool() {
     var entries = [];
     var seen = {};
-    var sources = [W.WORLD_CUP_DATA, W.CL_DATA, W.EURO_DATA];
+    var poolKey = DVC.poolKey || "all";
+    var sources;
+    if (poolKey === "all") {
+      sources = [W.WORLD_CUP_DATA, W.CL_DATA, W.EURO_DATA];
+    } else if (W.RW_POOLS) {
+      var chosenPool = null;
+      W.RW_POOLS.forEach(function(p){ if (p.key === poolKey) chosenPool = p; });
+      sources = chosenPool && W[chosenPool.dataKey] ? [W[chosenPool.dataKey]] : [W.WORLD_CUP_DATA];
+    } else {
+      sources = [W.WORLD_CUP_DATA, W.CL_DATA, W.EURO_DATA];
+    }
     sources.forEach(function(d) {
       if (!d) return;
       Object.keys(d).forEach(function(team) {
@@ -315,6 +325,16 @@ window.startDraftVsComputer = (function (W) {
     html += '</div>';
     html += '<div class="seg-desc" id="dvcPersonDesc">'+(DVC.personality==="scorer"?"CPU hunts strikers — expect a high-scoring game.":DVC.personality==="defender"?"CPU prioritises defence — it will be a battle to break down.":"No obvious weakness — CPU builds a complete side.")+'</div>';
     html += '</div>';
+    /* Pool selection */
+    html += '<div class="setup-row setup-row-col"><span class="setup-label">Squad Pool</span>';
+    html += '<div class="dvc-pool-grid" id="dvcPoolGrid">';
+    html += '<button class="rw-pool-card'+((!DVC.poolKey||DVC.poolKey==="all")?" rw-pool-selected":"")+'" data-dvcpool="all"><span class="rw-pool-name">All Pools</span><span class="rw-pool-hint">WC · CL · Euros combined</span></button>';
+    if (W.RW_POOLS) W.RW_POOLS.forEach(function(pool){
+      var ok = W[pool.dataKey] && Object.keys(W[pool.dataKey]).length > 0;
+      if (!ok) return;
+      html += '<button class="rw-pool-card'+(DVC.poolKey===pool.key?" rw-pool-selected":"")+(ok?"":" rw-pool-disabled")+'" data-dvcpool="'+pool.key+'"><span class="rw-pool-name">'+esc(pool.label)+'</span><span class="rw-pool-hint">'+esc(pool.hint)+'</span></button>';
+    });
+    html += '</div></div>';
     html += '<button class="start-btn" id="dvcStart">Start Draft &#8594;</button></div>';
     return html;
   }
@@ -358,6 +378,14 @@ window.startDraftVsComputer = (function (W) {
         DVC.maxRerolls = parseInt(btn.getAttribute("data-r"), 10);
         document.querySelectorAll("#dvcRerollBar .diff-opt").forEach(function(b){ b.classList.remove("active"); });
         btn.classList.add("active");
+      };
+    });
+
+    document.querySelectorAll("#dvcPoolGrid [data-dvcpool]").forEach(function(btn){
+      btn.onclick = function(){
+        DVC.poolKey = btn.getAttribute("data-dvcpool");
+        document.querySelectorAll("#dvcPoolGrid [data-dvcpool]").forEach(function(b){ b.classList.remove("rw-pool-selected"); });
+        btn.classList.add("rw-pool-selected");
       };
     });
 
@@ -812,8 +840,9 @@ window.startDraftVsComputer = (function (W) {
     html += '<div class="dvc-xi-header"><span class="dvc-xi-title">Your XI</span>';
     html += '<span class="dvc-xi-avg mp-r-badge'+ratingTierClass(Math.round(playerAvg))+'">avg '+playerAvg+'</span></div>';
     html += pitchHTML(DVC.playerPicks, DVC.formation);
+    var sortedPlayer = DVC.playerPicks.slice().sort(function(a,b){ return (POS_ORDER[a.pos]||5)-(POS_ORDER[b.pos]||5) || (b.r||0)-(a.r||0); });
     html += '<div class="dvc-xi-list dvc-result-list">';
-    DVC.playerPicks.forEach(function(p){
+    sortedPlayer.forEach(function(p){
       html += '<div class="dvc-xi-row"><span class="pos '+p.line+'">'+esc(p.pos)+'</span><span class="dvc-xi-name">'+esc(p.n)+'</span><span class="mp-r-badge'+ratingTierClass(p.r)+'">'+p.r+'</span></div>';
     });
     html += '</div></div>';
@@ -822,8 +851,9 @@ window.startDraftVsComputer = (function (W) {
     html += '<div class="dvc-xi-header"><span class="dvc-xi-title">'+esc(DVC.cpuName)+'</span>';
     html += '<span class="dvc-xi-avg mp-r-badge'+ratingTierClass(Math.round(cpuAvg))+'">avg '+cpuAvg+'</span></div>';
     html += pitchHTML(DVC.cpuPicks, DVC.formation);
+    var sortedCpu = DVC.cpuPicks.slice().sort(function(a,b){ return (POS_ORDER[a.pos]||5)-(POS_ORDER[b.pos]||5) || (b.r||0)-(a.r||0); });
     html += '<div class="dvc-xi-list dvc-result-list">';
-    DVC.cpuPicks.forEach(function(p){
+    sortedCpu.forEach(function(p){
       html += '<div class="dvc-xi-row"><span class="pos '+p.line+'">'+esc(p.pos)+'</span><span class="dvc-xi-name">'+esc(p.n)+'</span><span class="mp-r-badge'+ratingTierClass(p.r)+'">'+p.r+'</span></div>';
     });
     html += '</div></div>';
@@ -874,6 +904,7 @@ window.startDraftVsComputer = (function (W) {
       personality: "balanced",
       maxRerolls: 3,
       rerollsLeft: 3,
+      poolKey: "all",
       teamPool: [],
       playerPicks: [],
       cpuPicks: [],

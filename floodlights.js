@@ -45,6 +45,8 @@
     var home = document.getElementById("homeView");
     if (home) home.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
+    // Reset squad dock so it doesn't persist on home screen
+    if (W.flResetSquadDock) W.flResetSquadDock();
     // Let online transport close cleanly if it was active
     try { if (W.ElxiNet && W.ElxiNet.isOnline && W.ElxiNet.isOnline()) W.ElxiNet.close(); } catch (e) {}
   };
