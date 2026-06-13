@@ -321,6 +321,10 @@ body.light {
 .rw-rerolls { color: var(--text-mute); font-size: var(--t-xs); margin-bottom: var(--sp-3); }
 .rw-reroll-badge { font-size: var(--t-2xs); font-weight: 700; padding: 3px 9px; border-radius: var(--r-pill); background: rgba(34,224,200,.12); border: 1px solid rgba(34,224,200,.35); color: var(--positive); white-space: nowrap; }
 .rw-reroll-badge.rw-reroll-empty { background: rgba(255,122,89,.12); border-color: rgba(255,122,89,.35); color: var(--warning); }
+/* Online build countdown clock (6-minute simultaneous build) */
+.rw-build-clock { display: inline-block; margin-left: var(--sp-2); font-variant-numeric: tabular-nums; font-weight: 800; font-size: var(--t-sm); padding: 2px 9px; border-radius: var(--r-pill); background: rgba(34,224,200,.14); border: 1px solid rgba(34,224,200,.4); color: var(--positive); }
+.rw-build-clock.rw-timer-urgent { background: rgba(255,122,89,.16); border-color: rgba(255,122,89,.5); color: var(--warning); animation: rw-clock-pulse 1s ease-in-out infinite; }
+@keyframes rw-clock-pulse { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.06); } }
 /* Local alternating-draft hint (replaces the lock button while passing back and forth) */
 .rw-alt-hint { margin-top: var(--sp-4); text-align: center; font-size: var(--t-sm); color: var(--text-mute); padding: var(--sp-3); border: 1px dashed var(--line); border-radius: var(--r-md); background: var(--surface-2); }
 /* MP draft reroll counter inline in draft-meta */

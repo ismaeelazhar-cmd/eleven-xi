@@ -4,11 +4,26 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: Cross-mode polish + gold→indigo button migration complete. Cache wcxi-v142._
+_Last checkpoint: Online Duels build fixes + 6-min timer. Cache wcxi-v143._
 
+## §36. Task 7 — Online Duels build: simultaneous 6-min timer + fix self-spinning / can't-select
+
+**Status: COMPLETE** | Files: `ratingswar.js v114`, `floodlights.css v125`, `sw.js wcxi-v143`
+
+Reported: in online Duels, the wheel sometimes spins by itself and sometimes players can't be selected; wanted a 6-minute simultaneous build with auto-lock (host still owns settings).
+
+Root cause: a `rw_hello` network message from the opponent called a full `render()` **during the build** (`rwNet`, the `onbuild` branch). That rebuilt the whole build screen mid-spin/mid-pick — a stale spin animation would then complete on detached elements (looks like the wheel spinning itself) and the freshly-rendered squad panel lost its click wiring (can't select players).
+
+Fixes:
+- `rwNet`: never full-re-render during `onbuild`; just patch the opponent's name into `#rwOppNameLive` in place. Only the lobby/wait screens (`onintro`, `waitopp`) still re-render on hello. This makes the online picker behave exactly like local/other modes.
+- **6-minute build timer**: `RW.buildDeadline` set on entering `onbuild`; `rwStartBuildTimer()` ticks a `#rwBuildTimer` chip in the build header (turns coral + pulses under 1:00); at 0:00 `rwOnlineAutoLock()` locks whatever XI exists (empty slots score 0 in the reveal — already handled) and sends it. Timer cleared on manual lock (`maybeStartReveal`), disconnect (`rwPeerLeft`), and `goHome`. Both players build simultaneously on their own devices, each against the same clock.
+- Auto-respin when a spun squad has no fillable slots now shows a "No open positions — respinning" toast and waits a touch longer, so it no longer feels like a ghost spin.
+- CSS: `.rw-build-clock` / `.rw-timer-urgent` chip + pulse.
+
+Note (unchanged, by request): host still chooses settings; online is Duels-only (Draft Tournament stays local-only).
 ## §35. Task 6 — Finish the transcript's outstanding items (button colour migration, manager/flag consistency)
 
-**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v124`, `league.js v87`, `draftvscomputer.js v15`, `sw.js wcxi-v142`
+**Status: COMPLETE** | Files: `tokens.css v76`, `style.css v120`, `floodlights.css v125`, `league.js v87`, `draftvscomputer.js v15`, `sw.js wcxi-v143`
 
 Re-read the full transcript; the parallel session had landed most items but two were unfinished and one design migration was incomplete:
 
@@ -50,7 +65,7 @@ Verified already-done (by parallel session, kept): squad-list spacing, summary s
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v136`
-- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v124, game.js v116, multiplayer.js v103, floodlights.js v95, ratingswar.js v113, draftvscomputer.js v15, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v142
+- **Current file versions:** style.css v120, tokens.css v76, floodlights.css v125, game.js v116, multiplayer.js v103, floodlights.js v95, ratingswar.js v114, draftvscomputer.js v15, league.js v87, engine.js v81, net.js v84, sw.js wcxi-v143
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`

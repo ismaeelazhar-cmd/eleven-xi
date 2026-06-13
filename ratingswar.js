@@ -64,11 +64,36 @@
   }
   function goHome(){
     clearTimeout(RW && RW._t);
+    rwClearBuildTimer();
     if (RW && RW.online && W.ElxiNet) { try { W.ElxiNet.close(); } catch(e){} }
     var v = document.getElementById("rwView"); if (v) v.style.display = "none";
     var f = document.querySelector("footer"); if (f) f.style.display = "";
     var h = document.getElementById("homeView"); if (h) h.style.display = "";
     if (W.scrollTo) W.scrollTo(0,0);
+  }
+
+  /* ── Online build timer (6-minute simultaneous build, then auto-lock) ── */
+  var RW_BUILD_MS = 6 * 60 * 1000;
+  function rwClearBuildTimer(){ if (RW && RW._buildTimerInt){ clearInterval(RW._buildTimerInt); RW._buildTimerInt = null; } }
+  function rwFmtClock(ms){ var s = Math.max(0, Math.ceil(ms/1000)); var m = Math.floor(s/60); var ss = s%60; return m + ":" + (ss<10?"0":"") + ss; }
+  function rwOnlineAutoLock(){
+    rwClearBuildTimer();
+    if (!RW || !RW.online || RW.myLocked) return;
+    RW.myLocked = true; RW.currentSpin = null; RW.pendingRWPick = null;
+    rwSend({ t:"rw_xi", name:RW.players[RW.myIdx].name, picks:RW.players[RW.myIdx].picks });
+    if (typeof W.flToast === "function") W.flToast("Time's up — your XI is locked in.");
+    maybeStartReveal();
+  }
+  function rwStartBuildTimer(){
+    if (!RW || !RW.online) return;
+    rwClearBuildTimer();
+    RW._buildTimerInt = setInterval(function(){
+      if (!RW || RW.phase !== "onbuild"){ rwClearBuildTimer(); return; }
+      var rem = (RW.buildDeadline || 0) - Date.now();
+      var el = document.getElementById("rwBuildTimer");
+      if (el){ el.textContent = rwFmtClock(rem); if (rem <= 60000) el.classList.add("rw-timer-urgent"); }
+      if (rem <= 0) rwOnlineAutoLock();
+    }, 1000);
   }
 
   /* ── Feature definitions (house rule toggles — posBan, bestOf3, asyncOnline removed) ── */
@@ -257,7 +282,13 @@
       // If I locked before my opponent was ready, my XI may have been dropped on
       // their side — re-send it now that they've announced themselves.
       if(RW.myLocked) rwSend({ t:"rw_xi", name:RW.players[RW.myIdx].name, picks:RW.players[RW.myIdx].picks });
-      if(RW.phase === "onbuild" || RW.phase === "waitopp" || RW.phase === "onintro") render();
+      // NB: never full-re-render during onbuild — that wipes an in-progress spin/pick.
+      // Just patch the opponent's name in place; only re-render on the lobby/wait screens.
+      if(RW.phase === "waitopp" || RW.phase === "onintro") render();
+      else if(RW.phase === "onbuild"){
+        var oppEl = document.getElementById("rwOppNameLive");
+        if(oppEl) oppEl.textContent = RW.players[RW.oppIdx].name;
+      }
     } else if(msg.t === "rw_xi"){
       RW.oppPicks = sanitizePicks(msg.picks);
       RW.players[RW.oppIdx].picks = RW.oppPicks;
@@ -277,6 +308,7 @@
     });
   }
   function maybeStartReveal(){
+    rwClearBuildTimer();
     if(RW.myLocked && RW.oppPicks){
       RW.phase = "reveal"; RW.revealStep = -1; computeResult();
       render();
@@ -287,6 +319,7 @@
   function rwPeerLeft(){
     if(!RW || !RW.online) return;
     clearTimeout(RW._t);
+    rwClearBuildTimer();
     if(typeof W.flToast === "function") W.flToast("Your opponent disconnected.");
     RW.online = false;
     goHome();
@@ -373,7 +406,10 @@
       var nm = (document.getElementById("rwMyName").value.trim()) || me.name;
       RW.players[RW.myIdx].name = nm;
       rwSend({ t:"rw_hello", name:nm });
-      RW.cur = RW.myIdx; RW.phase = "onbuild"; render();
+      RW.cur = RW.myIdx; RW.phase = "onbuild";
+      RW.buildDeadline = Date.now() + RW_BUILD_MS;
+      render();
+      rwStartBuildTimer();
     };
   }
 
@@ -847,7 +883,8 @@
           var allBlocked = pS.every(function(pl){ return rwEligibleSlots(pl, P).length===0; });
           if (allBlocked){
             RW.currentSpin = null; /* clear so doRWSpin treats it as a free spin (isRespin=false) */
-            setTimeout(function(){ doRWSpin(cStrip, yStrip, spinBtn, squadPanel, P); }, 400);
+            if (typeof W.flToast === "function") W.flToast("No open positions in that squad — respinning");
+            setTimeout(function(){ doRWSpin(cStrip, yStrip, spinBtn, squadPanel, P); }, 600);
           } else {
             showRWSquadPanel(squadPanel, RW.currentSpin, P);
           }
@@ -1071,6 +1108,7 @@
   /* ---------- build (blind): WC-style layout — pitch + wheel left, XI list right ---------- */
   function renderBuild(v){
     var P = RW.players[RW.cur];
+    if (RW.online && !RW.buildDeadline) RW.buildDeadline = Date.now() + RW_BUILD_MS;
     var filled = P.picks.filter(Boolean).length;
     var rerollsLeft = Math.max(0, 3-(P.rerollsUsed||0));
     var isRespin = !!RW.currentSpin;
@@ -1085,8 +1123,10 @@
         /* LEFT */
         "<div class='draft-left'>"+
           "<div class='draft-pitch-header'>"+
-            "<div class='draft-team'>"+esc(P.name)+"</div>"+
+            "<div class='draft-team'>"+esc(P.name)+
+              (RW.online ? " <span class='rw-build-clock' id='rwBuildTimer'>"+rwFmtClock((RW.buildDeadline||0)-Date.now())+"</span>" : "")+"</div>"+
             "<div class='draft-meta'>Pick <strong id='rwPickCount'>"+filled+"</strong>/11 · "+esc(RW.poolLabelCur||"World Cup")+
+              (RW.online ? " · vs <span id='rwOppNameLive'>"+esc(RW.players[RW.oppIdx].name)+"</span>" : "")+
               " · <span class='rw-reroll-badge"+(rerollsLeft===0?" rw-reroll-empty":"")+"'>"+rerollsLeft+"/3 rerolls</span></div>"+
           "</div>"+
           "<div class='draft-pitch-wrap rw-pitch-wrap' id='rwPitchWrap'>"+buildRWPitch(P)+"</div>"+
@@ -1165,6 +1205,9 @@
       }
       render();
     };
+
+    /* Keep the 6-minute online build clock ticking (no-op for local play) */
+    if (RW.online) rwStartBuildTimer();
   }
 
   /* Build a formation pitch for Duels (fixed 4-3-3 slots) */
