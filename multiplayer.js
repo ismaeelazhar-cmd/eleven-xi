@@ -1513,6 +1513,32 @@
     });
     html += '</div></div>';
 
+    /* Count draftable players before rendering */
+    var draftableCount = 0;
+    sorted.forEach(function(pl){
+      if(!st.lockedNames.hasOwnProperty(pl.n) && eligibleSlots(pl, player).length > 0) draftableCount++;
+    });
+
+    /* Free respin: no eligible players at all → auto spin again */
+    if(draftableCount === 0 && !st.pendingPick){
+      var freeHtml = html +
+        '<div class="mp-free-respin">No positions fit — <strong>Free Respin!</strong></div></div>';
+      panel.innerHTML = freeHtml;
+      panel.style.display = "";
+      /* Trigger a free spin after a short delay so player sees the message */
+      setTimeout(function(){
+        st.currentSpin = null;
+        panel.style.display = "none";
+        var spinBtn2 = eid("mpDraftSpin");
+        var cS = eid("mpCS"), yS = eid("mpYS");
+        if(spinBtn2 && cS && yS){
+          initDraftStrips(cS, yS, null);
+          doSpinDraft(cS, yS, spinBtn2, panel, player);
+        }
+      }, 1800);
+      return;
+    }
+
     panel.innerHTML = html;
     panel.style.display = "";
 
@@ -1689,110 +1715,116 @@
        gTotal+1..gTotal+kTotal=reveal KO match N, gTotal+kTotal+1=champion */
     var maxStep = gTotal + kTotal + 1;
 
-    var wrap = mk("div","mp-wrap");
-    wrap.innerHTML = '<h2 class="mp-title">Tournament</h2>';
+    var wrap = mk("div","mp-wrap mp-tourn-wrap");
 
-    /* ── PRE-GAME: show teams ── */
+    /* ── PRE-GAME: show team lineups ── */
     if (st.simStep < 0) {
-      var prevSec = mk("div","mp-section");
+      wrap.innerHTML = '<h2 class="mp-title">⚽ Tournament</h2>';
+      var prevSec = mk("div","mp-section mp-team-lineups");
       prevSec.innerHTML = '<div class="mp-label">The Teams</div>';
       st.players.forEach(function(p){
-        var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+pk.r;},0)/p.picks.length) : 0;
-        var d = mk("div","mp-team-preview");
-        d.innerHTML = '<span style="font-weight:700">'+esc(p.name)+'</span>'+
-          '<span style="color:var(--txt-dim);font-size:.82rem">'+esc(p.formation)+'</span>'+
-          (p.manager?'<span>'+p.manager.emoji+'</span>':'')+
-          '<span class="mp-tc-avg">Avg '+avg+'</span>';
+        var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+(pk.r||0);},0)/p.picks.length) : 0;
+        var d = mk("div","mp-team-strip");
+        d.innerHTML =
+          '<div class="mp-ts-left">'+
+            '<div class="mp-ts-name">'+esc(p.name)+'</div>'+
+            '<div class="mp-ts-meta">'+esc(p.formation)+(p.manager?' · '+p.manager.emoji+' '+esc(p.manager.name):'')+'</div>'+
+          '</div>'+
+          '<div class="mp-ts-avg">'+avg+'<span>avg</span></div>';
         prevSec.appendChild(d);
       });
       wrap.appendChild(prevSec);
-      var beginBtn = mk("button","mp-start-btn","🎬 Begin Simulation →");
+      var beginBtn = mk("button","mp-start-btn mp-begin-btn","🎬 Begin Simulation");
       beginBtn.addEventListener("click",function(){ st.simStep=0; _render(); });
       wrap.appendChild(beginBtn);
       root.appendChild(wrap); return;
     }
 
-    /* ── GROUP STAGE: reveal matches one by one ── */
-    var revealed = Math.min(st.simStep, gTotal);
-    if (revealed > 0) {
+    /* ── CURRENT MATCH FEATURE CARD ── */
+    var isGroupStep = st.simStep > 0 && st.simStep <= gTotal;
+    var isKOStep = st.simStep > gTotal && st.simStep <= gTotal + kTotal;
+    var currentMatch = null;
+    if (isGroupStep) currentMatch = sd.groupMatches[st.simStep - 1];
+    else if (isKOStep) currentMatch = sd.knockouts[st.simStep - gTotal - 1];
+
+    if (currentMatch) {
+      wrap.appendChild(buildMatchFeature(currentMatch, isKOStep));
+    }
+
+    /* ── PAST GROUP MATCHES (collapsed mini-cards) ── */
+    var pastGroupCount = isGroupStep ? st.simStep - 1 : (st.simStep >= gTotal ? gTotal : 0);
+    if (pastGroupCount > 0) {
       var gSec = mk("div","mp-section");
       gSec.innerHTML = '<div class="mp-label">Group Stage</div>';
-      sd.groupMatches.slice(0, revealed).forEach(function(m){
-        var mc = mk("div","mp-sim-match");
-        mc.innerHTML =
-          '<span class="mp-sim-ta'+(m.goalsA>m.goalsB?" win":"")+'">'+esc(m.nameA)+'</span>'+
-          '<span class="mp-sim-score">'+m.goalsA+' – '+m.goalsB+'</span>'+
-          '<span class="mp-sim-tb'+(m.goalsB>m.goalsA?" win":"")+'">'+esc(m.nameB)+'</span>';
-        gSec.appendChild(mc);
+      sd.groupMatches.slice(0, pastGroupCount).forEach(function(m){
+        gSec.appendChild(buildMatchMini(m.nameA, m.nameB, m.goalsA, m.goalsB, false));
       });
       wrap.appendChild(gSec);
     }
 
-    /* ── STANDINGS: show once all group matches revealed ── */
+    /* ── STANDINGS ── */
     if (st.simStep >= gTotal) {
+      var advCount = sd.format==="h2h"?0: sd.format==="group_final"?2:4;
       var stSec = mk("div","mp-section");
       stSec.innerHTML = '<div class="mp-label">Standings</div>';
-      var advCount = sd.format==="h2h"?0: sd.format==="group_final"?2:4;
       var th = '<table class="mp-table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead><tbody>';
       sd.standings.forEach(function(row,i){
         th += '<tr class="'+(i<advCount?"mp-row-adv":"")+'">'+
-          '<td>'+(i+1)+'</td><td>'+esc(row.name)+'</td>'+
+          '<td>'+(i+1)+(i<advCount?' <span class="mp-adv-dot">●</span>':'')+'</td><td><strong>'+esc(row.name)+'</strong></td>'+
           '<td>'+row.played+'</td><td>'+row.w+'</td><td>'+row.d+'</td><td>'+row.l+'</td>'+
           '<td>'+row.gf+'</td><td>'+row.ga+'</td><td>'+(row.gf-row.ga>0?"+":"")+(row.gf-row.ga)+'</td>'+
           '<td><b>'+row.pts+'</b></td></tr>';
       });
       stSec.innerHTML += th + '</tbody></table>';
+      if (advCount > 0) stSec.innerHTML += '<div class="mp-adv-note"><span class="mp-adv-dot">●</span> Advance to knockouts</div>';
       wrap.appendChild(stSec);
     }
 
-    /* ── KNOCKOUTS: reveal one match at a time ── */
-    if (st.simStep > gTotal && kTotal > 0) {
-      var koRevealed = Math.min(st.simStep - gTotal - 1, kTotal);
-      if (koRevealed > 0) {
-        var curStage = null, koSec = null;
-        sd.knockouts.slice(0, koRevealed).forEach(function(ko){
-          if (ko.stage !== curStage) {
-            curStage = ko.stage;
-            koSec = mk("div","mp-section");
-            koSec.innerHTML = '<div class="mp-label">'+esc(ko.stage)+'</div>';
-            wrap.appendChild(koSec);
-          }
-          koSec.appendChild(matchCard(ko.nameA, ko.nameB, ko.result));
-        });
-      }
+    /* ── PAST KO MATCHES (collapsed) ── */
+    var pastKO = isKOStep ? st.simStep - gTotal - 1 : (st.simStep > gTotal ? kTotal : 0);
+    if (pastKO > 0 && kTotal > 0) {
+      var curStage = null, koSec = null;
+      sd.knockouts.slice(0, pastKO).forEach(function(ko){
+        if (ko.stage !== curStage) {
+          curStage = ko.stage; koSec = mk("div","mp-section");
+          koSec.innerHTML = '<div class="mp-label">'+esc(ko.stage)+'</div>';
+          wrap.appendChild(koSec);
+        }
+        koSec.appendChild(buildMatchMini(ko.nameA, ko.nameB, ko.result.a, ko.result.b, ko.result.pens, ko.result.winner));
+      });
     }
 
     /* ── CHAMPION banner ── */
     if (st.simStep >= maxStep) {
-      /* Save session history once */
       if(!st._histSaved){ st._histSaved = true; _saveMpHistory(sd.champion); }
-
-      var banner = mk("div","mp-champion");
-      banner.innerHTML = '<span class="mp-champ-trophy">🏆</span><span class="mp-champ-name">'+esc(sd.champion)+'</span><span class="mp-champ-sub">Champion!</span>';
+      var banner = mk("div","mp-champion mp-champion-full");
+      banner.innerHTML =
+        '<div class="mp-champ-confetti">🎊</div>'+
+        '<span class="mp-champ-trophy">🏆</span>'+
+        '<span class="mp-champ-name">'+esc(sd.champion)+'</span>'+
+        '<span class="mp-champ-sub">Champion!</span>';
       wrap.appendChild(banner);
 
-      /* MP-1: Squad reveal carousel */
+      /* Squad reveal carousel */
       if(st.revealIdx < 0){
-        /* Not started yet — show CTA */
         var revCta = mk("div","mp-section mp-reveal-cta");
-        var revBtn = mk("button","mp-start-btn","Reveal All Squads →");
+        var revBtn = mk("button","mp-start-btn","👀 Reveal All Squads");
         revBtn.addEventListener("click",function(){ st.revealIdx = 0; _render(); });
-        var skipRevBtn = mk("button","btn-ghost","Skip to Standings →");
+        var skipRevBtn = mk("button","btn-ghost","Skip →");
         skipRevBtn.addEventListener("click",function(){ st.revealIdx = st.numPlayers; _render(); });
         revCta.appendChild(revBtn);
         revCta.appendChild(skipRevBtn);
         wrap.appendChild(revCta);
       } else if(st.revealIdx < st.numPlayers){
-        /* Show current squad on pitch */
         var rp = st.players[st.revealIdx];
         var rpAvg = rp.picks.length ? Math.round(rp.picks.reduce(function(s,pk){return s+(pk.r||0);},0)/rp.picks.length) : 0;
         var sqSec = mk("div","mp-section mp-squad-reveal");
-        sqSec.innerHTML = '<div class="mp-label">'+esc(rp.name)+'\'s Squad</div>'+
+        var isChamp = rp.name === sd.champion;
+        sqSec.innerHTML = '<div class="mp-label">'+(isChamp?'🏆 ':'')+esc(rp.name)+'\'s Squad</div>'+
           '<div class="mp-rev-meta">'+esc(rp.formation)+' · '+(rp.manager?rp.manager.emoji+' '+esc(rp.manager.name):'')+' · Avg '+rpAvg+'</div>';
         var pitchWrap = mk("div","mp-rev-pitch");
         pitchWrap.innerHTML = buildWCPitch(rp);
         sqSec.appendChild(pitchWrap);
-        /* Player list below pitch */
         var revList = mk("ul","mp-tc-ul");
         rp.picks.forEach(function(pk){
           var li = mk("li","mp-tc-player");
@@ -1804,18 +1836,18 @@
         });
         sqSec.appendChild(revList);
         var isLast = st.revealIdx === st.numPlayers - 1;
-        var nextBtn = mk("button","mp-start-btn", isLast ? "See Final Standings →" : "Next Squad →");
-        nextBtn.addEventListener("click",function(){ st.revealIdx++; _render(); });
-        sqSec.appendChild(nextBtn);
+        var nextRevBtn = mk("button","mp-start-btn", isLast ? "Final Standings →" : "Next Squad →");
+        nextRevBtn.addEventListener("click",function(){ st.revealIdx++; _render(); });
+        sqSec.appendChild(nextRevBtn);
         wrap.appendChild(sqSec);
       } else {
-        /* All squads revealed — show full summaries */
         var summSec = mk("div","mp-section");
         summSec.innerHTML = '<div class="mp-label">All Teams</div>';
         st.players.forEach(function(p){
           var avg = p.picks.length ? Math.round(p.picks.reduce(function(s,pk){return s+(pk.r||0);},0)/p.picks.length):0;
           var card = mk("div","mp-team-card");
-          card.innerHTML = '<div class="mp-tc-head"><span class="mp-tc-name">'+esc(p.name)+'</span>'+
+          var isC = p.name===sd.champion;
+          card.innerHTML = '<div class="mp-tc-head"><span class="mp-tc-name">'+(isC?'🏆 ':'')+esc(p.name)+'</span>'+
             '<span class="mp-tc-info">'+esc(p.formation)+' · '+(p.manager?p.manager.emoji+" "+esc(p.manager.name):"")+'</span>'+
             '<span class="mp-tc-avg">Avg '+avg+'</span></div>';
           var ul = mk("ul","mp-tc-ul");
@@ -1824,31 +1856,28 @@
             li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
               '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
               '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
-              '<span class="mp-tc-r">'+pk.r+'</span>';
+              '<span class="mp-tc-r mp-r-badge'+ratingTierClass(pk.r)+'">'+pk.r+'</span>';
             ul.appendChild(li);
           });
           card.appendChild(ul);
           summSec.appendChild(card);
         });
         wrap.appendChild(summSec);
-
         var again = mk("button","mp-start-btn","← Back to Home");
         again.addEventListener("click", goHome);
         wrap.appendChild(again);
       }
     }
 
-    /* ── Navigation buttons ── */
+    /* ── Navigation ── */
     if (st.simStep < maxStep) {
       var navDiv = mk("div","mp-sim-nav");
-
       var label = st.simStep < gTotal ? "Next Match →" :
-                  st.simStep === gTotal ? (kTotal>0 ? "Knockouts →" : "See Champion →") :
-                  st.simStep < gTotal+kTotal ? "Next Match →" : "See Champion →";
+                  st.simStep === gTotal ? (kTotal>0 ? "⚡ Knockouts →" : "🏆 See Champion →") :
+                  st.simStep < gTotal+kTotal ? "Next Match →" : "🏆 See Champion →";
       var nextBtn = mk("button","mp-start-btn",label);
       nextBtn.addEventListener("click",function(){ st.simStep++; _render(); });
       navDiv.appendChild(nextBtn);
-
       if (st.simStep < maxStep - 1) {
         var skipBtn = mk("button","btn-ghost","Skip to End →");
         skipBtn.addEventListener("click",function(){ st.simStep=maxStep; _render(); });
@@ -1858,6 +1887,75 @@
     }
 
     root.appendChild(wrap);
+  }
+
+  /* Build a featured match card with goal events timeline */
+  function buildMatchFeature(m, isKO){
+    var nameA = m.nameA, nameB = m.nameB;
+    var goalsA = m.goalsA != null ? m.goalsA : m.result ? m.result.a : 0;
+    var goalsB = m.goalsB != null ? m.goalsB : m.result ? m.result.b : 0;
+    var evA = m.evA||[], evB = m.evB||[];
+    var pens = m.result && m.result.pens;
+    var winner = m.result ? m.result.winner : (goalsA>goalsB?nameA:goalsB>goalsA?nameB:null);
+
+    var card = mk("div","mp-feat-match");
+    /* Stage badge */
+    var stage = isKO ? (m.stage||"Knockout") : "Group Stage";
+    card.innerHTML = '<div class="mp-feat-stage">'+esc(stage)+'</div>';
+
+    /* Scoreboard */
+    var sb = mk("div","mp-feat-scoreboard");
+    sb.innerHTML =
+      '<div class="mp-feat-team'+(winner===nameA?' mp-feat-winner':'')+'">'+
+        '<div class="mp-feat-tname">'+esc(nameA)+'</div>'+
+      '</div>'+
+      '<div class="mp-feat-scores">'+
+        '<span class="mp-feat-g'+(goalsA>goalsB?" mp-feat-g-win":"")+'">'+goalsA+'</span>'+
+        '<span class="mp-feat-sep">–</span>'+
+        '<span class="mp-feat-g'+(goalsB>goalsA?" mp-feat-g-win":"")+'">'+goalsB+'</span>'+
+        (pens?'<div class="mp-feat-pens">Penalties</div>':'')+
+      '</div>'+
+      '<div class="mp-feat-team mp-feat-team-r'+(winner===nameB?' mp-feat-winner':'')+'">'+
+        '<div class="mp-feat-tname">'+esc(nameB)+'</div>'+
+      '</div>';
+    card.appendChild(sb);
+
+    /* Goal events timeline */
+    if (evA.length || evB.length) {
+      var timeline = mk("div","mp-feat-timeline");
+      /* Merge and sort */
+      var allEv = evA.map(function(e){return {side:"A",n:e.n,min:e.min};})
+        .concat(evB.map(function(e){return {side:"B",n:e.n,min:e.min};}));
+      allEv.sort(function(a,b){return a.min-b.min;});
+      allEv.forEach(function(ev){
+        var row = mk("div","mp-ev-row mp-ev-"+ev.side);
+        if (ev.side==="A"){
+          row.innerHTML = '<span class="mp-ev-name">'+esc(ev.n)+'</span><span class="mp-ev-icon">⚽</span><span class="mp-ev-min">'+ev.min+'\'</span>';
+        } else {
+          row.innerHTML = '<span class="mp-ev-min">'+ev.min+'\'</span><span class="mp-ev-icon">⚽</span><span class="mp-ev-name">'+esc(ev.n)+'</span>';
+        }
+        timeline.appendChild(row);
+      });
+      card.appendChild(timeline);
+    } else if (goalsA===0 && goalsB===0) {
+      var nil = mk("div","mp-feat-nil"); nil.textContent = "Clean sheet both ends"; card.appendChild(nil);
+    }
+
+    /* Full time label */
+    var ft = mk("div","mp-feat-ft"); ft.textContent = pens ? "AET • Decided on Penalties" : "Full Time"; card.appendChild(ft);
+    return card;
+  }
+
+  /* Compact past match row */
+  function buildMatchMini(nameA, nameB, gA, gB, pens, winner){
+    var mc = mk("div","mp-sim-match");
+    var winA = winner ? winner===nameA : gA>gB;
+    var winB = winner ? winner===nameB : gB>gA;
+    mc.innerHTML =
+      '<span class="mp-sim-ta'+(winA?" win":"")+'">'+esc(nameA)+'</span>'+
+      '<span class="mp-sim-score">'+gA+' – '+gB+(pens?' <em>(P)</em>':'')+'</span>'+
+      '<span class="mp-sim-tb'+(winB?" win":"")+'">'+esc(nameB)+'</span>';
+    return mc;
   }
 
   /* Pre-compute all tournament results once */
@@ -1888,17 +1986,17 @@
                  (Math.random()<0.5?p1.name:p2.name);
     } else if (format==="group_final"){
       var fin=simKO(sorted[0],sorted[1]);
-      knockouts.push({stage:"🏆 Final",nameA:sorted[0].name,nameB:sorted[1].name,result:fin});
+      knockouts.push({stage:"🏆 Final",nameA:sorted[0].name,nameB:sorted[1].name,result:fin,evA:fin.evA,evB:fin.evB});
       champion=fin.winner;
     } else {
       var sf1=simKO(sorted[0],sorted[3]);
       var sf2=simKO(sorted[1],sorted[2]);
-      knockouts.push({stage:"Semi-Final",nameA:sorted[0].name,nameB:sorted[3].name,result:sf1});
-      knockouts.push({stage:"Semi-Final",nameA:sorted[1].name,nameB:sorted[2].name,result:sf2});
+      knockouts.push({stage:"Semi-Final",nameA:sorted[0].name,nameB:sorted[3].name,result:sf1,evA:sf1.evA,evB:sf1.evB});
+      knockouts.push({stage:"Semi-Final",nameA:sorted[1].name,nameB:sorted[2].name,result:sf2,evA:sf2.evA,evB:sf2.evB});
       var finA=sf1.winner===sorted[0].name?sorted[0]:sorted[3];
       var finB=sf2.winner===sorted[1].name?sorted[1]:sorted[2];
       var finM=simKO(finA,finB);
-      knockouts.push({stage:"🏆 Final",nameA:finA.name,nameB:finB.name,result:finM});
+      knockouts.push({stage:"🏆 Final",nameA:finA.name,nameB:finB.name,result:finM,evA:finM.evA,evB:finM.evB});
       champion=finM.winner;
     }
     st.simData = {format:format, groupMatches:gs.matches, standings:sorted, knockouts:knockouts, champion:champion};
@@ -1916,10 +2014,10 @@
       for (var j=i+1;j<n;j++){
         var r1 = simMatch(st.players[i], st.players[j], false);
         updateRow(standings,i,j,r1.a,r1.b);
-        matches.push({nameA:st.players[i].name, nameB:st.players[j].name, goalsA:r1.a, goalsB:r1.b});
+        matches.push({nameA:st.players[i].name, nameB:st.players[j].name, goalsA:r1.a, goalsB:r1.b, evA:r1.evA, evB:r1.evB});
         var r2 = simMatch(st.players[j], st.players[i], false);
         updateRow(standings,j,i,r2.a,r2.b);
-        matches.push({nameA:st.players[j].name, nameB:st.players[i].name, goalsA:r2.a, goalsB:r2.b});
+        matches.push({nameA:st.players[j].name, nameB:st.players[i].name, goalsA:r2.a, goalsB:r2.b, evA:r2.evA, evB:r2.evB});
       }
     }
     return { standings:standings, matches:matches };
@@ -1939,14 +2037,43 @@
     var winner;
     if (res.a>res.b) winner=rowA.name;
     else if (res.b>res.a) winner=rowB.name;
-    else { winner = Math.random()<0.5 ? rowA.name : rowB.name; return {a:res.a,b:res.b,pens:true,winner:winner}; }
-    return {a:res.a, b:res.b, pens:false, winner:winner};
+    else { winner = Math.random()<0.5 ? rowA.name : rowB.name; return {a:res.a,b:res.b,pens:true,winner:winner,evA:res.evA,evB:res.evB}; }
+    return {a:res.a, b:res.b, pens:false, winner:winner, evA:res.evA, evB:res.evB};
   }
 
   function simMatch(pA, pB, isKO){
     var ra = teamStr(pA, isKO), rb = teamStr(pB, isKO);
     var diff = (ra-rb)/60;
-    return { a: poisson(Math.max(0.3, 1.3+diff)), b: poisson(Math.max(0.3, 1.3-diff)) };
+    var goalsA = poisson(Math.max(0.3, 1.3+diff));
+    var goalsB = poisson(Math.max(0.3, 1.3-diff));
+    var evA = genGoalEvents(pA.picks||[], goalsA);
+    var evB = genGoalEvents(pB.picks||[], goalsB);
+    return { a: goalsA, b: goalsB, evA: evA, evB: evB };
+  }
+
+  function genGoalEvents(picks, count){
+    var pool = picks.filter(function(pk){
+      var l = MP_LINE_OF[pk.slot||pk.gp||pk.p]||"MID";
+      return l==="FWD"||l==="MID";
+    });
+    if(!pool.length) pool = picks.slice();
+    if(!pool.length) {
+      var ev=[];
+      for(var i=0;i<count;i++) ev.push({n:"Own Goal",min:Math.floor(Math.random()*90)+1});
+      return ev;
+    }
+    var used={}, events=[];
+    for(var i=0;i<count;i++){
+      var total=0; pool.forEach(function(pk){total+=(pk.r||75);});
+      var r=Math.random()*total,cum=0,scorer=pool[0];
+      for(var j=0;j<pool.length;j++){ cum+=(pool[j].r||75); if(r<=cum){scorer=pool[j];break;} }
+      var min,tries=0;
+      do{min=Math.floor(Math.random()*89)+1;tries++;}while(used[min]&&tries<30);
+      used[min]=true;
+      events.push({n:scorer.n,min:min});
+    }
+    events.sort(function(a,b){return a.min-b.min;});
+    return events;
   }
 
   function teamStr(p, isKO){

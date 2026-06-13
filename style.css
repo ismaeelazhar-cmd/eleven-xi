@@ -4088,3 +4088,121 @@ button, a, .seg-opt { touch-action: manipulation; }
 }
 /* Multiplayer draft: squad panel inside draft-left */
 .draft-left .mp-squad-panel { margin-top: 10px; }
+
+/* ══════════════════════════════════════════════
+   TOURNAMENT SIMULATION — CINEMATIC MATCH VIEW
+══════════════════════════════════════════════ */
+
+/* Wrapper */
+.mp-tourn-wrap { max-width: 640px; margin: 0 auto; }
+.mp-begin-btn { margin: 24px auto 0; display: block; font-size: 1.1rem; }
+
+/* Team strip (pre-game lineup) */
+.mp-team-lineups { display: flex; flex-direction: column; gap: 10px; }
+.mp-team-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.mp-ts-name { font-weight: 700; font-size: 1rem; }
+.mp-ts-meta { font-size: .78rem; color: var(--text-mute,#828DAD); margin-top: 2px; }
+.mp-ts-avg {
+  font-size: 1.5rem; font-weight: 800; color: #f99c00;
+  display: flex; flex-direction: column; align-items: center;
+}
+.mp-ts-avg span { font-size: .6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-mute,#828DAD); }
+
+/* ── Featured match card ── */
+.mp-feat-match {
+  background: linear-gradient(160deg, #0c1a2e 0%, #0a1520 100%);
+  border: 1px solid rgba(34,224,200,.18);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.mp-feat-stage {
+  text-align: center;
+  font-size: .7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: #22E0C8;
+  padding: 10px 0 0;
+}
+.mp-feat-scoreboard {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px;
+  gap: 12px;
+}
+.mp-feat-team {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: flex-start;
+}
+.mp-feat-team-r { align-items: flex-end; }
+.mp-feat-tname { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+.mp-feat-winner .mp-feat-tname { color: #f99c00; }
+.mp-feat-scores {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0;
+}
+.mp-feat-g {
+  font-size: 2.6rem; font-weight: 900; line-height: 1;
+  color: rgba(255,255,255,.4);
+}
+.mp-feat-sep { font-size: 2rem; font-weight: 300; color: rgba(255,255,255,.2); line-height: 1; }
+/* Show score as "G – G" row */
+.mp-feat-scores { flex-direction: row; gap: 8px; align-items: center; }
+.mp-feat-g-win { color: #fff; }
+.mp-feat-pens { font-size: .65rem; color: #22E0C8; letter-spacing: 1px; text-transform: uppercase; }
+/* Divider */
+.mp-feat-timeline {
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding: 12px 24px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.mp-ev-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .83rem;
+}
+.mp-ev-A { justify-content: flex-start; }
+.mp-ev-B { justify-content: flex-end; }
+.mp-ev-icon { font-size: 1rem; }
+.mp-ev-min { font-size: .72rem; color: #22E0C8; font-weight: 700; min-width: 28px; }
+.mp-ev-A .mp-ev-min { text-align: right; }
+.mp-ev-B .mp-ev-min { text-align: left; }
+.mp-ev-name { font-weight: 600; color: var(--text, #ECF1FF); }
+.mp-feat-nil { text-align: center; font-size: .8rem; color: var(--text-mute,#828DAD); padding: 10px 0; }
+.mp-feat-ft {
+  text-align: center; font-size: .65rem; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(255,255,255,.3); padding: 8px 0 14px;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+
+/* Mini past match row */
+.mp-sim-match {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; border-radius: 8px;
+  background: rgba(255,255,255,.03); margin-bottom: 4px;
+  border: 1px solid rgba(255,255,255,.05);
+}
+
+/* Advance dot */
+.mp-adv-dot { color: #22E0C8; font-size: .6rem; vertical-align: middle; }
+.mp-adv-note { font-size: .72rem; color: var(--text-mute,#828DAD); margin-top: 6px; }
+
+/* Champion banner enhanced */
+.mp-champion-full {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #1a1000 0%, #0a0800 50%, #1a1000 100%);
+  border: 1px solid rgba(249,156,0,.35);
+}
+.mp-champ-confetti { font-size: 2rem; margin-bottom: -8px; display: block; }
+
+/* Free respin notice */
+.mp-free-respin {
+  text-align: center; padding: 12px;
+  color: #22E0C8; font-size: .9rem;
+  border-top: 1px solid rgba(34,224,200,.15);
+  animation: pulse-teal 1s ease infinite alternate;
+}
+@keyframes pulse-teal { from { opacity:.7; } to { opacity:1; } }
