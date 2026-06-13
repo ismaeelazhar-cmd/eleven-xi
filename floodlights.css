@@ -321,6 +321,8 @@ body.light {
 .rw-rerolls { color: var(--text-mute); font-size: var(--t-xs); margin-bottom: var(--sp-3); }
 .rw-reroll-badge { font-size: var(--t-2xs); font-weight: 700; padding: 3px 9px; border-radius: var(--r-pill); background: rgba(34,224,200,.12); border: 1px solid rgba(34,224,200,.35); color: var(--positive); white-space: nowrap; }
 .rw-reroll-badge.rw-reroll-empty { background: rgba(255,122,89,.12); border-color: rgba(255,122,89,.35); color: var(--warning); }
+/* Local alternating-draft hint (replaces the lock button while passing back and forth) */
+.rw-alt-hint { margin-top: var(--sp-4); text-align: center; font-size: var(--t-sm); color: var(--text-mute); padding: var(--sp-3); border: 1px dashed var(--line); border-radius: var(--r-md); background: var(--surface-2); }
 /* MP draft reroll counter inline in draft-meta */
 .mp-reroll-badge { font-size: var(--t-2xs); font-weight: 700; padding: 2px 7px; border-radius: var(--r-pill); background: rgba(34,224,200,.12); border: 1px solid rgba(34,224,200,.35); color: var(--positive); }
 .mp-reroll-badge.mp-reroll-empty { background: rgba(255,122,89,.12); border-color: rgba(255,122,89,.35); color: var(--warning); }
@@ -987,7 +989,10 @@ body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, 
 .dvc-pitch .pdot.MID.filled { background: color-mix(in srgb, var(--primary) 55%, transparent); }
 .dvc-pitch .pdot.FWD.filled { background: color-mix(in srgb, var(--warning) 55%, transparent); }
 .dvc-pitch .dot-pos { color: rgba(255,255,255,.65); font-size: 8px; }
+.dvc-pitch .dot-init { color: #fff; font-size: 13px; font-weight: 900; line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
 .dvc-pitch .dot-name { color: #fff; font-size: 8px; font-weight: 700; text-align: center; line-height: 1.1; max-width: 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* small draft-header pitches (MP/WC): keep the rating number compact */
+.draft-pitch-wrap .pdot .dot-init { font-size: 9px; }
 .rw-sp-chooser { background: var(--surface-2); border: 1px solid var(--primary); border-radius: var(--r-lg); padding: var(--sp-4); margin-bottom: var(--sp-4); text-align: center; }
 .rw-sp-chooser-q { font-size: var(--t-sm); color: var(--text); display: block; margin-bottom: var(--sp-3); }
 .rw-sp-cancel { margin-top: var(--sp-3); }

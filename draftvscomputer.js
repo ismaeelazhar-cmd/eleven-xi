@@ -260,7 +260,7 @@ window.startDraftVsComputer = (function (W) {
       row.forEach(function(f){
         if (f.player) {
           html += '<div class="pdot filled '+f.line+'">' +
-            '<span class="dot-init">'+(f.player.r||'?')+'</span>' +
+            '<span class="dot-init">'+(f.player.r||esc(f.slot))+'</span>' +
             '<span class="dot-name">'+esc(f.player.n.split(" ").pop())+'</span>' +
           '</div>';
         } else {

@@ -4,7 +4,19 @@
 > done, what's left, decisions made, and exactly where to pick up. Update it after
 > every completed part.
 
-_Last checkpoint: T1+T2 COMPLETE. T3 UI pass complete. Cache wcxi-v138._
+_Last checkpoint: Cross-mode polish pass (T5) complete. Cache wcxi-v140._
+
+## §34. Task 5 — Cross-mode polish (squad spacing, position order, pitch ratings, local Duels alternating draft)
+
+**Status: COMPLETE** | Files: `style.css v81`, `floodlights.css v117`, `game.js v99`, `multiplayer.js v96`, `ratingswar.js v104`, `draftvscomputer.js v11`, `sw.js wcxi-v140`
+
+1. **Squad-list spacing (ALL modes)** — `.xi-row .info` is now a flex column with `gap:2px`; `.pn` and `.meta` each get ellipsis + nowrap. Player name now sits on its own line above "Team · Year" (was running together as "Gaston MáspoliUruguay · 1950"). Applies to WC/CL/Euro (game.js), League, Multiplayer, and Duels since they all share `.xi-row .info .pn/.meta`.
+2. **Summary top scorers/assists fit (ALL modes via shared CSS)** — `.stat-col`/`.stat-row` get `min-width:0`; `.sn` gets ellipsis+nowrap; `.sp` and `.sv` are `flex:0 0 auto`. Long names no longer overflow the column or overlap lines.
+3. **Squad picker position order (ALL modes)** — picker lists sort GK→DEF→MID→FWD then rating desc. game.js + DVC newly sorted; MP, Duels, League already sorted.
+4. **Pitch dots show rating + name (ALL modes)** — MP `buildWCPitch` and DVC `pitchHTML` now render the rating in the dot (`dot-init`, tier-coloured) with the short name below, matching WC/League. Added `.dvc-pitch .dot-init` (white, 13px) and `.draft-pitch-wrap .pdot .dot-init` (compact 9px). Duels build stays blind (no ratings) by design.
+5. **Local Duels alternating draft** — standard local 2-player Duels (no online/async/shared-pool) now passes the device after EACH pick: spin → pick one → "Pass the device" screen → next player. New `altpass` phase + helpers (`isAltLocal`, `rwApplyPool`, `rwNextNeedingPicks`, `rwFinishBuild`, `rwAfterPick`, `renderAltPass`). Each player's pool stored in `RW.poolByPlayer` and restored on their turn. Lock button replaced by an auto-pass hint in this mode. Online/async/shared-pool/3-4-player variants keep the existing full-build-then-handoff flow. Bo3 resets `poolByPlayer` between matches.
+
+
 
 ## CURRENT SESSION TASKS
 
@@ -23,7 +35,7 @@ _Last checkpoint: T1+T2 COMPLETE. T3 UI pass complete. Cache wcxi-v138._
 - **Live production:** https://ismaeelazhar-cmd.github.io/eleven-xi/ (auto-deploys on push to main)
 - **GitHub SSH:** `git@github.com:ismaeelazhar-cmd/eleven-xi.git`
 - **Cache version:** `wcxi-v136`
-- **Current file versions:** style.css v80, tokens.css v74, floodlights.css v116, game.js v98, multiplayer.js v94, floodlights.js v94, ratingswar.js v103, draftvscomputer.js v10, league.js v84, sw.js wcxi-v139
+- **Current file versions:** style.css v81, tokens.css v74, floodlights.css v117, game.js v99, multiplayer.js v96, floodlights.js v94, ratingswar.js v104, draftvscomputer.js v11, league.js v84, sw.js wcxi-v140
 
 ## 1. Design direction — LOCKED: "Floodlights"
 - **Palette:** Midnight `#0B1020` · Slate `#1B2340` · Violet `#7C5CFC` · Cyan `#22E0C8` · Coral `#FF7A59` · Gold `#F5B43C`

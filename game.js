@@ -652,14 +652,15 @@
         }).join("") + '<button class="choose-cancel">cancel</button></div>';
     }
 
-    // Sort players into position groups: GK → DEF → MID → FWD
-    var lineOrder = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
+    // Sort players into position groups: GK → DEF → MID → FWD, rating desc within each
     var lineLabels = { GK: "Goalkeeper", DEF: "Defenders", MID: "Midfielders", FWD: "Attackers" };
     var groups = { GK: [], DEF: [], MID: [], FWD: [] };
     players.forEach(function (pl) {
-      var line = LINE_OF[pl.p] || pl.p || "MID";
+      var gps0 = gpOf(pl);
+      var line = LINE_OF[gps0 ? gps0[0] : pl.p] || "MID";
       (groups[line] || groups.MID).push(pl);
     });
+    ["GK","DEF","MID","FWD"].forEach(function (L) { groups[L].sort(function (a, b) { return (b.r || 0) - (a.r || 0); }); });
 
     inner += '<div class="players">';
     ["GK","DEF","MID","FWD"].forEach(function (line) {

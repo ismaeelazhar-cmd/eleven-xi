@@ -1654,8 +1654,8 @@
         var pk = pop(slot);
         if(pk){
           var sn = pk.n.split(" ").pop();
-          html += '<div class="pdot filled '+lineCls+'">'+
-            '<span class="dot-pos">'+slot+'</span>'+
+          html += '<div class="pdot filled '+lineCls+ratingTierClass(pk.r)+'">'+
+            '<span class="dot-init">'+(pk.r||slot)+'</span>'+
             '<span class="dot-name">'+esc(sn)+'</span>'+
             '</div>';
         } else {

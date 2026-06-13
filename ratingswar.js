@@ -344,6 +344,7 @@
     if (RW.phase === "asyncaccept")  return renderAsyncAccept(v);
     if (RW.phase === "waitopp")      return renderWaitOpp(v);
     if (RW.phase === "handoff")      return renderHandoff(v);
+    if (RW.phase === "altpass")      return renderAltPass(v);
     if (RW.phase === "reveal")       return renderReveal(v);
     if (RW.phase === "matchnext")    return renderMatchNext(v);
     if (RW.phase === "tournresult")  return renderTournResult(v);
@@ -704,6 +705,8 @@
         RW.poolNationalCur = pool.national;
         RW.poolLabelCur = pool.label;
         RW._asyncPoolKey = pool.key;
+        RW.poolByPlayer = RW.poolByPlayer || {};
+        RW.poolByPlayer[RW.cur] = { data: RW.poolDataCur, national: RW.poolNationalCur, label: RW.poolLabelCur, key: pool.key };
         RW.currentSpin = null; RW.pendingRWPick = null;
         if (RW.features.sharedPool && !RW.online){
           RW.sharedPool = generateSharedPool(RW.poolDataCur);
@@ -998,6 +1001,9 @@
           var idx = parseInt(btn.getAttribute("data-rwidx"),10);
           var pp = RW.pendingRWPick;
           P.picks[idx] = { n:pp.n, r:pp.r||75, gp:SLOTS[idx].k.trim(), club:spin.country, year:spin.year };
+          if (window.sfx) window.sfx.pick();
+          /* Local 2-player Duel: pass the device after each pick */
+          if (isAltLocal()){ rwAfterPick(); return; }
           RW.pendingRWPick = null; RW.currentSpin = null;
           /* Refresh pitch without full re-render */
           var pw = document.getElementById("rwPitchWrap");
@@ -1104,9 +1110,11 @@
         /* RIGHT */
         "<div class='draft-right'>"+
           renderRWXiListHTML(P)+
-          "<div class='xi-actions'>"+
-            "<button class='btn-primary rw-lock-btn' id='rwLock' "+(filled<11?"disabled":"")+">"+lockLabel+"</button>"+
-          "</div>"+
+          (isAltLocal()
+            ? "<div class='rw-alt-hint'>Pick one player, then the device passes to "+esc(RW.players[(RW.cur+1)%RW.numPlayers].name)+" automatically.</div>"
+            : "<div class='xi-actions'>"+
+                "<button class='btn-primary rw-lock-btn' id='rwLock' "+(filled<11?"disabled":"")+">"+lockLabel+"</button>"+
+              "</div>")+
         "</div>"+
       "</div>";
 
@@ -1417,6 +1425,70 @@
   }
 
   /* ---------- handoff (privacy between players) ---------- */
+  /* ---------- local alternating draft (pass device after each pick) ---------- */
+  /* Active only for a standard local 2-player Duel (no online / async / shared pool). */
+  function isAltLocal(){
+    return !RW.online && !RW.features.asyncOnline && !RW.features.sharedPool && RW.numPlayers === 2;
+  }
+  function rwApplyPool(idx){
+    var pp = RW.poolByPlayer && RW.poolByPlayer[idx];
+    if (!pp) return false;
+    RW.poolDataCur = pp.data; RW.poolNationalCur = pp.national;
+    RW.poolLabelCur = pp.label; RW._asyncPoolKey = pp.key;
+    return true;
+  }
+  function rwNextNeedingPicks(){
+    var n = RW.numPlayers;
+    for (var i=1; i<=n; i++){
+      var idx = (RW.cur + i) % n;
+      if (RW.players[idx].picks.filter(Boolean).length < 11) return idx;
+    }
+    return RW.cur;
+  }
+  /* Replicates the "all players built" tail of the lock-XI handler. */
+  function rwFinishBuild(){
+    RW.currentSpin = null; RW.pendingRWPick = null;
+    RW.matches = buildMatchSchedule(RW.numPlayers);
+    RW.matchIdx = 0;
+    RW.curA = RW.matches[0].a; RW.curB = RW.matches[0].b;
+    if (RW.features.blindSwap){
+      RW.cur = 0; RW.swapDone = RW.players.map(function(){ return false; });
+      RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
+      RW.phase = "blindswap";
+    } else {
+      goToReveal();
+    }
+    render();
+  }
+  /* Called after a pick is placed; routes the alternating turn flow. */
+  function rwAfterPick(){
+    RW.pendingRWPick = null; RW.currentSpin = null;
+    if (!isAltLocal()){ render(); return; }
+    var everyone = RW.players.every(function(p){ return p.picks.filter(Boolean).length >= 11; });
+    if (everyone){ rwFinishBuild(); return; }
+    var next = rwNextNeedingPicks();
+    if (next === RW.cur){ render(); return; } /* only this player still needs picks */
+    RW.cur = next;
+    RW.phase = "altpass";
+    render();
+  }
+  function renderAltPass(v){
+    var P = RW.players[RW.cur];
+    var mine = P.picks.filter(Boolean).length;
+    v.innerHTML =
+      "<div class='wrap'><div class='rw-handoff'>"+
+        "<h2 class='rw-title'>Pass the device</h2>"+
+        "<div class='rw-handoff-prog'>"+mine+"/11 picked</div>"+
+        "<p class='rw-sub'><strong>"+esc(P.name)+"</strong>, it's your turn — spin and pick one player. Ratings stay hidden.</p>"+
+        "<button class='fl-btn rw-start' id='rwAltGo'>I'm "+esc(P.name)+" — continue →</button>"+
+      "</div></div>";
+    document.getElementById("rwAltGo").onclick = function(){
+      /* Pool is shared (chosen on the intro screen) — go straight to build */
+      RW.phase = "build";
+      render();
+    };
+  }
+
   function renderHandoff(v){
     var cur = RW.players[RW.cur], prev = RW.players[RW.cur-1];
     var built = RW.cur, total = RW.numPlayers;
@@ -1908,6 +1980,7 @@
     RW.seriesMatch = (RW.seriesMatch||0) + 1;
     _saveDuelSeries(); /* D-3: persist series state between matches */
     RW.players.forEach(function(p){ p.picks = newPicks(); p.rerollsUsed = 0; p.wildcardUsed = false; });
+    RW.poolByPlayer = {};
     RW.currentSpin = null; RW.pendingRWPick = null; RW._spinning = false;
     RW.swapSel = null; RW.swapTimeLeft = 30; RW.blindSwapPassing = false;
     if (RW._swapTimerInterval){ clearInterval(RW._swapTimerInterval); RW._swapTimerInterval = null; }
