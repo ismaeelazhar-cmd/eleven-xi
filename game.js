@@ -910,7 +910,7 @@
   }
   function setMode(m) {
     mode = m;
-    loadManagerPref();   /* restore last manager across modes */
+    clFormat = "swiss"; /* always use New Swiss format */
     document.body.classList.toggle("mode-cl", m === "cl");
     DATA = m === "cl" ? window.CL_DATA : m === "euro" ? (window.EURO_DATA || window.WORLD_CUP_DATA) : window.WORLD_CUP_DATA;
     COUNTRIES = Object.keys(DATA);
@@ -919,14 +919,16 @@
     selectedYears = {}; ALL_YEARS.forEach(function (y) { selectedYears[y] = true; });
     continent = "all";
     squad = []; current = null; pendingPick = null; awaitingPick = false;
+    /* Reset manager so player can spin fresh each time they enter a mode */
+    managerId = "none"; managerName = ""; managerSpun = false;
+    if (elManagerSpin) { elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin manager"; }
     var cl = (m === "cl");
     var euro = (m === "euro");
-    $("clFormatRow").style.display = cl ? "block" : "none";
     var cw = $("continentWrap"); if (cw) cw.style.display = (cl || euro) ? "none" : "block";
     var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Player pool — Champions League seasons" : euro ? "Player pool — Euro tournament eras" : "Player pool — World Cup eras";
     var cl2 = $("countryLabel"); if (cl2) cl2.textContent = cl ? "Club" : "Nation";
     renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra();
-    renderContinent(); renderDifficultyBar(); renderClFormat();
+    renderContinent(); renderDifficultyBar();
     paintPitches(); renderXI(); updateControls(); showView("setup");
   }
 
