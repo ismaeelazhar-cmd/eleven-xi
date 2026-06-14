@@ -869,6 +869,32 @@ window.startDraftVsComputer = (function (W) {
     html += '<button class="btn-primary" id="dvcPlayAgain">Draft Again</button>';
     html += '<button class="btn-ghost" id="dvcHome">&#8592; Home</button>';
     html += '</div>';
+    /* Shareable card */
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var now = new Date(), dateStr = months[now.getMonth()] + " " + now.getDate();
+    var verdict = res ? (res.winner==="A" ? "You Won!" : res.winner==="B" ? DVC.cpuName+" Won" : "Draw") : "No result";
+    var scoreStr2 = res ? res.a+"-"+res.b : "—";
+    var PO = {GK:0,CB:1,LB:1,RB:1,LWB:1,RWB:1,CDM:2,CM:2,CAM:3,LM:2,RM:2,LW:4,RW:4,CF:4,ST:4,SS:4};
+    var sortedForCard = DVC.playerPicks.slice().sort(function(a,b){ return (PO[a.pos]||5)-(PO[b.pos]||5) || (b.r||0)-(a.r||0); });
+    var playerTiles = sortedForCard.map(function(p){
+      var lastName = p.n.split(" ").pop(); if(lastName.length>8) lastName=lastName.slice(0,7)+".";
+      var cls = "f-player"+(p.pos==="GK"?" gk":"")+(p.r>=97?" goat":"");
+      return '<div class="'+cls+'"><div class="f-rating">'+p.r+'</div><div class="f-name">'+lastName+'</div><div class="f-year">'+esc(p.country||"")+'</div></div>';
+    }).join("");
+    html += '<div class="share-card dvc-share-card">' +
+      '<div class="sc-header"><div class="sc-logo">ELEVEN XI</div><div class="sc-date">'+dateStr+' · vs Computer</div></div>' +
+      '<div class="sc-title">Your XI</div>' +
+      '<div class="sc-sub">'+esc(DVC.formation)+' · '+esc(DVC.difficulty.charAt(0).toUpperCase()+DVC.difficulty.slice(1))+'</div>' +
+      '<div class="formation-grid dvc-tile-grid">'+playerTiles+'</div>' +
+      '<div class="sc-result">' +
+        '<div><div class="sc-rt">Score</div><div class="sc-rv">'+scoreStr2+'</div></div>' +
+        '<div style="text-align:right"><div class="sc-rt">Result</div><div class="sc-rrank">'+esc(verdict)+'</div></div>' +
+      '</div>' +
+      '<div class="sc-share-row">' +
+        '<button class="sc-btn sc-btn-primary" id="dvcShareBtn">Share my XI ↗</button>' +
+        '<button class="sc-btn sc-btn-sec" id="dvcCopyBtn">Copy image</button>' +
+      '</div>' +
+    '</div>';
     html += '</div>';
     return html;
   }
@@ -884,6 +910,10 @@ window.startDraftVsComputer = (function (W) {
     };
     var home = document.getElementById("dvcHome");
     if (home) home.onclick = function(){ W.flGoHome(); };
+    var dvcShare = document.getElementById("dvcShareBtn");
+    if (dvcShare) dvcShare.onclick = function(){ if (W.WCXI_shareXIPNG) W.WCXI_shareXIPNG(this); };
+    var dvcCopy = document.getElementById("dvcCopyBtn");
+    if (dvcCopy) dvcCopy.onclick = function(){ if (W.WCXI_copyXIPNG) W.WCXI_copyXIPNG(this); };
   }
 
   /* ---- Public entry point ---- */

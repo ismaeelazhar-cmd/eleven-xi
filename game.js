@@ -118,6 +118,8 @@
   window.WCXI_MANAGERS_DB = MANAGERS_DB;
   /* Shared leaderboard API so League / Multiplayer can post per-mode scores */
   window.WCXI_addScore = function (e) { try { addScore(e); _trackProgress(e); } catch (err) {} };
+  window.WCXI_shareXIPNG = function(btn) { shareXIPNG(btn); };
+  window.WCXI_copyXIPNG  = function(btn) { copyXIPNG(btn); };
 
   /* ── Progression system ───────────────────────────────────────────── */
   var PROG_KEY = "wcxi_progress";
@@ -829,41 +831,34 @@
     };
   }
 
-  function shareXIPNG(btn) {
+  function buildXICanvas() {
     var a = assignByLines();
     var lines = [a.gk].concat(a.lines);
     var CW = 900, CH = 1200, PAD = 48;
     var c = document.createElement("canvas"); c.width = CW; c.height = CH;
-    var ctx = c.getContext("2d"); if (!ctx) return;
+    var ctx = c.getContext("2d"); if (!ctx) return null;
     var FS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
-    // Background
     var bg = ctx.createLinearGradient(0, 0, 0, CH);
     bg.addColorStop(0, "#0B1020"); bg.addColorStop(1, "#121830");
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
-    // Pitch area
     var pitchY = 140, pitchH = CH - pitchY - 80;
     var pg = ctx.createLinearGradient(0, pitchY, 0, pitchY + pitchH);
     pg.addColorStop(0, "#0d1f14"); pg.addColorStop(1, "#091510");
     ctx.fillStyle = pg; ctx.fillRect(PAD, pitchY, CW - PAD * 2, pitchH);
     ctx.strokeStyle = "rgba(34,224,200,0.18)"; ctx.lineWidth = 1.5;
     ctx.strokeRect(PAD, pitchY, CW - PAD * 2, pitchH);
-    // Penalty box
     var pbW = (CW - PAD * 2) * 0.56, pbH = pitchH * 0.3, pbX = PAD + (CW - PAD * 2 - pbW) / 2, pbY = pitchY + pitchH - pbH;
     ctx.strokeRect(pbX, pbY, pbW, pbH);
-    // Header
     ctx.textAlign = "center";
     ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("ELEVEN XI", CW / 2, 38);
     ctx.fillStyle = "#ECF1FF"; ctx.font = "800 32px " + FS; ctx.fillText(teamDisplayName(), CW / 2, 78);
     ctx.fillStyle = "rgba(236,241,255,0.5)"; ctx.font = "500 17px " + FS;
     ctx.fillText(formation + "  ·  " + currentManager().name, CW / 2, 110);
-    // Result line from lastSim
     if (lastSim && lastSim.userTeam && lastSim.userTeam.result) {
       ctx.fillStyle = "#F5B43C"; ctx.font = "700 15px " + FS;
       ctx.fillText(String(lastSim.userTeam.result), CW / 2, 132);
     }
-    // Players on pitch
     var lineColors = { GK: "#F5B43C", DEF: "#22E0C8", MID: "#7C5CFC", FWD: "#FF7A59" };
-    var lineKeys = { GK: "GK", DEF: "DEF", MID: "MID", FWD: "FWD" };
     lines.forEach(function (row, rowIdx) {
       var n = row.length, rowFrac = (rowIdx + 0.6) / (lines.length);
       var y = pitchY + pitchH * (0.95 - rowFrac * 0.88);
@@ -872,30 +867,27 @@
         var x = PAD + (CW - PAD * 2) * ((colIdx + 0.5) / n);
         var line = rowIdx === 0 ? "GK" : (rowIdx === lines.length - 1 ? "FWD" : (rowIdx <= 1 ? "DEF" : "MID"));
         var col = lineColors[line] || "#ECF1FF";
-        // Dot
         ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(11,16,32,0.85)"; ctx.fill();
         ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
-        // Position label
         ctx.fillStyle = col; ctx.font = "700 10px " + FS; ctx.textAlign = "center";
         ctx.fillText(cell.pos, x, y - 7);
-        // Player name (abbreviate if long)
         if (cell.pick) {
-          var name = cell.pick.n.split(" ").pop(); // last name
+          var name = cell.pick.n.split(" ").pop();
           ctx.fillStyle = "#ECF1FF"; ctx.font = "600 11px " + FS;
           ctx.fillText(name.length > 10 ? name.slice(0, 9) + "." : name, x, y + 6);
-          if (showRatings) {
-            ctx.fillStyle = col; ctx.font = "700 9px " + FS;
-            ctx.fillText(cell.pick.r, x, y + 18);
-          }
+          if (showRatings) { ctx.fillStyle = col; ctx.font = "700 9px " + FS; ctx.fillText(cell.pick.r, x, y + 18); }
         }
         ctx.textAlign = "center";
       });
     });
-    // Footer
     ctx.fillStyle = "rgba(236,241,255,0.25)"; ctx.font = "500 14px " + FS;
     ctx.fillText("ismaeelazhar-cmd.github.io/eleven-xi", CW / 2, CH - 24);
-    // Export
+    return c;
+  }
+
+  function shareXIPNG(btn) {
+    var c = buildXICanvas(); if (!c) return;
     c.toBlob(function (blob) {
       if (!blob) return;
       var fname = "eleven-xi.png";
@@ -909,7 +901,23 @@
       var url = URL.createObjectURL(blob), el = document.createElement("a");
       el.href = url; el.download = fname; document.body.appendChild(el); el.click(); el.remove();
       setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-      if (btn) { btn.textContent = "Saved!"; setTimeout(function () { btn.textContent = "Share XI"; }, 1800); }
+      if (btn) { btn.textContent = "Saved!"; setTimeout(function () { btn.textContent = "Share my XI ↗"; }, 1800); }
+    }, "image/png");
+  }
+
+  function copyXIPNG(btn) {
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      if (btn) { btn.textContent = "Not supported"; setTimeout(function(){ btn.textContent = "Copy image"; }, 2000); }
+      return;
+    }
+    var c = buildXICanvas(); if (!c) return;
+    c.toBlob(function(blob) {
+      if (!blob) return;
+      try {
+        navigator.clipboard.write([new ClipboardItem({"image/png": blob})]).then(function() {
+          if (btn) { btn.textContent = "Copied!"; setTimeout(function(){ btn.textContent = "Copy image"; }, 2000); }
+        });
+      } catch(e) { if (btn) { btn.textContent = "Failed"; setTimeout(function(){ btn.textContent = "Copy image"; }, 2000); } }
     }, "image/png");
   }
 
@@ -1119,8 +1127,12 @@
     if (btmBoard) btmBoard.addEventListener("click", function () { renderBoard(); showView("board"); });
     var shareXIBtn = document.getElementById("shareXIBtn");
     if (shareXIBtn) shareXIBtn.addEventListener("click", function () { shareXIPNG(this); });
+    var copyImgBtn = document.getElementById("copyImgBtn");
+    if (copyImgBtn) copyImgBtn.addEventListener("click", function () { copyXIPNG(this); });
     var boardBtn = document.getElementById("boardBtn");
     if (boardBtn) boardBtn.addEventListener("click", function () { renderBoard(); showView("board"); });
+    var btmNewGame2 = document.getElementById("btmNewGame");
+    if (btmNewGame2) btmNewGame2.addEventListener("click", newGame);
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
@@ -1151,6 +1163,49 @@
       { label: s.gf + " goals × 4", value: s.gf * 4 }
     ]);
   }
+  function shareCardHTML(sc, resultLabel, competitionLabel) {
+    var a = assignByLines();
+    var allRows = [a.gk].concat(a.lines);
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var now = new Date(), dateStr = months[now.getMonth()] + " " + now.getDate();
+    var gridRows = allRows.map(function(row) {
+      return '<div class="f-row">' + row.map(function(cell) {
+        var pick = cell && cell.pick;
+        var isGK = cell && cell.pos === "GK";
+        var isGoat = pick && pick.r >= 97;
+        var cls = "f-player" + (isGK ? " gk" : "") + (isGoat ? " goat" : "");
+        var lastName = pick ? pick.n.split(" ").pop() : "—";
+        if (lastName.length > 8) lastName = lastName.slice(0, 7) + ".";
+        var flagYear = pick ? (pick.country + " '" + String(pick.year || "").slice(-2)) : "";
+        return '<div class="' + cls + '">' +
+          '<div class="f-rating">' + (pick ? pick.r : "") + '</div>' +
+          '<div class="f-name">' + esc(lastName) + '</div>' +
+          '<div class="f-year">' + esc(flagYear) + '</div>' +
+          '</div>';
+      }).join("") + '</div>';
+    }).join("");
+    var mgr = currentManager();
+    var mgrTxt = managerId !== "none" ? " · " + esc(mgr.name) : "";
+    return '<div class="share-card" id="shareCard">' +
+      '<div class="sc-header">' +
+        '<div class="sc-logo">ELEVEN XI</div>' +
+        '<div class="sc-date">' + esc(dateStr) + ' · ' + esc(competitionLabel) + '</div>' +
+      '</div>' +
+      '<div class="sc-title">' + esc(teamDisplayName()) + '\'s XI</div>' +
+      '<div class="sc-sub">' + esc(formation) + mgrTxt + '</div>' +
+      '<div class="formation-grid">' + gridRows + '</div>' +
+      '<div class="sc-result">' +
+        '<div><div class="sc-rt">Score</div><div class="sc-rv">' + (sc ? sc.score : 0) + ' pts</div></div>' +
+        '<div style="text-align:right"><div class="sc-rt">Result</div><div class="sc-rrank">' + esc(resultLabel) + '</div></div>' +
+      '</div>' +
+      '<div class="sc-share-row">' +
+        '<button class="sc-btn sc-btn-primary" id="shareXIBtn">Share my XI ↗</button>' +
+        '<button class="sc-btn sc-btn-sec" id="copyImgBtn">Copy image</button>' +
+        '<button class="sc-btn sc-btn-sec" id="btmNewGame">New game</button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function scoreBannerHTML(sc, result) {
     var rows = sc.parts.map(function (p) {
       return '<div class="sb-row"><span>' + esc(p.label) + '</span><span class="' + (p.value < 0 ? "neg" : "pos") + '">' +
@@ -1378,10 +1433,11 @@
       }
     } else {
       if (!r.saved) { r.saved = true; if (window.sfx && wc.userResult === "Champions!") window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); }
+      html += shareCardHTML(r.sc, wc.userResult, r.compLabel || "World Cup");
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += scoreBannerHTML(r.sc, wc.userResult);
       html += statsSummaryHTML(wc.userStats);
-      html += '<div class="result-under-summary"><button class="btn-ghost" id="shareXIBtn">Share Score &amp; XI</button><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
+      html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       /* Group phase journey (shown for all WC/CL result screens) */
       var gPhase = r.phaseLabel || "Group stage";
       if (r.groupMatches && r.groupMatches.length) {
@@ -1434,6 +1490,7 @@
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
       if (!r.saved) { r.saved = true; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); }
+      html += shareCardHTML(r.sc, result, r.cl ? "Champions League" : "League");
       html += scoreBannerHTML(r.sc, result);
       html += '<div class="verdict-card"><div class="vc-row">' +
         '<div class="vc-cell"><div class="vc-k">Finished</div><div class="vc-v">' + ordinal(lg.userPos) + "</div></div>" +
@@ -1442,7 +1499,7 @@
         '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
       html += statsSummaryHTML(lg.userStats);
-      html += '<div class="result-under-summary"><button class="btn-ghost" id="shareXIBtn">Share Score &amp; XI</button><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
+      html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       html += '<h3 class="sec">Final ' + lg.table.length + '-team table</h3>' + leagueTableHTML(lg);
       html += '<div class="result-bottom-cta"><button class="btn-ghost" id="btmGoHome">← Home</button><button class="btn-ghost" id="btmBoard">Leaderboards</button></div>';
     }
