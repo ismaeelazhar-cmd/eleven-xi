@@ -5643,3 +5643,106 @@ body.light .dc-sug-item:hover { background: rgba(99,102,241,0.08); }
   .dc-row { grid-template-columns: 72px repeat(5, 1fr); }
   .dc-search { font-size: 14px; padding: 10px 12px; }
 }
+
+/* ══ WORDLE DAILY CHALLENGE ══════════════════════════════════════════════ */
+
+.wl-wrap { max-width: 420px; margin: 0 auto; padding: 8px 0 60px; display: flex; flex-direction: column; align-items: center; }
+.wl-head { text-align: center; margin-bottom: 16px; }
+.wl-tag  { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.wl-title { font-size: 22px; font-weight: 900; margin: 0 0 4px; }
+.wl-sub  { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* Message bar */
+.wl-msg { min-height: 20px; font-size: 13px; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 6px; transition: opacity 0.4s; opacity: 0; }
+
+/* Toast for win/loss */
+.wl-toast { width: 100%; text-align: center; padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 12px; }
+.wl-win  { background: rgba(22,163,74,0.15); border: 1px solid rgba(22,163,74,0.35); color: var(--text); }
+.wl-loss { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text); }
+.wl-toast strong { font-weight: 900; font-size: 16px; }
+body.light .wl-win  { background: rgba(22,163,74,0.1); }
+body.light .wl-loss { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+
+/* Grid */
+.wl-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.wl-row  { display: flex; gap: 6px; }
+
+/* Tiles */
+.wl-tile {
+  width: 58px; height: 58px;
+  border: 2px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 900; letter-spacing: 0;
+  color: var(--text); text-transform: uppercase;
+  transition: border-color 0.1s;
+  user-select: none;
+}
+.wl-tile.filled { border-color: rgba(255,255,255,0.5); animation: wlPop 0.1s ease; }
+@keyframes wlPop { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
+
+/* Flip animation */
+.wl-tile.flipping { animation: wlFlipOut 0.2s ease forwards; }
+@keyframes wlFlipOut { 0%{transform:scaleY(1)} 100%{transform:scaleY(0)} }
+
+/* Revealed states */
+.wl-tile.revealed { animation: wlFlipIn 0.2s ease forwards; border: none; color: #fff; }
+@keyframes wlFlipIn { 0%{transform:scaleY(0)} 100%{transform:scaleY(1)} }
+.wl-tile.revealed.hit   { background: #16a34a; }
+.wl-tile.revealed.close { background: #ca8a04; }
+.wl-tile.revealed.miss  { background: #374151; }
+body.light .wl-tile { border-color: rgba(0,0,0,0.2); color: #1a1a1a; }
+body.light .wl-tile.filled { border-color: rgba(0,0,0,0.5); }
+body.light .wl-tile.revealed.miss { background: #6b7280; }
+
+/* Flip delays per column */
+.wl-delay-0 { animation-delay: 0ms !important; }
+.wl-delay-1 { animation-delay: 100ms !important; }
+.wl-delay-2 { animation-delay: 200ms !important; }
+.wl-delay-3 { animation-delay: 300ms !important; }
+.wl-delay-4 { animation-delay: 400ms !important; }
+
+/* Shake */
+.wl-shake { animation: wlShake 0.5s ease; }
+@keyframes wlShake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+}
+
+/* Keyboard */
+.wl-kb { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.wl-kb-row { display: flex; justify-content: center; gap: 5px; }
+.wl-key {
+  height: 56px; min-width: 34px; padding: 0 8px; flex: 1; max-width: 42px;
+  border: none; border-radius: 6px; cursor: pointer;
+  background: rgba(255,255,255,0.12); color: var(--text);
+  font-size: 13px; font-weight: 800; text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.wl-wide { max-width: 64px; font-size: 11px; }
+.wl-key:active { opacity: 0.7; }
+/* Key states */
+.wl-key.hit   { background: #16a34a; color: #fff; }
+.wl-key.close { background: #ca8a04; color: #fff; }
+.wl-key.miss  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.28); }
+body.light .wl-key { background: rgba(0,0,0,0.1); color: #1a1a1a; }
+body.light .wl-key.miss { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.25); }
+
+/* Hint + actions */
+.wl-hint { font-size: 11px; color: var(--muted); text-align: center; margin: 4px 0 12px; }
+.wl-actions { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
+.wl-share { width: 100%; }
+.wl-tomorrow { font-size: 12px; color: var(--muted); margin: 0; }
+
+/* Responsive */
+@media (max-width: 440px) {
+  .wl-tile { width: 50px; height: 50px; font-size: 18px; }
+  .wl-key  { height: 48px; font-size: 12px; }
+}
+@media (max-width: 360px) {
+  .wl-tile { width: 42px; height: 42px; font-size: 16px; }
+  .wl-row, .wl-grid { gap: 4px; }
+  .wl-key  { height: 44px; min-width: 28px; font-size: 11px; }
+  .wl-kb-row { gap: 4px; }
+}
