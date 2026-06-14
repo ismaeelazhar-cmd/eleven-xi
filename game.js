@@ -267,10 +267,7 @@
     "Cuba":"CU","Ethiopia":"ET","Libya":"LY","Tanzania":"TZ","Uganda":"UG",
     "Sweden":"SE","Scotland":"GB"
   };
-  function countryFlag(name) {
-    var iso = COUNTRY_ISO[name]; if (!iso || iso.length !== 2) return "";
-    try { return String.fromCodePoint(0x1F1E6+iso.charCodeAt(0)-65, 0x1F1E6+iso.charCodeAt(1)-65); } catch(e){ return ""; }
-  }
+  function countryFlag(name) { return ""; } // flags removed
 
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
@@ -1382,7 +1379,7 @@
       });
       if (rdIdx === rounds.length - 1 && rd.ties.length === 1 && rd.ties[0].winner) {
         var champ = rd.ties[0].winner;
-        html += '<div class="bracket-champion">' + (champ.flag ? esc(champ.flag) + " " : "") + "<b>" + esc(champ.name) + "</b></div>";
+        html += '<div class="bracket-champion"><b>' + esc(champ.name) + "</b></div>";
       }
       html += "</div>";
     });
@@ -1405,7 +1402,7 @@
   function renderWorldCup(result, label) {
     var champ = result.champion;
     var html = '<h2 class="res-title">' + label + "</h2>";
-    html += '<div class="champion">Champions: <b>' + (champ.flag ? esc(champ.flag) + " " : "") + esc(champ.name) + "</b></div>";
+    html += '<div class="champion">Champions: <b>' + esc(champ.name) + "</b></div>";
     html += '<h3 class="sec">Knockouts</h3>' + renderBracket(result.rounds);
     html += '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups);
     return html;
@@ -2158,7 +2155,7 @@
           var isMe = t.isUser;
           var badge = (t.rating >= 90 ? "r-gold" : t.rating >= 85 ? "r-elite" : t.rating >= 80 ? "r-great" : t.rating >= 75 ? "r-good" : "r-amber");
           html += '<div class="gp-row' + (isMe ? " gp-me" : "") + '">';
-          html += (t.flag ? '<span class="gp-flag">' + esc(t.flag) + "</span>" : "");
+          // flags removed
           html += '<span class="gp-name">' + esc(t.name) + "</span>";
           html += '<span class="mp-r-badge ' + badge + '">' + (isMe ? "Your XI" : t.rating) + "</span>";
           html += "</div>";
