@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Icon Generator</title>
+<style>
+  body { background: #f0f0f0; font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  canvas { border: 1px solid #ccc; background: white; }
+  button { padding: 8px 18px; background: #1A1A2E; color: #C9AA71; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+  h2 { margin: 0; }
+  .row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center; }
+</style>
+</head>
+<body>
+<h2>Gaffer XI — Icon Preview & Export</h2>
+
+<div class="row">
+  <div>
+    <p>512×512 (main)</p>
+    <canvas id="c512" width="512" height="512"></canvas>
+    <br><button onclick="dl('c512','icon-512.png')">Download icon-512.png</button>
+  </div>
+  <div>
+    <p>192×192</p>
+    <canvas id="c192" width="192" height="192"></canvas>
+    <br><button onclick="dl('c192','icon-192.png')">Download icon-192.png</button>
+  </div>
+  <div>
+    <p>180×180 (Apple)</p>
+    <canvas id="c180" width="180" height="180"></canvas>
+    <br><button onclick="dl('c180','icon-180.png')">Download icon-180.png</button>
+  </div>
+  <div>
+    <p>OG 1200×630</p>
+    <canvas id="cog" width="1200" height="630" style="width:480px;height:252px"></canvas>
+    <br><button onclick="dl('cog','og-image.png')">Download og-image.png</button>
+  </div>
+</div>
+
+<script>
+const SVG_SRC = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="sf" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1f2347"/>
+      <stop offset="100%" stop-color="#141729"/>
+    </linearGradient>
+    <linearGradient id="gb" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D4B97A"/>
+      <stop offset="100%" stop-color="#A8893C"/>
+    </linearGradient>
+  </defs>
+  <path d="M 256,28 L 460,90 L 460,295 Q 458,370 256,490 Q 54,370 52,295 L 52,90 Z" fill="url(#gb)"/>
+  <path d="M 256,40 L 448,98 L 448,293 Q 446,362 256,476 Q 66,362 64,293 L 64,98 Z" fill="url(#sf)"/>
+  <path d="M 256,42 L 446,100 L 446,292 Q 444,360 256,474 Q 68,360 66,292 L 66,100 Z" fill="none" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
+  <line x1="90" y1="298" x2="422" y2="298" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="256" y="280" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="196" font-weight="700" fill="#C9AA71" letter-spacing="-4">XI</text>
+  <text x="256" y="294" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="400" fill="#C9AA71" letter-spacing="10" opacity="0.9">GAFFER</text>
+  <circle cx="256" cy="338" r="9" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.7"/>
+  <circle cx="186" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
+  <circle cx="326" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
+  <circle cx="204" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
+  <circle cx="308" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="256" y1="338" x2="186" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
+  <line x1="256" y1="338" x2="326" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
+  <line x1="186" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
+  <line x1="326" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
+  <line x1="186" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
+  <line x1="326" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
+</svg>`;
+
+function renderIcon(canvasId, size) {
+  var canvas = document.getElementById(canvasId);
+  var ctx = canvas.getContext('2d');
+  var img = new Image();
+  var blob = new Blob([SVG_SRC], {type:'image/svg+xml'});
+  var url = URL.createObjectURL(blob);
+  img.onload = function() {
+    ctx.clearRect(0,0,size,size);
+    ctx.drawImage(img, 0, 0, size, size);
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
+function renderOG(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  var ctx = canvas.getContext('2d');
+  var W = 1200, H = 630;
+
+  // Background gradient
+  var bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0a0a16');
+  bg.addColorStop(1, '#0f1a2e');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Green glow
+  var glow = ctx.createRadialGradient(200, 200, 0, 200, 200, 320);
+  glow.addColorStop(0, 'rgba(0,228,106,0.07)');
+  glow.addColorStop(1, 'rgba(0,228,106,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Load shield SVG and draw it on the right side
+  var img = new Image();
+  var blob = new Blob([SVG_SRC], {type:'image/svg+xml'});
+  var url = URL.createObjectURL(blob);
+  img.onload = function() {
+    // Draw shield right side
+    ctx.drawImage(img, 780, 80, 360, 360);
+
+    // Left side text
+    ctx.fillStyle = 'rgba(201,170,113,0.9)';
+    ctx.font = '900 80px Georgia, serif';
+    ctx.fillText('GAFFER XI', 80, 220);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = '400 26px Arial, sans-serif';
+    ctx.fillText('Pick your XI. Build your legacy.', 80, 276);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(80, 308); ctx.lineTo(660, 308); ctx.stroke();
+
+    // Stats
+    ctx.font = '900 38px Georgia, serif';
+    ctx.fillStyle = '#C9AA71';
+    ctx.fillText('93', 80, 360);
+    ctx.fillText('153', 200, 360);
+    ctx.fillText('76yr', 360, 360);
+
+    ctx.font = '400 13px Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.fillText('Nations', 80, 380);
+    ctx.fillText('Clubs', 200, 380);
+    ctx.fillText('History', 360, 380);
+
+    // LIVE badge
+    ctx.fillStyle = '#ef4444';
+    roundRect(ctx, 80, 404, 68, 26, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 12px Arial, sans-serif';
+    ctx.fillText('LIVE', 94, 421);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '400 13px Arial, sans-serif';
+    ctx.fillText('2026 World Cup mode active', 158, 421);
+
+    // URL
+    ctx.fillStyle = 'rgba(201,170,113,0.3)';
+    ctx.font = '400 16px Arial, sans-serif';
+    ctx.fillText('gafferxi.com', 80, 510);
+
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function dl(canvasId, filename) {
+  var canvas = document.getElementById(canvasId);
+  var link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// Render all
+renderIcon('c512', 512);
+renderIcon('c192', 192);
+renderIcon('c180', 180);
+renderOG('cog');
+</script>
+</body>
+</html>

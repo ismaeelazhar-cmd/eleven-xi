@@ -1,23 +1,107 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="96" fill="#07070f"/>
-  <!-- Subtle inner glow -->
-  <rect width="512" height="512" rx="96" fill="url(#glow)" opacity="0.6"/>
   <defs>
-    <radialGradient id="glow" cx="50%" cy="35%" r="55%">
-      <stop offset="0%" stop-color="#00bb7f" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#00bb7f" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="shieldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1f2347"/>
+      <stop offset="100%" stop-color="#141729"/>
+    </linearGradient>
+    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D4B97A"/>
+      <stop offset="100%" stop-color="#A8893C"/>
+    </linearGradient>
+    <filter id="innerShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
   </defs>
-  <!-- GX monogram — clean, readable at 16px -->
+
+  <!-- Shield outer (gold border) -->
+  <path d="M 256,28
+    L 460,90
+    L 460,295
+    Q 458,370 256,490
+    Q 54,370 52,295
+    L 52,90
+    Z"
+    fill="url(#goldBorder)"
+    filter="url(#innerShadow)"
+  />
+
+  <!-- Shield inner fill (navy) -->
+  <path d="M 256,40
+    L 448,98
+    L 448,293
+    Q 446,362 256,476
+    Q 66,362 64,293
+    L 64,98
+    Z"
+    fill="url(#shieldFill)"
+  />
+
+  <!-- Inner shield line (subtle, like the reference) -->
+  <path d="M 256,42
+    L 446,100
+    L 446,292
+    Q 444,360 256,474
+    Q 68,360 66,292
+    L 66,100
+    Z"
+    fill="none"
+    stroke="#C9AA71"
+    stroke-width="1"
+    stroke-opacity="0.25"
+  />
+
+  <!-- Horizontal divider -->
+  <line x1="90" y1="298" x2="422" y2="298" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.4"/>
+
+  <!-- XI — large gold serif -->
   <text
-    x="256" y="318"
+    x="256" y="274"
     text-anchor="middle"
-    dominant-baseline="auto"
-    font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
-    font-size="258"
-    font-weight="900"
-    letter-spacing="-10"
-    fill="#00bb7f">GX</text>
-  <!-- Thin underline accent -->
-  <rect x="136" y="350" width="240" height="6" rx="3" fill="#00bb7f" opacity="0.35"/>
+    font-family="'Georgia', 'Times New Roman', serif"
+    font-size="196"
+    font-weight="700"
+    fill="#C9AA71"
+    letter-spacing="-4"
+  >XI</text>
+
+  <!-- GAFFER wordmark -->
+  <text
+    x="256" y="254"
+    text-anchor="middle"
+    font-family="'Georgia', 'Times New Roman', serif"
+    font-size="38"
+    font-weight="400"
+    fill="#C9AA71"
+    letter-spacing="14"
+    opacity="0.0"
+  >GAFFER</text>
+
+  <!-- GAFFER below XI -->
+  <text
+    x="256" y="292"
+    text-anchor="middle"
+    font-family="'Arial', 'Helvetica', sans-serif"
+    font-size="32"
+    font-weight="400"
+    fill="#C9AA71"
+    letter-spacing="10"
+    opacity="0.9"
+  >GAFFER</text>
+
+  <!-- Formation dots — lower half of shield -->
+  <!-- 1 top (ST) -->
+  <circle cx="256" cy="338" r="9" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.7"/>
+  <!-- 2 mid-left / mid-right (MID) -->
+  <circle cx="186" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
+  <circle cx="326" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
+  <!-- 2 bottom (DEF) -->
+  <circle cx="204" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
+  <circle cx="308" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
+  <!-- Connection lines -->
+  <line x1="256" y1="338" x2="186" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
+  <line x1="256" y1="338" x2="326" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
+  <line x1="186" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
+  <line x1="326" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
+  <line x1="186" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
+  <line x1="326" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
 </svg>
