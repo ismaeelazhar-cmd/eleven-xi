@@ -5879,3 +5879,48 @@ body.light .mgr-cond-dot.unmet { background: rgba(0,0,0,0.2); }
 .cond-style .mgr-name { display: flex; align-items: center; }
 .mgr-cond-locked { color: var(--muted); font-size: 11px; font-style: italic; }
 .mgr-cond-hint   { color: var(--muted); font-size: 11px; }
+
+/* ── Match narrative ─────────────────────────────────────────────────── */
+.match-narrative {
+  border-radius: 16px; padding: 16px 18px; margin: 16px 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+body.light .match-narrative {
+  background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07);
+}
+.mn-head {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px;
+}
+.mn-body { display: flex; flex-direction: column; gap: 6px; }
+.mn-line {
+  margin: 0; font-size: 14px; line-height: 1.65; color: var(--text);
+  padding-left: 12px; border-left: 2px solid rgba(255,255,255,0.1);
+}
+body.light .mn-line { border-left-color: rgba(0,0,0,0.1); }
+.mn-line strong { color: var(--gold); font-weight: 800; }
+.mn-line:first-child { border-left-color: var(--gold); }
+
+/* ── What If card ───────────────────────────────────────────────────── */
+.whatif-card {
+  border-radius: 16px; padding: 16px 18px; margin: 16px 0;
+  background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.07));
+  border: 1px solid rgba(139,92,246,0.3);
+}
+.wi-head {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #a78bfa; margin-bottom: 8px;
+}
+.wi-body {
+  font-size: 14px; line-height: 1.65; color: var(--text);
+}
+.wi-body strong { font-weight: 900; color: var(--text); }
+.wi-alt-r  { color: #22c55e; font-weight: 900; }
+.wi-weak-r { color: #f97316; font-weight: 900; }
+.wi-footer {
+  margin-top: 10px; font-size: 12px; font-weight: 800;
+  color: #a78bfa; cursor: pointer; opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.wi-footer:hover { opacity: 1; text-decoration: underline; }

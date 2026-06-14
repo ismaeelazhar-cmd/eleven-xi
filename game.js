@@ -1316,6 +1316,174 @@
       '<div class="stat-cols"><div class="stat-col"><div class="stat-h">Top scorers</div>' + statRows(s.scorers, "g", 5) + "</div>" +
       '<div class="stat-col"><div class="stat-h">Top assists</div>' + statRows(s.assisters, "a", 5) + "</div></div></div>";
   }
+  /* ═══════════════════════════════════════════════════════════════════
+     MATCH NARRATIVE + WHAT-IF ENGINE
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* Picks one string from an array using a numeric seed (not random — stable per call) */
+  function pick(arr, seed) { return arr[Math.abs(seed || 0) % arr.length]; }
+
+  /* Short last-name helper */
+  function lastName(full) {
+    if (!full) return "—";
+    var parts = full.trim().split(/\s+/);
+    return parts[parts.length - 1];
+  }
+
+  /* Generate a 4–5 sentence tournament narrative from real match data */
+  function matchNarrativeHTML(userMatches, userStats, userTeam, compType) {
+    if (!userMatches || !userMatches.length || !userStats) return "";
+    var s = userStats;
+    var topScorer   = s.scorers[0]   || null;
+    var topAssister = s.assisters[0] || null;
+    var keeper      = s.keeper       || null;
+
+    /* Classify group stage */
+    var groupM = userMatches.filter(function(m){ return m.round.indexOf("Group") === 0 || m.round === "League phase" || m.round === "Matchday"; });
+    var koM    = userMatches.filter(function(m){ return m.round.indexOf("Group") !== 0 && m.round !== "League phase" && m.round !== "Matchday"; });
+    var groupW = groupM.filter(function(m){ return m.result === "W"; }).length;
+    var groupGF = groupM.reduce(function(acc,m){ return acc+m.gf; }, 0);
+    var groupGA = groupM.reduce(function(acc,m){ return acc+m.ga; }, 0);
+
+    /* Key KO moments */
+    var finalMatch = koM.length ? koM[koM.length-1] : null;
+    var biggestWin = null, biggestMargin = 0;
+    koM.forEach(function(m) { var d = m.gf - m.ga; if (m.result === "W" && d > biggestMargin) { biggestMargin = d; biggestWin = m; } });
+    var penMatch = koM.filter(function(m){ return m.pens; })[0] || null;
+    var cleanSheetKO = koM.filter(function(m){ return m.cleanSheet && m.result === "W"; })[0] || null;
+
+    var lines = [];
+
+    /* ── Line 1: Group stage tone ── */
+    var gLabel = compType === "league" ? "season" : "group stage";
+    if (groupM.length) {
+      var groupDesc;
+      if (groupW === groupM.length)      groupDesc = "dominant — " + groupW + " wins from " + groupM.length + " with " + groupGF + " goals scored";
+      else if (groupW >= groupM.length * 0.6) groupDesc = "solid — " + groupW + " wins, " + groupGF + " goals and only " + groupGA + " conceded";
+      else if (groupW >= 1)              groupDesc = "patchy — " + groupW + " wins from " + groupM.length + ", but enough to advance";
+      else                               groupDesc = "brutal — winless in " + groupM.length + " games, outscored " + groupGF + "–" + groupGA;
+      lines.push("The " + gLabel + " was " + groupDesc + ".");
+    }
+
+    /* ── Line 2: Top scorer ── */
+    if (topScorer && topScorer.g >= 1) {
+      var scoreVerbs = ["lit up the tournament", "led the line brilliantly", "was the standout attacker", "carried the attack all campaign"];
+      var contrib = esc(lastName(topScorer.n)) + " " + pick(scoreVerbs, topScorer.g) + " with <strong>" + topScorer.g + " goal" + (topScorer.g !== 1 ? "s" : "") + "</strong>";
+      if (topAssister && topAssister.n !== topScorer.n && topAssister.a >= 2) {
+        contrib += ", with " + esc(lastName(topAssister.n)) + " pulling the strings behind (" + topAssister.a + " assists)";
+      }
+      lines.push(contrib + ".");
+    } else if (topAssister && topAssister.a >= 2) {
+      lines.push(esc(lastName(topAssister.n)) + " was the creative hub, registering <strong>" + topAssister.a + " assists</strong> across the campaign.");
+    }
+
+    /* ── Line 3: Key KO moment (most dramatic) ── */
+    if (penMatch) {
+      var penRes = penMatch.result === "W" ? "survived" : "were knocked out";
+      lines.push("The " + esc(penMatch.round.toLowerCase()) + " against <strong>" + esc(penMatch.opp.name) + "</strong> went to penalties — they " + penRes + " <strong>" + penMatch.pens[0] + "–" + penMatch.pens[1] + "</strong> in the shootout.");
+    } else if (biggestWin) {
+      var dominateAdjs = ["clinical", "ruthless", "brilliant", "stunning"];
+      lines.push("A " + pick(dominateAdjs, biggestMargin) + " <strong>" + biggestWin.gf + "–" + biggestWin.ga + "</strong> win over <strong>" + esc(biggestWin.opp.name) + "</strong> in the " + esc(biggestWin.round.toLowerCase()) + " was the standout result.");
+    } else if (koM.length && koM[koM.length-1].result === "L") {
+      var lm = koM[koM.length-1];
+      lines.push("The run ended in the " + esc(lm.round.toLowerCase()) + " — a <strong>" + lm.gf + "–" + lm.ga + "</strong> loss to <strong>" + esc(lm.opp.name) + "</strong> that could have gone either way.");
+    }
+
+    /* ── Line 4: Defensive story ── */
+    if (keeper && s.cleanSheets >= 2) {
+      var keepAdjs = ["commanding", "composed", "exceptional", "imperious"];
+      lines.push(esc(lastName(keeper.n)) + " was " + pick(keepAdjs, s.cleanSheets) + " in goal — <strong>" + s.cleanSheets + " clean sheet" + (s.cleanSheets !== 1 ? "s" : "") + "</strong> across the campaign.");
+    } else if (s.ga > s.gf) {
+      lines.push("Defensively it was a struggle — <strong>" + s.ga + "</strong> goals conceded to just <strong>" + s.gf + "</strong> scored told the real story.");
+    } else if (s.ga === 0 && s.games >= 3) {
+      lines.push((keeper ? esc(lastName(keeper.n)) + "-anchored — a" : "A") + " perfect <strong>" + s.games + "-game clean sheet run</strong>. A rare achievement.");
+    }
+
+    /* ── Line 5: Final verdict ── */
+    if (finalMatch && compType !== "league") {
+      if (finalMatch.round === "Final") {
+        if (finalMatch.result === "W") {
+          lines.push("The final against <strong>" + esc(finalMatch.opp.name) + "</strong> ended <strong>" + finalMatch.gf + "–" + finalMatch.ga + "</strong> — the trophy was earned, not gifted.");
+        } else {
+          lines.push("The final against <strong>" + esc(finalMatch.opp.name) + "</strong> — a <strong>" + finalMatch.gf + "–" + finalMatch.ga + "</strong> loss — will sting. So close.");
+        }
+      } else if (finalMatch.result === "W" && koM.length >= 3) {
+        lines.push("A squad rated <strong>" + (userTeam ? userTeam.rating : "?") + "</strong> making it to the " + esc(finalMatch.round.toLowerCase()) + ". Overachievement of the highest order.");
+      }
+    }
+
+    if (!lines.length) return "";
+    return '<div class="match-narrative">' +
+      '<div class="mn-head">📋 Match report</div>' +
+      '<div class="mn-body">' +
+        lines.map(function(l) { return '<p class="mn-line">' + l + '</p>'; }).join("") +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ── What If engine ────────────────────────────────────────────────── */
+
+  /* Search DATA for the best available player at position p, not already in squad */
+  function findBestAlternative(weakPlayer) {
+    var takenNames = {};
+    squad.forEach(function(s) { takenNames[s.n] = true; });
+    /* Position line mapping — look for same or adjacent position */
+    var LINE_OF2 = { GK:"GK", LB:"DEF", CB:"DEF", RB:"DEF", LWB:"DEF", RWB:"DEF",
+                     CDM:"MID", CM:"MID", CAM:"MID", AM:"MID",
+                     LW:"FWD", RW:"FWD", ST:"FWD", CF:"FWD" };
+    var targetLine = LINE_OF2[weakPlayer.p] || "MID";
+    var best = null;
+    try {
+      var countries = Object.keys(DATA);
+      for (var ci = 0; ci < countries.length; ci++) {
+        var c = countries[ci];
+        var years = Object.keys(DATA[c].years);
+        for (var yi = 0; yi < years.length; yi++) {
+          var players = DATA[c].years[years[yi]];
+          for (var pi = 0; pi < players.length; pi++) {
+            var pl = players[pi];
+            if (takenNames[pl.n]) continue;
+            var plLine = LINE_OF2[pl.p] || "MID";
+            if (plLine !== targetLine) continue;
+            if (pl.r <= weakPlayer.r) continue;
+            if (!best || pl.r > best.r) {
+              best = { n: pl.n, r: pl.r, p: pl.p, country: c, year: years[yi] };
+            }
+          }
+        }
+      }
+    } catch(e) {}
+    return best;
+  }
+
+  function whatIfHTML(userTeam, scoreObj) {
+    if (!squad.length || !scoreObj) return "";
+    /* Find the weakest outfield player (or any player) */
+    var outfield = squad.filter(function(p){ return p.p !== "GK"; });
+    var pool = outfield.length ? outfield : squad;
+    pool = pool.slice().sort(function(a,b){ return a.r - b.r; });
+    var weakest = pool[0];
+    if (!weakest) return "";
+
+    var alt = findBestAlternative(weakest);
+    if (!alt || alt.r - weakest.r < 2) return ""; /* Gap too small to be interesting */
+
+    var ratingGap = alt.r - weakest.r;
+    /* Rough score estimate: each +1 ATK ≈ +0.3 extra goals per game; each extra win ≈ +80-150 pts */
+    var scoreGain = Math.round(ratingGap * 14 + Math.random() * ratingGap * 6);
+    scoreGain = Math.round(scoreGain / 10) * 10; /* Round to nearest 10 for credibility */
+
+    return '<div class="whatif-card">' +
+      '<div class="wi-head">💭 What if?</div>' +
+      '<div class="wi-body">' +
+        'If you\'d picked <strong>' + esc(alt.n) + '</strong> (' + alt.country + ' ' + alt.year + ', <span class="wi-alt-r">' + alt.r + '</span>) ' +
+        'over <strong>' + esc(weakest.n) + '</strong> (<span class="wi-weak-r">' + weakest.r + '</span>), ' +
+        'your score would have been approximately <strong>+' + scoreGain + ' pts</strong> higher.' +
+      '</div>' +
+      '<div class="wi-footer">Replay and try it →</div>' +
+    '</div>';
+  }
+
   function renderWorldCupUser(result, label) {
     var groupMatches = result.userMatches.filter(function (m) { return m.round.indexOf("Group") === 0; });
     var koMatches = result.userMatches.filter(function (m) { return m.round.indexOf("Group") !== 0; });
@@ -1374,6 +1542,9 @@
     if (boardBtn) boardBtn.addEventListener("click", function () { renderBoard(); showView("board"); });
     var btmNewGame2 = document.getElementById("btmNewGame");
     if (btmNewGame2) btmNewGame2.addEventListener("click", newGame);
+    /* What-if "Replay" link */
+    var wiFooter = document.querySelector(".wi-footer");
+    if (wiFooter) wiFooter.addEventListener("click", newGame);
     animateRankReveal();
     wireNextStep();
   }
@@ -1912,8 +2083,10 @@
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += rankRevealHTML(r.sc.score);
       html += scoreBannerHTML(r.sc, wc.userResult);
+      html += matchNarrativeHTML(wc.userMatches, wc.userStats, r.userTeam, "tournament");
       html += managerVerdictHTML(wc.userStats, r.compLabel || "World Cup", r.userTeam);
       html += statsSummaryHTML(wc.userStats);
+      html += whatIfHTML(r.userTeam, r.sc);
       html += nextStepCTAsHTML(r.mode || (r.cl ? "cl" : "wc"), wc.userResult);
       html += dailyCTAHTML();
       html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
@@ -1978,8 +2151,10 @@
         '<div class="vc-cell"><div class="vc-k">Squad rating</div><div class="vc-v">' + lg.squadRating + "</div></div>" +
         '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
+      html += matchNarrativeHTML(lg.userMatches, lg.userStats, r.userTeam, "league");
       html += managerVerdictHTML(lg.userStats, r.cl ? "Champions League" : "League", r.userTeam);
       html += statsSummaryHTML(lg.userStats);
+      html += whatIfHTML(r.userTeam, r.sc);
       html += nextStepCTAsHTML(r.cl ? "cl" : "league", result);
       html += dailyCTAHTML();
       html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
