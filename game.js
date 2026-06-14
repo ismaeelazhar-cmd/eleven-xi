@@ -1305,7 +1305,56 @@
   }
   function loadBoard() { try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); } catch (e) { return []; } }
   function saveBoard(a) { try { localStorage.setItem(LB_KEY, JSON.stringify(a)); } catch (e) {} }
-  function addScore(e) { var a = loadBoard(); a.push(e); saveBoard(a); }
+
+  /* ── Username gate ──────────────────────────────────────────────── */
+  var UN_KEY = "gaffer_username";
+  function getUsername() { try { return (localStorage.getItem(UN_KEY) || "").trim(); } catch(e){ return ""; } }
+  function saveUsername(n) { try { localStorage.setItem(UN_KEY, n.trim()); } catch(e){} }
+
+  function showUsernameModal(onSave) {
+    var existing = document.getElementById("usernameModal");
+    if (existing) existing.remove();
+    var modal = document.createElement("div");
+    modal.id = "usernameModal";
+    modal.className = "um-overlay";
+    modal.innerHTML =
+      '<div class="um-card">' +
+        '<div class="um-title">Choose your username</div>' +
+        '<p class="um-sub">Required to save scores to the leaderboard. Set once, stays forever.</p>' +
+        '<input class="um-input" id="umInput" type="text" maxlength="20" placeholder="Your name…" autocomplete="off" />' +
+        '<button class="btn-primary um-save" id="umSave">Save &amp; continue</button>' +
+        '<button class="um-skip btn-ghost" id="umSkip">Skip (score won\'t be saved)</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    var inp = document.getElementById("umInput");
+    var saveBtn = document.getElementById("umSave");
+    var skipBtn = document.getElementById("umSkip");
+    inp.focus();
+    function doSave() {
+      var n = inp.value.trim();
+      if (!n) { inp.classList.add("um-shake"); setTimeout(function(){ inp.classList.remove("um-shake"); }, 500); return; }
+      saveUsername(n);
+      modal.remove();
+      onSave(n);
+    }
+    saveBtn.addEventListener("click", doSave);
+    inp.addEventListener("keydown", function(e){ if (e.key === "Enter") doSave(); });
+    skipBtn.addEventListener("click", function(){ modal.remove(); });
+  }
+
+  function addScore(e) {
+    var un = getUsername();
+    if (!un) {
+      showUsernameModal(function(name) {
+        e.username = name;
+        var a = loadBoard(); a.push(e); saveBoard(a);
+        renderBoard(); /* refresh if board is visible */
+      });
+      return;
+    }
+    e.username = un;
+    var a = loadBoard(); a.push(e); saveBoard(a);
+  }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
 
   /* ── Results: rank calculation ──────────────────────────────────── */
@@ -1438,6 +1487,7 @@
       b.className = "seg-opt" + (b.getAttribute("data-mode") === boardMode ? " active" : "");
     });
     var all = loadBoard(), now = Date.now();
+    var myName = getUsername();
     var filtered = all.filter(function (e) {
       if (boardMode !== "all" && (e.mode || "league") !== boardMode) return false;
       if (boardTab === "daily") return sameDay(e.ts, now);
@@ -1446,13 +1496,61 @@
     });
     filtered.sort(function (a, b) { return b.score - a.score; });
     var top = filtered.slice(0, 25);
+
+    /* Find user's personal best in this filtered set (even outside top 25) */
+    var myBest = null, myBestRank = -1;
+    if (myName) {
+      filtered.forEach(function(e, i) {
+        if ((e.username || e.name) === myName && (!myBest || e.score > myBest.score)) {
+          myBest = e; myBestRank = i + 1;
+        }
+      });
+    }
+    var myBestInTop = myBest && myBestRank <= 25;
+
     if (!top.length) { elBoardBody.innerHTML = '<div class="empty-note">No scores yet — finish a game in this mode to set one!</div>'; return; }
     var showModeCol = (boardMode === "all");
     var html = '<div class="board-list">';
+
     top.forEach(function (e, i) {
-      html += '<div class="board-row' + (i < 3 ? " top3" : "") + '"><span class="brank">' + (i + 1) + "</span><span class=\"bname\">" + esc(e.name) + "</span><span class=\"bres\">" + esc(e.result || "") + (showModeCol ? " · " + modeLabel(e.mode) : "") + "</span><span class=\"bscore\">" + e.score + "</span></div>";
+      var entryName = e.username || e.name;
+      var isMe = myName && entryName === myName && e === myBest;
+      html += '<div class="board-row' + (i < 3 ? " top3" : "") + (isMe ? " board-mine" : "") + '">' +
+        '<span class="brank">' + (i + 1) + '</span>' +
+        '<span class="bname">' + esc(entryName) + (isMe ? ' <span class="board-you-tag">You</span>' : '') + '</span>' +
+        '<span class="bres">' + esc(e.result || "") + (showModeCol ? " · " + modeLabel(e.mode) : "") + '</span>' +
+        '<span class="bscore">' + e.score + '</span>' +
+        '<button class="board-challenge-btn" data-mode="' + (e.mode||"wc") + '" data-score="' + e.score + '" title="Beat this score">⚔️</button>' +
+      '</div>';
     });
-    elBoardBody.innerHTML = html + "</div>";
+
+    /* Show user's best below the list if outside top 25 */
+    if (myBest && !myBestInTop) {
+      html += '<div class="board-my-best">' +
+        '<div class="board-row board-mine">' +
+          '<span class="brank">#' + myBestRank + '</span>' +
+          '<span class="bname">' + esc(myName) + ' <span class="board-you-tag">You</span></span>' +
+          '<span class="bres">' + esc(myBest.result || "") + (showModeCol ? " · " + modeLabel(myBest.mode) : "") + '</span>' +
+          '<span class="bscore">' + myBest.score + '</span>' +
+          '<button class="board-challenge-btn" data-mode="' + (myBest.mode||"wc") + '" data-score="' + myBest.score + '">⚔️</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    html += "</div>";
+    elBoardBody.innerHTML = html;
+
+    /* Wire challenge buttons */
+    Array.prototype.forEach.call(elBoardBody.querySelectorAll(".board-challenge-btn"), function(btn) {
+      btn.addEventListener("click", function() {
+        var targetScore = btn.getAttribute("data-score");
+        var mode = btn.getAttribute("data-mode") || "wc";
+        /* Show the user their challenge target, then go to setup */
+        if (window.flToast) window.flToast("Beat " + targetScore + " pts — good luck!", 3000);
+        window._challengeTarget = { score: parseInt(targetScore, 10), mode: mode };
+        setTimeout(function() { showView("home"); }, 200);
+      });
+    });
   }
 
   function whoLabel(userTeam, comp) {
