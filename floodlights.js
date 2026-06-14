@@ -155,11 +155,11 @@
       } catch (e) {}
     })();
 
-    // How To Play overlay
+    // ── Onboarding 3-screen overlay ──────────────────────────────────────
     (function () {
-      var HTP_KEY = "wcxi_seen_howto";
+      var OB_KEY = "gaffer_ob_v1";
       var overlay = document.getElementById("howToPlay");
-      var slides, dots, prevBtn, nextBtn, closeBtn;
+      var slides, dots, prevBtn, nextBtn;
       var step = 0;
 
       function openHTP() {
@@ -169,29 +169,47 @@
         dots   = overlay.querySelectorAll(".htp-dot");
         prevBtn = document.getElementById("htpPrev");
         nextBtn = document.getElementById("htpNext");
-        closeBtn = document.getElementById("htpClose");
         syncSlide();
         overlay.hidden = false;
+        // Animate rank counter on slide 3
+        var rankEl = document.getElementById("htpRankAnim");
+        if (rankEl) { var r = 1; rankEl.textContent = "#" + r; }
         if (nextBtn) nextBtn.focus();
       }
 
       function closeHTP() {
         if (overlay) overlay.hidden = true;
-        try { localStorage.setItem(HTP_KEY, "1"); } catch (e) {}
+        try { localStorage.setItem(OB_KEY, "1"); } catch (e) {}
       }
 
       function syncSlide() {
+        if (!slides) return;
         slides.forEach(function (s, i) { s.classList.toggle("active", i === step); });
         dots.forEach(function (d, i) { d.classList.toggle("active", i === step); });
         if (prevBtn) prevBtn.hidden = (step === 0);
         var last = step === slides.length - 1;
-        if (nextBtn) { nextBtn.textContent = last ? "Got it ✔" : "Next →"; }
+        if (nextBtn) nextBtn.textContent = last ? "Let\'s go →" : "Next →";
+        // Animate rank counter when reaching slide 3
+        if (step === 2) animateRank();
+      }
+
+      function animateRank() {
+        var el = document.getElementById("htpRankAnim");
+        if (!el) return;
+        var target = 342, cur = 1200, step2 = 0;
+        el.textContent = "#" + cur;
+        var iv = setInterval(function () {
+          step2++;
+          cur = Math.max(target, Math.round(cur - (cur - target) * 0.18));
+          el.textContent = "#" + cur;
+          if (cur <= target || step2 > 40) clearInterval(iv);
+        }, 40);
       }
 
       if (overlay) {
         overlay.addEventListener("click", function (e) { if (e.target === overlay) closeHTP(); });
         document.addEventListener("keydown", function (e) {
-          if (overlay.hidden) return;
+          if (!overlay || overlay.hidden) return;
           if (e.key === "Escape") closeHTP();
           if (e.key === "ArrowRight") { step = Math.min(step + 1, 2); syncSlide(); }
           if (e.key === "ArrowLeft") { step = Math.max(step - 1, 0); syncSlide(); }
@@ -210,14 +228,129 @@
         if (t === "homeHelp") { openHTP(); return; }
       });
 
-      // Auto-show for new users (no prior visits, no leaderboard entries)
+      // Show to all first-timers (new key so existing users also see it once)
       try {
-        var seen = localStorage.getItem(HTP_KEY);
-        var hasScores = (JSON.parse(localStorage.getItem("wcxi_leaderboard_v1") || "[]")).length > 0;
-        if (!seen && !hasScores) setTimeout(openHTP, 600);
+        if (!localStorage.getItem(OB_KEY)) setTimeout(openHTP, 500);
       } catch (e) {}
 
       W.openHowToPlay = openHTP;
+    })();
+
+    // ── In-draft guided tooltip system (Steps 1-4) ───────────────────────
+    (function () {
+      var TOUR_KEY = "gaffer_tour_v1";
+      var tooltip = document.getElementById("obTooltip");
+      var tooltipText = document.getElementById("obTooltipText");
+      var tooltipSkip = document.getElementById("obTooltipSkip");
+      if (!tooltip) return;
+
+      var tourDone = false;
+      try { tourDone = !!localStorage.getItem(TOUR_KEY); } catch(e) {}
+      if (tourDone) return;
+
+      var currentStep = 0; // 0=idle, 1=pre-spin, 2=post-spin/reroll, 3=autofill, 4=done
+
+      function showTip(text, targetId, pos) {
+        if (tourDone) return;
+        tooltipText.textContent = text;
+        tooltip.hidden = false;
+        tooltip.className = "ob-tooltip ob-tooltip--" + (pos || "bottom");
+        // Position near target if visible
+        var target = targetId && document.getElementById(targetId);
+        if (target) {
+          var r = target.getBoundingClientRect();
+          var tw = tooltip.offsetWidth || 260;
+          var left = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
+          if (pos === "above") {
+            tooltip.style.top = (r.top + window.scrollY - tooltip.offsetHeight - 14) + "px";
+          } else {
+            tooltip.style.top = (r.bottom + window.scrollY + 12) + "px";
+          }
+          tooltip.style.left = left + "px";
+          tooltip.style.transform = "none";
+        } else {
+          tooltip.style.top = ""; tooltip.style.left = "";
+          tooltip.style.transform = "";
+        }
+      }
+
+      function hideTip() { tooltip.hidden = true; }
+
+      function endTour() {
+        tourDone = true;
+        hideTip();
+        try { localStorage.setItem(TOUR_KEY, "1"); } catch(e) {}
+      }
+
+      if (tooltipSkip) tooltipSkip.addEventListener("click", endTour);
+
+      // Expose hooks for game.js to call
+      W.GAFFER_OB = {
+        // Called when user enters draft view for the first time
+        onEnterDraft: function () {
+          if (tourDone || currentStep > 0) return;
+          currentStep = 1;
+          setTimeout(function () {
+            showTip("Tap SPIN to draft a squad from football history.", "spinBtn", "above");
+          }, 400);
+        },
+        // Called after the spin animation completes (player picker shown)
+        afterSpin: function () {
+          if (tourDone || currentStep !== 1) return;
+          currentStep = 2;
+          hideTip();
+          setTimeout(function () {
+            showTip("Got a player you don't want? Tap Reroll — you get 3.", "rerollBtn", "above");
+          }, 300);
+        },
+        // Called each time a player is added
+        playerAdded: function (count) {
+          if (tourDone) return;
+          if (currentStep === 2 && count >= 1) {
+            currentStep = 3;
+            hideTip();
+          }
+          if (currentStep === 3 && count >= 3) {
+            currentStep = 4;
+            setTimeout(function () {
+              showTip("Tap Auto-fill to complete your XI instantly — or keep spinning for better players.", "autoFillBtn", "above");
+            }, 400);
+          }
+        },
+        // Called after reroll is used (advance past reroll tip)
+        afterReroll: function () {
+          if (tourDone || currentStep !== 2) return;
+          currentStep = 3;
+          hideTip();
+        },
+        // Called after auto-fill
+        afterAutoFill: function () {
+          if (tourDone || currentStep !== 4) return;
+          currentStep = 5;
+          hideTip();
+        },
+        // Called after first result is saved — shows rank reveal
+        onResult: function (score) {
+          if (tourDone) return;
+          endTour();
+          try {
+            var board = JSON.parse(localStorage.getItem("wcxi_leaderboard_v1") || "[]");
+            var rank = board.filter(function (e) { return e.score > score; }).length + 1;
+            var reveal = document.getElementById("obRankReveal");
+            var rankNum = document.getElementById("obRankNum");
+            var rankSub = document.getElementById("obRankSub");
+            if (!reveal) return;
+            if (rankNum) rankNum.textContent = "#" + rank;
+            if (rankSub) rankSub.textContent = "on today\'s leaderboard — can you go higher?";
+            reveal.hidden = false;
+            reveal.classList.add("ob-rank-reveal--in");
+            setTimeout(function () {
+              reveal.classList.add("ob-rank-reveal--out");
+              setTimeout(function () { reveal.hidden = true; reveal.className = "ob-rank-reveal"; }, 500);
+            }, 4000);
+          } catch(e) {}
+        }
+      };
     })();
 
     // Logo click → home from any screen

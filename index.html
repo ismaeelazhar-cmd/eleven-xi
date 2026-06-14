@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=123" />
   <link rel="stylesheet" href="tokens.css?v=76" />
-  <link rel="stylesheet" href="floodlights.css?v=129" />
+  <link rel="stylesheet" href="floodlights.css?v=130" />
 </head>
 <body>
   <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Sound on — click to mute">
@@ -315,22 +315,48 @@
   <!-- ===== HOW TO PLAY OVERLAY ===== -->
   <div id="howToPlay" class="htp-overlay" hidden aria-modal="true" role="dialog">
     <div class="htp-panel">
-      <button class="htp-close" id="htpClose" aria-label="Close">&times;</button>
+      <div class="htp-top-row">
+        <span class="htp-brand">GAFFER</span>
+        <button class="htp-skip" id="htpClose" aria-label="Skip">Skip</button>
+      </div>
       <div class="htp-slides" id="htpSlides">
         <div class="htp-slide">
-          <div class="htp-ico">&#9881;</div>
+          <div class="htp-visual htp-visual--spin">
+            <div class="htp-reel-mock">
+              <div class="htp-reel-row"><span>Brazil</span><span>2002</span></div>
+              <div class="htp-reel-row htp-reel-row--sel"><span>🇦🇷 Argentina</span><span>1986</span></div>
+              <div class="htp-reel-row"><span>Spain</span><span>2010</span></div>
+            </div>
+            <div class="htp-spin-btn-mock">SPIN</div>
+          </div>
+          <div class="htp-step-num">01 / 03</div>
+          <h3 class="htp-title">Spin a squad</h3>
+          <p class="htp-body">Each spin pulls a real squad from football history — World Cups, Champions League seasons, leagues. Pick players to fill your XI.</p>
+        </div>
+        <div class="htp-slide">
+          <div class="htp-visual htp-visual--xi">
+            <div class="htp-mini-pitch">
+              <div class="htp-mini-row"><span class="htp-dot-player gk">GK</span></div>
+              <div class="htp-mini-row"><span class="htp-dot-player">CB</span><span class="htp-dot-player">CB</span><span class="htp-dot-player">CB</span></div>
+              <div class="htp-mini-row"><span class="htp-dot-player">CM</span><span class="htp-dot-player">CM</span></div>
+              <div class="htp-mini-row"><span class="htp-dot-player fwd">ST</span><span class="htp-dot-player fwd">ST</span></div>
+            </div>
+          </div>
+          <div class="htp-step-num">02 / 03</div>
           <h3 class="htp-title">Build your XI</h3>
-          <p class="htp-body">Spin the wheel to get squads from football history — World Cup, Euros, Champions League, and more. Pick 11 players for your chosen formation. Use rerolls to swap a spin you don&apos;t want.</p>
+          <p class="htp-body">Pick 11 players into your formation. Don't like a spin? Use a <strong>Reroll</strong> — you get 3. Or tap <strong>Auto-fill</strong> to complete your squad instantly.</p>
         </div>
         <div class="htp-slide">
-          <div class="htp-ico">&#128081;</div>
-          <h3 class="htp-title">Pick a manager</h3>
-          <p class="htp-body">Choose a tactical style (Attack +4 ATK, Defence +4 DEF, Gegenpress +2/+2) or spin the wheel for a famous historical manager. Their bonus chips show the exact effect on your team stats.</p>
-        </div>
-        <div class="htp-slide">
-          <div class="htp-ico">&#127942;</div>
-          <h3 class="htp-title">Simulate &amp; score</h3>
-          <p class="htp-body">Run your XI in a World Cup, Euro Championship, Champions League, or League season. Score points based on how far you go, goals, clean sheets, and difficulty. Results save to the leaderboard.</p>
+          <div class="htp-visual htp-visual--sim">
+            <div class="htp-result-mock">
+              <div class="htp-res-row"><span class="htp-res-badge">⚽ 3–1</span><span class="htp-res-label">Quarter-final</span></div>
+              <div class="htp-res-row"><span class="htp-res-badge htp-gold">🏆 Champions!</span><span class="htp-res-label">2,847 pts</span></div>
+              <div class="htp-res-row htp-rank-row"><span class="htp-rank-anim" id="htpRankAnim">#1 today</span></div>
+            </div>
+          </div>
+          <div class="htp-step-num">03 / 03</div>
+          <h3 class="htp-title">Simulate &amp; rank</h3>
+          <p class="htp-body">Run your XI through a full World Cup, Champions League, or league season. Score points. See your leaderboard rank. Can you go higher?</p>
         </div>
       </div>
       <div class="htp-dots" id="htpDots">
@@ -340,6 +366,24 @@
         <button class="btn-ghost" id="htpPrev" hidden>&#8592; Back</button>
         <button class="btn-primary" id="htpNext">Next &#8594;</button>
       </div>
+    </div>
+  </div>
+
+  <!-- In-draft onboarding tooltip -->
+  <div id="obTooltip" class="ob-tooltip" hidden role="status" aria-live="polite">
+    <div class="ob-tooltip-inner">
+      <span class="ob-tooltip-text" id="obTooltipText"></span>
+      <button class="ob-tooltip-skip" id="obTooltipSkip">Skip tour</button>
+    </div>
+    <div class="ob-tooltip-arrow"></div>
+  </div>
+
+  <!-- Post-result rank reveal -->
+  <div id="obRankReveal" class="ob-rank-reveal" hidden>
+    <div class="ob-rank-inner">
+      <div class="ob-rank-label">You are</div>
+      <div class="ob-rank-num" id="obRankNum">#1</div>
+      <div class="ob-rank-sub" id="obRankSub">today · Can you go higher?</div>
     </div>
   </div>
 
@@ -364,12 +408,12 @@
   <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=81"></script>
-  <script src="game.js?v=120"></script>
+  <script src="game.js?v=121"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=89"></script>
   <script src="audio.js?v=1" defer></script>
-  <script src="floodlights.js?v=97" defer></script>
+  <script src="floodlights.js?v=98" defer></script>
   <script src="ratingswar.js?v=115" defer></script>
   <script src="draftvscomputer.js?v=18" defer></script>
 </body>

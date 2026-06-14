@@ -613,7 +613,7 @@
     /* Longer durations make the deceleration more satisfying */
     var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 560);
     var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 620);
-    Promise.all([p1, p2]).then(function () { spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = ""; renderSquadPicker(); });
+    Promise.all([p1, p2]).then(function () { spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = ""; renderSquadPicker(); if (window.GAFFER_OB) window.GAFFER_OB.afterSpin(); });
   }
 
   function ratingBadge(p) { return showRatings ? '<span class="mp-r-badge' + ratingTierClass(p.r) + '">' + p.r + '</span>' : ""; }
@@ -723,6 +723,7 @@
     elSquadPanel.style.display = "none";
     renderXI(); paintPitches(); updateControls();
     elHint.textContent = squad.length < XI_SIZE ? (name + " → " + pos + ". Spin for your next pick.") : "XI complete — enter a competition!";
+    if (window.GAFFER_OB) window.GAFFER_OB.playerAdded(squad.length);
   }
   function removePlayer(id) {
     squad = squad.filter(function (p) { return p.id !== id; });
@@ -970,6 +971,7 @@
 
   function startDraft() {
     showView("draft");
+    if (window.GAFFER_OB) window.GAFFER_OB.onEnterDraft();
     current = null; awaitingPick = false; spinning = false; rerollsLeft = diffRerolls();
     elSquadPanel.style.display = "none";
     var restored = loadDraft();
@@ -1432,7 +1434,7 @@
         html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
       }
     } else {
-      if (!r.saved) { r.saved = true; if (window.sfx && wc.userResult === "Champions!") window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); }
+      if (!r.saved) { r.saved = true; if (window.sfx && wc.userResult === "Champions!") window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
       html += shareCardHTML(r.sc, wc.userResult, r.compLabel || "World Cup");
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += scoreBannerHTML(r.sc, wc.userResult);
@@ -1489,7 +1491,7 @@
       html += revealListHTML(gm, r.shown, lg.teamName);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
-      if (!r.saved) { r.saved = true; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); }
+      if (!r.saved) { r.saved = true; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
       html += shareCardHTML(r.sc, result, r.cl ? "Champions League" : "League");
       html += scoreBannerHTML(r.sc, result);
       html += '<div class="verdict-card"><div class="vc-row">' +
@@ -1540,9 +1542,9 @@
 
   elManagerSpin.addEventListener("click", spinManager);
   elSpin.addEventListener("click", doSpin);
-  elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; doSpin(); });
+  elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; if (window.GAFFER_OB) window.GAFFER_OB.afterReroll(); doSpin(); });
   elAutoPick.addEventListener("click", autoPickCurrent);
-  $("autoFillBtn").addEventListener("click", autoFill);
+  $("autoFillBtn").addEventListener("click", function () { if (window.GAFFER_OB) window.GAFFER_OB.afterAutoFill(); autoFill(); });
   $("clearBtn").addEventListener("click", newGame);
   $("shareBtn").addEventListener("click", shareTeam);
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim(mode === "euro" ? "euro" : "wc", userTeamFromSquad()); });
