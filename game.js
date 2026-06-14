@@ -2317,14 +2317,14 @@
   var elThemeToggle = $("themeToggle");
   function applyTheme(light) {
     if (light) document.body.classList.add("light"); else document.body.classList.remove("light");
-    if (elThemeToggle) Array.prototype.forEach.call(elThemeToggle.querySelectorAll("button"), function (b) {
-      b.className = (b.getAttribute("data-theme") === (light ? "light" : "dark")) ? "active" : "";
-    });
+    if (elThemeToggle) elThemeToggle.setAttribute("aria-pressed", light ? "true" : "false");
     try { localStorage.setItem("wcxi_theme", light ? "light" : "dark"); } catch (e) {}
   }
-  if (elThemeToggle) Array.prototype.forEach.call(elThemeToggle.querySelectorAll("button"), function (b) {
-    b.addEventListener("click", function () { applyTheme(b.getAttribute("data-theme") === "light"); });
-  });
+  if (elThemeToggle) {
+    elThemeToggle.addEventListener("click", function () {
+      applyTheme(!document.body.classList.contains("light"));
+    });
+  }
   (function () { var t = null; try { t = localStorage.getItem("wcxi_theme"); } catch (e) {} applyTheme(t === "light"); })();
   $("homeWC").addEventListener("click", function () { setMode("wc"); });
   $("homeCL").addEventListener("click", function () { setMode("cl"); });

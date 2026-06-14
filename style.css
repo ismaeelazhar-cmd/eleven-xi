@@ -1313,58 +1313,55 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 .diff-btn.active .diff-sub { color: var(--gold); }
 
 /* ===== Theme toggle — animated sliding pill ===== */
+/* ── Theme toggle — iOS-style single pill switch ── */
 .theme-toggle {
   position: fixed; top: 10px; right: 12px; z-index: 100;
-  display: flex; gap: 0; padding: 2px;
-  background: rgba(8,8,16,0.7);
+  width: 56px; height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  padding: 0; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-toggle-track {
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: rgba(8,8,16,0.75);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 999px;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  transition: background 0.3s, border-color 0.3s;
 }
-/* sliding pill indicator */
-.theme-pill {
+.theme-toggle-thumb {
   position: absolute;
-  top: 2px; left: 2px;
-  width: 30px; height: 18px;
+  top: 3px; left: 3px;
+  width: 24px; height: 24px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-  transition: transform 0.28s cubic-bezier(0.34,1.4,0.64,1);
-  pointer-events: none;
-}
-/* dark mode (default) — pill sits over 🌙 (2nd button) */
-body:not(.light) .theme-pill { transform: translateX(30px); }
-/* light mode — pill sits over ☀ (1st button) */
-body.light .theme-pill { transform: translateX(0); }
-
-.theme-toggle button {
-  position: relative; z-index: 1;
-  background: transparent; border: none;
-  width: 30px; height: 18px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
   display: flex; align-items: center; justify-content: center;
-  border-radius: 999px; font-size: 11px; cursor: pointer;
-  color: rgba(255,255,255,0.28);
-  transition: color 0.22s;
-  padding: 0;
+  transition: transform 0.3s cubic-bezier(0.34,1.4,0.64,1), background 0.3s;
+  color: #1a1a2e;
 }
-.theme-toggle button.active { color: rgba(255,255,255,0.92); background: transparent; }
+/* dark mode (default) — thumb on right */
+body:not(.light) .theme-toggle-thumb { transform: translateX(26px); }
+/* light mode — thumb on left */
+body.light .theme-toggle-thumb { transform: translateX(0); background: #fff; color: #92700a; }
 
-/* light mode */
-body.light .theme-toggle {
-  background: rgba(255,252,243,0.9);
-  border-color: rgba(200,134,10,0.18);
-  box-shadow: 0 2px 20px rgba(120,90,20,0.1), inset 0 1px 0 rgba(255,255,255,0.85);
+/* icons inside thumb — show only relevant one */
+.tt-icon { position: absolute; }
+.tt-icon-sun  { opacity: 0; transition: opacity 0.2s; }
+.tt-icon-moon { opacity: 1; transition: opacity 0.2s; }
+body.light .tt-icon-sun  { opacity: 1; }
+body.light .tt-icon-moon { opacity: 0; }
+
+/* light mode track */
+body.light .theme-toggle-track {
+  background: rgba(255,252,240,0.92);
+  border-color: rgba(180,120,10,0.2);
+  box-shadow: 0 2px 12px rgba(120,80,10,0.12), inset 0 1px 0 rgba(255,255,255,0.9);
 }
-body.light .theme-pill {
-  background: rgba(200,134,10,0.12);
-  border-color: rgba(200,134,10,0.28);
-  box-shadow: 0 1px 6px rgba(120,90,20,0.15);
-}
-body.light .theme-toggle button { color: rgba(42,38,32,0.28); }
-body.light .theme-toggle button.active { color: rgba(42,38,32,0.88); }
 
 /* ===== Sub-label (e.g. Continent under the era slider) ===== */
 .setup-sublabel {
