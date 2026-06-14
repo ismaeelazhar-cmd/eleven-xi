@@ -1918,13 +1918,16 @@
     if (nsHarder) nsHarder.addEventListener("click", function() {
       var order = ["Easy","Medium","Hard","Legend"];
       var idx = order.indexOf(difficulty);
-      if (idx < order.length-1) difficulty = order[idx+1];
+      var nextDiff = (idx >= 0 && idx < order.length-1) ? order[idx+1] : difficulty;
+      var savedMode = mode;
       newGame();
+      difficulty = nextDiff;
+      setMode(savedMode);
     });
     var nsCL = document.getElementById("nsCL");
-    if (nsCL) nsCL.addEventListener("click", function() { newGame(); showView("setup"); });
+    if (nsCL) nsCL.addEventListener("click", function() { setMode("cl"); });
     var nsWC = document.getElementById("nsWC");
-    if (nsWC) nsWC.addEventListener("click", function() { newGame(); showView("setup"); });
+    if (nsWC) nsWC.addEventListener("click", function() { setMode("wc"); });
     var nsChallenge = document.getElementById("nsChallenge");
     if (nsChallenge) nsChallenge.addEventListener("click", function() {
       var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer XI — can you beat it? gaffer.app";
