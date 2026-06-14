@@ -89,9 +89,14 @@
       var proofEl = document.getElementById("homeSocialProof");
       if (proofEl) proofEl.textContent = count + " managers played today";
 
-      function launchDaily() { var b = document.getElementById(pick.id); if (b) b.click(); }
+      function launchDaily() {
+        if (W.startDailyChallenge) { W.startDailyChallenge(); return; }
+        var b = document.getElementById(pick.id); if (b) b.click();
+      }
       var bar = document.getElementById("homeDaily");     if (bar) bar.addEventListener("click", launchDaily);
       var top = document.getElementById("homeDailyTop");  if (top) top.addEventListener("click", launchDaily);
+      var dailyBack = document.getElementById("dailyBack");
+      if (dailyBack) dailyBack.addEventListener("click", function() { if (W.flGoHome) W.flGoHome(); });
     })();
 
     /* Euro home card — wired in game.js alongside homeWC/homeCL via setMode("euro") */
