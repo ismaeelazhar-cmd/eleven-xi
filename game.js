@@ -1252,7 +1252,7 @@
       try {
         var file = new File([blob], fname, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: "My Gaffer XI", text: teamDisplayName() + " · " + formation }).catch(function () {});
+          navigator.share({ files: [file], title: "My Gaffer XI", text: teamDisplayName() + " · " + formation + " · Built on gafferxi.com" }).catch(function () {});
           return;
         }
       } catch (e) {}
@@ -1703,14 +1703,18 @@
     var allRows = [a.gk].concat(a.lines);
     var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     var now = new Date(), dateStr = months[now.getMonth()] + " " + now.getDate();
+    var isChamp = resultLabel && (resultLabel.indexOf("Champions") !== -1 || resultLabel.indexOf("1st") !== -1);
     var gridRows = allRows.map(function(row) {
       return '<div class="f-row">' + row.map(function(cell) {
         var pick = cell && cell.pick;
         var isGK = cell && cell.pos === "GK";
-        var isGoat = pick && pick.r >= 97;
-        var cls = "f-player" + (isGK ? " gk" : "") + (isGoat ? " goat" : "");
-        var lastName = pick ? pick.n.split(" ").pop() : "—";
-        if (lastName.length > 8) lastName = lastName.slice(0, 7) + ".";
+        var isGoat = pick && pick.r >= 98;
+        var isElite = pick && pick.r >= 94 && pick.r < 98;
+        var cls = "f-player" +
+          (isGK ? " gk" : "") +
+          (isGoat ? " goat" : isElite ? " elite" : "");
+        var lastName = pick ? pick.n.split(" ").slice(-1)[0] : "—";
+        if (lastName.length > 9) lastName = lastName.slice(0, 8) + ".";
         var flagYear = pick ? (pick.country + " '" + String(pick.year || "").slice(-2)) : "";
         return '<div class="' + cls + '">' +
           '<div class="f-rating">' + (pick ? pick.r : "") + '</div>' +
@@ -1721,23 +1725,26 @@
     }).join("");
     var mgr = currentManager();
     var mgrTxt = managerId !== "none" ? " · " + esc(mgr.name) : "";
-    return '<div class="share-card" id="shareCard">' +
+    var scoreVal = sc ? sc.score : 0;
+    return '<div class="sc-card-label">📤 Your result — tap to share</div>' +
+    '<div class="share-card' + (isChamp ? " share-card--champ" : "") + '" id="shareCard">' +
       '<div class="sc-header">' +
-        '<div class="sc-logo">GAFFER</div>' +
+        '<div class="sc-logo">⚽ GAFFER XI</div>' +
         '<div class="sc-date">' + esc(dateStr) + ' · ' + esc(competitionLabel) + '</div>' +
       '</div>' +
       '<div class="sc-title">' + esc(teamDisplayName()) + '\'s XI</div>' +
       '<div class="sc-sub">' + esc(formation) + mgrTxt + '</div>' +
       '<div class="formation-grid">' + gridRows + '</div>' +
       '<div class="sc-result">' +
-        '<div><div class="sc-rt">Score</div><div class="sc-rv">' + (sc ? sc.score : 0) + ' pts</div></div>' +
-        '<div style="text-align:right"><div class="sc-rt">Result</div><div class="sc-rrank">' + esc(resultLabel) + '</div></div>' +
+        '<div><div class="sc-rt">Result</div><div class="sc-rv' + (isChamp ? " sc-rv--champ" : "") + '">' + esc(resultLabel) + '</div></div>' +
+        '<div style="text-align:right"><div class="sc-rt">Score</div><div class="sc-rrank">' + scoreVal + ' pts</div></div>' +
       '</div>' +
       '<div class="sc-share-row">' +
-        '<button class="sc-btn sc-btn-primary" id="shareXIBtn">Share my XI ↗</button>' +
-        '<button class="sc-btn sc-btn-sec" id="copyImgBtn">Copy image</button>' +
+        '<button class="sc-btn sc-btn-primary" id="shareXIBtn">Share ↗</button>' +
+        '<button class="sc-btn sc-btn-sec" id="copyImgBtn">Save image</button>' +
         '<button class="sc-btn sc-btn-sec" id="btmNewGame">New game</button>' +
       '</div>' +
+      '<div class="sc-url">gafferxi.com</div>' +
     '</div>';
   }
 
@@ -1930,7 +1937,7 @@
     if (nsWC) nsWC.addEventListener("click", function() { setMode("wc"); });
     var nsChallenge = document.getElementById("nsChallenge");
     if (nsChallenge) nsChallenge.addEventListener("click", function() {
-      var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer XI — can you beat it? gaffer.app";
+      var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer XI — can you beat it?\n🔗 gafferxi.com";
       try { navigator.share({ text: text }); } catch(e) {
         navigator.clipboard && navigator.clipboard.writeText(text);
         nsChallenge.textContent = "Copied!"; setTimeout(function(){ nsChallenge.textContent = "📣 Challenge a friend to beat this"; }, 2000);

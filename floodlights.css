@@ -325,60 +325,88 @@ body.light .ec-input {
 /* ── Hide continent filter — adds complexity before fun ── */
 #continentWrap { display: none !important; }
 
-/* ── Share card polish ── */
-.share-card {
-  background: linear-gradient(160deg, #0d1117 0%, #1a2235 100%);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 18px; padding: 16px 16px 12px; margin-bottom: 18px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+/* ── Shareable Results Card ──────────────────────────────────────────────── */
+/* Visual identity: Gold #C9AA71 on Navy #1A1A2E                             */
+
+/* Label above the card */
+.sc-card-label {
+  font-size: 10px; font-weight: 600; color: rgba(255,255,255,.3);
+  text-align: center; text-transform: uppercase; letter-spacing: .1em;
+  margin-bottom: 10px;
 }
+
+/* The card itself */
+.share-card {
+  background: linear-gradient(155deg, #111827 0%, #1a2235 60%, #0d111c 100%);
+  border: 1px solid rgba(201,170,113,.18);  /* gold border */
+  border-radius: 18px; padding: 18px 16px 14px; margin-bottom: 20px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.55), 0 0 0 0.5px rgba(201,170,113,.1) inset;
+  position: relative; overflow: hidden;
+}
+/* Subtle top accent stripe */
+.share-card::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #C9AA71 40%, #C9AA71 60%, transparent);
+  opacity: .6;
+}
+/* Champion glow variant */
+.share-card--champ { border-color: rgba(201,170,113,.4); }
+.share-card--champ::before { opacity: 1; }
+
 .sc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.sc-logo { font-family: var(--font-display); font-size: 13px; font-weight: 900; color: var(--h2-green); letter-spacing: .06em; }
-.sc-date { font-size: 11px; color: rgba(255,255,255,.35); }
-.sc-title { font-size: 17px; font-weight: 900; color: #fff; margin: 0 0 2px; }
-.sc-sub { font-size: 11px; color: rgba(255,255,255,.45); margin: 0 0 12px; }
+.sc-logo { font-family: var(--font-display); font-size: 12px; font-weight: 900; color: #C9AA71; letter-spacing: .1em; }
+.sc-date { font-size: 10px; color: rgba(255,255,255,.3); }
+.sc-title { font-size: 16px; font-weight: 900; color: #fff; margin: 0 0 2px; }
+.sc-sub { font-size: 10px; color: rgba(255,255,255,.4); margin: 0 0 12px; }
 
 /* Formation grid */
 .formation-grid { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-.f-row { display: flex; justify-content: center; gap: 5px; }
+.f-row { display: flex; justify-content: center; gap: 4px; }
 .f-player {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
-  border-radius: 8px; padding: 6px 4px; min-width: 52px; flex: 1; max-width: 72px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; padding: 6px 4px; min-width: 50px; flex: 1; max-width: 70px;
   gap: 1px;
 }
-.f-player.gk { background: rgba(22,163,74,.15); border-color: rgba(22,163,74,.35); }
-.f-player.gold, .f-player.goat { background: rgba(245,180,60,.15); border-color: rgba(245,180,60,.45); }
+.f-player.gk { background: rgba(45,106,79,.3); border-color: rgba(45,106,79,.6); }
+.f-player.goat { background: rgba(201,170,113,.14); border-color: rgba(201,170,113,.5); }
 .f-player.elite { background: rgba(124,92,252,.12); border-color: rgba(124,92,252,.3); }
-.f-rating { font-size: 14px; font-weight: 900; color: #fff; line-height: 1; font-family: var(--font-display); }
-.f-player.gold .f-rating, .f-player.goat .f-rating { color: #F5B43C; }
+.f-rating { font-size: 13px; font-weight: 900; color: rgba(255,255,255,.85); line-height: 1; font-family: var(--font-display); }
+.f-player.goat .f-rating { color: #C9AA71; }
 .f-player.gk .f-rating { color: #4ade80; }
 .f-player.elite .f-rating { color: #a78bfa; }
-.f-name { font-size: 9.5px; font-weight: 700; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.f-year { font-size: 8.5px; color: rgba(255,255,255,.35); }
+.f-name { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.f-year { font-size: 8px; color: rgba(255,255,255,.3); }
 
 /* Result row */
 .sc-result {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(201,170,113,.07); border: 1px solid rgba(201,170,113,.18);
+  border-radius: 10px; padding: 9px 12px; margin-bottom: 10px;
 }
-.sc-rt { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: .06em; flex: 0 0 auto; }
-.sc-rv { font-size: 14px; font-weight: 900; color: var(--h2-green); flex: 1; }
-.sc-rrank { font-size: 11px; color: rgba(255,255,255,.4); flex: 0 0 auto; }
+.sc-rt { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+.sc-rv { font-size: 15px; font-weight: 900; color: #fff; }
+.sc-rv--champ { color: #C9AA71; }
+.sc-rrank { font-size: 14px; font-weight: 900; color: rgba(255,255,255,.7); }
+
+/* URL footer */
+.sc-url {
+  font-size: 9px; color: rgba(255,255,255,.2); text-align: center;
+  letter-spacing: .05em; margin-top: 10px;
+}
 
 /* Share buttons */
-.sc-share-row { display: flex; gap: 8px; }
+.sc-share-row { display: flex; gap: 7px; margin-top: 2px; }
 .sc-btn {
-  flex: 1; border: none; border-radius: 10px; padding: 11px 12px;
-  font-size: 13px; font-weight: 800; cursor: pointer; font-family: var(--font-body);
+  flex: 1; border: none; border-radius: 10px; padding: 11px 10px;
+  font-size: 12px; font-weight: 800; cursor: pointer; font-family: var(--font-body);
   transition: filter .15s, transform .1s;
 }
 .sc-btn:active { transform: scale(.97); }
-.sc-btn-primary { background: var(--h2-green); color: #04140c; }
-.sc-btn-primary:hover { filter: brightness(1.07); }
-.sc-btn-sec { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.14); }
-.sc-btn-sec:hover { background: rgba(255,255,255,.16); }
+.sc-btn-primary { background: #C9AA71; color: #0d0d0d; }
+.sc-btn-primary:hover { filter: brightness(1.08); }
+.sc-btn-sec { background: rgba(255,255,255,.09); color: rgba(255,255,255,.8); border: 1px solid rgba(255,255,255,.13); }
+.sc-btn-sec:hover { background: rgba(255,255,255,.15); }
 
 /* ---------- responsive ---------- */
 @media (max-width: 540px) {
@@ -1652,133 +1680,10 @@ body.light .lg-cup-result.L { background: rgba(255,122,89,.07); }
   .pdot.filled, .reel--settled { animation: none !important; }
 }
 
-/* ── Shareable Results Card ─────────────────────────────────────────── */
-.share-card {
-  background: #0a0a14;
-  border-radius: 16px;
-  padding: 16px;
-  border: 0.5px solid rgba(255,255,255,.08);
-  max-width: 340px;
-  margin: 0 auto 20px;
-}
-.sc-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.sc-logo {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--positive, #22E0C8);
-  letter-spacing: .08em;
-}
-.sc-date {
-  font-size: 9px;
-  color: rgba(255,255,255,.3);
-}
-.sc-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 2px;
-}
-.sc-sub {
-  font-size: 9px;
-  color: rgba(255,255,255,.4);
-  margin-bottom: 10px;
-}
-/* Formation mini-grid */
-.formation-grid {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.f-row {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-}
-.f-player {
-  background: rgba(255,255,255,.06);
-  border: 0.5px solid rgba(255,255,255,.1);
-  border-radius: 6px;
-  padding: 4px 5px;
-  text-align: center;
-  min-width: 48px;
-}
-.f-player.gk {
-  border-color: rgba(34,224,200,.35);
-  background: rgba(34,224,200,.07);
-}
-.f-player.goat {
-  border-color: rgba(255,215,0,.5);
-  background: rgba(255,215,0,.08);
-}
-.f-name {
-  font-size: 8px;
-  font-weight: 500;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 46px;
-}
-.f-year {
-  font-size: 7px;
-  color: rgba(255,255,255,.35);
-}
-.f-rating {
-  font-size: 9px;
-  font-weight: 600;
-  color: #ffd700;
-  margin-bottom: 1px;
-}
-/* DvC card uses a flat tile grid instead of formation rows */
+/* ── DvC tile grid (kept, not duplicate) ── */
 .dvc-tile-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   justify-content: center;
 }
-/* Result row */
-.sc-result {
-  background: rgba(34,224,200,.07);
-  border: 0.5px solid rgba(34,224,200,.2);
-  border-radius: 10px;
-  padding: 8px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.sc-rt { font-size: 9px; color: rgba(255,255,255,.45); }
-.sc-rv { font-size: 14px; font-weight: 600; color: var(--positive, #22E0C8); }
-.sc-rrank { font-size: 10px; font-weight: 500; color: #ffd700; }
-/* Share buttons */
-.sc-share-row {
-  display: flex;
-  gap: 6px;
-}
-.sc-btn {
-  flex: 1;
-  border-radius: 8px;
-  padding: 8px 6px;
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  border: none;
-  font-family: inherit;
-}
-.sc-btn-primary {
-  background: var(--positive, #22E0C8);
-  color: #0a0a14;
-}
-.sc-btn-primary:active { opacity: .85; }
-.sc-btn-sec {
-  background: rgba(255,255,255,.07);
-  color: rgba(255,255,255,.65);
-  border: 0.5px solid rgba(255,255,255,.1);
-}
-.sc-btn-sec:active { opacity: .75; }
