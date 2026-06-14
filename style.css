@@ -1327,7 +1327,7 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 .theme-pill {
   position: absolute;
   top: 2px; left: 2px;
-  width: 26px; height: 26px;
+  width: 22px; height: 22px;
   border-radius: 999px;
   background: rgba(255,255,255,0.09);
   border: 1px solid rgba(255,255,255,0.12);
@@ -1336,16 +1336,16 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
   pointer-events: none;
 }
 /* dark mode (default) — pill sits over 🌙 (2nd button) */
-body:not(.light) .theme-pill { transform: translateX(26px); }
+body:not(.light) .theme-pill { transform: translateX(22px); }
 /* light mode — pill sits over ☀ (1st button) */
 body.light .theme-pill { transform: translateX(0); }
 
 .theme-toggle button {
   position: relative; z-index: 1;
   background: transparent; border: none;
-  width: 26px; height: 26px;
+  width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 999px; font-size: 12px; cursor: pointer;
+  border-radius: 999px; font-size: 11px; cursor: pointer;
   color: rgba(255,255,255,0.28);
   transition: color 0.22s;
   padding: 0;
@@ -5152,8 +5152,8 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
     right: 10px;
   }
   .sound-toggle {
-    top: calc(env(safe-area-inset-top, 0px) + 12px);
-    right: 60px; /* keep clear of theme toggle (2×26px + padding + right:10px) */
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    right: 56px; /* keep clear of theme toggle (2×22px + padding + right:10px) */
   }
   /* Home / back button: pin to the top-left so it stays reachable while scrolling */
   .back, .mp-back {
