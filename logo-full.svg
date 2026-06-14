@@ -61,7 +61,7 @@
     letter-spacing="-4"
   >XI</text>
 
-  <!-- GAFFER below divider line -->
+  <!-- DRAFT below divider line -->
   <text
     x="320" y="282"
     text-anchor="middle"
@@ -71,7 +71,7 @@
     fill="#C9AA71"
     letter-spacing="10"
     opacity="0.9"
-  >GAFFER</text>
+  >DRAFT</text>
 
   <!-- Formation dots -->
   <circle cx="320" cy="328" r="8.5" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.65"/>
@@ -87,7 +87,7 @@
   <line x1="388" y1="356" x2="270" y2="396" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.12"/>
 
   <!-- Wordmark below shield -->
-  <!-- "GAFFER XI" ghost text -->
+  <!-- "DRAFT XI" ghost text -->
   <text
     x="320" y="520"
     text-anchor="middle"
@@ -97,7 +97,7 @@
     fill="#1A1A2E"
     letter-spacing="4"
     opacity="0.12"
-  >GAFFER XI</text>
+  >DRAFT XI</text>
 
   <!-- Tagline -->
   <text

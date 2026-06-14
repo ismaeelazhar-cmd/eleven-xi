@@ -537,8 +537,8 @@ body.light .ec-input {
 
 /* ===== Sound toggle ===== */
 .sound-toggle {
-  position: fixed; top: 10px; right: 78px; z-index: 100;
-  width: 30px; height: 30px; border-radius: 999px;
+  position: fixed; top: 10px; right: 12px; z-index: 100;
+  width: 38px; height: 30px; border-radius: 999px;
   background: rgba(8,8,16,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.07);
   box-shadow: 0 1px 8px rgba(0,0,0,0.3);
@@ -548,11 +548,6 @@ body.light .ec-input {
 }
 .sound-toggle:hover { color: rgba(255,255,255,0.9); }
 .sound-toggle[aria-pressed="true"] { color: rgba(255,255,255,0.22); }
-body.light .sound-toggle {
-  background: rgba(255,255,255,0.92);
-  border-color: rgba(0,0,0,0.12); color: rgba(42,38,32,0.45);
-}
-body.light .sound-toggle:hover { color: rgba(42,38,32,0.88); }
 
 /* ===== Group preview interstitial ===== */
 .group-preview { display: flex; flex-direction: column; gap: var(--sp-2); margin: var(--sp-5) 0; }

@@ -1,6 +1,6 @@
 {
-  "name": "Gaffer XI",
-  "short_name": "Gaffer XI",
+  "name": "Draft XI",
+  "short_name": "Draft XI",
   "description": "Spin to draft an all-time XI from real squads, pick a formation and manager, then simulate the World Cup, Champions League or a full domestic league.",
   "start_url": "./index.html",
   "scope": "./",

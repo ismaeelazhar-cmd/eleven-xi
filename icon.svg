@@ -1,107 +1,73 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="shieldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#1f2347"/>
-      <stop offset="100%" stop-color="#141729"/>
+    <linearGradient id="cardTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d1f5e"/>
+      <stop offset="100%" stop-color="#231748"/>
     </linearGradient>
-    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#D4B97A"/>
-      <stop offset="100%" stop-color="#A8893C"/>
+    <linearGradient id="cardBot" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#140e2e"/>
+      <stop offset="100%" stop-color="#0a0718"/>
     </linearGradient>
-    <filter id="innerShadow">
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9b85e8"/>
+      <stop offset="100%" stop-color="#5a3fa0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- Shield outer (gold border) -->
-  <path d="M 256,28
-    L 460,90
-    L 460,295
-    Q 458,370 256,490
-    Q 54,370 52,295
-    L 52,90
-    Z"
-    fill="url(#goldBorder)"
-    filter="url(#innerShadow)"
-  />
+  <!-- Card border (purple glow) -->
+  <rect x="54" y="28" width="404" height="456" rx="32" fill="url(#borderGrad)"/>
 
-  <!-- Shield inner fill (navy) -->
-  <path d="M 256,40
-    L 448,98
-    L 448,293
-    Q 446,362 256,476
-    Q 66,362 64,293
-    L 64,98
-    Z"
-    fill="url(#shieldFill)"
-  />
+  <!-- Card top section -->
+  <rect x="60" y="34" width="392" height="172" rx="28" fill="url(#cardTop)"/>
 
-  <!-- Inner shield line (subtle, like the reference) -->
-  <path d="M 256,42
-    L 446,100
-    L 446,292
-    Q 444,360 256,474
-    Q 68,360 66,292
-    L 66,100
-    Z"
-    fill="none"
-    stroke="#C9AA71"
-    stroke-width="1"
-    stroke-opacity="0.25"
-  />
+  <!-- Card bottom section -->
+  <rect x="60" y="194" width="392" height="284" rx="0" fill="url(#cardBot)"/>
+  <rect x="60" y="450" width="392" height="28" rx="0" ry="0" fill="url(#cardBot)"/>
+  <!-- Bottom corners -->
+  <rect x="60" y="449" width="392" height="35" rx="28" fill="url(#cardBot)"/>
 
-  <!-- Horizontal divider -->
-  <line x1="90" y1="298" x2="422" y2="298" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.4"/>
+  <!-- Divider line between top and bottom -->
+  <line x1="60" y1="206" x2="452" y2="206" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.4"/>
 
-  <!-- XI — large gold serif -->
-  <text
-    x="256" y="274"
-    text-anchor="middle"
-    font-family="'Georgia', 'Times New Roman', serif"
-    font-size="196"
-    font-weight="700"
-    fill="#C9AA71"
-    letter-spacing="-4"
-  >XI</text>
+  <!-- XI — large serif, lavender -->
+  <text x="256" y="162" text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="148" font-weight="700"
+    fill="#c4b8e8" opacity="0.92"
+    letter-spacing="-2">XI</text>
 
-  <!-- GAFFER wordmark -->
-  <text
-    x="256" y="254"
-    text-anchor="middle"
-    font-family="'Georgia', 'Times New Roman', serif"
-    font-size="38"
-    font-weight="400"
-    fill="#C9AA71"
-    letter-spacing="14"
-    opacity="0.0"
-  >GAFFER</text>
+  <!-- DRAFT text below divider -->
+  <text x="256" y="196" text-anchor="middle"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="28" font-weight="400"
+    fill="#c4b8e8" letter-spacing="12" opacity="0.85">DRAFT</text>
 
-  <!-- GAFFER below divider -->
-  <text
-    x="256" y="316"
-    text-anchor="middle"
-    font-family="'Arial', 'Helvetica', sans-serif"
-    font-size="32"
-    font-weight="400"
-    fill="#C9AA71"
-    letter-spacing="10"
-    opacity="0.9"
-  >GAFFER</text>
+  <!-- Formation dots — lavender, connected -->
+  <!-- Top (ST) -->
+  <circle cx="256" cy="278" r="14" fill="none" stroke="#9b85e8" stroke-width="2" stroke-opacity="0.75" filter="url(#glow)"/>
+  <circle cx="256" cy="278" r="4" fill="#9b85e8" opacity="0.5"/>
 
-  <!-- Formation dots — lower half of shield -->
-  <!-- 1 top (ST) -->
-  <circle cx="256" cy="338" r="9" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.7"/>
-  <!-- 2 mid-left / mid-right (MID) -->
-  <circle cx="186" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
-  <circle cx="326" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
-  <!-- 2 bottom (DEF) -->
-  <circle cx="204" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
-  <circle cx="308" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
+  <!-- Mid left / right -->
+  <circle cx="168" cy="330" r="12" fill="none" stroke="#9b85e8" stroke-width="1.8" stroke-opacity="0.6"/>
+  <circle cx="168" cy="330" r="3.5" fill="#9b85e8" opacity="0.4"/>
+  <circle cx="344" cy="330" r="12" fill="none" stroke="#9b85e8" stroke-width="1.8" stroke-opacity="0.6"/>
+  <circle cx="344" cy="330" r="3.5" fill="#9b85e8" opacity="0.4"/>
+
+  <!-- Bottom left / right -->
+  <circle cx="188" cy="394" r="12" fill="none" stroke="#9b85e8" stroke-width="1.6" stroke-opacity="0.5"/>
+  <circle cx="188" cy="394" r="3" fill="#9b85e8" opacity="0.35"/>
+  <circle cx="324" cy="394" r="12" fill="none" stroke="#9b85e8" stroke-width="1.6" stroke-opacity="0.5"/>
+  <circle cx="324" cy="394" r="3" fill="#9b85e8" opacity="0.35"/>
+
   <!-- Connection lines -->
-  <line x1="256" y1="338" x2="186" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
-  <line x1="256" y1="338" x2="326" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
-  <line x1="186" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
-  <line x1="326" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
-  <line x1="186" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
-  <line x1="326" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
+  <line x1="256" y1="278" x2="168" y2="330" stroke="#9b85e8" stroke-width="1.2" stroke-opacity="0.35"/>
+  <line x1="256" y1="278" x2="344" y2="330" stroke="#9b85e8" stroke-width="1.2" stroke-opacity="0.35"/>
+  <line x1="168" y1="330" x2="188" y2="394" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.28"/>
+  <line x1="344" y1="330" x2="324" y2="394" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.28"/>
+  <line x1="168" y1="330" x2="324" y2="394" stroke="#9b85e8" stroke-width="0.75" stroke-opacity="0.15"/>
+  <line x1="344" y1="330" x2="188" y2="394" stroke="#9b85e8" stroke-width="0.75" stroke-opacity="0.15"/>
 </svg>

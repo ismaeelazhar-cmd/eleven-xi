@@ -1240,7 +1240,7 @@
       });
     });
     ctx.fillStyle = "rgba(236,241,255,0.25)"; ctx.font = "500 14px " + FS;
-    ctx.fillText("Gaffer XI", CW / 2, CH - 24);
+    ctx.fillText("Draft XI", CW / 2, CH - 24);
     return c;
   }
 
@@ -1252,7 +1252,7 @@
       try {
         var file = new File([blob], fname, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: "My Gaffer XI", text: teamDisplayName() + " · " + formation + " · Built on gafferxi.com" }).catch(function () {});
+          navigator.share({ files: [file], title: "My Draft XI", text: teamDisplayName() + " · " + formation + " · Built on draft-11.com" }).catch(function () {});
           return;
         }
       } catch (e) {}
@@ -1729,7 +1729,7 @@
     return '<div class="sc-card-label">📤 Your result — tap to share</div>' +
     '<div class="share-card' + (isChamp ? " share-card--champ" : "") + '" id="shareCard">' +
       '<div class="sc-header">' +
-        '<div class="sc-logo">⚽ GAFFER XI</div>' +
+        '<div class="sc-logo">⚽ DRAFT XI</div>' +
         '<div class="sc-date">' + esc(dateStr) + ' · ' + esc(competitionLabel) + '</div>' +
       '</div>' +
       '<div class="sc-title">' + esc(teamDisplayName()) + '\'s XI</div>' +
@@ -1744,7 +1744,7 @@
         '<button class="sc-btn sc-btn-sec" id="copyImgBtn">Save image</button>' +
         '<button class="sc-btn sc-btn-sec" id="btmNewGame">New game</button>' +
       '</div>' +
-      '<div class="sc-url">gafferxi.com</div>' +
+      '<div class="sc-url">draft-11.com</div>' +
     '</div>';
   }
 
@@ -1937,7 +1937,7 @@
     if (nsWC) nsWC.addEventListener("click", function() { setMode("wc"); });
     var nsChallenge = document.getElementById("nsChallenge");
     if (nsChallenge) nsChallenge.addEventListener("click", function() {
-      var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer XI — can you beat it?\n🔗 gafferxi.com";
+      var text = "I scored " + (window._lastResultScore||"") + " pts in Draft XI — can you beat it?\n🔗 draft-11.com";
       try { navigator.share({ text: text }); } catch(e) {
         navigator.clipboard && navigator.clipboard.writeText(text);
         nsChallenge.textContent = "Copied!"; setTimeout(function(){ nsChallenge.textContent = "📣 Challenge a friend to beat this"; }, 2000);
@@ -2314,18 +2314,7 @@
 
   // ================= WIRING =================
   elTeamName.addEventListener("input", function () { teamName = elTeamName.value; paintPitches(); renderXI(); });
-  var elThemeToggle = $("themeToggle");
-  function applyTheme(light) {
-    if (light) document.body.classList.add("light"); else document.body.classList.remove("light");
-    if (elThemeToggle) elThemeToggle.setAttribute("aria-pressed", light ? "true" : "false");
-    try { localStorage.setItem("wcxi_theme", light ? "light" : "dark"); } catch (e) {}
-  }
-  if (elThemeToggle) {
-    elThemeToggle.addEventListener("click", function () {
-      applyTheme(!document.body.classList.contains("light"));
-    });
-  }
-  (function () { var t = null; try { t = localStorage.getItem("wcxi_theme"); } catch (e) {} applyTheme(t === "light"); })();
+  // Dark mode only — no theme toggle
   $("homeWC").addEventListener("click", function () { setMode("wc"); });
   $("homeCL").addEventListener("click", function () { setMode("cl"); });
   var _euroBtn = document.getElementById("homeEuro");

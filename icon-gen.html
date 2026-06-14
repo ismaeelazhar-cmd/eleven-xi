@@ -12,7 +12,7 @@
 </style>
 </head>
 <body>
-<h2>Gaffer XI — Icon Preview & Export</h2>
+<h2>Draft XI — Icon Preview & Export</h2>
 
 <div class="row">
   <div>
@@ -40,32 +40,42 @@
 <script>
 const SVG_SRC = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="sf" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#1f2347"/>
-      <stop offset="100%" stop-color="#141729"/>
+    <linearGradient id="cardTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d1f5e"/>
+      <stop offset="100%" stop-color="#231748"/>
     </linearGradient>
-    <linearGradient id="gb" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#D4B97A"/>
-      <stop offset="100%" stop-color="#A8893C"/>
+    <linearGradient id="cardBot" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#140e2e"/>
+      <stop offset="100%" stop-color="#0a0718"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9b85e8"/>
+      <stop offset="100%" stop-color="#5a3fa0"/>
     </linearGradient>
   </defs>
-  <path d="M 256,28 L 460,90 L 460,295 Q 458,370 256,490 Q 54,370 52,295 L 52,90 Z" fill="url(#gb)"/>
-  <path d="M 256,40 L 448,98 L 448,293 Q 446,362 256,476 Q 66,362 64,293 L 64,98 Z" fill="url(#sf)"/>
-  <path d="M 256,42 L 446,100 L 446,292 Q 444,360 256,474 Q 68,360 66,292 L 66,100 Z" fill="none" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
-  <line x1="90" y1="298" x2="422" y2="298" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.4"/>
-  <text x="256" y="280" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="196" font-weight="700" fill="#C9AA71" letter-spacing="-4">XI</text>
-  <text x="256" y="316" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="400" fill="#C9AA71" letter-spacing="10" opacity="0.9">GAFFER</text>
-  <circle cx="256" cy="338" r="9" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.7"/>
-  <circle cx="186" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
-  <circle cx="326" cy="368" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.6"/>
-  <circle cx="204" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
-  <circle cx="308" cy="410" r="8" fill="none" stroke="#C9AA71" stroke-width="1.5" stroke-opacity="0.5"/>
-  <line x1="256" y1="338" x2="186" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
-  <line x1="256" y1="338" x2="326" y2="368" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.3"/>
-  <line x1="186" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
-  <line x1="326" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="1" stroke-opacity="0.25"/>
-  <line x1="186" y1="368" x2="308" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
-  <line x1="326" y1="368" x2="204" y2="410" stroke="#C9AA71" stroke-width="0.75" stroke-opacity="0.15"/>
+  <rect x="54" y="28" width="404" height="456" rx="32" fill="url(#borderGrad)"/>
+  <rect x="60" y="34" width="392" height="172" rx="28" fill="url(#cardTop)"/>
+  <rect x="60" y="194" width="392" height="284" rx="0" fill="url(#cardBot)"/>
+  <rect x="60" y="449" width="392" height="35" rx="28" fill="url(#cardBot)"/>
+  <line x1="60" y1="206" x2="452" y2="206" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="256" y="162" text-anchor="middle" font-family="Georgia, Times New Roman, serif" font-size="148" font-weight="700" fill="#c4b8e8" opacity="0.92" letter-spacing="-2">XI</text>
+  <text x="256" y="196" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="400" fill="#c4b8e8" letter-spacing="12" opacity="0.85">DRAFT</text>
+  <circle cx="256" cy="278" r="14" fill="none" stroke="#9b85e8" stroke-width="2" stroke-opacity="0.75"/>
+  <circle cx="256" cy="278" r="4" fill="#9b85e8" opacity="0.5"/>
+  <circle cx="168" cy="330" r="12" fill="none" stroke="#9b85e8" stroke-width="1.8" stroke-opacity="0.6"/>
+  <circle cx="168" cy="330" r="3.5" fill="#9b85e8" opacity="0.4"/>
+  <circle cx="344" cy="330" r="12" fill="none" stroke="#9b85e8" stroke-width="1.8" stroke-opacity="0.6"/>
+  <circle cx="344" cy="330" r="3.5" fill="#9b85e8" opacity="0.4"/>
+  <circle cx="188" cy="394" r="12" fill="none" stroke="#9b85e8" stroke-width="1.6" stroke-opacity="0.5"/>
+  <circle cx="188" cy="394" r="3" fill="#9b85e8" opacity="0.35"/>
+  <circle cx="324" cy="394" r="12" fill="none" stroke="#9b85e8" stroke-width="1.6" stroke-opacity="0.5"/>
+  <circle cx="324" cy="394" r="3" fill="#9b85e8" opacity="0.35"/>
+  <line x1="256" y1="278" x2="168" y2="330" stroke="#9b85e8" stroke-width="1.2" stroke-opacity="0.35"/>
+  <line x1="256" y1="278" x2="344" y2="330" stroke="#9b85e8" stroke-width="1.2" stroke-opacity="0.35"/>
+  <line x1="168" y1="330" x2="188" y2="394" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.28"/>
+  <line x1="344" y1="330" x2="324" y2="394" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.28"/>
+  <line x1="168" y1="330" x2="324" y2="394" stroke="#9b85e8" stroke-width="0.75" stroke-opacity="0.15"/>
+  <line x1="344" y1="330" x2="188" y2="394" stroke="#9b85e8" stroke-width="0.75" stroke-opacity="0.15"/>
 </svg>`;
 
 function renderIcon(canvasId, size) {
@@ -112,7 +122,7 @@ function renderOG(canvasId) {
     // Left side text
     ctx.fillStyle = 'rgba(201,170,113,0.9)';
     ctx.font = '900 80px Georgia, serif';
-    ctx.fillText('GAFFER XI', 80, 220);
+    ctx.fillText('DRAFT XI', 80, 220);
 
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     ctx.font = '400 26px Arial, sans-serif';
@@ -151,7 +161,7 @@ function renderOG(canvasId) {
     // URL
     ctx.fillStyle = 'rgba(201,170,113,0.3)';
     ctx.font = '400 16px Arial, sans-serif';
-    ctx.fillText('gafferxi.com', 80, 510);
+    ctx.fillText('draft-11.com', 80, 510);
 
     URL.revokeObjectURL(url);
   };
