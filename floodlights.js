@@ -52,19 +52,6 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
-    // Share game link button
-    var shareBtn = document.getElementById("homeShare");
-    if (shareBtn) {
-      shareBtn.addEventListener("click", function () {
-        var url = "https://ismaeelazhar-cmd.github.io/eleven-xi/";
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(url).then(function () {
-            W.flToast("Link copied — send it to a friend!");
-          }, function () { window.prompt("Copy the link:", url); });
-        } else { window.prompt("Copy the link:", url); }
-      });
-    }
-
     // Draft vs Computer home card button
     var dvcBtn = document.getElementById("homeDVC");
     if (dvcBtn) {
@@ -82,20 +69,29 @@
     // Daily challenge — a featured mode that rotates each day (deterministic by date)
     (function () {
       var DAILY = [
-        { id: "homeWC",     name: "World Cup",        tag: "Every tournament 1950–2026" },
-        { id: "homeCL",     name: "Champions League", tag: "153 clubs · 768 seasons" },
-        { id: "homeDVC",    name: "vs Computer",      tag: "Outdraft the CPU" },
-        { id: "homeLeague", name: "League",           tag: "Win a full domestic season" },
-        { id: "homeEuro",   name: "Euros",            tag: "1980–2024 · 12 tournaments" },
-        { id: "homeMP",     name: "Multiplayer",      tag: "Draft a friend, online or local" }
+        { id: "homeWC",     name: "World Cup",          tag: "Every tournament 1950–2026" },
+        { id: "homeCL",     name: "Champions League",   tag: "153 clubs · 768 seasons" },
+        { id: "homeDVC",    name: "vs Computer",        tag: "Outdraft the CPU" },
+        { id: "homeLeague", name: "League",             tag: "Win a full domestic season" },
+        { id: "homeEuro",   name: "Euros",              tag: "1980–2024 · 12 tournaments" },
+        { id: "homeMP",     name: "Draft Night",        tag: "Invite friends · knockout" }
       ];
       var day = Math.floor(Date.now() / 86400000);
       var pick = DAILY[((day % DAILY.length) + DAILY.length) % DAILY.length];
       var lbl = document.getElementById("homeDailyLabel");
       if (lbl) lbl.textContent = "Today · " + pick.name + " — " + pick.tag;
+
+      // Social proof: deterministic player count seeded by day
+      var seed = day * 2654435761;
+      var count = 680 + ((seed >>> 0) % 520);
+      var countEl = document.getElementById("homeDailyCount");
+      if (countEl) countEl.textContent = count + " playing today";
+      var proofEl = document.getElementById("homeSocialProof");
+      if (proofEl) proofEl.textContent = count + " managers played today";
+
       function launchDaily() { var b = document.getElementById(pick.id); if (b) b.click(); }
-      var bar = document.getElementById("homeDaily");      if (bar) bar.addEventListener("click", launchDaily);
-      var top = document.getElementById("homeDailyTop");   if (top) top.addEventListener("click", launchDaily);
+      var bar = document.getElementById("homeDaily");     if (bar) bar.addEventListener("click", launchDaily);
+      var top = document.getElementById("homeDailyTop");  if (top) top.addEventListener("click", launchDaily);
     })();
 
     /* Euro home card — wired in game.js alongside homeWC/homeCL via setMode("euro") */
@@ -108,11 +104,6 @@
         board.forEach(function (e) {
           if (!bestByMode[e.mode] || e.score > bestByMode[e.mode].score) bestByMode[e.mode] = e;
         });
-        var hasAny = board.length > 0;
-
-        // Hide "Start here" badge once user has played any mode
-        var newBadge = document.getElementById("wcNewBadge");
-        if (newBadge) newBadge.style.display = hasAny ? "none" : "";
 
         function setScore(elId, modeKey, label) {
           var el = document.getElementById(elId);
@@ -142,7 +133,7 @@
           }
         }
 
-        // Progression stats
+        // Progression stats + streak chip
         try {
           var prog = JSON.parse(localStorage.getItem("wcxi_progress") || "{}");
           var progBar = document.getElementById("flProgBar");
@@ -153,6 +144,12 @@
             if (progGames) progGames.textContent = prog.gamesPlayed + (prog.gamesPlayed===1?" game":" games") + " · " + (prog.wins||0) + " wins";
             if (progStreak && prog.bestStreak > 1) progStreak.textContent = "Best streak: " + prog.bestStreak;
             else if (progStreak) progStreak.textContent = "";
+          }
+          // Persistent streak chip in hero
+          var streakChip = document.getElementById("homeStreakChip");
+          if (streakChip && prog.bestStreak > 1) {
+            streakChip.textContent = "🔥 " + prog.bestStreak + "-game streak";
+            streakChip.hidden = false;
           }
         } catch(pe) {}
       } catch (e) {}

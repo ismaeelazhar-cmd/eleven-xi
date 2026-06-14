@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
   <link rel="stylesheet" href="style.css?v=123" />
   <link rel="stylesheet" href="tokens.css?v=76" />
-  <link rel="stylesheet" href="floodlights.css?v=128" />
+  <link rel="stylesheet" href="floodlights.css?v=129" />
 </head>
 <body>
   <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Sound on — click to mute">
@@ -47,9 +47,12 @@
     <section id="homeView">
       <!-- Hero -->
       <div class="h2-hero">
-        <span class="h2-badge">★ 2026 World Cup mode live</span>
-        <h2 class="h2-title">Spin real squads.<br><span>Build the legend.</span></h2>
-        <p class="h2-sub">Draft all-time XIs from 1950 to today. Pick a formation and manager. Simulate. Dominate.</p>
+        <div class="h2-hero-top">
+          <span class="h2-badge">★ 2026 World Cup mode live</span>
+          <span class="h2-streak-chip" id="homeStreakChip" hidden></span>
+        </div>
+        <h2 class="h2-title">Build the greatest XI<br><span>in history.</span></h2>
+        <p class="h2-sub">Spin. Draft. Dominate.</p>
         <div class="h2-cta-row">
           <button class="h2-cta primary" id="homePlay">Play now →</button>
           <button class="h2-cta secondary" id="homeDailyTop">Daily challenge</button>
@@ -60,6 +63,7 @@
           <div class="h2-stat"><span class="n">76yr</span><span class="l">History</span></div>
           <div class="h2-stat"><span class="n">8P</span><span class="l">Multiplayer</span></div>
         </div>
+        <div class="h2-social-proof" id="homeSocialProof"></div>
         <div class="fl-prog-bar" id="flProgBar" style="display:none">
           <span class="fl-prog-games" id="flProgGames"></span>
           <span class="fl-prog-streak" id="flProgStreak"></span>
@@ -72,21 +76,21 @@
         <button class="h2-mode active" id="homeWC">
           <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg></span>
           <span class="h2-mode-body"><span class="h2-mode-name">World Cup</span><span class="h2-mode-desc">93 nations · 1950–2026</span><span class="fl-mode-stat" id="wcBestScore"></span></span>
-          <span class="h2-mode-badge" id="wcNewBadge">NEW</span>
+          <span class="h2-mode-badge h2-mode-badge--live" id="wcNewBadge">LIVE</span>
+        </button>
+        <button class="h2-mode" id="homeCL">
+          <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
+          <span class="h2-mode-body"><span class="h2-mode-name">Champions League</span><span class="h2-mode-desc">153 clubs · 768 seasons</span><span class="fl-mode-stat" id="clBestScore"></span></span>
+          <span class="h2-mode-arrow">›</span>
         </button>
         <button class="h2-mode" id="homeMP">
           <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19a6 6 0 0 1 12 0M14.5 19a5 5 0 0 1 6.5-4.8"/></svg></span>
-          <span class="h2-mode-body"><span class="h2-mode-name">Multiplayer</span><span class="h2-mode-desc">2–8 players · draft &amp; knockout · online</span></span>
+          <span class="h2-mode-body"><span class="h2-mode-name">Draft Night</span><span class="h2-mode-desc">2–8 players · draft &amp; knockout · online</span></span>
           <span class="h2-mode-arrow">›</span>
         </button>
         <button class="h2-mode" id="homeDVC">
           <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
           <span class="h2-mode-body"><span class="h2-mode-name">vs Computer</span><span class="h2-mode-desc">Alternating draft · outsmart the CPU</span><span class="fl-mode-stat" id="dvcHomeRecord"></span></span>
-          <span class="h2-mode-arrow">›</span>
-        </button>
-        <button class="h2-mode" id="homeCL">
-          <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
-          <span class="h2-mode-body"><span class="h2-mode-name">Champions League</span><span class="h2-mode-desc">153 clubs · 768 seasons</span><span class="fl-mode-stat" id="clBestScore"></span></span>
           <span class="h2-mode-arrow">›</span>
         </button>
         <button class="h2-mode" id="homeLeague">
@@ -101,18 +105,21 @@
         </button>
       </div>
 
-      <!-- Daily challenge -->
-      <button class="h2-daily" id="homeDaily">
-        <span class="h2-daily-ico">🏆</span>
-        <span class="h2-daily-text"><span class="t">Daily challenge</span><span class="s" id="homeDailyLabel">A fresh mode to master every day</span></span>
-        <span class="h2-daily-cta">Play</span>
-      </button>
-
       <div class="home-links">
         <button class="home-board-link" id="homeBoard">Leaderboards</button>
-        <button class="home-board-link" id="homeShare">Share game</button>
         <button class="home-board-link" id="homeHelp" aria-label="How to play">How to play</button>
       </div>
+
+      <!-- Daily challenge — pinned at bottom -->
+      <button class="h2-daily h2-daily--pinned" id="homeDaily">
+        <span class="h2-daily-ico">🏆</span>
+        <span class="h2-daily-text">
+          <span class="t">Daily challenge</span>
+          <span class="s" id="homeDailyLabel">A fresh mode to master every day</span>
+        </span>
+        <span class="h2-daily-count" id="homeDailyCount"></span>
+        <span class="h2-daily-cta">Play</span>
+      </button>
     </section>
 
     <!-- ===== SETUP ===== -->
@@ -362,7 +369,7 @@
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=89"></script>
   <script src="audio.js?v=1" defer></script>
-  <script src="floodlights.js?v=96" defer></script>
+  <script src="floodlights.js?v=97" defer></script>
   <script src="ratingswar.js?v=115" defer></script>
   <script src="draftvscomputer.js?v=18" defer></script>
 </body>
