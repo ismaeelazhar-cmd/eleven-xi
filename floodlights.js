@@ -56,6 +56,35 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
+    // "More modes" expandable toggle
+    var moreToggle = document.getElementById("homeMoreToggle");
+    var moreModes  = document.getElementById("homeMoreModes");
+    if (moreToggle && moreModes) {
+      moreToggle.addEventListener("click", function () {
+        var open = moreModes.hidden;
+        moreModes.hidden = !open;
+        moreToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+
+    // Email capture form — store locally + show success
+    var ecForm = document.getElementById("emailCaptureForm");
+    var ecSuccess = document.getElementById("ecSuccess");
+    if (ecForm) {
+      ecForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var inp = document.getElementById("ecInput");
+        var email = (inp ? inp.value : "").trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          if (inp) { inp.style.borderColor = "#ef4444"; setTimeout(function(){ inp.style.borderColor = ""; }, 1500); }
+          return;
+        }
+        try { localStorage.setItem("gaffer_email_sub", email); } catch(e){}
+        ecForm.style.display = "none";
+        if (ecSuccess) ecSuccess.hidden = false;
+      });
+    }
+
     // Draft vs Computer home card button
     var dvcBtn = document.getElementById("homeDVC");
     if (dvcBtn) {

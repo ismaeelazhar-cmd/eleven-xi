@@ -1319,7 +1319,7 @@
     var cl = (m === "cl");
     var euro = (m === "euro");
     var cw = $("continentWrap"); if (cw) cw.style.display = (cl || euro) ? "none" : "block";
-    var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Player pool — Champions League seasons" : euro ? "Player pool — Euro tournament eras" : "Player pool — World Cup eras";
+    var pl = $("poolLabel"); if (pl) pl.textContent = cl ? "Club pool — CL seasons" : euro ? "Nation pool — Euro eras" : "World Cup squads";
     var cl2 = $("countryLabel"); if (cl2) cl2.textContent = cl ? "Club" : "Nation";
     renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra();
     renderContinent(); renderDifficultyBar();
@@ -1941,7 +1941,7 @@
   }
   function modeLabel(m) {
     return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" :
-           m === "euro" ? "Euros" : m === "dvc" ? "vs Computer" : m === "duels" ? "Duels" : "League";
+           m === "euro" ? "Euros" : m === "dvc" ? "Take on the CPU" : m === "duels" ? "Duels" : "League";
   }
   function renderBoard() {
     Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {

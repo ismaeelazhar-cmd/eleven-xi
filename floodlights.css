@@ -257,6 +257,129 @@ body.light .h2-cta.secondary:hover { background: rgba(255,255,255,.16); }
 
 @keyframes fl-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
+/* ── Hero mode card ── */
+.h2-mode--hero { padding: 16px 16px; }
+.h2-mode--hero .h2-mode-name { font-size: 17px; }
+
+/* ── Secondary trio (3 compact side-by-side cards) ── */
+.h2-modes-trio {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px;
+}
+.h2-mode--sm {
+  flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 12px 12px 10px;
+}
+.h2-mode--sm .h2-mode-ico { width: 32px; height: 32px; }
+.h2-mode--sm .h2-mode-ico svg { width: 17px; height: 17px; }
+.h2-mode--sm .h2-mode-name { font-size: 12px; }
+.h2-mode--sm .h2-mode-desc { font-size: 10px; white-space: normal; line-height: 1.4; }
+@media (max-width: 380px) {
+  .h2-modes-trio { grid-template-columns: 1fr 1fr; }
+  .h2-modes-trio .h2-mode--sm:last-child { grid-column: 1 / -1; }
+}
+
+/* ── More modes toggle ── */
+.h2-more-toggle {
+  width: 100%; background: transparent; border: 1px dashed var(--line);
+  color: var(--text-dim); border-radius: 12px; padding: 10px 14px;
+  font-size: 13px; font-weight: 700; cursor: pointer; text-align: left;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color .15s, color .15s; margin-bottom: 8px;
+  font-family: var(--font-body);
+}
+.h2-more-toggle:hover { border-color: var(--line-strong); color: var(--text); }
+.h2-more-toggle[aria-expanded="true"] .h2-more-arrow { transform: rotate(90deg); }
+.h2-more-arrow { display: inline-block; transition: transform .2s var(--ease-spring); font-size: 16px; }
+.h2-more-modes { margin-bottom: 8px; }
+
+/* ── Email capture ── */
+.email-capture {
+  background: color-mix(in srgb, var(--primary) 6%, var(--card-bg));
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--line));
+  border-radius: 14px; padding: 16px; margin-bottom: 16px;
+}
+.ec-label {
+  font-size: 13px; font-weight: 800; color: var(--text); margin: 0 0 10px;
+}
+.ec-form { display: flex; gap: 8px; }
+.ec-input {
+  flex: 1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; padding: 10px 13px; font-size: 14px; color: var(--text);
+  font-family: var(--font-body); outline: none;
+  transition: border-color .15s;
+}
+.ec-input:focus { border-color: var(--primary); }
+.ec-input::placeholder { color: var(--text-dim); }
+.ec-submit {
+  background: var(--primary); color: #fff; border: none; border-radius: 10px;
+  padding: 10px 16px; font-size: 13px; font-weight: 800; cursor: pointer;
+  font-family: var(--font-body); white-space: nowrap;
+  transition: filter .15s;
+}
+.ec-submit:hover { filter: brightness(1.1); }
+.ec-success { font-size: 13px; color: var(--positive); margin: 10px 0 0; }
+body.light .ec-input {
+  background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); color: #1a1a2e;
+}
+
+/* ── Hide continent filter — adds complexity before fun ── */
+#continentWrap { display: none !important; }
+
+/* ── Share card polish ── */
+.share-card {
+  background: linear-gradient(160deg, #0d1117 0%, #1a2235 100%);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 18px; padding: 16px 16px 12px; margin-bottom: 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+.sc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sc-logo { font-family: var(--font-display); font-size: 13px; font-weight: 900; color: var(--h2-green); letter-spacing: .06em; }
+.sc-date { font-size: 11px; color: rgba(255,255,255,.35); }
+.sc-title { font-size: 17px; font-weight: 900; color: #fff; margin: 0 0 2px; }
+.sc-sub { font-size: 11px; color: rgba(255,255,255,.45); margin: 0 0 12px; }
+
+/* Formation grid */
+.formation-grid { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.f-row { display: flex; justify-content: center; gap: 5px; }
+.f-player {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; padding: 6px 4px; min-width: 52px; flex: 1; max-width: 72px;
+  gap: 1px;
+}
+.f-player.gk { background: rgba(22,163,74,.15); border-color: rgba(22,163,74,.35); }
+.f-player.gold, .f-player.goat { background: rgba(245,180,60,.15); border-color: rgba(245,180,60,.45); }
+.f-player.elite { background: rgba(124,92,252,.12); border-color: rgba(124,92,252,.3); }
+.f-rating { font-size: 14px; font-weight: 900; color: #fff; line-height: 1; font-family: var(--font-display); }
+.f-player.gold .f-rating, .f-player.goat .f-rating { color: #F5B43C; }
+.f-player.gk .f-rating { color: #4ade80; }
+.f-player.elite .f-rating { color: #a78bfa; }
+.f-name { font-size: 9.5px; font-weight: 700; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.f-year { font-size: 8.5px; color: rgba(255,255,255,.35); }
+
+/* Result row */
+.sc-result {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
+}
+.sc-rt { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: .06em; flex: 0 0 auto; }
+.sc-rv { font-size: 14px; font-weight: 900; color: var(--h2-green); flex: 1; }
+.sc-rrank { font-size: 11px; color: rgba(255,255,255,.4); flex: 0 0 auto; }
+
+/* Share buttons */
+.sc-share-row { display: flex; gap: 8px; }
+.sc-btn {
+  flex: 1; border: none; border-radius: 10px; padding: 11px 12px;
+  font-size: 13px; font-weight: 800; cursor: pointer; font-family: var(--font-body);
+  transition: filter .15s, transform .1s;
+}
+.sc-btn:active { transform: scale(.97); }
+.sc-btn-primary { background: var(--h2-green); color: #04140c; }
+.sc-btn-primary:hover { filter: brightness(1.07); }
+.sc-btn-sec { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.14); }
+.sc-btn-sec:hover { background: rgba(255,255,255,.16); }
+
 /* ---------- responsive ---------- */
 @media (max-width: 540px) {
   .fl-modes { grid-template-columns: 1fr; max-width: 420px; }

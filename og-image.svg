@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a16"/>
+      <stop offset="100%" stop-color="#0f1a2e"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00e46a" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00e46a" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle grid lines -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+
+  <!-- Green glow blob top-left -->
+  <ellipse cx="200" cy="200" rx="320" ry="200" fill="#00e46a" opacity="0.05"/>
+
+  <!-- GX Logo mark -->
+  <rect x="100" y="210" width="64" height="64" rx="16" fill="#00e46a" opacity="0.15"/>
+  <text x="132" y="252" font-family="'Arial Black', Arial, sans-serif" font-size="22" font-weight="900" fill="#00e46a" text-anchor="middle">GX</text>
+
+  <!-- Main title -->
+  <text x="186" y="252" font-family="'Arial Black', Arial, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">Gaffer</text>
+  <text x="530" y="252" font-family="'Arial Black', Arial, sans-serif" font-size="72" font-weight="900" fill="#7c5cfc" letter-spacing="-2"> XI</text>
+
+  <!-- Tagline -->
+  <text x="100" y="310" font-family="Arial, sans-serif" font-size="28" font-weight="400" fill="rgba(255,255,255,0.55)">Spin real squads. Draft your best XI. Simulate the World Cup.</text>
+
+  <!-- Divider -->
+  <line x1="100" y1="345" x2="600" y2="345" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- Stats row -->
+  <text x="100" y="395" font-family="'Arial Black', Arial, sans-serif" font-size="36" font-weight="900" fill="#00e46a">93</text>
+  <text x="100" y="420" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)" text-transform="uppercase" letter-spacing="2">Nations</text>
+
+  <text x="280" y="395" font-family="'Arial Black', Arial, sans-serif" font-size="36" font-weight="900" fill="#00e46a">153</text>
+  <text x="280" y="420" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">Clubs</text>
+
+  <text x="460" y="395" font-family="'Arial Black', Arial, sans-serif" font-size="36" font-weight="900" fill="#00e46a">76yr</text>
+  <text x="460" y="420" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.4)">History</text>
+
+  <!-- URL -->
+  <text x="100" y="520" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.25)">gafferxi.com</text>
+
+  <!-- LIVE badge -->
+  <rect x="100" y="440" width="72" height="28" rx="6" fill="#ff4545"/>
+  <text x="136" y="459" font-family="'Arial Black', Arial, sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">LIVE</text>
+  <text x="185" y="459" font-family="Arial, sans-serif" font-size="13" fill="rgba(255,255,255,0.5)">2026 World Cup mode active</text>
+
+  <!-- Right side: mini pitch visual -->
+  <rect x="820" y="120" width="280" height="390" rx="20" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+  <!-- Pitch lines -->
+  <rect x="860" y="160" width="200" height="310" rx="4" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+  <line x1="860" y1="315" x2="1060" y2="315" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <circle cx="960" cy="315" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+  <!-- Player dots -->
+  <circle cx="960" cy="190" r="10" fill="#00e46a" opacity="0.9"/>
+  <circle cx="905" cy="240" r="9" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="960" cy="240" r="9" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="1015" cy="240" r="9" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="920" cy="290" r="9" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="1000" cy="290" r="9" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="895" cy="340" r="9" fill="rgba(255,255,255,0.35)"/>
+  <circle cx="940" cy="340" r="9" fill="rgba(255,255,255,0.35)"/>
+  <circle cx="980" cy="340" r="9" fill="rgba(255,255,255,0.35)"/>
+  <circle cx="1025" cy="340" r="9" fill="rgba(255,255,255,0.35)"/>
+  <circle cx="960" cy="430" r="11" fill="rgba(124,92,252,0.7)"/>
+</svg>
