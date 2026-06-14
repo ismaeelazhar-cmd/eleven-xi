@@ -1,4 +1,4 @@
-/* daily.js — Gaffer XI Football Wordle
+/* daily.js — Draft XI Football Wordle
    Guess the football word of the day in 6 tries.
    Exposes: window.startDailyChallenge()
 */
@@ -112,7 +112,7 @@
   }
   function shareText() {
     var res = S.won ? S.guesses.length + "/" + MAX : "X/" + MAX;
-    return "Gaffer XI Wordle · " + todayStr() + "\n" + res + "\n\n" + emojiGrid() + "\n\ngaffer.app";
+    return "Draft XI Wordle · " + todayStr() + "\n" + res + "\n\n" + emojiGrid() + "\n\ndraft-11.com";
   }
 
   /* ── Render ─────────────────────────────────────────────────────── */

@@ -1514,7 +1514,7 @@
     }
 
     /* Footer */
-    x.fillStyle="#3a4a5c"; x.font="500 28px "+FS; x.fillText("Gaffer XI", CW/2, CH-50);
+    x.fillStyle="#3a4a5c"; x.font="500 28px "+FS; x.fillText("Draft XI", CW/2, CH-50);
 
     c.toBlob(function(blob){
       if(!blob) return;
@@ -1522,7 +1522,7 @@
       try{
         var file=new File([blob],fname,{type:"image/png"});
         if(navigator.canShare && navigator.canShare({files:[file]})){
-          navigator.share({files:[file], title:"My Gaffer XI season", text:d.team+" finished "+ordinal(d.pos)+" in the "+d.league}).catch(function(){});
+          navigator.share({files:[file], title:"My Draft XI season", text:d.team+" finished "+ordinal(d.pos)+" in the "+d.league}).catch(function(){});
           return;
         }
       }catch(e){}
