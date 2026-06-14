@@ -1,4 +1,4 @@
-/* daily.js — Gaffer Football Wordle
+/* daily.js — Gaffer XI Football Wordle
    Guess the football word of the day in 6 tries.
    Exposes: window.startDailyChallenge()
 */

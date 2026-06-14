@@ -1243,7 +1243,7 @@
       });
     });
     ctx.fillStyle = "rgba(236,241,255,0.25)"; ctx.font = "500 14px " + FS;
-    ctx.fillText("Gaffer", CW / 2, CH - 24);
+    ctx.fillText("Gaffer XI", CW / 2, CH - 24);
     return c;
   }
 
@@ -1930,7 +1930,7 @@
     if (nsWC) nsWC.addEventListener("click", function() { newGame(); showView("setup"); });
     var nsChallenge = document.getElementById("nsChallenge");
     if (nsChallenge) nsChallenge.addEventListener("click", function() {
-      var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer — can you beat it? gaffer.app";
+      var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer XI — can you beat it? gaffer.app";
       try { navigator.share({ text: text }); } catch(e) {
         navigator.clipboard && navigator.clipboard.writeText(text);
         nsChallenge.textContent = "Copied!"; setTimeout(function(){ nsChallenge.textContent = "📣 Challenge a friend to beat this"; }, 2000);
