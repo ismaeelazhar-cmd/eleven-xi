@@ -6056,3 +6056,105 @@ body.light .mn-line { border-left-color: rgba(0,0,0,0.1); }
   .player-flavour { display: none; }    /* hide flavour on very small screens to save space */
   .player-era { font-size: 10px; }
 }
+
+/* ===== BOTTOM NAV BAR (mobile) ===== */
+.bnav {
+  display: none; /* hidden on desktop */
+}
+
+/* ===== EMPTY LEADERBOARD STATE ===== */
+.board-empty {
+  text-align: center;
+  padding: 56px 24px 40px;
+}
+.board-empty-trophy {
+  font-size: 72px; line-height: 1;
+  margin-bottom: 20px;
+  display: block;
+  animation: be-float 3s ease-in-out infinite;
+  filter: grayscale(0.25);
+}
+@keyframes be-float {
+  0%, 100% { transform: translateY(0); filter: grayscale(0.25) opacity(0.75); }
+  50%       { transform: translateY(-8px); filter: grayscale(0) opacity(1); }
+}
+.board-empty-title {
+  font-size: 24px; font-weight: 900; margin: 0 0 8px; color: var(--text);
+}
+.board-empty-sub {
+  font-size: 14px; color: var(--muted); line-height: 1.65;
+  margin: 0 0 28px;
+}
+.board-empty-cta {
+  font-size: 15px; font-weight: 800; padding: 12px 28px;
+}
+
+@media (max-width: 768px) {
+  /* ── Bottom nav ── */
+  .bnav {
+    display: flex;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 500;
+    background: rgba(7,7,15,0.93);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .bnav-btn {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.38);
+    padding: 6px 0 2px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+    font-family: inherit;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bnav-btn svg {
+    width: 22px; height: 22px;
+    transition: transform 0.15s, filter 0.15s;
+  }
+  .bnav-btn.active {
+    color: var(--green2);
+  }
+  .bnav-btn.active svg {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 2px 6px rgba(0,187,127,0.45));
+  }
+  /* Active indicator dot */
+  .bnav-btn::after {
+    content: '';
+    display: block;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: transparent;
+    margin: 2px auto 0;
+    transition: background 0.15s;
+  }
+  .bnav-btn.active::after { background: var(--green); }
+
+  /* Body padding so content clears the nav */
+  body { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Hide old back/home buttons — nav replaces them */
+  .back,
+  .draft-corner-home,
+  #resultsHomeBtn,
+  #boardBack,
+  #challengeBack,
+  #dailyBack,
+  #setupBack {
+    display: none !important;
+  }
+}
+
+/* Light mode bnav */
+body.light .bnav {
+  background: rgba(250,246,236,0.94);
+  border-top-color: rgba(200,134,10,0.15);
+}
+body.light .bnav-btn { color: rgba(42,38,32,0.38); }
+body.light .bnav-btn.active { color: var(--green); }
+body.light .bnav-btn.active svg { filter: drop-shadow(0 2px 5px rgba(10,158,110,0.4)); }
+body.light .bnav-btn.active::after { background: var(--green); }

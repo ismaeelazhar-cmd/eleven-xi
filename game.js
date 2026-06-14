@@ -331,6 +331,12 @@
     // Close, wipe and reset the squad dock whenever the view changes
     if (window.flResetSquadDock) window.flResetSquadDock();
     if (window.scrollTo) window.scrollTo(0, 0);
+    // Sync bottom nav active state
+    Array.prototype.forEach.call(document.querySelectorAll(".bnav-btn"), function (b) {
+      var bv = b.getAttribute("data-view");
+      var isActive = bv === name || (bv === "draft" && (name === "setup" || name === "draft" || name === "results"));
+      b.classList.toggle("active", isActive);
+    });
   }
 
   // ---- formation helpers ----
@@ -1967,7 +1973,18 @@
     }
     var myBestInTop = myBest && myBestRank <= 25;
 
-    if (!top.length) { elBoardBody.innerHTML = '<div class="empty-note">No scores yet — finish a game in this mode to set one!</div>'; return; }
+    if (!top.length) {
+      elBoardBody.innerHTML =
+        '<div class="board-empty">' +
+          '<div class="board-empty-trophy">🏆</div>' +
+          '<h3 class="board-empty-title">No scores yet</h3>' +
+          '<p class="board-empty-sub">Be the first to top the board.<br>Spin, draft your XI, and make history.</p>' +
+          '<button class="btn-accent board-empty-cta" id="boardEmptyCTA">Draft my XI →</button>' +
+        '</div>';
+      var emptyCTA = document.getElementById("boardEmptyCTA");
+      if (emptyCTA) emptyCTA.addEventListener("click", function () { newGame(); showView("setup"); });
+      return;
+    }
     var showModeCol = (boardMode === "all");
     var html = '<div class="board-list">';
 
@@ -2405,6 +2422,22 @@
   var _bm = document.getElementById("boardModes");
   if (_bm) Array.prototype.forEach.call(_bm.querySelectorAll(".seg-opt"), function (b) {
     b.addEventListener("click", function () { boardMode = b.getAttribute("data-mode"); renderBoard(); });
+  });
+
+  // ---- Bottom nav ----
+  var _bnavHome  = $("bnavHome");
+  var _bnavDraft = $("bnavDraft");
+  var _bnavBoard = $("bnavBoard");
+  var _bnavShare = $("bnavShare");
+  if (_bnavHome)  _bnavHome.addEventListener("click",  function () { showView("home"); });
+  if (_bnavDraft) _bnavDraft.addEventListener("click", function () {
+    if (squad.length > 0 || current) showView("draft");
+    else { newGame(); showView("setup"); }
+  });
+  if (_bnavBoard) _bnavBoard.addEventListener("click", function () { renderBoard(); showView("board"); });
+  if (_bnavShare) _bnavShare.addEventListener("click", function () {
+    if (squad.length > 0) shareTeam();
+    else if (window.flToast) window.flToast("Draft your XI first, then share it!", 2500);
   });
 
   // ---- Keyboard navigation on spin wheel ----
