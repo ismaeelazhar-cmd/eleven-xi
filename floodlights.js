@@ -73,6 +73,31 @@
       });
     }
 
+    // Hero "Play now" → World Cup (the headline mode)
+    var playBtn = document.getElementById("homePlay");
+    if (playBtn) playBtn.addEventListener("click", function () {
+      var wc = document.getElementById("homeWC"); if (wc) wc.click();
+    });
+
+    // Daily challenge — a featured mode that rotates each day (deterministic by date)
+    (function () {
+      var DAILY = [
+        { id: "homeWC",     name: "World Cup",        tag: "Every tournament 1950–2026" },
+        { id: "homeCL",     name: "Champions League", tag: "153 clubs · 768 seasons" },
+        { id: "homeDVC",    name: "vs Computer",      tag: "Outdraft the CPU" },
+        { id: "homeLeague", name: "League",           tag: "Win a full domestic season" },
+        { id: "homeEuro",   name: "Euros",            tag: "1980–2024 · 12 tournaments" },
+        { id: "homeMP",     name: "Multiplayer",      tag: "Draft a friend, online or local" }
+      ];
+      var day = Math.floor(Date.now() / 86400000);
+      var pick = DAILY[((day % DAILY.length) + DAILY.length) % DAILY.length];
+      var lbl = document.getElementById("homeDailyLabel");
+      if (lbl) lbl.textContent = "Today · " + pick.name + " — " + pick.tag;
+      function launchDaily() { var b = document.getElementById(pick.id); if (b) b.click(); }
+      var bar = document.getElementById("homeDaily");      if (bar) bar.addEventListener("click", launchDaily);
+      var top = document.getElementById("homeDailyTop");   if (top) top.addEventListener("click", launchDaily);
+    })();
+
     /* Euro home card — wired in game.js alongside homeWC/homeCL via setMode("euro") */
 
     // Home card stats — populate best scores and DVC record from localStorage
