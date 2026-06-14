@@ -1584,12 +1584,12 @@ button.spin:active { animation: none; transform: translateY(2px); }
   cursor: pointer;
   font-weight: 800;
   font-size: 14px;
-  box-shadow: 0 6px 20px rgba(249,156,0,0.32), inset 0 1px 0 rgba(255,255,255,0.45);
+  box-shadow: 0 6px 20px rgba(99,102,241,0.32), inset 0 1px 0 rgba(255,255,255,0.25);
   transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
 }
 .btn-primary:hover:not(:disabled) {
   filter: brightness(1.06);
-  box-shadow: 0 8px 26px rgba(249,156,0,0.45), inset 0 1px 0 rgba(255,255,255,0.45);
+  box-shadow: 0 8px 26px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 .btn-primary:active:not(:disabled) { transform: translateY(1px); }
 .btn-primary:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }

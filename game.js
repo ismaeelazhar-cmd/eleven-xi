@@ -1489,7 +1489,6 @@
   $("clearBtn").addEventListener("click", newGame);
   $("shareBtn").addEventListener("click", shareTeam);
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim(mode === "euro" ? "euro" : "wc", userTeamFromSquad()); });
-  $("newGameBtn").addEventListener("click", newGame);
   // shareXIBtn and boardBtn are dynamically rendered inside resultsBody — wired in wireResults()
   $("boardBack").addEventListener("click", function () { showView("home"); });
   $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
