@@ -276,7 +276,7 @@
       b.title=m.desc;
       b.innerHTML="<span class='mgr-emoji'>"+(m.emoji||"")+"</span><span class='mgr-name'>"+m.name+"</span>";
       b.addEventListener("click",function(){
-        LS.manager=m; LS.mgrName=""; LS.mgrBonus={attack:m.atk||0,defend:m.def||0};
+        LS.manager=m; LS.mgrName=""; LS.mgrBonus={attack:m.cond ? 0 : (m.atk||0), defend:m.cond ? 0 : (m.def||0)};
         curMgr=m; mgrSpinDone=false;
         styleBox.querySelectorAll(".manager-opt").forEach(function(x){ x.classList.remove("active"); });
         b.classList.add("active");
@@ -346,7 +346,7 @@
             strip.style.transition="none"; strip.style.transform="translateY(0)";
             strip.innerHTML='<div class="reel-item mgr-item"><span class="mgr-name-big">'+esc(pick.n)+'</span></div>';
             LS.manager=ps; LS.mgrName=pick.n; curMgr=ps; mgrSpinDone=true;
-            LS.mgrBonus={attack:ps.atk||0,defend:ps.def||0};
+            LS.mgrBonus={attack:ps.cond ? 0 : (ps.atk||0), defend:ps.cond ? 0 : (ps.def||0)};
             mgrSpinBtn.textContent="Manager appointed"; mgrSpinBtn.disabled=true;
             styleBox.querySelectorAll(".manager-opt").forEach(function(b2){
               b2.classList.toggle("active", b2.getAttribute("data-style")===pick.s);
@@ -835,8 +835,20 @@
     var userStr=xiRatings.length
       ? Math.round(xiRatings.reduce(function(a,b){ return a+b; },0)/xiRatings.length)
       : 78;
+    /* Conditional manager bonus (Tiki-Taka, Route One) */
+    var condAtk = 0;
+    if (window.WCXI_computeCondBonus && LS.manager) {
+      var cb = window.WCXI_computeCondBonus(LS.xi.filter(Boolean), LS.manager.id);
+      if (cb && cb.met) condAtk = cb.atk || 0;
+    }
+    /* Synergy bonus — Tournament DNA applies as an overall strength boost in league */
+    var synBonus = 0;
+    if (window.WCXI_computeSynergy) {
+      var syn = window.WCXI_computeSynergy(LS.xi.filter(Boolean));
+      if (syn) { synBonus = syn.bonus; LS.synergy = syn; }
+    }
     /* Cap manager bonus contribution to avoid trivial dominance */
-    userStr = Math.min(92, userStr + Math.round((LS.mgrBonus.attack||0)*0.6));
+    userStr = Math.min(94, userStr + Math.round(((LS.mgrBonus.attack||0) + condAtk)*0.6) + Math.round(synBonus * 0.5));
 
     teams.push({name:LS.teamName,str:userStr});
     var userIdx=teams.length-1, n=teams.length;
@@ -1139,10 +1151,10 @@
         var b=eid("lgEvtSpin"); b.disabled=true; b.textContent="Spinning…";
         _lgSpinReel(strip, items, items.length-1, function(){
           var s=MGRS.filter(function(m){return m.id===pick.s;})[0]||MGRS[0];
-          LS.manager=s; LS.mgrName=pick.n; LS.mgrBonus={attack:s.atk||0,defend:s.def||0};
+          LS.manager=s; LS.mgrName=pick.n; LS.mgrBonus={attack:s.cond ? 0 : (s.atk||0), defend:s.cond ? 0 : (s.def||0)};
           try{ localStorage.setItem("wcxi_manager",JSON.stringify({id:s.id,name:pick.n})); }catch(e){}
           /* Before/after comparison */
-          var newAtk=s.atk||0, newDef=s.def||0;
+          var newAtk=s.cond ? 0 : (s.atk||0), newDef=s.cond ? 0 : (s.def||0);
           function bonusBadge(v){ return '<span class="lge-delta '+(v>0?"pos":v<0?"neg":"neu")+'">'+(v>0?"+":"")+v+'</span>'; }
           var compareHtml=
             "<div class='lge-compare'>"+

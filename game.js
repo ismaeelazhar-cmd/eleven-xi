@@ -88,16 +88,24 @@
     press:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-7 8-7 13a7 7 0 0 0 14 0c0-5-7-7-7-13z"/><path d="M9 18a3 3 0 0 0 6 0"/></svg>',
     cup:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg>',
     motivator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-    counter:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'
+    counter:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+    tikitaka:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14M12 2v20M2 12h20"/></svg>',
+    routeone:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17L12 5l7 12H5z"/><path d="M5 17h14"/></svg>'
   };
   var MANAGERS = [
-    { id: "none",      name: "No manager",     atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
-    { id: "attack",    name: "Total Football",  atk: 4,  def: -2, ko: 0, desc: "+4 attack, −2 defence — all-out attack." },
-    { id: "defence",   name: "Catenaccio",      atk: -2, def: 4,  ko: 0, desc: "+4 defence, −2 attack — shut up shop." },
-    { id: "press",     name: "Gegenpress",      atk: 2,  def: 2,  ko: 0, desc: "+2 attack, +2 defence — relentless intensity." },
-    { id: "cup",       name: "Cup Specialist",  atk: 0,  def: 0,  ko: 6, desc: "+6 in knockout games — a tournament master." },
-    { id: "motivator", name: "The Motivator",   atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." },
-    { id: "counter",   name: "Counter-Attack",  atk: 3,  def: 1,  ko: 0, desc: "+3 attack, +1 defence — lethal on the break." }
+    { id: "none",      name: "No manager",    atk: 0,  def: 0,  ko: 0, desc: "No bonus — just the XI." },
+    { id: "attack",    name: "Total Football", atk: 4,  def: 0,  ko: 0, desc: "+4 ATK — all-out attack, no compromise." },
+    { id: "defence",   name: "Catenaccio",     atk: 0,  def: 4,  ko: 0, desc: "+4 DEF — lock it down, suffocate the opposition." },
+    { id: "press",     name: "Gegenpress",     atk: 2,  def: 2,  ko: 0, desc: "+2 ATK, +2 DEF — relentless intensity across the pitch." },
+    { id: "counter",   name: "Counter-Attack", atk: 1,  def: 3,  ko: 0, desc: "+3 DEF, +1 ATK — absorb, then strike with precision." },
+    { id: "tikitaka",  name: "Tiki-Taka",      atk: 0,  def: 0,  ko: 0, cond: true,
+      desc: "+3 ATK if your midfielders average 90+ — pass them to death.",
+      condLabel: "Mid avg ≥ 90" },
+    { id: "routeone",  name: "Route One",      atk: 0,  def: 0,  ko: 0, cond: true,
+      desc: "+4 ATK if 2+ players from pre-1980 squads — long ball, old school.",
+      condLabel: "2+ pre-1980 players" },
+    { id: "cup",       name: "Cup Specialist", atk: 0,  def: 0,  ko: 6, desc: "+6 in every knockout tie — built for the big occasion." },
+    { id: "motivator", name: "The Motivator",  atk: 2,  def: 2,  ko: 2, desc: "+2 overall and +2 in knockouts — wins the big moments." }
   ];
   // Legacy/iconic managers linked to a tactical style (the bonus comes from the style above).
   var MANAGERS_DB = [
@@ -111,11 +119,16 @@
     { n: "Lionel Scaloni", s: "cup" }, { n: "Zinedine Zidane", s: "cup" },
     { n: "Sir Alex Ferguson", s: "motivator" }, { n: "Vicente del Bosque", s: "motivator" },
     { n: "Luiz Felipe Scolari", s: "motivator" }, { n: "Bora Milutinović", s: "motivator" }, { n: "Otto Rehhagel", s: "motivator" },
-    { n: "Claudio Ranieri", s: "counter" }, { n: "Roberto Di Matteo", s: "counter" }, { n: "Sven-Göran Eriksson", s: "counter" }, { n: "Guus Hiddink", s: "counter" }
+    { n: "Claudio Ranieri", s: "counter" }, { n: "Roberto Di Matteo", s: "counter" }, { n: "Sven-Göran Eriksson", s: "counter" }, { n: "Guus Hiddink", s: "counter" },
+    { n: "Pep Guardiola", s: "tikitaka" }, { n: "Xabi Alonso", s: "tikitaka" }, { n: "Luis Enrique", s: "tikitaka" }, { n: "Vicente del Bosque", s: "tikitaka" },
+    { n: "Brian Clough", s: "routeone" }, { n: "Bobby Robson", s: "routeone" }, { n: "Ron Greenwood", s: "routeone" }, { n: "César Luis Menotti", s: "routeone" }
   ];
   /* Expose for other modules (league, multiplayer) */
   window.WCXI_MANAGERS    = MANAGERS;
   window.WCXI_MANAGERS_DB = MANAGERS_DB;
+  /* Shared synergy/conditional helpers for league.js / multiplayer */
+  window.WCXI_computeSynergy   = computeSynergy;
+  window.WCXI_computeCondBonus = computeConditionalBonus;
   /* Shared leaderboard API so League / Multiplayer can post per-mode scores */
   window.WCXI_addScore = function (e) { try { addScore(e); _trackProgress(e); } catch (err) {} };
   window.WCXI_shareXIPNG = function(btn) { shareXIPNG(btn); };
@@ -416,8 +429,14 @@
   }
   function renderManagerStyles() {
     elManagerStyles.innerHTML = MANAGERS.map(function (m) {
-      return '<button class="manager-opt' + (m.id === managerId ? " active" : "") + '" data-style="' + m.id +
-        '" title="' + esc(m.desc) + '"><span class="mgr-icon">' + (MGR_ICONS[m.id] || "") + '</span><span class="mgr-name">' + esc(m.name) + "</span></button>";
+      var condState = "";
+      if (m.cond) {
+        var cb = computeConditionalBonus(squad, m.id);
+        if (cb) condState = '<span class="mgr-cond-dot ' + (cb.met ? "met" : "unmet") + '"></span>';
+      }
+      return '<button class="manager-opt' + (m.id === managerId ? " active" : "") + (m.cond ? " cond-style" : "") + '" data-style="' + m.id +
+        '" title="' + esc(m.desc) + '"><span class="mgr-icon">' + (MGR_ICONS[m.id] || "") + '</span>' +
+        '<span class="mgr-name">' + esc(m.name) + condState + '</span></button>';
     }).join("");
     Array.prototype.forEach.call(elManagerStyles.querySelectorAll(".manager-opt"), function (b) {
       b.addEventListener("click", function () {
@@ -430,11 +449,22 @@
   function mgrBonusHTML(st) {
     if (!st || st.id === "none") return "";
     var parts = [];
-    if (st.atk > 0) parts.push('<span class="mgr-bonus mgr-atk-pos">+' + st.atk + " ATK</span>");
-    if (st.atk < 0) parts.push('<span class="mgr-bonus mgr-atk-neg">' + st.atk + " ATK</span>");
-    if (st.def > 0) parts.push('<span class="mgr-bonus mgr-def-pos">+' + st.def + " DEF</span>");
-    if (st.def < 0) parts.push('<span class="mgr-bonus mgr-def-neg">' + st.def + " DEF</span>");
-    if (st.ko  > 0) parts.push('<span class="mgr-bonus mgr-ko-pos">+' + st.ko + " KO</span>");
+    if (st.cond) {
+      var cb = computeConditionalBonus(squad, st.id);
+      if (cb) {
+        var bonus = cb.met
+          ? '<span class="mgr-bonus mgr-atk-pos">+' + (st.id === "tikitaka" ? 3 : 4) + ' ATK ✓</span>'
+          : '<span class="mgr-bonus mgr-cond-locked">Condition not met</span>';
+        parts.push(bonus);
+        parts.push('<span class="mgr-bonus mgr-cond-hint">' + esc(cb.detail || st.condLabel || "") + '</span>');
+      }
+    } else {
+      if (st.atk > 0) parts.push('<span class="mgr-bonus mgr-atk-pos">+' + st.atk + " ATK</span>");
+      if (st.atk < 0) parts.push('<span class="mgr-bonus mgr-atk-neg">' + st.atk + " ATK</span>");
+      if (st.def > 0) parts.push('<span class="mgr-bonus mgr-def-pos">+' + st.def + " DEF</span>");
+      if (st.def < 0) parts.push('<span class="mgr-bonus mgr-def-neg">' + st.def + " DEF</span>");
+      if (st.ko  > 0) parts.push('<span class="mgr-bonus mgr-ko-pos">+' + st.ko + " KO</span>");
+    }
     return parts.length ? '<div class="mgr-bonus-row">' + parts.join("") + "</div>" : "";
   }
 
@@ -955,25 +985,86 @@
 
     if (squad.length) {
       var t = userTeamFromSquad(), mgr = currentManager();
-      elRatingNote.textContent = teamDisplayName() + " · " + formation + " · " + mgr.name +
-        (showRatings ? " · ATK " + Math.round(t.atk) + " / DEF " + Math.round(t.def) + (mgr.ko ? " · +" + mgr.ko + " KO" : "") : " · ratings hidden") +
-        (full ? "" : "  — all 11 must be picked to enter");
+      var condBonus = t.condBonus || {};
+      var condStr = (condBonus.met && condBonus.atk > 0) ? " · +" + condBonus.atk + " ATK ✓" : "";
+      elRatingNote.innerHTML =
+        esc(teamDisplayName() + " · " + formation + " · " + mgr.name) +
+        (showRatings ? ' · <span class="rn-atk">ATK ' + Math.round(t.atk) + '</span> / <span class="rn-def">DEF ' + Math.round(t.def) + '</span>' + (mgr.ko ? ' · +' + mgr.ko + ' KO' : '') + esc(condStr) : " · ratings hidden") +
+        (full ? "" : "<span class='rn-warn'> — 11 players needed to enter</span>") +
+        (t.synergy ? '<div class="syn-badge">🏆 Tournament DNA: ' + esc(t.synergy.country + " " + t.synergy.year + " ×" + t.synergy.count) + ' — +' + t.synergy.bonus + ' group stage</div>' : "");
       saveDraft();
-    } else { elRatingNote.textContent = ""; clearDraft(); }
+      /* Refresh conditional dots on manager style buttons live */
+      if (elManagerStyles) renderManagerStyles();
+    } else { elRatingNote.innerHTML = ""; clearDraft(); }
   }
 
   function avgRating() { if (!squad.length) return 80; var s = 0; squad.forEach(function (p) { s += p.r; }); return s / squad.length; }
+
+  /* ── World Cup winners for synergy detection ──────────────────────── */
+  var WC_WINNERS = {
+    "1930":"Uruguay","1934":"Italy","1938":"Italy","1950":"Uruguay",
+    "1954":"West Germany","1958":"Brazil","1962":"Brazil","1966":"England",
+    "1970":"Brazil","1974":"West Germany","1978":"Argentina","1982":"Italy",
+    "1986":"Argentina","1990":"West Germany","1994":"Brazil","1998":"France",
+    "2002":"Brazil","2006":"Italy","2010":"Spain","2014":"Germany",
+    "2018":"France","2022":"Argentina"
+  };
+
+  /* Returns the strongest synergy group, or null */
+  function computeSynergy(sq) {
+    var groups = {};
+    sq.forEach(function (p) {
+      if (!p.country || !p.year) return;
+      var key = p.country + "|" + p.year;
+      if (!groups[key]) groups[key] = { country: p.country, year: p.year, count: 0 };
+      groups[key].count++;
+    });
+    var best = null;
+    Object.keys(groups).forEach(function (k) {
+      var g = groups[k];
+      if (g.count >= 3 && WC_WINNERS[g.year] === g.country) {
+        if (!best || g.count > best.count) best = g;
+      }
+    });
+    if (!best) return null;
+    return { country: best.country, year: best.year, count: best.count, bonus: 4 };
+  }
+
+  /* Returns conditional ATK/DEF bonus for styles that depend on squad composition */
+  function computeConditionalBonus(sq, styleId) {
+    if (styleId === "tikitaka") {
+      var MID_POS = { CDM: 1, CM: 1, CAM: 1, AM: 1, MID: 1 };
+      var mids = sq.filter(function (p) { return MID_POS[p.p]; });
+      if (!mids.length) return { atk: 0, def: 0, met: false };
+      var avg = mids.reduce(function (s, p) { return s + (p.r || 80); }, 0) / mids.length;
+      return avg >= 90 ? { atk: 3, def: 0, met: true, detail: "Mid avg " + Math.round(avg) }
+                       : { atk: 0, def: 0, met: false, detail: "Mid avg " + Math.round(avg) + " (need 90)" };
+    }
+    if (styleId === "routeone") {
+      var old = sq.filter(function (p) { return p.year && parseInt(p.year, 10) < 1980; });
+      return old.length >= 2 ? { atk: 4, def: 0, met: true, detail: old.length + " pre-1980 players" }
+                             : { atk: 0, def: 0, met: false, detail: old.length + " pre-1980 (need 2)" };
+    }
+    return null;
+  }
   function formationTilt(name) {
     var c = formationCounts(name), SCALE = 2;
     return { atk: ((c.FWD - 2) + (c.MID - 4) * 0.5) * SCALE, def: (c.DEF - 4) * SCALE };
   }
   function userTeamFromSquad() {
     var rating = Math.round(avgRating()), tilt = formationTilt(formation), mgr = currentManager();
+    var cond   = computeConditionalBonus(squad, mgr.id) || { atk: 0, def: 0, met: false };
+    var syn    = computeSynergy(squad);
     return {
       name: teamDisplayName(), flag: "⭐", rating: rating,
-      atk: rating + tilt.atk + mgr.atk, def: rating + tilt.def + mgr.def,
-      koBonus: mgr.ko, isUser: true, formation: formation, manager: (managerId === "none" ? "No manager" : (managerName ? managerName + " (" + mgr.name + ")" : mgr.name)),
-      players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; })
+      atk: rating + tilt.atk + mgr.atk + cond.atk,
+      def: rating + tilt.def + mgr.def + cond.def,
+      koBonus: mgr.ko, isUser: true, formation: formation,
+      manager: (managerId === "none" ? "No manager" : (managerName ? managerName + " (" + mgr.name + ")" : mgr.name)),
+      players: squad.map(function (s) { return { n: s.n, p: s.p, r: s.r }; }),
+      groupBonus: syn ? syn.bonus : 0,
+      synergy: syn,
+      condBonus: cond
     };
   }
 
@@ -1451,30 +1542,44 @@
   }
 
   /* ── Results: manager verdict ───────────────────────────────────── */
-  function managerVerdictHTML(userStats, compLabel) {
+  function managerVerdictHTML(userStats, compLabel, teamObj) {
     var mgr = currentManager();
     if (!mgr || mgr.id === "none") return "";
     var name = managerName || mgr.name;
     var lines = [];
-    if (mgr.atk !== 0 && userStats) {
-      var gf = userStats.gf || 0;
-      var atkEst = Math.round(Math.abs(mgr.atk) / 2);
-      if (mgr.atk > 0 && gf > 0) lines.push(name + "'s <strong>+" + mgr.atk + " ATK</strong> bonus translated to roughly <strong>" + atkEst + " extra goal" + (atkEst !== 1 ? "s" : "") + "</strong> across the campaign.");
-      if (mgr.atk < 0) lines.push("Playing Catenaccio cost around " + atkEst + " goal" + (atkEst !== 1 ? "s" : "") + " — but the defence held firm.");
+
+    /* Conditional styles */
+    if (mgr.id === "tikitaka" && teamObj && teamObj.condBonus) {
+      if (teamObj.condBonus.met) lines.push("<strong>Tiki-Taka unlocked</strong> — " + esc(teamObj.condBonus.detail || "Mid avg ≥ 90") + " gave a <strong>+3 ATK</strong> boost that turned possession into goals.");
+      else lines.push("Tiki-Taka <em>wasn't unlocked</em> — " + esc(teamObj.condBonus.detail || "midfield didn't reach 90 avg") + ". Bring better mids next time.");
+    } else if (mgr.id === "routeone" && teamObj && teamObj.condBonus) {
+      if (teamObj.condBonus.met) lines.push("<strong>Route One unlocked</strong> — " + esc(teamObj.condBonus.detail || "2+ pre-1980 players") + " powered a brutal <strong>+4 ATK</strong> old-school surge.");
+      else lines.push("Route One <em>wasn't active</em> — " + esc(teamObj.condBonus.detail || "not enough pre-1980 players") + ". Draft more legends from the 70s.");
+    } else {
+      if (mgr.atk !== 0 && userStats) {
+        var gf = userStats.gf || 0;
+        var atkEst = Math.round(Math.abs(mgr.atk) / 2);
+        if (mgr.atk > 0 && gf > 0) lines.push(name + "'s <strong>+" + mgr.atk + " ATK</strong> bonus translated to roughly <strong>" + atkEst + " extra goal" + (atkEst !== 1 ? "s" : "") + "</strong> across the campaign.");
+        if (mgr.atk < 0) lines.push("The defensive style cost around " + atkEst + " goal" + (atkEst !== 1 ? "s" : "") + " — but the backline more than compensated.");
+      }
+      if (mgr.def !== 0 && userStats) {
+        var ga = userStats.ga || 0;
+        var defEst = Math.round(Math.abs(mgr.def) / 2);
+        if (mgr.def > 0) lines.push("The <strong>+" + mgr.def + " DEF</strong> style kept the backline organised — saving roughly " + defEst + " goal" + (defEst !== 1 ? "s" : "") + " conceded.");
+      }
+      if (mgr.ko > 0) lines.push("The <strong>+" + mgr.ko + " KO</strong> tournament bonus gave a decisive edge in every knockout tie.");
     }
-    if (mgr.def !== 0 && userStats) {
-      var ga = userStats.ga || 0;
-      var defEst = Math.round(Math.abs(mgr.def) / 2);
-      if (mgr.def > 0 && ga >= 0) lines.push("The <strong>+" + mgr.def + " DEF</strong> style kept the backline organised — saving roughly " + defEst + " goal" + (defEst !== 1 ? "s" : "") + " conceded.");
+
+    /* Synergy line */
+    var syn = teamObj && teamObj.synergy;
+    if (syn) {
+      lines.push('🏆 <strong>Tournament DNA</strong> — ' + esc(syn.country + " " + syn.year + " ×" + syn.count) + ' added <strong>+' + syn.bonus + '</strong> to group stage ATK & DEF.');
     }
-    if (mgr.ko > 0 && userStats) {
-      var koWins = userStats.koWins || 0;
-      lines.push("The <strong>+" + mgr.ko + " KO</strong> tournament bonus gave a decisive edge in every knockout tie.");
-    }
+
     if (!lines.length) return "";
     return '<div class="manager-verdict">' +
       '<div class="mv-head">⚙️ Manager insight · ' + esc(name) + '</div>' +
-      '<div class="mv-body">' + lines.join(" ") + '</div>' +
+      '<div class="mv-body">' + lines.join("<br>") + '</div>' +
     '</div>';
   }
 
@@ -1807,7 +1912,7 @@
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += rankRevealHTML(r.sc.score);
       html += scoreBannerHTML(r.sc, wc.userResult);
-      html += managerVerdictHTML(wc.userStats, r.compLabel || "World Cup");
+      html += managerVerdictHTML(wc.userStats, r.compLabel || "World Cup", r.userTeam);
       html += statsSummaryHTML(wc.userStats);
       html += nextStepCTAsHTML(r.mode || (r.cl ? "cl" : "wc"), wc.userResult);
       html += dailyCTAHTML();
@@ -1873,7 +1978,7 @@
         '<div class="vc-cell"><div class="vc-k">Squad rating</div><div class="vc-v">' + lg.squadRating + "</div></div>" +
         '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
-      html += managerVerdictHTML(lg.userStats, r.cl ? "Champions League" : "League");
+      html += managerVerdictHTML(lg.userStats, r.cl ? "Champions League" : "League", r.userTeam);
       html += statsSummaryHTML(lg.userStats);
       html += nextStepCTAsHTML(r.cl ? "cl" : "league", result);
       html += dailyCTAHTML();

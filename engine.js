@@ -18,6 +18,14 @@ window.ENGINE = (function () {
   var ASSIST_CHANCE = 0.66;  // chance a goal has an assist
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  /* Apply the Tournament DNA synergy groupBonus to the user team for group-stage sims only */
+  function withGroupBonus(t) {
+    if (!t.isUser || !t.groupBonus) return t;
+    return { name: t.name, flag: t.flag, rating: t.rating,
+      atk: t.atk + t.groupBonus, def: t.def + t.groupBonus,
+      koBonus: t.koBonus, isUser: true, players: t.players };
+  }
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
@@ -198,7 +206,7 @@ window.ENGINE = (function () {
     var rows = group.teams.map(blankRow), matches = [];
     for (var i = 0; i < group.teams.length; i++) {
       for (var j = i + 1; j < group.teams.length; j++) {
-        var A = group.teams[i], B = group.teams[j];
+        var A = withGroupBonus(group.teams[i]), B = withGroupBonus(group.teams[j]);
         var r = simulateMatch(A, B, true);
         applyResult(rows[i], rows[j], r.a, r.b);
         matches.push({ a: A, b: B, ga: r.a, gb: r.b });
@@ -283,7 +291,7 @@ window.ENGINE = (function () {
     var rows = field.map(blankRow), total = 0, userMatches = [];
     for (var i = 0; i < field.length; i++) {
       for (var j = i + 1; j < field.length; j++) {
-        var A = field[i], B = field[j];
+        var A = withGroupBonus(field[i]), B = withGroupBonus(field[j]);
         var r = simulateMatch(A, B, true);
         applyResult(rows[i], rows[j], r.a, r.b);
         if (userTeam && (A.isUser || B.isUser)) recordUserMatch(userMatches, "Matchday", A, B, r);
@@ -375,10 +383,10 @@ window.ENGINE = (function () {
       var gteams = [pots[0][g], pots[1][g], pots[2][g], pots[3][g]];
       var rows = gteams.map(blankRow);
       for (var a = 0; a < 4; a++) for (var b = a + 1; b < 4; b++) {
-        var r1 = simulateMatch(gteams[a], gteams[b], true);
+        var r1 = simulateMatch(withGroupBonus(gteams[a]), withGroupBonus(gteams[b]), true);
         applyResult(rows[a], rows[b], r1.a, r1.b);
         if (userMatches && (gteams[a].isUser || gteams[b].isUser)) recordUserMatch(userMatches, "Group " + String.fromCharCode(65 + g), gteams[a], gteams[b], r1);
-        var r2 = simulateMatch(gteams[b], gteams[a], true);
+        var r2 = simulateMatch(withGroupBonus(gteams[b]), withGroupBonus(gteams[a]), true);
         applyResult(rows[b], rows[a], r2.a, r2.b);
         if (userMatches && (gteams[a].isUser || gteams[b].isUser)) recordUserMatch(userMatches, "Group " + String.fromCharCode(65 + g), gteams[b], gteams[a], r2);
       }
@@ -402,7 +410,7 @@ window.ENGINE = (function () {
     var rows = field.map(blankRow), userMatches = userTeam ? [] : null, total = 0;
     var rr = roundRobinRounds(36);
     for (var r = 0; r < 8; r++) rr[r].forEach(function (pair) {
-      var A = field[pair[0]], B = field[pair[1]];
+      var A = withGroupBonus(field[pair[0]]), B = withGroupBonus(field[pair[1]]);
       var res = simulateMatch(A, B, true);
       applyResult(rows[pair[0]], rows[pair[1]], res.a, res.b);
       if (userMatches && (A.isUser || B.isUser)) recordUserMatch(userMatches, "League phase", A, B, res);
