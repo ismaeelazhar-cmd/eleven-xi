@@ -927,7 +927,7 @@
               (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) +
             '</div>' +
             '<div class="player-sub">' +
-              '<span class="player-era">' + flag + ' ' + esc(c) + ' · ' + y + '</span>' +
+              '<span class="player-era">' + esc(c) + ' · ' + y + '</span>' +
               (flavour ? '<span class="player-flavour">' + flavour + '</span>' : '') +
             '</div>' +
           '</div>' +
