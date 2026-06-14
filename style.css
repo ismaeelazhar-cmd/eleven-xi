@@ -1314,38 +1314,38 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 
 /* ===== Theme toggle — animated sliding pill ===== */
 .theme-toggle {
-  position: fixed; top: 16px; right: 16px; z-index: 100;
-  display: flex; gap: 0; padding: 3px;
-  background: rgba(8,8,16,0.82);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.08);
+  position: fixed; top: 10px; right: 12px; z-index: 100;
+  display: flex; gap: 0; padding: 2px;
+  background: rgba(8,8,16,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 999px;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.3);
 }
 /* sliding pill indicator */
 .theme-pill {
   position: absolute;
-  top: 3px; left: 3px;
-  width: 36px; height: 36px;
+  top: 2px; left: 2px;
+  width: 26px; height: 26px;
   border-radius: 999px;
   background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   transition: transform 0.28s cubic-bezier(0.34,1.4,0.64,1);
   pointer-events: none;
 }
 /* dark mode (default) — pill sits over 🌙 (2nd button) */
-body:not(.light) .theme-pill { transform: translateX(36px); }
+body:not(.light) .theme-pill { transform: translateX(26px); }
 /* light mode — pill sits over ☀ (1st button) */
 body.light .theme-pill { transform: translateX(0); }
 
 .theme-toggle button {
   position: relative; z-index: 1;
   background: transparent; border: none;
-  width: 36px; height: 36px;
+  width: 26px; height: 26px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 999px; font-size: 15px; cursor: pointer;
+  border-radius: 999px; font-size: 12px; cursor: pointer;
   color: rgba(255,255,255,0.28);
   transition: color 0.22s;
   padding: 0;
@@ -5152,10 +5152,8 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
     right: 10px;
   }
   .sound-toggle {
-    top: calc(env(safe-area-inset-top, 0px) + 10px);
-    right: 88px; /* keep clear of theme toggle (2×34px + gap + right:10px) */
-    width: 36px;
-    height: 36px;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: 60px; /* keep clear of theme toggle (2×26px + padding + right:10px) */
   }
   /* Home / back button: pin to the top-left so it stays reachable while scrolling */
   .back, .mp-back {
@@ -5338,8 +5336,8 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
 /* ── 14. Tablet tweaks (768px) ─── */
 @media (max-width: 768px) and (min-width: 601px) {
   header { padding-top: 48px; }
-  .theme-toggle { top: 12px; right: 12px; }
-  .sound-toggle { top: 12px; right: 90px; }
+  .theme-toggle { top: 10px; right: 10px; }
+  .sound-toggle { top: 12px; right: 62px; }
   /* vs Computer: keep 3 col but compress pitches */
   .dvc-pitch-col { flex: 0 0 160px; }
   .dvc-pitch-col .pitch { max-height: 220px !important; }
