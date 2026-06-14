@@ -223,6 +223,33 @@
   }
   function teamDisplayName() { return teamName.trim() || "My XI"; }
 
+  /* ── Country flag emoji ─────────────────────────────────────────── */
+  var COUNTRY_ISO = {
+    "Argentina":"AR","Australia":"AU","Austria":"AT","Belgium":"BE","Bolivia":"BO",
+    "Brazil":"BR","Bulgaria":"BG","Cameroon":"CM","Chile":"CL","China":"CN",
+    "Colombia":"CO","Costa Rica":"CR","Croatia":"HR","Czech Republic":"CZ","Denmark":"DK",
+    "DR Congo":"CD","Ecuador":"EC","Egypt":"EG","El Salvador":"SV","England":"GB",
+    "Finland":"FI","France":"FR","Germany":"DE","Ghana":"GH","Greece":"GR",
+    "Honduras":"HN","Hungary":"HU","Iceland":"IS","Indonesia":"ID","Iran":"IR",
+    "Ireland":"IE","Israel":"IL","Italy":"IT","Jamaica":"JM","Japan":"JP",
+    "Kazakhstan":"KZ","Kenya":"KE","Kuwait":"KW","Libya":"LY","Malaysia":"MY",
+    "Mali":"ML","Mexico":"MX","Morocco":"MA","Netherlands":"NL","New Zealand":"NZ",
+    "Nigeria":"NG","North Korea":"KP","Norway":"NO","Panama":"PA","Paraguay":"PY",
+    "Peru":"PE","Poland":"PL","Portugal":"PT","Qatar":"QA","Romania":"RO",
+    "Russia":"RU","Saudi Arabia":"SA","Senegal":"SN","Serbia":"RS","Slovakia":"SK",
+    "Slovenia":"SI","South Africa":"ZA","South Korea":"KR","Spain":"ES","Sweden":"SE",
+    "Switzerland":"CH","Togo":"TG","Trinidad and Tobago":"TT","Tunisia":"TN",
+    "Turkey":"TR","Ukraine":"UA","United Arab Emirates":"AE","United States":"US",
+    "Uruguay":"UY","Venezuela":"VE","Wales":"GB","Zambia":"ZM","Zimbabwe":"ZW",
+    "Republic of Ireland":"IE","Ivory Coast":"CI","Algeria":"DZ","Angola":"AO",
+    "Cuba":"CU","Ethiopia":"ET","Libya":"LY","Tanzania":"TZ","Uganda":"UG",
+    "Sweden":"SE","Scotland":"GB"
+  };
+  function countryFlag(name) {
+    var iso = COUNTRY_ISO[name]; if (!iso || iso.length !== 2) return "";
+    try { return String.fromCodePoint(0x1F1E6+iso.charCodeAt(0)-65, 0x1F1E6+iso.charCodeAt(1)-65); } catch(e){ return ""; }
+  }
+
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
   var views = { home: $("homeView"), setup: $("setupView"), draft: $("draftView"), results: $("resultsView"), board: $("boardView") };
@@ -235,6 +262,7 @@
   var elFormationBar = $("formationBar"), elSetupPitch = $("setupPitch"), elDraftPitch = $("draftPitch");
   var elPitchTitle = $("pitchTitle"), elDraftTeam = $("draftTeam"), elDraftMeta = $("draftMeta");
   var elRatingsToggle = $("ratingsToggle"), elRatingsDesc = $("ratingsDesc");
+  var elProgressFill = $("draftProgressFill"), elProgressLabel = $("draftProgressLabel");
   var elEraMin = $("eraMin"), elEraMax = $("eraMax"), elEraFill = $("eraFill"), elEraLo = $("eraLo"), elEraHi = $("eraHi");
   var elPoolDesc = $("poolDesc"), elBoardBody = $("boardBody");
   var ALL_YEARS = (function () {
@@ -584,6 +612,13 @@
     elReroll.disabled = spinning;
     elAutoPick.hidden = !(awaitingPick && !full);
     elAutoPick.disabled = spinning;
+    /* Progress bar */
+    var pct = Math.round((squad.length / XI_SIZE) * 100);
+    if (elProgressFill) elProgressFill.style.width = pct + "%";
+    if (elProgressLabel) elProgressLabel.textContent = squad.length + " / " + XI_SIZE + " drafted";
+    /* Reroll warning at 1 left */
+    var rerollBar = $("draftProgressBar");
+    if (rerollBar) rerollBar.className = "draft-progress-bar" + (rerollsLeft === 1 ? " reroll-warn" : "");
   }
 
   function doSpin() {
@@ -636,16 +671,26 @@
       if (!isTaken && open.length > 0) draftable++;
     });
 
+    // Find GOAT (highest-rated available player)
+    var goatName = null, goatR = -1;
+    players.forEach(function(pl) {
+      if (taken.indexOf(c+"|"+y+"|"+pl.n) !== -1) return;
+      if ((pl.r||0) > goatR) { goatR = pl.r||0; goatName = pl.n; }
+    });
+
     // Modal card header
+    var flag = countryFlag(c);
     var inner = '<div class="squad-card">';
-    inner += '<div class="squad-head"><h2>' + esc(c) + " &middot; " + y + '</h2>';
+    inner += '<div class="squad-head"><h2>' + (flag ? '<span class="squad-flag">'+flag+'</span> ' : '') + esc(c) + " &middot; " + y + '</h2>';
     if (draftable > 0 && rerollsLeft > 0) {
-      inner += '<button class="squad-respin-btn" id="squadRespinBtn">Respin (' + rerollsLeft + ' left)</button>';
+      var rerollWarn = rerollsLeft === 1 ? ' reroll-last' : '';
+      inner += '<button class="squad-respin-btn'+rerollWarn+'" id="squadRespinBtn">Respin <span class="reroll-badge">'+rerollsLeft+'</span></button>';
     } else if (draftable > 0) {
       inner += '<span class="squad-respin-empty">No respins left</span>';
     }
     inner += '</div>';
     inner += '<div class="sub">Pick a player, then choose where they play.</div>';
+    inner += '<div class="squad-search-wrap"><input class="squad-search" id="squadSearch" type="text" placeholder="Search players…" autocomplete="off" /></div>';
 
     if (pendingPick) {
       inner += '<div class="chooser">Where should <b>' + esc(pendingPick.name) + "</b> play? " +
@@ -682,10 +727,13 @@
         var open = openEligiblePositions(pl);
         var noSlot = open.length === 0;
         if (!isTaken && !noSlot) draftable++;
-        var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "");
+        var isGoat = !isTaken && pl.n === goatName;
+        var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "") + (isGoat ? " goat-player" : "");
         var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
         inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
-          '<span class="pname">' + esc(pl.n) + "</span>" + (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
+          '<span class="pname">' + esc(pl.n) + "</span>" +
+          (isGoat ? '<span class="goat-badge">GOAT</span>' : '') +
+          (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
       });
     });
     inner += "</div></div>"; // close .players + .squad-card
@@ -717,6 +765,35 @@
     });
     var cancel = elSquadPanel.querySelector(".choose-cancel");
     if (cancel) cancel.addEventListener("click", function () { pendingPick = null; renderSquadPicker(); });
+    /* Search box filtering */
+    var searchInput = elSquadPanel.querySelector("#squadSearch");
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        var q = searchInput.value.toLowerCase().trim();
+        Array.prototype.forEach.call(elSquadPanel.querySelectorAll(".player,.squad-group-label"), function(el) {
+          if (el.classList.contains("squad-group-label")) {
+            el.style.display = ""; // reset; hide if all siblings hidden
+            return;
+          }
+          var name = (el.getAttribute("data-name") || "").toLowerCase();
+          el.style.display = (!q || name.indexOf(q) !== -1) ? "" : "none";
+        });
+        // Hide group labels if all players in group are hidden
+        var players2 = elSquadPanel.querySelector(".players");
+        if (players2) {
+          Array.prototype.forEach.call(players2.querySelectorAll(".squad-group-label"), function(lbl) {
+            var next = lbl.nextElementSibling;
+            var hasVisible = false;
+            while (next && !next.classList.contains("squad-group-label")) {
+              if (next.style.display !== "none") { hasVisible = true; break; }
+              next = next.nextElementSibling;
+            }
+            lbl.style.display = hasVisible ? "" : "none";
+          });
+        }
+      });
+      if (!pendingPick) setTimeout(function(){ searchInput.focus(); }, 50);
+    }
     if (draftable === 0) { awaitingPick = false; elHint.textContent = "No open slots for this squad — spin again (free)."; }
     else awaitingPick = true;
     updateControls();
@@ -1549,6 +1626,18 @@
   Array.prototype.forEach.call(document.querySelectorAll("[data-home]"), function (b) { b.addEventListener("click", function () { showView("home"); }); });
 
   elManagerSpin.addEventListener("click", spinManager);
+  /* Random Legend — picks a random manager instantly (no animation required) */
+  var elManagerRandom = $("managerRandom");
+  if (elManagerRandom) {
+    elManagerRandom.addEventListener("click", function () {
+      if (managerSpun) return;
+      var pick = MANAGERS_DB[Math.floor(Math.random() * MANAGERS_DB.length)];
+      managerName = pick.n; managerId = pick.s; managerSpun = true;
+      elManagerSpin.disabled = true; elManagerSpin.textContent = "Manager appointed";
+      elManagerRandom.disabled = true; elManagerRandom.textContent = "✓ Legend picked";
+      saveManagerPref(); renderManagerStyles(); renderManager(); paintPitches(); renderXI();
+    });
+  }
   elSpin.addEventListener("click", doSpin);
   elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; if (window.GAFFER_OB) window.GAFFER_OB.afterReroll(); doSpin(); });
   elAutoPick.addEventListener("click", autoPickCurrent);

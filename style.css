@@ -1309,7 +1309,7 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 /* ===== Theme toggle — animated sliding pill ===== */
 .theme-toggle {
   position: fixed; top: 16px; right: 16px; z-index: 100;
-  display: flex; gap: 0; padding: 4px;
+  display: flex; gap: 0; padding: 3px;
   background: rgba(8,8,16,0.82);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -1320,8 +1320,8 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 /* sliding pill indicator */
 .theme-pill {
   position: absolute;
-  top: 4px; left: 4px;
-  width: 34px; height: 34px;
+  top: 3px; left: 3px;
+  width: 36px; height: 36px;
   border-radius: 999px;
   background: rgba(255,255,255,0.09);
   border: 1px solid rgba(255,255,255,0.14);
@@ -1330,14 +1330,14 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
   pointer-events: none;
 }
 /* dark mode (default) — pill sits over 🌙 (2nd button) */
-body:not(.light) .theme-pill { transform: translateX(34px); }
+body:not(.light) .theme-pill { transform: translateX(36px); }
 /* light mode — pill sits over ☀ (1st button) */
 body.light .theme-pill { transform: translateX(0); }
 
 .theme-toggle button {
   position: relative; z-index: 1;
   background: transparent; border: none;
-  width: 34px; height: 34px;
+  width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 999px; font-size: 15px; cursor: pointer;
   color: rgba(255,255,255,0.28);
@@ -5376,3 +5376,71 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
   .rw-sub, .sub, .seg-desc { font-size: 13px !important; }
   .spin-col-label { display: none; } /* hide labels — save vertical space */
 }
+
+/* ══ DRAFT SCREEN FEATURES ══════════════════════════════════════════════ */
+
+/* Progress bar */
+.draft-progress-bar {
+  position: relative; width: 100%; height: 28px;
+  background: rgba(255,255,255,0.06); border-radius: 0;
+  display: flex; align-items: center; overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.draft-progress-fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: linear-gradient(90deg, rgba(99,102,241,0.4), rgba(99,102,241,0.65));
+  transition: width 0.4s cubic-bezier(0.34,1.2,0.64,1);
+  border-radius: 0;
+}
+.draft-progress-label {
+  position: relative; z-index: 1; width: 100%; text-align: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.7);
+}
+.draft-progress-bar.reroll-warn .draft-progress-label::after {
+  content: " · ⚠️ Last reroll — use wisely";
+  color: #fbbf24;
+}
+body.light .draft-progress-bar { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.08); }
+body.light .draft-progress-label { color: rgba(0,0,0,0.55); }
+
+/* GOAT badge */
+.goat-player {
+  border: 1.5px solid #F5B43C !important;
+  background: linear-gradient(120deg, rgba(245,180,60,0.12), transparent) !important;
+}
+.goat-badge {
+  font-size: 9px; font-weight: 900; letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #F5B43C, #e8a020);
+  color: #0a0a0f; padding: 2px 5px; border-radius: 4px;
+  margin-left: auto; flex-shrink: 0;
+}
+
+/* Country flag */
+.squad-flag { font-size: 1.1em; line-height: 1; }
+
+/* Reroll badge inside respin button */
+.reroll-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); font-weight: 900; font-size: 11px;
+  margin-left: 4px;
+}
+.reroll-last { border-color: #fbbf24 !important; color: #fbbf24 !important; }
+.reroll-last .reroll-badge { background: #fbbf24; color: #0a0a0f; }
+
+/* Squad search */
+.squad-search-wrap { padding: 6px 0 4px; }
+.squad-search {
+  width: 100%; padding: 7px 12px; border-radius: 8px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text); font-size: 13px; outline: none;
+  transition: border-color 0.2s;
+}
+.squad-search:focus { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.08); }
+body.light .squad-search { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.15); color: #1a1a1a; }
+body.light .squad-search:focus { border-color: #4338ca; }
+
+/* Manager wheel buttons row */
+.mgr-wheel-btns { display: flex; gap: 8px; flex-direction: column; }
+.mgr-random-btn { font-size: 12px; padding: 6px 12px; }

@@ -20,9 +20,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=124" />
+  <link rel="stylesheet" href="style.css?v=125" />
   <link rel="stylesheet" href="tokens.css?v=76" />
-  <link rel="stylesheet" href="floodlights.css?v=130" />
+  <link rel="stylesheet" href="floodlights.css?v=131" />
 </head>
 <body>
   <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Sound on — click to mute">
@@ -110,16 +110,6 @@
         <button class="home-board-link" id="homeHelp" aria-label="How to play">How to play</button>
       </div>
 
-      <!-- Daily challenge — pinned at bottom -->
-      <button class="h2-daily h2-daily--pinned" id="homeDaily">
-        <span class="h2-daily-ico">🏆</span>
-        <span class="h2-daily-text">
-          <span class="t">Daily challenge</span>
-          <span class="s" id="homeDailyLabel">A fresh mode to master every day</span>
-        </span>
-        <span class="h2-daily-count" id="homeDailyCount"></span>
-        <span class="h2-daily-cta">Play</span>
-      </button>
     </section>
 
     <!-- ===== SETUP ===== -->
@@ -136,7 +126,10 @@
           <div class="manager-options" id="managerStyles"></div>
           <div class="mgr-wheel">
             <div class="reel mgr-reel"><div class="reel-strip" id="managerStrip"></div></div>
-            <button class="btn-accent" id="managerSpin">Spin</button>
+            <div class="mgr-wheel-btns">
+              <button class="btn-accent" id="managerSpin">Spin legend</button>
+              <button class="btn-ghost mgr-random-btn" id="managerRandom">⚡ Random</button>
+            </div>
           </div>
           <div class="manager-desc" id="managerDesc"></div>
         </div>
@@ -194,6 +187,11 @@
     <!-- ===== DRAFT (second part) ===== -->
     <section id="draftView" style="display:none;">
       <button class="draft-corner-home" id="draftHomeBtn">&#8592; Home</button>
+      <!-- Progress bar always visible -->
+      <div class="draft-progress-bar" id="draftProgressBar">
+        <div class="draft-progress-fill" id="draftProgressFill"></div>
+        <span class="draft-progress-label" id="draftProgressLabel">0 / 11 drafted</span>
+      </div>
 
       <div class="draft-layout">
         <!-- LEFT: pitch + spin wheel -->
@@ -297,6 +295,16 @@
     </section>
 
     <footer>
+      <!-- Daily challenge — in-flow at footer -->
+      <button class="h2-daily h2-daily--footer" id="homeDaily">
+        <span class="h2-daily-ico">🏆</span>
+        <span class="h2-daily-text">
+          <span class="t">Daily challenge</span>
+          <span class="s" id="homeDailyLabel">A fresh mode to master every day</span>
+        </span>
+        <span class="h2-daily-count" id="homeDailyCount"></span>
+        <span class="h2-daily-cta">Play</span>
+      </button>
       <div class="footer-actions">
         <a class="foot-btn" id="feedbackBtn" href="#" onclick="return false">Feedback &amp; bugs</a>
         <a class="foot-btn coffee" id="coffeeBtn" href="#" onclick="return false">Enjoying the game?</a>
@@ -408,7 +416,7 @@
   <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=81"></script>
-  <script src="game.js?v=122"></script>
+  <script src="game.js?v=123"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=89"></script>
