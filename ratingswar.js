@@ -1044,12 +1044,12 @@
     });
   }
 
+  var RW_POS_ORDER = {GK:0,LB:1,LWB:2,CB:3,RWB:4,RB:5,CDM:6,CM:7,CAM:8,AM:8,LW:9,RW:10,ST:11,CF:11};
   function showRWSquadPanel(panel, spin, P){
-    var lineOrder = {GK:0,DEF:1,MID:2,FWD:3};
     var sorted = spin.squad.slice().sort(function(a,b){
-      var la = lineOrder[LINE_OF[a.gp||a.p]||"MID"]||2;
-      var lb = lineOrder[LINE_OF[b.gp||b.p]||"MID"]||2;
-      return la!==lb ? la-lb : (b.r||0)-(a.r||0);
+      var pa = RW_POS_ORDER[a.gp||a.p]; if(pa==null) pa=7;
+      var pb = RW_POS_ORDER[b.gp||b.p]; if(pb==null) pb=7;
+      return pa!==pb ? pa-pb : (b.r||0)-(a.r||0);
     });
 
     var rerollsLeft = Math.max(0, rwMax()-(P.rerollsUsed||0));
@@ -1128,7 +1128,7 @@
             var newHtml = "";
             SLOTS.forEach(function(slot,i){
               var pk2=P.picks[i], l=slot.line, k=slot.k.trim();
-              if(pk2) newHtml += '<div class="xi-row"><span class="pos '+l+'">'+esc(k)+'</span><span class="info"><span class="pn">'+esc(pk2.n)+'</span><span class="meta">'+esc(pk2.club||"")+(pk2.year?' &middot; '+pk2.year:'')+'</span></span></div>';
+              if(pk2) newHtml += '<div class="xi-row"><span class="pos '+l+'">'+esc(k)+'</span><span class="info"><span class="pn">'+esc(pk2.n)+'</span><span class="meta">'+(pk2.club||pk2.year?'&nbsp;&middot;&nbsp;':'')+esc(pk2.club||"")+(pk2.year?' &middot; '+pk2.year:'')+'</span></span></div>';
               else newHtml += '<div class="xi-row empty"><span class="pos '+l+'">'+esc(k)+'</span><span class="info"><span class="pn slot-empty">'+esc(k)+' — empty</span></span></div>';
             });
             xiList.innerHTML = newHtml;
@@ -1173,7 +1173,7 @@
       if (pk){
         html += '<div class="xi-row"><span class="pos '+line+'">'+esc(key)+'</span>'+
           '<span class="info"><span class="pn">'+esc(pk.n)+'</span>'+
-          '<span class="meta">'+esc(pk.club||"")+(pk.year?' &middot; '+pk.year:'')+'</span></span></div>';
+          '<span class="meta">'+(pk.club||pk.year?'&nbsp;&middot;&nbsp;':'')+esc(pk.club||"")+(pk.year?' &middot; '+pk.year:'')+'</span></span></div>';
       } else {
         html += '<div class="xi-row empty"><span class="pos '+line+'">'+esc(key)+'</span>'+
           '<span class="info"><span class="pn slot-empty">'+esc(key)+' — empty</span></span></div>';
@@ -1303,8 +1303,9 @@
       row.forEach(function(s){
         var pk = P.picks[s.idx];
         html += "<div class='pdot "+(pk?"filled ":"")+s.line+"'>"+
-            "<span class='dot-postag'>"+esc(s.k)+"</span>"+
-            (pk ? "<span class='dot-name'>"+esc(shortRWName(pk.n))+"</span>" : "")+
+            (pk
+              ? "<span class='dot-init'>"+(pk.r||"")+"</span><span class='dot-name'>"+esc(shortRWName(pk.n))+"</span>"
+              : "<span class='dot-pos'>"+esc(s.k)+"</span>")+
         "</div>";
       });
       html += "</div>";

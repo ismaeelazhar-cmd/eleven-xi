@@ -350,7 +350,7 @@
       if (c.pick) {
         var tier = ratingTierClass(c.pick.r);
         return '<div class="pdot filled ' + c.line + tier + '">' +
-          '<span class="dot-init">' + (showRatings && c.pick.r ? c.pick.r : esc(initials(c.pick.n))) +
+          '<span class="dot-init">' + (c.pick.r ? c.pick.r : esc(initials(c.pick.n))) +
           '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
       }
       return '<div class="pdot ' + c.line + '"><span class="dot-pos">' + c.pos + "</span></div>";
@@ -662,7 +662,15 @@
       var line = LINE_OF[gps0 ? gps0[0] : pl.p] || "MID";
       (groups[line] || groups.MID).push(pl);
     });
-    ["GK","DEF","MID","FWD"].forEach(function (L) { groups[L].sort(function (a, b) { return (b.r || 0) - (a.r || 0); }); });
+    var GAME_POS_ORD = {GK:0,LB:1,LWB:2,CB:3,RWB:4,RB:5,CDM:6,CM:7,CAM:8,AM:8,LW:9,RW:10,ST:11,CF:11};
+    ["GK","DEF","MID","FWD"].forEach(function (L) {
+      groups[L].sort(function (a, b) {
+        var gA = gpOf(a), gB = gpOf(b);
+        var pa = GAME_POS_ORD[gA?gA[0]:a.p]; if(pa==null) pa=7;
+        var pb = GAME_POS_ORD[gB?gB[0]:b.p]; if(pb==null) pb=7;
+        return pa!==pb ? pa-pb : (b.r||0)-(a.r||0);
+      });
+    });
 
     inner += '<div class="players">';
     ["GK","DEF","MID","FWD"].forEach(function (line) {
