@@ -850,7 +850,7 @@
     var pbW = (CW - PAD * 2) * 0.56, pbH = pitchH * 0.3, pbX = PAD + (CW - PAD * 2 - pbW) / 2, pbY = pitchY + pitchH - pbH;
     ctx.strokeRect(pbX, pbY, pbW, pbH);
     ctx.textAlign = "center";
-    ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("ELEVEN XI", CW / 2, 38);
+    ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("GAFFER", CW / 2, 38);
     ctx.fillStyle = "#ECF1FF"; ctx.font = "800 32px " + FS; ctx.fillText(teamDisplayName(), CW / 2, 78);
     ctx.fillStyle = "rgba(236,241,255,0.5)"; ctx.font = "500 17px " + FS;
     ctx.fillText(formation + "  ·  " + currentManager().name, CW / 2, 110);
@@ -882,7 +882,7 @@
       });
     });
     ctx.fillStyle = "rgba(236,241,255,0.25)"; ctx.font = "500 14px " + FS;
-    ctx.fillText("ismaeelazhar-cmd.github.io/eleven-xi", CW / 2, CH - 24);
+    ctx.fillText("Gaffer", CW / 2, CH - 24);
     return c;
   }
 
@@ -890,11 +890,11 @@
     var c = buildXICanvas(); if (!c) return;
     c.toBlob(function (blob) {
       if (!blob) return;
-      var fname = "eleven-xi.png";
+      var fname = "gaffer.png";
       try {
         var file = new File([blob], fname, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: "My Eleven XI", text: teamDisplayName() + " · " + formation }).catch(function () {});
+          navigator.share({ files: [file], title: "My Gaffer XI", text: teamDisplayName() + " · " + formation }).catch(function () {});
           return;
         }
       } catch (e) {}
@@ -1188,7 +1188,7 @@
     var mgrTxt = managerId !== "none" ? " · " + esc(mgr.name) : "";
     return '<div class="share-card" id="shareCard">' +
       '<div class="sc-header">' +
-        '<div class="sc-logo">ELEVEN XI</div>' +
+        '<div class="sc-logo">GAFFER</div>' +
         '<div class="sc-date">' + esc(dateStr) + ' · ' + esc(competitionLabel) + '</div>' +
       '</div>' +
       '<div class="sc-title">' + esc(teamDisplayName()) + '\'s XI</div>' +

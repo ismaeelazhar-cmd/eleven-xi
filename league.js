@@ -1431,7 +1431,7 @@
     x.textAlign="center";
 
     /* Branding */
-    x.fillStyle="#5a6a80"; x.font="700 34px "+FS; x.fillText("ELEVEN XI", CW/2, 96);
+    x.fillStyle="#5a6a80"; x.font="700 34px "+FS; x.fillText("GAFFER", CW/2, 96);
 
     /* Pill */
     var pillColor = d.pill==="CHAMPIONS" ? "#f5b301" : d.pill==="TOP FOUR" ? "#22c97d" :
@@ -1502,15 +1502,15 @@
     }
 
     /* Footer */
-    x.fillStyle="#3a4a5c"; x.font="500 28px "+FS; x.fillText("Build your all-time XI · eleven-xi.com", CW/2, CH-50);
+    x.fillStyle="#3a4a5c"; x.font="500 28px "+FS; x.fillText("Gaffer", CW/2, CH-50);
 
     c.toBlob(function(blob){
       if(!blob) return;
-      var fname="eleven-xi-season.png";
+      var fname="gaffer-season.png";
       try{
         var file=new File([blob],fname,{type:"image/png"});
         if(navigator.canShare && navigator.canShare({files:[file]})){
-          navigator.share({files:[file], title:"My Eleven XI season", text:d.team+" finished "+ordinal(d.pos)+" in the "+d.league}).catch(function(){});
+          navigator.share({files:[file], title:"My Gaffer season", text:d.team+" finished "+ordinal(d.pos)+" in the "+d.league}).catch(function(){});
           return;
         }
       }catch(e){}
