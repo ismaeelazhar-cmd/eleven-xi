@@ -182,9 +182,18 @@
   var managerSpun = false;
   var showRatings = true;
   var pool = "all";
-  var DIFFICULTIES = [{ id: "Rookie", rr: 3 }, { id: "Pro", rr: 1 }, { id: "Legend", rr: 0 }];
-  var difficulty = "Pro";
+  var DIFFICULTIES = [
+    { id: "Easy",   rr: 5, desc: "5 rerolls — room to be picky" },
+    { id: "Medium", rr: 3, desc: "3 rerolls — classic mode" },
+    { id: "Hard",   rr: 1, desc: "1 reroll — make it count" },
+    { id: "Legend", rr: 0, desc: "No rerolls — you take what you spin" }
+  ];
+  var difficulty = "Medium";
   function diffRerolls() { for (var i = 0; i < DIFFICULTIES.length; i++) if (DIFFICULTIES[i].id === difficulty) return DIFFICULTIES[i].rr; return 3; }
+  /* Reroll economy tracking */
+  var rerollsMax    = 0;       /* set at draft start */
+  var rerollLog     = [];      /* [{discarded:R, kept:R|null}, …] */
+  var pendingDiscard = null;   /* rating about to be burned; set just before doSpin() */
   var boardTab = "daily";
   var boardMode = "all";
   var lastSim = null;
@@ -538,10 +547,8 @@
     Array.prototype.forEach.call(elDiffBar.querySelectorAll(".diff-btn"), function (b) {
       b.addEventListener("click", function () { difficulty = b.getAttribute("data-diff"); renderDifficultyBar(); });
     });
-    var rr = diffRerolls();
-    elDiffDesc.textContent = rr === 0
-      ? "Legend — no rerolls. You take whatever you spin."
-      : difficulty + " — " + rr + " reroll" + (rr === 1 ? "" : "s") + " during the draft.";
+    var d = DIFFICULTIES.filter(function(x){ return x.id === difficulty; })[0];
+    elDiffDesc.textContent = d ? d.desc : "";
   }
 
   function inContinent(c) { return continent === "all" || CONTINENT[c] === continent; }
@@ -602,6 +609,43 @@
       stripEl.addEventListener("transitionend", finish, { once: true });
       setTimeout(function(){ finish(null); }, duration + 120);
     });
+  }
+
+  /* ── Reroll summary (shown in done-banner when XI is complete) ───── */
+  function rerollSummaryHTML() {
+    if (!rerollsMax) return ""; /* Legend mode — no rerolls to show */
+    var used = rerollLog.length;
+    if (!used) {
+      return '<div class="rr-summary rr-summary--clean">' +
+        '<span class="rr-sum-ico">🎯</span>' +
+        '<span class="rr-sum-txt">No rerolls used — built with ice-cold precision.</span>' +
+      '</div>';
+    }
+    /* Net gain: sum of (kept − discarded) for entries where we have both */
+    var netGain = 0, pairs = 0;
+    var rows = rerollLog.map(function(e, i) {
+      var net = (e.kept !== null && e.discarded !== null) ? (e.kept - e.discarded) : null;
+      if (net !== null) { netGain += net; pairs++; }
+      return '<span class="rr-sum-swap">' +
+        (e.discarded !== null ? '<span class="rr-sum-was">' + e.discarded + '</span>' : '') +
+        ' → ' +
+        (e.kept !== null ? '<span class="rr-sum-got ' + (net !== null && net >= 0 ? "pos" : "neg") + '">' + e.kept + '</span>' : '?') +
+        (net !== null ? '<span class="rr-sum-net">' + (net >= 0 ? "+" : "") + net + '</span>' : '') +
+      '</span>';
+    }).join(' · ');
+
+    var leftOver = rerollsMax - used;
+    var netLabel = pairs > 0 ? ' &nbsp;·&nbsp; Net <strong>' + (netGain >= 0 ? "+" : "") + netGain + '</strong>' : '';
+    return '<div class="rr-summary">' +
+      '<div class="rr-sum-head">' +
+        '<span class="rr-sum-ico">🔥</span>' +
+        '<span class="rr-sum-stat"><strong>' + used + '</strong> of <strong>' + rerollsMax + '</strong> reroll' + (rerollsMax === 1 ? '' : 's') + ' used' +
+        (leftOver > 0 ? ' &nbsp;·&nbsp; <span class="rr-saved">' + leftOver + ' saved</span>' : '') +
+        netLabel +
+        '</span>' +
+      '</div>' +
+      '<div class="rr-sum-swaps">' + rows + '</div>' +
+    '</div>';
   }
 
   function updateControls() {
@@ -745,8 +789,15 @@
     if (respinBtn) {
       respinBtn.addEventListener("click", function () {
         if (rerollsLeft <= 0 || spinning) return;
+        /* Record what's being burned before decrement */
+        var discR = pendingPick ? pendingPick.r : null;
+        rerollLog.push({ discarded: discR, kept: null });
         rerollsLeft--;
+        pendingDiscard = discR;
         pendingPick = null;
+        /* Burn animation on badge */
+        var badge = respinBtn.querySelector(".reroll-badge");
+        if (badge) { badge.classList.add("rr-burn"); setTimeout(function(){ badge.classList.remove("rr-burn"); }, 500); }
         elSquadPanel.style.display = "none";
         doSpin();
       });
@@ -803,7 +854,13 @@
     if (squad.length >= XI_SIZE || !current || !pos || openOf(pos) <= 0) return;
     if (window.sfx) window.sfx.pick();
     var pl = playerByName(name);
-    squad.push({ id: nextId++, n: name, p: pl ? pl.p : "MID", r: pl ? pl.r : 80, slot: pos, country: current.country, year: current.year });
+    var pickedR = pl ? pl.r : 80;
+    /* Close out the last reroll log entry — record what they kept */
+    if (rerollLog.length && rerollLog[rerollLog.length - 1].kept === null) {
+      rerollLog[rerollLog.length - 1].kept = pickedR;
+    }
+    pendingDiscard = null;
+    squad.push({ id: nextId++, n: name, p: pl ? pl.p : "MID", r: pickedR, slot: pos, country: current.country, year: current.year });
     current = null; awaitingPick = false; pendingPick = null;
     elSquadPanel.style.display = "none";
     renderXI(); paintPitches(); updateControls();
@@ -891,7 +948,10 @@
     $("shareBtn").disabled = squad.length < 1;
     $("autoFillBtn").disabled = full;
     elDone.style.display = full ? "block" : "none";
-    if (full) elDone.textContent = "Full " + formation + " XI — choose a competition below.";
+    if (full) {
+      elDone.innerHTML = '<span class="done-main">Full ' + formation + ' XI — choose a competition below.</span>' +
+        rerollSummaryHTML();
+    }
 
     if (squad.length) {
       var t = userTeamFromSquad(), mgr = currentManager();
@@ -1057,7 +1117,9 @@
   function startDraft() {
     showView("draft");
     if (window.GAFFER_OB) window.GAFFER_OB.onEnterDraft();
-    current = null; awaitingPick = false; spinning = false; rerollsLeft = diffRerolls();
+    current = null; awaitingPick = false; spinning = false;
+    rerollsLeft = diffRerolls(); rerollsMax = rerollsLeft;
+    rerollLog = []; pendingDiscard = null;
     elSquadPanel.style.display = "none";
     var restored = loadDraft();
     elHint.textContent = restored ? "Draft restored from your last session." : "";
@@ -1068,7 +1130,8 @@
   function newGame() {
     clearTimeout(revealTimer);
     squad = []; current = null; awaitingPick = false; pendingPick = null; spinning = false;
-    teamName = ""; managerId = "none"; managerName = ""; managerSpun = false; formation = "4-3-3"; showRatings = true; difficulty = "Pro";
+    teamName = ""; managerId = "none"; managerName = ""; managerSpun = false; formation = "4-3-3"; showRatings = true; difficulty = "Medium";
+    rerollLog = []; rerollsMax = 0; pendingDiscard = null;
     elManagerSpin.disabled = false; elManagerSpin.textContent = "Spin";
     minIdx = 0; maxIdx = ALL_YEARS.length - 1; continent = "all";
     rerollsLeft = diffRerolls();
@@ -1420,8 +1483,10 @@
     var btns = [];
     // Harder difficulty
     if (difficulty !== "Legend") {
-      var harder = difficulty === "Amateur" ? "Pro" : difficulty === "Pro" ? "World Class" : "Legend";
-      btns.push('<button class="next-cta-btn" id="nsHarder">Try ' + harder + ' difficulty →</button>');
+      var diffOrder = ["Easy","Medium","Hard","Legend"];
+      var dIdx = diffOrder.indexOf(difficulty);
+      var harder = dIdx >= 0 && dIdx < diffOrder.length - 1 ? diffOrder[dIdx + 1] : null;
+      if (harder) btns.push('<button class="next-cta-btn" id="nsHarder">Try ' + harder + ' →</button>');
     }
     // Cross-sell other mode
     if (currentMode === "wc" || currentMode === "euro") {
@@ -1454,7 +1519,7 @@
   function wireNextStep() {
     var nsHarder = document.getElementById("nsHarder");
     if (nsHarder) nsHarder.addEventListener("click", function() {
-      var order = ["Amateur","Pro","World Class","Legend"];
+      var order = ["Easy","Medium","Hard","Legend"];
       var idx = order.indexOf(difficulty);
       if (idx < order.length-1) difficulty = order[idx+1];
       newGame();
@@ -1865,7 +1930,18 @@
     });
   }
   elSpin.addEventListener("click", doSpin);
-  elReroll.addEventListener("click", function () { if (rerollsLeft <= 0 || spinning) return; rerollsLeft--; if (window.GAFFER_OB) window.GAFFER_OB.afterReroll(); doSpin(); });
+  elReroll.addEventListener("click", function () {
+    if (rerollsLeft <= 0 || spinning) return;
+    var discR = pendingPick ? pendingPick.r : null;
+    rerollLog.push({ discarded: discR, kept: null });
+    rerollsLeft--;
+    pendingDiscard = discR;
+    /* Burn animation on the reroll count span */
+    var countEl = $("rerollCount");
+    if (countEl) { countEl.classList.add("rr-burn"); setTimeout(function(){ countEl.classList.remove("rr-burn"); }, 500); }
+    if (window.GAFFER_OB) window.GAFFER_OB.afterReroll();
+    doSpin();
+  });
   elAutoPick.addEventListener("click", autoPickCurrent);
   $("autoFillBtn").addEventListener("click", function () { if (window.GAFFER_OB) window.GAFFER_OB.afterAutoFill(); autoFill(); });
   $("clearBtn").addEventListener("click", newGame);
