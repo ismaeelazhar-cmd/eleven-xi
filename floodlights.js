@@ -40,7 +40,7 @@
      Each module's own goHome handles cleanup; this covers the logo tap
      from any screen without needing per-module hooks. */
   W.flGoHome = function () {
-    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView"];
+    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView"];
     ALL.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = "none"; });
     var home = document.getElementById("homeView");
     if (home) home.style.display = "";
@@ -49,6 +49,10 @@
     if (W.flResetSquadDock) W.flResetSquadDock();
     // Let online transport close cleanly if it was active
     try { if (W.ElxiNet && W.ElxiNet.isOnline && W.ElxiNet.isOnline()) W.ElxiNet.close(); } catch (e) {}
+    // Sync bottom nav — home is now active
+    Array.prototype.forEach.call(document.querySelectorAll(".bnav-btn"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-view") === "home");
+    });
   };
 
   document.addEventListener("DOMContentLoaded", function () {

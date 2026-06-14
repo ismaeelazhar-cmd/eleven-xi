@@ -314,10 +314,16 @@
     loadS();
 
     ["homeView","setupView","draftView","resultsView","mpView","leagueView",
-     "boardView","rwView","dvcView","euroView","dailyView"
+     "boardView","rwView","dvcView","euroView","challengeView","dailyView"
     ].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.style.display = (id === "dailyView") ? "" : "none";
+    });
+
+    // Sync bottom nav — treat daily as the Home tab
+    document.body.setAttribute("data-view", "daily");
+    Array.prototype.forEach.call(document.querySelectorAll(".bnav-btn"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-view") === "home");
     });
 
     render();
