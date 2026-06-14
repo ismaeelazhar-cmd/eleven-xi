@@ -1220,6 +1220,8 @@
     if (boardBtn) boardBtn.addEventListener("click", function () { renderBoard(); showView("board"); });
     var btmNewGame2 = document.getElementById("btmNewGame");
     if (btmNewGame2) btmNewGame2.addEventListener("click", newGame);
+    animateRankReveal();
+    wireNextStep();
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
@@ -1305,6 +1307,124 @@
   function saveBoard(a) { try { localStorage.setItem(LB_KEY, JSON.stringify(a)); } catch (e) {} }
   function addScore(e) { var a = loadBoard(); a.push(e); saveBoard(a); }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
+
+  /* ── Results: rank calculation ──────────────────────────────────── */
+  function getUserRank(score) {
+    var all = loadBoard(), rank = 1;
+    all.forEach(function(e) { if ((e.score||0) > score) rank++; });
+    return rank;
+  }
+  function rankRevealHTML(score) {
+    var rank = getUserRank(score);
+    var rankLabel = rank === 1 ? "🥇 #1 on your leaderboard!" : rank <= 3 ? "🏆 Top 3" : "#" + rank + " on your board";
+    return '<div class="rank-reveal" id="rankReveal">' +
+      '<div class="rank-reveal-inner">' +
+        '<div class="rank-calc" id="rankCalc">Calculating your rank…</div>' +
+        '<div class="rank-num" id="rankNum" style="display:none">' + rankLabel + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  function animateRankReveal() {
+    var calc = document.getElementById("rankCalc");
+    var num  = document.getElementById("rankNum");
+    if (!calc || !num) return;
+    setTimeout(function() {
+      calc.classList.add("rank-calc-fade");
+      setTimeout(function() {
+        calc.style.display = "none";
+        num.style.display = "";
+        num.classList.add("rank-num-pop");
+      }, 500);
+    }, 1200);
+  }
+
+  /* ── Results: manager verdict ───────────────────────────────────── */
+  function managerVerdictHTML(userStats, compLabel) {
+    var mgr = currentManager();
+    if (!mgr || mgr.id === "none") return "";
+    var name = managerName || mgr.name;
+    var lines = [];
+    if (mgr.atk !== 0 && userStats) {
+      var gf = userStats.gf || 0;
+      var atkEst = Math.round(Math.abs(mgr.atk) / 2);
+      if (mgr.atk > 0 && gf > 0) lines.push(name + "'s <strong>+" + mgr.atk + " ATK</strong> bonus translated to roughly <strong>" + atkEst + " extra goal" + (atkEst !== 1 ? "s" : "") + "</strong> across the campaign.");
+      if (mgr.atk < 0) lines.push("Playing Catenaccio cost around " + atkEst + " goal" + (atkEst !== 1 ? "s" : "") + " — but the defence held firm.");
+    }
+    if (mgr.def !== 0 && userStats) {
+      var ga = userStats.ga || 0;
+      var defEst = Math.round(Math.abs(mgr.def) / 2);
+      if (mgr.def > 0 && ga >= 0) lines.push("The <strong>+" + mgr.def + " DEF</strong> style kept the backline organised — saving roughly " + defEst + " goal" + (defEst !== 1 ? "s" : "") + " conceded.");
+    }
+    if (mgr.ko > 0 && userStats) {
+      var koWins = userStats.koWins || 0;
+      lines.push("The <strong>+" + mgr.ko + " KO</strong> tournament bonus gave a decisive edge in every knockout tie.");
+    }
+    if (!lines.length) return "";
+    return '<div class="manager-verdict">' +
+      '<div class="mv-head">⚙️ Manager insight · ' + esc(name) + '</div>' +
+      '<div class="mv-body">' + lines.join(" ") + '</div>' +
+    '</div>';
+  }
+
+  /* ── Results: next-step CTAs ────────────────────────────────────── */
+  function nextStepCTAsHTML(currentMode, result) {
+    var btns = [];
+    // Harder difficulty
+    if (difficulty !== "Legend") {
+      var harder = difficulty === "Amateur" ? "Pro" : difficulty === "Pro" ? "World Class" : "Legend";
+      btns.push('<button class="next-cta-btn" id="nsHarder">Try ' + harder + ' difficulty →</button>');
+    }
+    // Cross-sell other mode
+    if (currentMode === "wc" || currentMode === "euro") {
+      btns.push('<button class="next-cta-btn next-cta-sec" id="nsCL">Play Champions League →</button>');
+    } else if (currentMode === "cl") {
+      btns.push('<button class="next-cta-btn next-cta-sec" id="nsWC">Play World Cup →</button>');
+    } else if (currentMode === "league") {
+      btns.push('<button class="next-cta-btn next-cta-sec" id="nsWC">Play World Cup →</button>');
+    }
+    // Challenge a friend
+    btns.push('<button class="next-cta-btn next-cta-ghost" id="nsChallenge">📣 Challenge a friend to beat this</button>');
+    if (!btns.length) return "";
+    return '<div class="next-step-ctas"><div class="nsc-label">What\'s next?</div>' + btns.join("") + '</div>';
+  }
+
+  /* ── Results: daily challenge CTA ──────────────────────────────── */
+  function dailyCTAHTML() {
+    var DC_KEY = "wcxi_daily_ts";
+    var lastDone = 0;
+    try { lastDone = parseInt(localStorage.getItem(DC_KEY) || "0", 10); } catch(e) {}
+    if (sameDay(lastDone, Date.now())) return ""; // already done today
+    return '<div class="daily-cta-card" id="dailyCTACard">' +
+      '<span class="daily-cta-ico">🏆</span>' +
+      '<div class="daily-cta-text"><strong>Daily challenge</strong><br><span>You haven\'t played today\'s challenge — a fresh mode drops every day.</span></div>' +
+      '<button class="daily-cta-btn" id="dailyCTABtn">Play now →</button>' +
+    '</div>';
+  }
+
+  /* ── Wire new result buttons ────────────────────────────────────── */
+  function wireNextStep() {
+    var nsHarder = document.getElementById("nsHarder");
+    if (nsHarder) nsHarder.addEventListener("click", function() {
+      var order = ["Amateur","Pro","World Class","Legend"];
+      var idx = order.indexOf(difficulty);
+      if (idx < order.length-1) difficulty = order[idx+1];
+      newGame();
+    });
+    var nsCL = document.getElementById("nsCL");
+    if (nsCL) nsCL.addEventListener("click", function() { newGame(); showView("setup"); });
+    var nsWC = document.getElementById("nsWC");
+    if (nsWC) nsWC.addEventListener("click", function() { newGame(); showView("setup"); });
+    var nsChallenge = document.getElementById("nsChallenge");
+    if (nsChallenge) nsChallenge.addEventListener("click", function() {
+      var text = "I scored " + (window._lastResultScore||"") + " pts in Gaffer — can you beat it? gaffer.app";
+      try { navigator.share({ text: text }); } catch(e) {
+        navigator.clipboard && navigator.clipboard.writeText(text);
+        nsChallenge.textContent = "Copied!"; setTimeout(function(){ nsChallenge.textContent = "📣 Challenge a friend to beat this"; }, 2000);
+      }
+    });
+    var dailyBtn = document.getElementById("dailyCTABtn");
+    if (dailyBtn) dailyBtn.addEventListener("click", function() { showView("home"); setTimeout(function(){ var d = document.getElementById("homeDaily"); if(d) d.click(); }, 100); });
+  }
   function modeLabel(m) {
     return m === "wc" ? "World Cup" : m === "cl" ? "Champions League" : m === "mp" ? "Multiplayer" :
            m === "euro" ? "Euros" : m === "dvc" ? "vs Computer" : m === "duels" ? "Duels" : "League";
@@ -1519,11 +1639,15 @@
         html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
       }
     } else {
-      if (!r.saved) { r.saved = true; if (window.sfx && wc.userResult === "Champions!") window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
+      if (!r.saved) { r.saved = true; window._lastResultScore = r.sc.score; if (window.sfx && wc.userResult === "Champions!") window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: wc.userResult, mode: r.mode || (r.cl ? "cl" : "wc"), ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
       html += shareCardHTML(r.sc, wc.userResult, r.compLabel || "World Cup");
       html += '<div class="champion big">' + wc.userResult + "</div>";
+      html += rankRevealHTML(r.sc.score);
       html += scoreBannerHTML(r.sc, wc.userResult);
+      html += managerVerdictHTML(wc.userStats, r.compLabel || "World Cup");
       html += statsSummaryHTML(wc.userStats);
+      html += nextStepCTAsHTML(r.mode || (r.cl ? "cl" : "wc"), wc.userResult);
+      html += dailyCTAHTML();
       html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       /* Group phase journey (shown for all WC/CL result screens) */
       var gPhase = r.phaseLabel || "Group stage";
@@ -1576,8 +1700,9 @@
       html += revealListHTML(gm, r.shown, lg.teamName);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
-      if (!r.saved) { r.saved = true; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
+      if (!r.saved) { r.saved = true; window._lastResultScore = r.sc.score; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
       html += shareCardHTML(r.sc, result, r.cl ? "Champions League" : "League");
+      html += rankRevealHTML(r.sc.score);
       html += scoreBannerHTML(r.sc, result);
       html += '<div class="verdict-card"><div class="vc-row">' +
         '<div class="vc-cell"><div class="vc-k">Finished</div><div class="vc-v">' + ordinal(lg.userPos) + "</div></div>" +
@@ -1585,7 +1710,10 @@
         '<div class="vc-cell"><div class="vc-k">Squad rating</div><div class="vc-v">' + lg.squadRating + "</div></div>" +
         '<div class="vc-cell"><div class="vc-k">Record</div><div class="vc-v">' + lg.userRow.W + "-" + lg.userRow.D + "-" + lg.userRow.L + "</div></div>" +
         '</div><div class="vc-comment">' + leagueVerdict(lg.userPos, lg.expectedPos) + "</div></div>";
+      html += managerVerdictHTML(lg.userStats, r.cl ? "Champions League" : "League");
       html += statsSummaryHTML(lg.userStats);
+      html += nextStepCTAsHTML(r.cl ? "cl" : "league", result);
+      html += dailyCTAHTML();
       html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       html += '<h3 class="sec">Final ' + lg.table.length + '-team table</h3>' + leagueTableHTML(lg);
       html += '<div class="result-bottom-cta"><button class="btn-ghost" id="btmGoHome">← Home</button><button class="btn-ghost" id="btmBoard">Leaderboards</button></div>';
