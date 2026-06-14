@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gaffer — Spin, Draft, Simulate</title>
+  <title>Gaffer XI — Spin, Draft, Simulate</title>
   <meta name="description" content="Spin to draft an all-time XI from real squads, pick a formation and manager, then simulate the World Cup, Champions League or a full domestic league." />
 
   <!-- PWA -->
@@ -14,13 +14,13 @@
   <link rel="apple-touch-icon" href="icon-180.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Gaffer" />
+  <meta name="apple-mobile-web-app-title" content="Gaffer XI" />
   <meta name="mobile-web-app-capable" content="yes" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=132" />
+  <link rel="stylesheet" href="style.css?v=133" />
   <link rel="stylesheet" href="tokens.css?v=76" />
   <link rel="stylesheet" href="floodlights.css?v=131" />
 </head>
@@ -38,7 +38,7 @@
     <header>
       <div class="brand" id="brandLogo" role="button" tabindex="0" aria-label="Go to home" title="Home">
         <img class="brand-icon" src="icon.svg" alt="Gaffer" width="44" height="44" />
-        <h1>Gaffer</h1>
+        <h1>Gaffer XI</h1>
       </div>
       <button class="install-btn" id="installBtn" hidden>Install app</button>
     </header>
@@ -107,6 +107,7 @@
 
       <div class="home-links">
         <button class="home-board-link" id="homeBoard">Leaderboards</button>
+        <button class="home-board-link" id="homeChallenges">Challenges</button>
         <button class="home-board-link" id="homeHelp" aria-label="How to play">How to play</button>
       </div>
 
@@ -300,6 +301,36 @@
       <div id="boardBody"></div>
     </section>
 
+    <!-- ===== CHALLENGE HUB ===== -->
+    <section id="challengeView" style="display:none;">
+      <div class="results-head">
+        <button class="back" id="challengeBack">← Back</button>
+      </div>
+      <h2 class="res-title">Challenges</h2>
+
+      <!-- Daily constraint card -->
+      <div class="ch-section">
+        <div class="ch-section-label">Today's Challenge</div>
+        <div class="ch-daily-card" id="chDailyCard">
+          <div class="ch-daily-icon" id="chDailyIcon">🎯</div>
+          <div class="ch-daily-info">
+            <div class="ch-daily-name" id="chDailyName">Loading…</div>
+            <div class="ch-daily-desc" id="chDailyDesc"></div>
+          </div>
+          <div class="ch-daily-right">
+            <div class="ch-countdown" id="chCountdown"></div>
+            <button class="btn-accent ch-play-btn" id="chPlayDaily">Play →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permanent challenges -->
+      <div class="ch-section">
+        <div class="ch-section-label">Historical Challenges</div>
+        <div class="ch-grid" id="chGrid"></div>
+      </div>
+    </section>
+
     <footer>
       <!-- Daily challenge — in-flow at footer -->
       <button class="h2-daily h2-daily--footer" id="homeDaily">
@@ -422,7 +453,7 @@
   <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=82"></script>
-  <script src="game.js?v=128"></script>
+  <script src="game.js?v=129"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=90"></script>
@@ -430,6 +461,6 @@
   <script src="floodlights.js?v=99" defer></script>
   <script src="ratingswar.js?v=116" defer></script>
   <script src="draftvscomputer.js?v=18" defer></script>
-  <script src="daily.js?v=2" defer></script>
+  <script src="daily.js?v=3" defer></script>
 </body>
 </html>

@@ -274,7 +274,7 @@
 
   // ---- elements ----
   var $ = function (id) { return document.getElementById(id); };
-  var views = { home: $("homeView"), setup: $("setupView"), draft: $("draftView"), results: $("resultsView"), board: $("boardView") };
+  var views = { home: $("homeView"), setup: $("setupView"), draft: $("draftView"), results: $("resultsView"), board: $("boardView"), challenge: $("challengeView") };
   var elCountryStrip = $("countryStrip"), elYearStrip = $("yearStrip");
   var elSpin = $("spinBtn"), elReroll = $("rerollBtn"), elRerollCount = $("rerollCount"), elAutoPick = $("autoPickBtn");
   var elHint = $("hint"), elSquadPanel = $("squadPanel");
@@ -582,6 +582,69 @@
   }
 
   function inContinent(c) { return continent === "all" || CONTINENT[c] === continent; }
+  /* ═══════════════════════════════════════════════════════════════════
+     CHALLENGE SYSTEM — Daily constraints + curated historical challenges
+     ═══════════════════════════════════════════════════════════════════ */
+  var activeConstraint = null; /* set when a challenge mode is active */
+
+  var SA_NATIONS = ["Argentina","Brazil","Chile","Colombia","Ecuador","Paraguay","Peru","Uruguay","Bolivia"];
+  var AF_NATIONS = ["Algeria","Angola","Cameroon","Cape Verde","Egypt","Ghana","Ivory Coast","Morocco","Nigeria","Senegal","South Africa","Togo","Tunisia"];
+  var AMER_NATIONS = SA_NATIONS.concat(["USA","United States","Mexico","Canada","Costa Rica","Honduras","Jamaica","Panama","Trinidad and Tobago"]);
+
+  /* Daily constraints: pair-level filters + optional player-level filters */
+  var DAILY_CONSTRAINTS = [
+    { id:"wc2022", label:"Qatar 2022 Only",        icon:"🏆", desc:"Only players from the 2022 World Cup squads.", filterPair:function(p){ return p.y==="2022"; } },
+    { id:"wc2018", label:"Russia 2018 Only",        icon:"🏅", desc:"Only players from the 2018 World Cup squads.", filterPair:function(p){ return p.y==="2018"; } },
+    { id:"wc2014", label:"Brazil 2014 Only",        icon:"⭐", desc:"Only players from the 2014 World Cup in Brazil.", filterPair:function(p){ return p.y==="2014"; } },
+    { id:"wc2010", label:"South Africa 2010 Only",  icon:"🌍", desc:"Only players from the 2010 World Cup squads.", filterPair:function(p){ return p.y==="2010"; } },
+    { id:"wc2006", label:"Germany 2006 Only",       icon:"🦅", desc:"Only players from the 2006 World Cup in Germany.", filterPair:function(p){ return p.y==="2006"; } },
+    { id:"wc2002", label:"Korea/Japan 2002 Only",   icon:"🏟", desc:"Only players from the 2002 World Cup squads.", filterPair:function(p){ return p.y==="2002"; } },
+    { id:"wc1998", label:"France 98 Only",          icon:"🇫🇷", desc:"Only players from the 1998 World Cup in France.", filterPair:function(p){ return p.y==="1998"; } },
+    { id:"wc1994", label:"USA 94 Only",             icon:"🦅", desc:"Only players from the 1994 World Cup squads.", filterPair:function(p){ return p.y==="1994"; } },
+    { id:"wc1990", label:"Italia 90 Only",          icon:"🇮🇹", desc:"Build your XI exclusively from Italia 90 squads.", filterPair:function(p){ return p.y==="1990"; } },
+    { id:"wc1986", label:"Mexico 86 Only",          icon:"⚽", desc:"Only players from the 1986 World Cup in Mexico.", filterPair:function(p){ return p.y==="1986"; } },
+    { id:"decade90s", label:"The 90s",              icon:"📼", desc:"Only players from World Cups held in the 1990s (1990, 1994, 1998).", filterPair:function(p){ var y=parseInt(p.y); return y>=1990&&y<2000; } },
+    { id:"decade80s", label:"The 80s",              icon:"📻", desc:"Only players from World Cups held in the 1980s (1982, 1986).", filterPair:function(p){ var y=parseInt(p.y); return y>=1980&&y<1990; } },
+    { id:"golden_era", label:"The Golden Era",      icon:"✨", desc:"Only players from tournaments between 1994 and 2006.", filterPair:function(p){ var y=parseInt(p.y); return y>=1994&&y<=2006; } },
+    { id:"modern", label:"Modern Football",         icon:"🚀", desc:"Only players from 2010 World Cups onwards.", filterPair:function(p){ return parseInt(p.y)>=2010; } },
+    { id:"classic", label:"The Classic Era",        icon:"🎞", desc:"Only players from pre-1980 squads — the purists' choice.", filterPair:function(p){ return parseInt(p.y)<1980; } },
+    { id:"sa_only", label:"South American XI",      icon:"🌎", desc:"Only South American nations — Brazil, Argentina & Co.", filterPair:function(p){ return SA_NATIONS.indexOf(p.c)>=0; } },
+    { id:"eu_only", label:"European XI",            icon:"🏰", desc:"Only European nations may enter the draft.", filterPair:function(p){ return CONTINENT[p.c]==="EU"; } },
+    { id:"af_only", label:"African XI",             icon:"🌍", desc:"Only African nations. Underrated squads, massive upsets.", filterPair:function(p){ return AF_NATIONS.indexOf(p.c)>=0; } },
+    { id:"americas", label:"The Americas",          icon:"🗺", desc:"North & South America combined — a continental showdown.", filterPair:function(p){ return AMER_NATIONS.indexOf(p.c)>=0||CONTINENT[p.c]==="SA"; } },
+    { id:"elite90", label:"Elite Only",             icon:"💎", desc:"Every player in your XI must be rated 90 or above.", filterPair:null, filterPlayer:function(pl){ return pl.r>=90; } },
+    { id:"elite85", label:"Stars Only",             icon:"⭐", desc:"Only players rated 85+ may be selected.", filterPair:null, filterPlayer:function(pl){ return pl.r>=85; } },
+    { id:"wc2026", label:"2026 World Cup Only",     icon:"🆕", desc:"Only players from the brand new 2026 World Cup squads.", filterPair:function(p){ return p.y==="2026"; } },
+    { id:"latin", label:"Latin Classic",            icon:"🔥", desc:"Brazil, Argentina, Spain, Italy & Portugal only.", filterPair:function(p){ return ["Brazil","Argentina","Spain","Italy","Portugal"].indexOf(p.c)>=0; } },
+    { id:"big4", label:"The Big 4",                 icon:"👑", desc:"Only players from Brazil, Argentina, Germany and France.", filterPair:function(p){ return ["Brazil","Argentina","Germany","West Germany","France"].indexOf(p.c)>=0; } }
+  ];
+
+  /* Permanent historical challenges (playable any time) */
+  var PERMANENT_CHALLENGES = [
+    { id:"italia90", label:"Italia '90 XI",        icon:"🇮🇹", desc:"Build your XI exclusively from 1990 World Cup squads.",      filterPair:function(p){ return p.y==="1990"; }, badge:"Classic" },
+    { id:"golden_era", label:"The Golden Era",     icon:"✨", desc:"Only players from World Cups 1994–2006 — the peak era.",      filterPair:function(p){ var y=parseInt(p.y); return y>=1994&&y<=2006; }, badge:"Fan favourite" },
+    { id:"sa_xi", label:"South American XI",       icon:"🌎", desc:"Only South American nations. The continent of passion.",      filterPair:function(p){ return SA_NATIONS.indexOf(p.c)>=0; }, badge:"Regional" },
+    { id:"elite_club", label:"The Elite",          icon:"💎", desc:"Every player must be rated 90+. Only the very best.",         filterPair:null, filterPlayer:function(pl){ return pl.r>=90; }, badge:"Hardest" },
+    { id:"modern", label:"Modern Legends",         icon:"🚀", desc:"2010 onwards only. The era of pressing, data, and Messi.",    filterPair:function(p){ return parseInt(p.y)>=2010; }, badge:"Modern" },
+    { id:"big4_only", label:"Big 4 Nations",       icon:"👑", desc:"Brazil, Argentina, Germany and France only. The gods.",       filterPair:function(p){ return ["Brazil","Argentina","Germany","West Germany","France"].indexOf(p.c)>=0; }, badge:"Curated" }
+  ];
+
+  function todayStrChal() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+  }
+  function getDailyConstraint() {
+    var s = todayStrChal(), h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h<<5)+h+s.charCodeAt(i))|0;
+    return DAILY_CONSTRAINTS[Math.abs(h) % DAILY_CONSTRAINTS.length];
+  }
+  function setConstraint(c) {
+    activeConstraint = c || null;
+  }
+  function clearConstraint() {
+    activeConstraint = null;
+  }
+
   function poolPairs() {
     var pairs = [];
     COUNTRIES.forEach(function (c) {
@@ -591,6 +654,11 @@
     // fallback: keep continent, ignore era; then drop everything
     if (!pairs.length) COUNTRIES.forEach(function (c) { if (inContinent(c)) Object.keys(DATA[c].years).forEach(function (y) { pairs.push({ c: c, y: y }); }); });
     if (!pairs.length) COUNTRIES.forEach(function (c) { Object.keys(DATA[c].years).forEach(function (y) { pairs.push({ c: c, y: y }); }); });
+    /* Apply active constraint pair filter */
+    if (activeConstraint && activeConstraint.filterPair) {
+      var constrained = pairs.filter(activeConstraint.filterPair);
+      if (constrained.length > 0) pairs = constrained;
+    }
     return pairs;
   }
   function renderContinent() {
@@ -693,6 +761,28 @@
     /* Reroll warning at 1 left */
     var rerollBar = $("draftProgressBar");
     if (rerollBar) rerollBar.className = "draft-progress-bar" + (rerollsLeft === 1 ? " reroll-warn" : "");
+    /* Constraint banner */
+    var existBanner = $("constraintBanner");
+    if (activeConstraint) {
+      if (!existBanner) {
+        var banner = document.createElement("div");
+        banner.id = "constraintBanner";
+        banner.className = "constraint-banner";
+        if (rerollBar && rerollBar.parentNode) rerollBar.parentNode.insertBefore(banner, rerollBar.nextSibling);
+      }
+      var b = $("constraintBanner");
+      if (b) b.innerHTML = '<span class="cb-icon">' + (activeConstraint.icon||"🎯") + '</span>' +
+        '<span class="cb-label">' + esc(activeConstraint.label) + '</span>' +
+        '<span class="cb-desc">' + esc(activeConstraint.desc) + '</span>' +
+        '<button class="cb-exit" id="constraintExit">✕ Exit challenge</button>';
+      var exitBtn = $("constraintExit");
+      if (exitBtn && !exitBtn._wired) {
+        exitBtn._wired = true;
+        exitBtn.addEventListener("click", function() { clearConstraint(); newGame(); });
+      }
+    } else if (existBanner) {
+      existBanner.remove();
+    }
   }
 
   function doSpin() {
@@ -735,6 +825,11 @@
   function renderSquadPicker() {
     if (!current) return;
     var c = current.country, y = current.year, players = DATA[c].years[y];
+    /* Apply player-level constraint if active (e.g. "Elite Only: 90+") */
+    if (activeConstraint && activeConstraint.filterPlayer) {
+      var fp = players.filter(activeConstraint.filterPlayer);
+      if (fp.length > 0) players = fp;
+    }
     var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
 
     // Pre-compute draftable count so header can show respin button correctly
@@ -2230,6 +2325,57 @@
   // shareXIBtn and boardBtn are dynamically rendered inside resultsBody — wired in wireResults()
   $("boardBack").addEventListener("click", function () { showView("home"); });
   $("clearBoardBtn").addEventListener("click", function () { if (window.confirm("Clear all saved leaderboard scores?")) { saveBoard([]); renderBoard(); } });
+
+  /* ---- Challenge Hub ---- */
+  var _homeChallengesBtn = $("homeChallenges");
+  if (_homeChallengesBtn) _homeChallengesBtn.addEventListener("click", function () { renderChallengeHub(); showView("challenge"); });
+  var _challengeBackBtn = $("challengeBack");
+  if (_challengeBackBtn) _challengeBackBtn.addEventListener("click", function () { showView("home"); });
+
+  function renderChallengeHub() {
+    /* Daily constraint */
+    var dc = getDailyConstraint();
+    var nameEl = $("chDailyName"), descEl = $("chDailyDesc"), iconEl = $("chDailyIcon");
+    if (nameEl) nameEl.textContent = dc.label;
+    if (descEl) descEl.textContent = dc.desc;
+    if (iconEl) iconEl.textContent = dc.icon || "🎯";
+
+    /* Countdown to midnight */
+    var countdown = $("chCountdown");
+    if (countdown) {
+      var now = new Date(), midnight = new Date(now); midnight.setHours(24,0,0,0);
+      var diff = Math.floor((midnight - now) / 1000);
+      var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60);
+      countdown.textContent = "Resets in " + h + "h " + m + "m";
+    }
+
+    /* Play daily button */
+    var playDaily = $("chPlayDaily");
+    if (playDaily) {
+      playDaily.onclick = function () { setConstraint(dc); newGame(); showView("setup"); };
+    }
+
+    /* Permanent challenges grid */
+    var grid = $("chGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    PERMANENT_CHALLENGES.forEach(function (ch) {
+      var card = document.createElement("div");
+      card.className = "ch-card";
+      card.innerHTML =
+        '<div class="ch-card-top">' +
+          '<span class="ch-card-icon">' + (ch.icon||"🎯") + '</span>' +
+          '<span class="ch-card-name">' + esc(ch.label) + '</span>' +
+          (ch.badge ? '<span class="ch-card-badge">' + esc(ch.badge) + '</span>' : '') +
+        '</div>' +
+        '<div class="ch-card-desc">' + esc(ch.desc||"") + '</div>' +
+        '<button class="ch-card-play">Play →</button>';
+      card.querySelector(".ch-card-play").addEventListener("click", (function (c) {
+        return function () { setConstraint(c); newGame(); showView("setup"); };
+      })(ch));
+      grid.appendChild(card);
+    });
+  }
   Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
     b.addEventListener("click", function () { boardTab = b.getAttribute("data-board"); renderBoard(); });
   });

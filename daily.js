@@ -112,7 +112,7 @@
   }
   function shareText() {
     var res = S.won ? S.guesses.length + "/" + MAX : "X/" + MAX;
-    return "Gaffer Wordle · " + todayStr() + "\n" + res + "\n\n" + emojiGrid() + "\n\ngaffer.app";
+    return "Gaffer XI Wordle · " + todayStr() + "\n" + res + "\n\n" + emojiGrid() + "\n\ngaffer.app";
   }
 
   /* ── Render ─────────────────────────────────────────────────────── */
