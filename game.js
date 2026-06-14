@@ -394,6 +394,18 @@
     if (!r) return "";
     return r >= 90 ? " r-gold" : r >= 85 ? " r-elite" : r >= 80 ? " r-great" : r >= 75 ? " r-good" : r >= 70 ? " r-amber" : r >= 60 ? " r-orange" : " r-red";
   }
+
+  /* One-line flavour text per player based on position line + rating tier */
+  function playerFlavour(lineCls, r) {
+    var tier = r >= 90 ? 3 : r >= 85 ? 2 : r >= 80 ? 1 : 0;
+    var lines = {
+      GK:  ["Solid between the sticks.", "Good reflexes and calm in the box.", "Commanding presence with excellent distribution.", "Virtually unbeatable between the posts. World class."],
+      DEF: ["Dependable at the back.", "Disciplined defender who reads play well.", "Composed, dominant in the air and on the ground.", "Imperious. Wins every aerial duel. Elite defending."],
+      MID: ["Covers every blade of grass.", "Links play and breaks up attacks effectively.", "Creative engine who dictates the tempo of the game.", "Elite. Ball-winner, chance-creator, game-changer."],
+      FWD: ["Works hard and creates space for others.", "Dangerous pace and technique in the final third.", "Clinical finisher who delivers when it counts.", "Unstoppable. Pure box-office, world-class talent."]
+    };
+    return (lines[lineCls] || lines.MID)[tier];
+  }
   function renderPitchInto(el) {
     var a = assignByLines();
     function cell(c) {
@@ -899,10 +911,21 @@
         var isGoat = !isTaken && pl.n === goatName;
         var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "") + (isGoat ? " goat-player" : "");
         var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
-        inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '"><span class="pos ' + lineCls + '">' + posTag + "</span>" +
-          '<span class="pname">' + esc(pl.n) + "</span>" +
-          (isGoat ? '<span class="goat-badge">GOAT</span>' : '') +
-          (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) + "</div>";
+        var flavour = (!isTaken && !noSlot) ? playerFlavour(lineCls, pl.r || 75) : "";
+        inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '">' +
+          '<span class="pos ' + lineCls + '">' + posTag + '</span>' +
+          '<div class="player-body">' +
+            '<div class="player-top">' +
+              '<span class="pname">' + esc(pl.n) + '</span>' +
+              (isGoat ? '<span class="goat-badge">★ GOAT</span>' : '') +
+              (noSlot && !isTaken ? '<span class="slot-tag">no slot</span>' : ratingBadge(pl)) +
+            '</div>' +
+            '<div class="player-sub">' +
+              '<span class="player-era">' + flag + ' ' + esc(c) + ' · ' + y + '</span>' +
+              (flavour ? '<span class="player-flavour">' + flavour + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
       });
     });
     inner += "</div></div>"; // close .players + .squad-card
