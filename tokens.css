@@ -111,13 +111,13 @@
 
 /* light theme overrides */
 body.light {
-  --bg:           var(--p-paper);
-  --bg-gradient:  radial-gradient(125% 85% at 82% -8%, rgba(124,92,252,.10), transparent 55%),
-                  radial-gradient(95% 75% at -5% 108%, rgba(18,195,173,.08), transparent 55%),
-                  var(--p-paper);
-  --surface:      var(--p-card-light);
-  --surface-2:    #EEF1FA;
-  --surface-3:    #E4E9F6;
+  --bg:           #F5F3EE;
+  --bg-gradient:  radial-gradient(900px 520px at 60% -5%, rgba(201,170,113,.07), transparent 60%),
+                  radial-gradient(700px 500px at 0% 100%, rgba(45,106,79,.04), transparent 55%),
+                  #F5F3EE;
+  --surface:      #FFFFFF;
+  --surface-2:    #EEEAE0;
+  --surface-3:    #E5E0D4;
 
   --text:         var(--p-ink);
   --text-dim:     var(--p-ink-dim);

@@ -41,9 +41,9 @@ body.light {
 }
 body.light {
   background:
-    radial-gradient(900px 520px at 50% -10%, rgba(200, 134, 10, 0.08), transparent 60%),
-    radial-gradient(760px 520px at 100% 0%, rgba(10, 158, 110, 0.06), transparent 55%),
-    var(--bg);
+    radial-gradient(900px 520px at 60% -5%, rgba(201,170,113,.08), transparent 60%),
+    radial-gradient(700px 500px at 0% 100%, rgba(45,106,79,.04), transparent 55%),
+    #F5F3EE;
 }
 body.light .machine,
 body.light .setup, body.light .xi, body.light .mode-card,
@@ -1327,7 +1327,7 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 .theme-pill {
   position: absolute;
   top: 2px; left: 2px;
-  width: 22px; height: 22px;
+  width: 30px; height: 18px;
   border-radius: 999px;
   background: rgba(255,255,255,0.09);
   border: 1px solid rgba(255,255,255,0.12);
@@ -1336,14 +1336,14 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
   pointer-events: none;
 }
 /* dark mode (default) — pill sits over 🌙 (2nd button) */
-body:not(.light) .theme-pill { transform: translateX(22px); }
+body:not(.light) .theme-pill { transform: translateX(30px); }
 /* light mode — pill sits over ☀ (1st button) */
 body.light .theme-pill { transform: translateX(0); }
 
 .theme-toggle button {
   position: relative; z-index: 1;
   background: transparent; border: none;
-  width: 22px; height: 22px;
+  width: 30px; height: 18px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 999px; font-size: 11px; cursor: pointer;
   color: rgba(255,255,255,0.28);
@@ -5337,7 +5337,7 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
 @media (max-width: 768px) and (min-width: 601px) {
   header { padding-top: 48px; }
   .theme-toggle { top: 10px; right: 10px; }
-  .sound-toggle { top: 12px; right: 62px; }
+  .sound-toggle { top: 10px; right: 70px; }
   /* vs Computer: keep 3 col but compress pitches */
   .dvc-pitch-col { flex: 0 0 160px; }
   .dvc-pitch-col .pitch { max-height: 220px !important; }
