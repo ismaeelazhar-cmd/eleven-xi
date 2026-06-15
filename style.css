@@ -5696,6 +5696,14 @@ body.light .wl-tile.revealed.miss { background: #6b7280; }
 body.light .wl-key { background: rgba(0,0,0,0.1); color: #1a1a1a; }
 body.light .wl-key.miss { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.25); }
 
+/* Hidden input to capture device keyboard */
+.wl-hidden-input {
+  position: absolute; opacity: 0; pointer-events: none;
+  width: 1px; height: 1px; top: 0; left: 0;
+  border: none; background: transparent; color: transparent;
+  font-size: 16px; /* prevents iOS zoom */
+}
+
 /* Hint + actions */
 .wl-hint { font-size: 11px; color: var(--muted); text-align: center; margin: 4px 0 12px; }
 .wl-actions { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
@@ -5947,6 +5955,7 @@ body.light .mn-line { border-left-color: rgba(0,0,0,0.1); }
 .ch-play-btn {
   padding: 8px 18px; font-size: 13px; font-weight: 800;
   white-space: nowrap;
+  background: rgba(0,187,127,0.28); border-color: rgba(0,187,127,0.7);
 }
 .ch-grid {
   display: grid;
