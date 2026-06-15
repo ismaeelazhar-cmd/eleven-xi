@@ -2490,7 +2490,30 @@
   elAutoPick.addEventListener("click", autoPickCurrent);
   $("autoFillBtn").addEventListener("click", function () { if (window.GAFFER_OB) window.GAFFER_OB.afterAutoFill(); autoFill(); });
   $("clearBtn").addEventListener("click", newGame);
-  $("shareBtn").addEventListener("click", shareTeam);
+  $("shareBtn").addEventListener("click", function () {
+    /* Try image share first (mobile native sheet), fall back to text copy */
+    var c = buildXICanvas();
+    if (c) {
+      c.toBlob(function (blob) {
+        if (!blob) { shareTeam(); return; }
+        var fname = "draft-xi.png";
+        try {
+          var file = new File([blob], fname, { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: "My Draft XI", text: teamDisplayName() + " · " + formation + " · draft-11.com" }).catch(function () {});
+            return;
+          }
+        } catch (e) {}
+        /* Desktop — download the image */
+        var url = URL.createObjectURL(blob), el = document.createElement("a");
+        el.href = url; el.download = fname; document.body.appendChild(el); el.click(); el.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        if (window.flToast) window.flToast("XI saved as image!", 2000);
+      }, "image/png");
+    } else {
+      shareTeam();
+    }
+  });
   $("goWorldCup").addEventListener("click", function () { if (squad.length === XI_SIZE) runSim(mode === "euro" ? "euro" : "wc", userTeamFromSquad()); });
   // shareXIBtn and boardBtn are dynamically rendered inside resultsBody — wired in wireResults()
   $("boardBack").addEventListener("click", function () { showView("home"); });
