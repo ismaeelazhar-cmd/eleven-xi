@@ -329,10 +329,8 @@
     if (window.flResetSquadDock) window.flResetSquadDock();
     if (window.scrollTo) window.scrollTo(0, 0);
     // Sync bottom nav active state
-    Array.prototype.forEach.call(document.querySelectorAll(".bnav-btn"), function (b) {
-      var bv = b.getAttribute("data-view");
-      var isActive = bv === name || (bv === "draft" && (name === "setup" || name === "draft" || name === "results"));
-      b.classList.toggle("active", isActive);
+    Array.prototype.forEach.call(document.querySelectorAll(".bnav-pill"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-view") === name);
     });
   }
 
