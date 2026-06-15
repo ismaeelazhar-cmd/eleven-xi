@@ -52,9 +52,15 @@
   WORDS.forEach(function (w) { if (BY_LEN[w.length]) BY_LEN[w.length].push(w); });
 
   /* ── Daily pick ─────────────────────────────────────────────────── */
-  function todayStr() {
-    var d = new Date();
-    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  /* "Day" resets at 12:00 BST = 11:00 UTC.
+     Shift UTC back by 11h so the boundary falls at the right moment. */
+  function wordleDay() {
+    var utcMs = Date.now() - 11 * 60 * 60 * 1000;
+    var d = new Date(utcMs);
+    return {
+      str: d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate(),
+      idx: Math.floor(utcMs / 86400000)
+    };
   }
   function djb2(s) {
     var h = 5381;
@@ -62,16 +68,14 @@
     return Math.abs(h);
   }
   function dailyWord() {
-    var s = todayStr();
-    /* Rotate lengths: 5 → 6 → 7 → 5 … based on day index */
-    var epoch = new Date(2026, 0, 1);
-    var today = new Date(); today.setHours(0,0,0,0);
-    var dayIdx = Math.floor((today - epoch) / 86400000);
-    var len = [5, 6, 7][((dayIdx % 3) + 3) % 3];
+    var day = wordleDay();
+    /* Rotate lengths: 5 → 6 → 7 → 5 … */
+    var len = [5, 6, 7][((day.idx % 3) + 3) % 3];
     var pool = BY_LEN[len];
     if (!pool || !pool.length) { pool = BY_LEN[5]; len = 5; }
-    return pool[djb2(s) % pool.length];
+    return pool[djb2(day.str) % pool.length];
   }
+  function todayStr() { return wordleDay().str; }
 
   /* ── State ──────────────────────────────────────────────────────── */
   var KEY = "gaffer_wordle_v4";
