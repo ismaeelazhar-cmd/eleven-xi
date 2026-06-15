@@ -5632,9 +5632,9 @@ body.light .wl-loss { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1
 
 /* Grid */
 .wl-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.wl-row  { display: flex; gap: 6px; }
+.wl-row  { display: flex; gap: 6px; justify-content: center; }
 
-/* Tiles */
+/* Tile size scales with word length */
 .wl-tile {
   width: 58px; height: 58px;
   border: 2px solid rgba(255,255,255,0.18);
@@ -5645,6 +5645,8 @@ body.light .wl-loss { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1
   transition: border-color 0.1s;
   user-select: none;
 }
+.wl-grid-6 .wl-tile { width: 50px; height: 50px; font-size: 19px; }
+.wl-grid-7 .wl-tile { width: 44px; height: 44px; font-size: 17px; }
 .wl-tile.filled { border-color: rgba(255,255,255,0.5); animation: wlPop 0.1s ease; }
 @keyframes wlPop { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
 
