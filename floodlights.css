@@ -151,7 +151,7 @@ header h1 {
 .h2-sub { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.55); margin:0 0 18px; letter-spacing:.01em; }
 
 .h2-cta-row { display:flex; gap:10px; margin-bottom:16px; }
-.h2-cta { flex:1; border:none; border-radius:12px; padding:10px 10px; font-size:13px; font-weight:800; cursor:pointer; font-family: var(--font-body); transition: transform .12s var(--ease-spring), filter .15s var(--ease-out), background .15s; }
+.h2-cta { flex:1; border:none; border-radius:12px; padding:10px 10px; font-size:13px; font-weight:800; cursor:pointer; font-family: var(--font-body); transition: transform .12s var(--ease-spring), filter .15s var(--ease-out), background .15s; min-height:44px; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
 .h2-cta:active { transform: scale(.97); }
 .h2-cta.primary { background: var(--h2-green); color:#04140c; box-shadow: 0 6px 22px rgba(0,228,106,.35); }
 .h2-cta.primary:hover { filter: brightness(1.07); }
@@ -304,7 +304,7 @@ body.light .h2-cta.secondary:hover { background: rgba(255,255,255,.16); }
 .ec-form { display: flex; gap: 8px; }
 .ec-input {
   flex: 1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px; padding: 10px 13px; font-size: 14px; color: var(--text);
+  border-radius: 10px; padding: 10px 13px; font-size: 16px; color: var(--text);
   font-family: var(--font-body); outline: none;
   transition: border-color .15s;
 }

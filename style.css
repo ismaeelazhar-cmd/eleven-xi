@@ -3991,7 +3991,7 @@ body { min-height: 100dvh; overflow-x: hidden; }
 .btn-primary, .btn-ghost, .btn-accent, .start-btn, .spin, .reroll,
 .seg-opt, .home-mode-card, .lg-card, .home-board-link, .lg-modal-close,
 .lg-msel-row, .mp-choose-pos { min-height: 44px; }
-button, a, .seg-opt { touch-action: manipulation; }
+button, a, .seg-opt { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 /* Home mode cards — single column on small phones, capped & centred elsewhere */
 @media (max-width: 400px)  { .home-modes { grid-template-columns: 1fr; max-width: 340px; } }
@@ -5034,6 +5034,7 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
   font-size: 15px;
   width: 100%;
   white-space: nowrap;
+  min-height: 44px;
 }
 .spin-sub-row {
   display: flex;
