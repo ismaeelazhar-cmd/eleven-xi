@@ -1443,7 +1443,7 @@
     x.textAlign="center";
 
     /* Branding */
-    x.fillStyle="#5a6a80"; x.font="700 34px "+FS; x.fillText("GAFFER", CW/2, 96);
+    x.fillStyle="#5a6a80"; x.font="700 34px "+FS; x.fillText("DRAFT XI", CW/2, 96);
 
     /* Pill */
     var pillColor = d.pill==="CHAMPIONS" ? "#f5b301" : d.pill==="TOP FOUR" ? "#22c97d" :
@@ -1518,7 +1518,7 @@
 
     c.toBlob(function(blob){
       if(!blob) return;
-      var fname="gaffer-season.png";
+      var fname="draft-xi-season.png";
       try{
         var file=new File([blob],fname,{type:"image/png"});
         if(navigator.canShare && navigator.canShare({files:[file]})){

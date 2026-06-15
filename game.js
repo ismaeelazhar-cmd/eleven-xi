@@ -1206,7 +1206,7 @@
     var pbW = (CW - PAD * 2) * 0.56, pbH = pitchH * 0.3, pbX = PAD + (CW - PAD * 2 - pbW) / 2, pbY = pitchY + pitchH - pbH;
     ctx.strokeRect(pbX, pbY, pbW, pbH);
     ctx.textAlign = "center";
-    ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("GAFFER", CW / 2, 38);
+    ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("DRAFT XI", CW / 2, 38);
     ctx.fillStyle = "#ECF1FF"; ctx.font = "800 32px " + FS; ctx.fillText(teamDisplayName(), CW / 2, 78);
     ctx.fillStyle = "rgba(236,241,255,0.5)"; ctx.font = "500 17px " + FS;
     ctx.fillText(formation + "  ·  " + currentManager().name, CW / 2, 110);
@@ -1246,7 +1246,7 @@
     var c = buildXICanvas(); if (!c) return;
     c.toBlob(function (blob) {
       if (!blob) return;
-      var fname = "gaffer.png";
+      var fname = "draft-xi.png";
       try {
         var file = new File([blob], fname, { type: "image/png" });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {

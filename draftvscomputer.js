@@ -882,7 +882,7 @@ window.startDraftVsComputer = (function (W) {
       return '<div class="'+cls+'"><div class="f-rating">'+p.r+'</div><div class="f-name">'+lastName+'</div><div class="f-year">'+esc(p.country||"")+'</div></div>';
     }).join("");
     html += '<div class="share-card dvc-share-card">' +
-      '<div class="sc-header"><div class="sc-logo">GAFFER</div><div class="sc-date">'+dateStr+' · vs Computer</div></div>' +
+      '<div class="sc-header"><div class="sc-logo">DRAFT XI</div><div class="sc-date">'+dateStr+' · vs Computer</div></div>' +
       '<div class="sc-title">Your XI</div>' +
       '<div class="sc-sub">'+esc(DVC.formation)+' · '+esc(DVC.difficulty.charAt(0).toUpperCase()+DVC.difficulty.slice(1))+'</div>' +
       '<div class="formation-grid dvc-tile-grid">'+playerTiles+'</div>' +
