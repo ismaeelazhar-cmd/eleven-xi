@@ -1655,11 +1655,33 @@
     if (btmBoard) btmBoard.addEventListener("click", function () { renderBoard(); showView("board"); });
     var btmShare = document.getElementById("btmShare");
     if (btmShare) btmShare.addEventListener("click", function () {
-      var text = "⚽ Draft XI — " + teamDisplayName() + "'s " + formation + " XI\n" +
-        (window._lastResultScore ? window._lastResultScore + " pts · " : "") +
-        "Can you beat it?\n🔗 draft-11.com";
-      try { if (navigator.share) { navigator.share({ title: "Draft XI", text: text, url: "https://draft-11.com" }); return; } } catch(e) {}
-      if (navigator.clipboard) { navigator.clipboard.writeText(text); if (window.flToast) window.flToast("Link copied!", 2000); }
+      /* Try to share the XI image card — falls back to text share */
+      var c = buildXICanvas();
+      if (c) {
+        c.toBlob(function (blob) {
+          if (!blob) return;
+          var fname = "draft-xi.png";
+          try {
+            var file = new File([blob], fname, { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              navigator.share({ files: [file], title: "My Draft XI", text: "⚽ " + teamDisplayName() + "'s " + formation + " XI — " + (window._lastResultScore || "") + " pts · draft-11.com" }).catch(function () {});
+              return;
+            }
+          } catch (e) {}
+          /* No file share support — download the image instead */
+          var url = URL.createObjectURL(blob), el = document.createElement("a");
+          el.href = url; el.download = fname; document.body.appendChild(el); el.click(); el.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+          if (window.flToast) window.flToast("Image saved!", 2000);
+        }, "image/png");
+      } else {
+        /* No canvas (squad not built yet) — share text link */
+        var text = "⚽ Draft XI — " + teamDisplayName() + "'s " + formation + " XI\n" +
+          (window._lastResultScore ? window._lastResultScore + " pts · " : "") +
+          "Can you beat it?\n🔗 draft-11.com";
+        try { if (navigator.share) { navigator.share({ title: "Draft XI", text: text, url: "https://draft-11.com" }); return; } } catch(e) {}
+        if (navigator.clipboard) { navigator.clipboard.writeText(text); if (window.flToast) window.flToast("Link copied!", 2000); }
+      }
     });
     var shareXIBtn = document.getElementById("shareXIBtn");
     if (shareXIBtn) shareXIBtn.addEventListener("click", function () { shareXIPNG(this); });
