@@ -692,7 +692,7 @@
   function spinReel(stripEl, randomItem, finalHTML, duration) {
     var reelEl = stripEl.parentElement;
     return new Promise(function (resolve) {
-      var BLUR = 14, html = "";
+      var BLUR = 22, html = "";
       for (var i = 0; i < BLUR; i++) html += randomItem();
       html += finalHTML;
       stripEl.style.transition = "none"; stripEl.style.transform = "translateY(0)";
@@ -822,9 +822,10 @@
     current = { country: pick.c, year: pick.y };
     var pc = pairs.map(function (p) { return p.c; }), py = pairs.map(function (p) { return p.y; });
     elSpin.textContent = "SPINNING…";
-    /* Longer durations make the deceleration more satisfying */
-    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 560);
-    var p2 = spinReel(elYearStrip, function () { return yearItemHTML(rand(py)); }, yearItemHTML(pick.y), 620);
+    /* Country settles first, then year snaps in — creates a two-beat reveal */
+    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 1050);
+    var p2 = spinReel(elYearStrip,   function () { return yearItemHTML(rand(py)); },   yearItemHTML(pick.y),   1350);
+    p1.then(function () { elSpin.textContent = pick.c + "…"; });
     Promise.all([p1, p2]).then(function () { spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = ""; renderSquadPicker(); if (window.GAFFER_OB) window.GAFFER_OB.afterSpin(); });
   }
 
@@ -2368,8 +2369,8 @@
       html += shareCardHTML(r.sc, wc.userResult, r.compLabel || "World Cup");
       html += '<div class="champion big">' + wc.userResult + "</div>";
       html += rankRevealHTML(r.sc.score);
-      html += scoreBannerHTML(r.sc, wc.userResult);
       html += matchNarrativeHTML(wc.userMatches, wc.userStats, r.userTeam, "tournament");
+      html += scoreBannerHTML(r.sc, wc.userResult);
       html += managerVerdictHTML(wc.userStats, r.compLabel || "World Cup", r.userTeam);
       html += statsSummaryHTML(wc.userStats);
       html += whatIfHTML(r.userTeam, r.sc);

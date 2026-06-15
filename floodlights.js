@@ -350,9 +350,6 @@
           }
           if (currentStep === 3 && count >= 3) {
             currentStep = 4;
-            setTimeout(function () {
-              showTip("Tap Auto-fill to complete your XI instantly — or keep spinning for better players.", "autoFillBtn", "above");
-            }, 400);
           }
         },
         // Called after reroll is used (advance past reroll tip)
