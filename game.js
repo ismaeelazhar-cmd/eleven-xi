@@ -2450,6 +2450,25 @@
     }
   });
 
+  // ---- Theme toggle ----
+  (function () {
+    var btn = document.getElementById("themeToggle");
+    var darkSpan = btn && btn.querySelector(".theme-dark");
+    var lightSpan = btn && btn.querySelector(".theme-light");
+    function applyTheme(light) {
+      document.body.classList.toggle("light", light);
+      if (darkSpan) darkSpan.style.display = light ? "none" : "";
+      if (lightSpan) lightSpan.style.display = light ? "" : "none";
+    }
+    var saved = localStorage.getItem("theme");
+    applyTheme(saved === "light");
+    if (btn) btn.addEventListener("click", function () {
+      var isLight = document.body.classList.contains("light");
+      localStorage.setItem("theme", isLight ? "dark" : "light");
+      applyTheme(!isLight);
+    });
+  })();
+
   // ---- PWA ----
   var installBtn = $("installBtn");
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredPrompt = e; if (installBtn) installBtn.hidden = false; });

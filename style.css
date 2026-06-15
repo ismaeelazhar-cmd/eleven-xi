@@ -1,7 +1,7 @@
 :root {
-  --bg: #050508;        /* near-black, pure dark */
-  --bg2: #12121f;       /* card / secondary */
-  --panel: #12121f;
+  --bg: #111118;        /* slightly lifted dark */
+  --bg2: #18182a;       /* card / secondary */
+  --panel: #18182a;
   --gold: #f99c00;      /* 38-0 amber */
   --gold2: #fcbb00;
   --green: #00bb7f;     /* 38-0 emerald */
@@ -9,14 +9,14 @@
   --red: #fb2c36;
   --text: #f1f5f9;      /* slate-100 */
   --muted: #94a3b8;     /* slate-400 */
-  --line: rgba(255, 255, 255, 0.07);
+  --line: rgba(255, 255, 255, 0.09);
   /* surfaces */
-  --card: #0c0c14;
-  --card2: #14141f;
-  --card3: #0e0e16;
-  --reel: #050507;
-  --reelbox: #0b0b12;
-  --modecard: #16161f;
+  --card: #16161f;
+  --card2: #1c1c2a;
+  --card3: #141420;
+  --reel: #0e0e18;
+  --reelbox: #131320;
+  --modecard: #1e1e2c;
 }
 
 /* ===== Light (cream & gold) theme ===== */
@@ -261,9 +261,9 @@ button.spin {
   border: none;
   cursor: pointer;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 15px;
   letter-spacing: 1px;
-  padding: 14px 34px;
+  padding: 10px 26px;
   border-radius: 999px;
   color: var(--btn-primary-fg, #fff);
   background: var(--btn-primary-bg, linear-gradient(180deg, #9A82FF, #6A47ED));
@@ -736,8 +736,8 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
   margin-top: 6px;
   background: linear-gradient(180deg, #9A82FF, #6A47ED);
   color: #fff; border: none; border-radius: 999px;
-  padding: 15px 22px; font-size: 17px; font-weight: 900; cursor: pointer;
-  box-shadow: 0 8px 22px rgba(99, 102, 241, 0.4);
+  padding: 11px 22px; font-size: 15px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
 }
 .start-btn:hover { filter: brightness(1.05); }
 .link-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 6px; text-decoration: underline; }
@@ -844,7 +844,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .reroll {
   background: rgba(141, 84, 255, 0.16); color: #b69bff;
   border: 1px solid rgba(141, 84, 255, 0.5); border-radius: 999px;
-  padding: 12px 20px; font-weight: 800; font-size: 14px; cursor: pointer;
+  padding: 8px 16px; font-weight: 800; font-size: 13px; cursor: pointer;
 }
 .reroll:hover { background: rgba(141, 84, 255, 0.26); }
 .reroll:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -1250,7 +1250,7 @@ body.light .pitch { background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 
 /* ===== Manager spin wheel ===== */
 .mgr-wheel { display: flex; gap: 10px; align-items: center; }
 .mgr-reel { flex: 1; height: 60px; }
-.mgr-item { gap: 4px; justify-content: center; align-items: center; text-align: center; width: 100%; }
+.mgr-item { gap: 4px; justify-content: center; align-items: center; text-align: center; width: 100%; display: flex; flex-direction: column; }
 .mgr-name-big { font-size: 15px; font-weight: 800; color: var(--text); text-align: center; padding: 0 8px; width: 100%; display: block; }
 .mgr-style-tag { font-size: 11px; color: var(--gold); font-weight: 700; }
 #managerSpin { white-space: nowrap; align-self: center; }
@@ -1508,8 +1508,8 @@ header h1 {
   }
 }
 button.spin {
-  font-size: 17px;
-  padding: 15px 38px;
+  font-size: 14px;
+  padding: 10px 26px;
   border-radius: var(--radius-pill);
   letter-spacing: 2px;
   background: var(--btn-primary-bg, linear-gradient(180deg, #9A82FF 0%, #6A47ED 100%));
@@ -1553,9 +1553,9 @@ button.spin:active { animation: none; transform: translateY(2px); }
   color: #fff;
   border: none;
   border-radius: var(--radius-pill);
-  padding: 15px 28px;
-  font-size: 17px;
-  font-weight: 900;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
   letter-spacing: 0.3px;
   box-shadow: 0 8px 26px rgba(124,92,252,0.4), inset 0 1px 0 rgba(255,255,255,0.2);

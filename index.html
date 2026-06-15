@@ -39,6 +39,10 @@
   <link rel="stylesheet" href="floodlights.css?v=137" />
 </head>
 <body>
+  <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
+    <span class="theme-dark">🌙</span>
+    <span class="theme-light" style="display:none">☀️</span>
+  </button>
   <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Sound on — click to mute">
     <span class="snd-on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
     <span class="snd-off" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg></span>
@@ -46,7 +50,6 @@
   <div class="wrap">
     <header>
       <div class="brand" id="brandLogo" role="button" tabindex="0" aria-label="Go to home" title="Home">
-        <img class="brand-icon" src="icon.svg" alt="Draft XI" width="40" height="40" />
         <h1>Draft XI</h1>
       </div>
       <button class="install-btn" id="installBtn" hidden>Install app</button>

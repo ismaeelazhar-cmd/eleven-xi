@@ -151,7 +151,7 @@ header h1 {
 .h2-sub { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.55); margin:0 0 18px; letter-spacing:.01em; }
 
 .h2-cta-row { display:flex; gap:10px; margin-bottom:16px; }
-.h2-cta { flex:1; border:none; border-radius:12px; padding:14px 10px; font-size:14px; font-weight:800; cursor:pointer; font-family: var(--font-body); transition: transform .12s var(--ease-spring), filter .15s var(--ease-out), background .15s; }
+.h2-cta { flex:1; border:none; border-radius:12px; padding:10px 10px; font-size:13px; font-weight:800; cursor:pointer; font-family: var(--font-body); transition: transform .12s var(--ease-spring), filter .15s var(--ease-out), background .15s; }
 .h2-cta:active { transform: scale(.97); }
 .h2-cta.primary { background: var(--h2-green); color:#04140c; box-shadow: 0 6px 22px rgba(0,228,106,.35); }
 .h2-cta.primary:hover { filter: brightness(1.07); }
@@ -534,6 +534,23 @@ body.light .ec-input {
 .ob-rank-reveal--out { animation: rank-out 400ms ease-in both; }
 @keyframes rank-in  { from { opacity:0; transform:translateX(-50%) scale(.85) translateY(16px); } to { opacity:1; transform:translateX(-50%) scale(1) translateY(0); } }
 @keyframes rank-out { from { opacity:1; transform:translateX(-50%) scale(1); } to { opacity:0; transform:translateX(-50%) scale(.9) translateY(-8px); } }
+
+/* ===== Theme toggle ===== */
+.theme-toggle {
+  position: fixed; top: 10px; right: 56px; z-index: 100;
+  width: 38px; height: 30px; border-radius: 999px;
+  background: rgba(8,8,16,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px; line-height: 1;
+  transition: background var(--dur-1);
+}
+.theme-toggle:hover { background: rgba(8,8,16,0.9); }
+body.light .theme-toggle {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(0,0,0,0.1);
+}
 
 /* ===== Sound toggle ===== */
 .sound-toggle {
