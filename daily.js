@@ -330,15 +330,13 @@
     setTimeout(cb, delay + 220);
   }
 
-  /* Physical keyboard */
+  /* Physical keyboard — re-focus the hidden input so it captures the key */
   function onKeyDown(e) {
-    if (document.getElementById("dailyView") &&
-        document.getElementById("dailyView").style.display === "none") return;
-    var k = e.key.toUpperCase();
-    if (k === "BACKSPACE" || k === "ENTER" || /^[A-Z]$/.test(k)) {
-      e.preventDefault();
-      handleKey(k === "BACKSPACE" ? "⌫" : k);
-    }
+    var view = document.getElementById("dailyView");
+    if (!view || view.style.display === "none") return;
+    var inp = document.getElementById("wlInput");
+    if (!inp) return;
+    if (document.activeElement !== inp) inp.focus();
   }
 
   /* ── Public entry point ─────────────────────────────────────────── */
