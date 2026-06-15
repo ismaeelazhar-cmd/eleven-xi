@@ -1,73 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="cardTop" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#2d1f5e"/>
-      <stop offset="100%" stop-color="#231748"/>
-    </linearGradient>
-    <linearGradient id="cardBot" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#140e2e"/>
-      <stop offset="100%" stop-color="#0a0718"/>
-    </linearGradient>
-    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#9b85e8"/>
-      <stop offset="100%" stop-color="#5a3fa0"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
+  <!-- Gold Bar logo — navy background, gold header bar -->
 
-  <!-- Card border (purple glow) -->
-  <rect x="54" y="28" width="404" height="456" rx="32" fill="url(#borderGrad)"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1a0d2e"/>
 
-  <!-- Card top section -->
-  <rect x="60" y="34" width="392" height="172" rx="28" fill="url(#cardTop)"/>
+  <!-- Gold border -->
+  <rect width="512" height="512" rx="96" fill="none" stroke="#c9aa71" stroke-width="8"/>
 
-  <!-- Card bottom section -->
-  <rect x="60" y="194" width="392" height="284" rx="0" fill="url(#cardBot)"/>
-  <rect x="60" y="450" width="392" height="28" rx="0" ry="0" fill="url(#cardBot)"/>
-  <!-- Bottom corners -->
-  <rect x="60" y="449" width="392" height="35" rx="28" fill="url(#cardBot)"/>
+  <!-- Gold header bar top shape -->
+  <rect x="0" y="0" width="512" height="178" rx="96" fill="#c9aa71"/>
+  <!-- Fill the lower part of the rounded top so it looks like a flat bottom bar -->
+  <rect x="0" y="114" width="512" height="64" fill="#c9aa71"/>
 
-  <!-- Divider line between top and bottom -->
-  <line x1="60" y1="206" x2="452" y2="206" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.4"/>
-
-  <!-- XI — large serif, lavender -->
-  <text x="256" y="162" text-anchor="middle"
+  <!-- DRAFT text in bar -->
+  <text x="256" y="143"
+    text-anchor="middle"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="148" font-weight="700"
-    fill="#c4b8e8" opacity="0.92"
-    letter-spacing="-2">XI</text>
+    font-size="86" font-weight="700"
+    fill="#1a0d2e">DRAFT</text>
 
-  <!-- DRAFT text below divider -->
-  <text x="256" y="196" text-anchor="middle"
+  <!-- XI — large gold serif -->
+  <text x="256" y="360"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="196" font-weight="700"
+    fill="#c9aa71">XI</text>
+
+  <!-- Divider line -->
+  <line x1="80" y1="388" x2="432" y2="388" stroke="#c9aa71" stroke-width="2" opacity="0.4"/>
+
+  <!-- FOOTBALL tagline -->
+  <text x="256" y="440"
+    text-anchor="middle"
     font-family="Arial, Helvetica, sans-serif"
-    font-size="28" font-weight="400"
-    fill="#c4b8e8" letter-spacing="12" opacity="0.85">DRAFT</text>
-
-  <!-- Formation dots — lavender, connected -->
-  <!-- Top (ST) -->
-  <circle cx="256" cy="278" r="14" fill="none" stroke="#9b85e8" stroke-width="2" stroke-opacity="0.75" filter="url(#glow)"/>
-  <circle cx="256" cy="278" r="4" fill="#9b85e8" opacity="0.5"/>
-
-  <!-- Mid left / right -->
-  <circle cx="168" cy="330" r="12" fill="none" stroke="#9b85e8" stroke-width="1.8" stroke-opacity="0.6"/>
-  <circle cx="168" cy="330" r="3.5" fill="#9b85e8" opacity="0.4"/>
-  <circle cx="344" cy="330" r="12" fill="none" stroke="#9b85e8" stroke-width="1.8" stroke-opacity="0.6"/>
-  <circle cx="344" cy="330" r="3.5" fill="#9b85e8" opacity="0.4"/>
-
-  <!-- Bottom left / right -->
-  <circle cx="188" cy="394" r="12" fill="none" stroke="#9b85e8" stroke-width="1.6" stroke-opacity="0.5"/>
-  <circle cx="188" cy="394" r="3" fill="#9b85e8" opacity="0.35"/>
-  <circle cx="324" cy="394" r="12" fill="none" stroke="#9b85e8" stroke-width="1.6" stroke-opacity="0.5"/>
-  <circle cx="324" cy="394" r="3" fill="#9b85e8" opacity="0.35"/>
-
-  <!-- Connection lines -->
-  <line x1="256" y1="278" x2="168" y2="330" stroke="#9b85e8" stroke-width="1.2" stroke-opacity="0.35"/>
-  <line x1="256" y1="278" x2="344" y2="330" stroke="#9b85e8" stroke-width="1.2" stroke-opacity="0.35"/>
-  <line x1="168" y1="330" x2="188" y2="394" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.28"/>
-  <line x1="344" y1="330" x2="324" y2="394" stroke="#9b85e8" stroke-width="1" stroke-opacity="0.28"/>
-  <line x1="168" y1="330" x2="324" y2="394" stroke="#9b85e8" stroke-width="0.75" stroke-opacity="0.15"/>
-  <line x1="344" y1="330" x2="188" y2="394" stroke="#9b85e8" stroke-width="0.75" stroke-opacity="0.15"/>
+    font-size="28" font-weight="700"
+    fill="#c9aa71" letter-spacing="10" opacity="0.6">FOOTBALL</text>
 </svg>
