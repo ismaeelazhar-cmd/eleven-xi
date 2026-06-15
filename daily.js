@@ -183,6 +183,7 @@
     }
 
     var hint = !S.done ? '<p class="wl-hint">Only football words are valid guesses</p>' : "";
+    var inputEl = !S.done ? '<input id="wlInput" class="wl-hidden-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="5" inputmode="text" aria-label="Type your guess" />' : "";
 
     v.innerHTML =
       '<div class="wl-wrap">' +
@@ -193,13 +194,13 @@
         '</div>' +
         '<div id="wlMsg" class="wl-msg"></div>' +
         status +
+        inputEl +
         '<div class="wl-grid" id="wlGrid">' + gridRows + '</div>' +
         hint +
-        kb +
         actions +
       '</div>';
 
-    wireKeys();
+    wireInput();
 
     var shareBtn = document.getElementById("wlShare");
     if (shareBtn) {
@@ -217,10 +218,43 @@
   }
 
   /* ── Key handling ────────────────────────────────────────────────── */
-  function wireKeys() {
-    var kb = document.getElementById("wlKb"); if (!kb) return;
-    Array.prototype.forEach.call(kb.querySelectorAll(".wl-key"), function (btn) {
-      btn.addEventListener("click", function () { handleKey(btn.getAttribute("data-key")); });
+  function wireInput() {
+    var inp = document.getElementById("wlInput"); if (!inp) return;
+    // Focus immediately to bring up device keyboard
+    setTimeout(function () { inp.focus(); }, 80);
+
+    // Tap on grid also re-focuses
+    var grid = document.getElementById("wlGrid");
+    if (grid) grid.addEventListener("click", function () { inp.focus(); });
+
+    inp.addEventListener("keydown", function (e) {
+      if (S.done) return;
+      var k = e.key;
+      if (k === "Backspace") {
+        e.preventDefault();
+        S.current = S.current.slice(0, -1);
+        updateActiveTiles();
+      } else if (k === "Enter") {
+        e.preventDefault();
+        submitGuess();
+      } else if (/^[a-zA-Z]$/.test(k) && S.current.length < 5) {
+        e.preventDefault();
+        S.current += k.toUpperCase();
+        updateActiveTiles();
+      }
+      // keep input visually empty
+      inp.value = "";
+    });
+
+    inp.addEventListener("input", function () {
+      // handle mobile soft keyboard input events
+      if (S.done) { inp.value = ""; return; }
+      var val = inp.value.replace(/[^a-zA-Z]/g, "").toUpperCase();
+      inp.value = "";
+      for (var i = 0; i < val.length && S.current.length < 5; i++) {
+        S.current += val[i];
+      }
+      updateActiveTiles();
     });
   }
 
