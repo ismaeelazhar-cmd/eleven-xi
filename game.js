@@ -207,7 +207,7 @@
   var rerollsMax    = 0;       /* set at draft start */
   var rerollLog     = [];      /* [{discarded:R, kept:R|null}, …] */
   var pendingDiscard = null;   /* rating about to be burned; set just before doSpin() */
-  var boardTab = "daily";
+  var boardTab = "all";
   var boardMode = "all";
   var lastSim = null;
   var reveal = null;  // staged World Cup reveal state
@@ -1794,12 +1794,24 @@
   }
 
   function addScore(e) {
+    /* Attach formation + top 2 squad players for leaderboard display */
+    if (!e.formation && formation) e.formation = formation;
+    if (!e.players && squad && squad.length) {
+      var fwd = squad.filter(function(s){ return s.p === "FWD"; });
+      var mid = squad.filter(function(s){ return s.p === "MID"; });
+      var names = (fwd.length ? fwd : mid).slice(0, 2).map(function(s){ return s.n; });
+      if (names.length < 2) {
+        var rest = squad.filter(function(s){ return names.indexOf(s.n) === -1; });
+        names = names.concat(rest.slice(0, 2 - names.length).map(function(s){ return s.n; }));
+      }
+      e.players = names.slice(0, 2);
+    }
     var un = getUsername();
     if (!un) {
       showUsernameModal(function(name) {
         e.username = name;
         var a = loadBoard(); a.push(e); saveBoard(a);
-        renderBoard(); /* refresh if board is visible */
+        renderBoard();
       });
       return;
     }
@@ -1949,13 +1961,16 @@
            m === "euro" ? "Euros" : m === "dvc" ? "Take on the CPU" : m === "duels" ? "Duels" : "League";
   }
   function renderBoard() {
-    Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
-      b.className = "seg-opt" + (b.getAttribute("data-board") === boardTab ? " active" : "");
+    Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".lb-pill"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-board") === boardTab);
     });
     var modeTabs = document.getElementById("boardModes");
-    if (modeTabs) Array.prototype.forEach.call(modeTabs.querySelectorAll(".seg-opt"), function (b) {
-      b.className = "seg-opt" + (b.getAttribute("data-mode") === boardMode ? " active" : "");
+    if (modeTabs) Array.prototype.forEach.call(modeTabs.querySelectorAll(".lb-tab"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-mode") === boardMode);
     });
+    /* Live count — total scores today */
+    var lbCount = document.getElementById("lbLiveCount");
+    if (lbCount) { var all0 = loadBoard(), now0 = Date.now(); lbCount.textContent = all0.filter(function(e){ return sameDay(e.ts, now0); }).length; }
     var all = loadBoard(), now = Date.now();
     var myName = getUsername();
     var filtered = all.filter(function (e) {
@@ -1990,48 +2005,127 @@
       if (emptyCTA) emptyCTA.addEventListener("click", function () { newGame(); showView("setup"); });
       return;
     }
-    var showModeCol = (boardMode === "all");
-    var html = '<div class="board-list">';
-
-    top.forEach(function (e, i) {
-      var entryName = e.username || e.name;
-      var isMe = myName && entryName === myName && e === myBest;
-      html += '<div class="board-row' + (i < 3 ? " top3" : "") + (isMe ? " board-mine" : "") + '">' +
-        '<span class="brank">' + (i + 1) + '</span>' +
-        '<span class="bname">' + esc(entryName) + (isMe ? ' <span class="board-you-tag">You</span>' : '') + '</span>' +
-        '<span class="bres">' + esc(e.result || "") + (showModeCol ? " · " + modeLabel(e.mode) : "") + '</span>' +
-        '<span class="bscore">' + e.score + '</span>' +
-        '<button class="board-challenge-btn" data-mode="' + (e.mode||"wc") + '" data-score="' + e.score + '" title="Beat this score">⚔️</button>' +
-      '</div>';
-    });
-
-    /* Show user's best below the list if outside top 25 */
-    if (myBest && !myBestInTop) {
-      html += '<div class="board-my-best">' +
-        '<div class="board-row board-mine">' +
-          '<span class="brank">#' + myBestRank + '</span>' +
-          '<span class="bname">' + esc(myName) + ' <span class="board-you-tag">You</span></span>' +
-          '<span class="bres">' + esc(myBest.result || "") + (showModeCol ? " · " + modeLabel(myBest.mode) : "") + '</span>' +
-          '<span class="bscore">' + myBest.score + '</span>' +
-          '<button class="board-challenge-btn" data-mode="' + (myBest.mode||"wc") + '" data-score="' + myBest.score + '">⚔️</button>' +
-        '</div>' +
-      '</div>';
+    /* ── helpers ── */
+    function initials(name) {
+      var parts = (name || "?").trim().split(/\s+/);
+      return (parts[0][0] + (parts[1] ? parts[1][0] : parts[0][1] || "")).toUpperCase();
+    }
+    var AV_COLORS = [
+      {bg:"#1e2a1e",cl:"#4caf72"},{bg:"#1a1208",cl:"#c9a227"},{bg:"#0d1a2a",cl:"#5ba3e0"},
+      {bg:"#1a0d2a",cl:"#a07ae0"},{bg:"#2a1a00",cl:"#e09a27"},{bg:"#1a0808",cl:"#e05a5a"},
+      {bg:"#0d1f14",cl:"#6be0a0"},{bg:"#101828",cl:"#7ab8e0"}
+    ];
+    function avColor(name) {
+      var h = 0; for (var i = 0; i < (name||"").length; i++) h = (h * 31 + (name||"").charCodeAt(i)) | 0;
+      return AV_COLORS[Math.abs(h) % AV_COLORS.length];
+    }
+    function modeClass(m) {
+      return m === "wc" ? "wc" : m === "cl" ? "ucl" : m === "euro" ? "euro" : m === "league" ? "lg" :
+             m === "mp" ? "mp" : m === "dvc" ? "dvc" : "lg";
+    }
+    function modeShort(m) {
+      return m === "wc" ? "World Cup" : m === "cl" ? "UCL" : m === "euro" ? "Euros" :
+             m === "league" ? "League" : m === "mp" ? "Multi" : m === "dvc" ? "CPU" : m === "duels" ? "Duels" : "League";
+    }
+    function playerSubline(e) {
+      var parts = [];
+      if (e.formation) parts.push('<span class="lb-form">' + esc(e.formation) + '</span>');
+      if (e.players && e.players.length) parts.push(esc(e.players.join(" · ")));
+      return parts.join(" ");
     }
 
-    html += "</div>";
+    /* ── Podium (top 3) ── */
+    var podOrder = top.length >= 2 ? [top[1], top[0], top[2]] : top.slice(); // 2nd, 1st, 3rd
+    var podRanks = top.length >= 2 ? [2, 1, 3] : [1, 2, 3];
+    var podClass = ["silver", "gold", "bronze"];
+    var podHtml = '<div class="lb-section-lbl">🏆 Hall of Fame</div><div class="lb-podium-wrap"><div class="lb-podium">';
+    for (var pi = 0; pi < Math.min(podOrder.length, 3); pi++) {
+      var pe = podOrder[pi]; if (!pe) continue;
+      var pn = pe.username || pe.name;
+      var pc = avColor(pn); var pk = podClass[pi]; var pr = podRanks[pi];
+      var pav = initials(pn);
+      podHtml += '<div class="lb-pod lb-pod--' + pk + '">' +
+        '<div class="lb-pod-num lb-pod-num--' + pk + '">' + pr + '</div>' +
+        '<div class="lb-pod-av lb-pod-av--' + pk + '" style="background:' + pc.bg + ';color:' + pc.cl + '">' + pav + '</div>' +
+        '<div class="lb-pod-name">' + esc(pn) + '</div>' +
+        (pe.players && pe.players.length ? '<div class="lb-pod-stars">' + esc(pe.players.join(' · ')) + '</div>' : '') +
+        '<div class="lb-pod-pts lb-pod-pts--' + pk + '">' + pe.score + '</div>' +
+        '<div class="lb-pod-pts-lbl">points</div>' +
+        '<div><span class="lb-mode-pill lb-mode-pill--' + modeClass(pe.mode) + '">' + modeShort(pe.mode) + '</span></div>' +
+      '</div>';
+    }
+    podHtml += '</div></div>';
+
+    /* ── My position card ── */
+    var myCardHtml = "";
+    if (myBest) {
+      var mac = avColor(myName);
+      myCardHtml = '<div class="lb-section-lbl">Your position</div>' +
+        '<div class="lb-my-card">' +
+          '<div class="lb-my-left">' +
+            '<div class="lb-my-av" style="background:' + mac.bg + ';color:' + mac.cl + '">' + initials(myName) + '</div>' +
+            '<div class="lb-my-info">' +
+              '<div class="lb-my-name">' + esc(myName) + ' <span class="lb-me-tag">ME</span></div>' +
+              '<div class="lb-my-sub">' + playerSubline(myBest) + ' · ' + modeShort(myBest.mode) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="lb-my-right">' +
+            '<div class="lb-my-rank-lbl">rank</div>' +
+            '<div class="lb-my-rank">#' + myBestRank + '</div>' +
+            '<div class="lb-my-pts">' + myBest.score + ' pts</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    /* ── Table (rank 4+) ── */
+    var tableRows = top.slice(3);
+    var tableHtml = "";
+    if (tableRows.length) {
+      tableHtml = '<div class="lb-section-lbl">Full rankings</div>' +
+        '<div class="lb-tbl-head">' +
+          '<div>#</div><div>Player</div><div>Score</div><div>Result</div>' +
+        '</div>' +
+        '<div class="lb-entries">';
+      tableRows.forEach(function(e, i) {
+        var rank = i + 4;
+        var en = e.username || e.name;
+        var isMe = myName && en === myName && e === myBest;
+        var ac = avColor(en);
+        tableHtml += '<div class="lb-row' + (isMe ? " lb-row--me" : "") + '">' +
+          '<div class="lb-r-rank">' + rank + '</div>' +
+          '<div class="lb-r-player">' +
+            '<div class="lb-r-av" style="background:' + ac.bg + ';color:' + ac.cl + '">' + initials(en) + '</div>' +
+            '<div class="lb-r-info">' +
+              '<div class="lb-r-name">' + esc(en) + (isMe ? ' <span class="lb-me-tag">ME</span>' : '') + '</div>' +
+              '<div class="lb-r-sub">' + playerSubline(e) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="lb-r-score' + (isMe ? " lb-r-score--me" : "") + '">' + e.score + '</div>' +
+          '<div class="lb-r-result">' + esc(e.result || "—") + '</div>' +
+        '</div>';
+      });
+      if (!myBestInTop && myBest) {
+        var mac2 = avColor(myName);
+        tableHtml += '<div class="lb-ellipsis">· · ·</div>' +
+          '<div class="lb-row lb-row--me">' +
+            '<div class="lb-r-rank">' + myBestRank + '</div>' +
+            '<div class="lb-r-player">' +
+              '<div class="lb-r-av" style="background:' + mac2.bg + ';color:' + mac2.cl + ';border:2px solid var(--green)">' + initials(myName) + '</div>' +
+              '<div class="lb-r-info">' +
+                '<div class="lb-r-name">' + esc(myName) + ' <span class="lb-me-tag">ME</span></div>' +
+                '<div class="lb-r-sub">' + playerSubline(myBest) + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="lb-r-score lb-r-score--me">' + myBest.score + '</div>' +
+            '<div class="lb-r-result">' + esc(myBest.result || "—") + '</div>' +
+          '</div>';
+      }
+      tableHtml += '</div>';
+    }
+
+    var html = podHtml + myCardHtml + tableHtml;
     elBoardBody.innerHTML = html;
 
-    /* Wire challenge buttons */
-    Array.prototype.forEach.call(elBoardBody.querySelectorAll(".board-challenge-btn"), function(btn) {
-      btn.addEventListener("click", function() {
-        var targetScore = btn.getAttribute("data-score");
-        var mode = btn.getAttribute("data-mode") || "wc";
-        /* Show the user their challenge target, then go to setup */
-        if (window.flToast) window.flToast("Beat " + targetScore + " pts — good luck!", 3000);
-        window._challengeTarget = { score: parseInt(targetScore, 10), mode: mode };
-        setTimeout(function() { showView("home"); }, 200);
-      });
-    });
   }
 
   function whoLabel(userTeam, comp) {
@@ -2410,11 +2504,11 @@
       grid.appendChild(card);
     });
   }
-  Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".seg-opt"), function (b) {
+  Array.prototype.forEach.call(document.getElementById("boardTabs").querySelectorAll(".lb-pill"), function (b) {
     b.addEventListener("click", function () { boardTab = b.getAttribute("data-board"); renderBoard(); });
   });
   var _bm = document.getElementById("boardModes");
-  if (_bm) Array.prototype.forEach.call(_bm.querySelectorAll(".seg-opt"), function (b) {
+  if (_bm) Array.prototype.forEach.call(_bm.querySelectorAll(".lb-tab"), function (b) {
     b.addEventListener("click", function () { boardMode = b.getAttribute("data-mode"); renderBoard(); });
   });
 
