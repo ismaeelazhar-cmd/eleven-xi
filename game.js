@@ -1653,6 +1653,14 @@
     if (btmHome) btmHome.addEventListener("click", function () { showView("home"); });
     var btmBoard = document.getElementById("btmBoard");
     if (btmBoard) btmBoard.addEventListener("click", function () { renderBoard(); showView("board"); });
+    var btmShare = document.getElementById("btmShare");
+    if (btmShare) btmShare.addEventListener("click", function () {
+      var text = "⚽ Draft XI — " + teamDisplayName() + "'s " + formation + " XI\n" +
+        (window._lastResultScore ? window._lastResultScore + " pts · " : "") +
+        "Can you beat it?\n🔗 draft-11.com";
+      try { if (navigator.share) { navigator.share({ title: "Draft XI", text: text, url: "https://draft-11.com" }); return; } } catch(e) {}
+      if (navigator.clipboard) { navigator.clipboard.writeText(text); if (window.flToast) window.flToast("Link copied!", 2000); }
+    });
     var shareXIBtn = document.getElementById("shareXIBtn");
     if (shareXIBtn) shareXIBtn.addEventListener("click", function () { shareXIPNG(this); });
     var copyImgBtn = document.getElementById("copyImgBtn");
@@ -1746,6 +1754,18 @@
     '</div>';
   }
 
+  function resultBottomNav() {
+    return '<nav class="bnav result-bnav">' +
+      '<button class="bnav-pill" id="btmBoard">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg>' +
+        'Leaderboard' +
+      '</button>' +
+      '<button class="bnav-pill bnav-pill--share" id="btmShare">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>' +
+        'Share' +
+      '</button>' +
+    '</nav>';
+  }
   function scoreBannerHTML(sc, result) {
     var rows = sc.parts.map(function (p) {
       return '<div class="sb-row"><span>' + esc(p.label) + '</span><span class="' + (p.value < 0 ? "neg" : "pos") + '">' +
@@ -2342,7 +2362,7 @@
         html += '<div class="journey">' + r.koMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
       }
       html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
-      html += '<div class="result-bottom-cta"><button class="btn-ghost" id="btmGoHome">← Home</button><button class="btn-ghost" id="btmBoard">Leaderboards</button></div>';
+      html += resultBottomNav();
     }
     elResultsBody.innerHTML = html;
     var skip = document.getElementById("skipReveal");
@@ -2393,7 +2413,7 @@
       html += dailyCTAHTML();
       html += '<div class="result-under-summary"><button class="btn-ghost" id="boardBtn">Leaderboards</button></div>';
       html += '<h3 class="sec">Final ' + lg.table.length + '-team table</h3>' + leagueTableHTML(lg);
-      html += '<div class="result-bottom-cta"><button class="btn-ghost" id="btmGoHome">← Home</button><button class="btn-ghost" id="btmBoard">Leaderboards</button></div>';
+      html += resultBottomNav();
     }
     elResultsBody.innerHTML = html;
     var skip = document.getElementById("skipReveal");

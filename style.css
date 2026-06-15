@@ -989,6 +989,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 
 /* Bottom CTA: Home left, Leaderboards right */
 .result-bottom-cta { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 2.5rem; padding-bottom: 3rem; }
+.result-bnav { margin-top: 2rem; margin-bottom: 1rem; }
 
 /* ===== Leaderboards ===== */
 /* ===== LEADERBOARD (new design) ===== */
@@ -6125,42 +6126,32 @@ body.light .mn-line { border-left-color: rgba(0,0,0,0.1); }
   /* ── Bottom nav ── */
   .bnav {
     display: flex;
-    position: fixed; bottom: 0; left: 0; right: 0;
-    z-index: 500;
-    background: transparent;
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
     gap: 10px;
-    pointer-events: none;
+    margin-top: auto;
   }
   .bnav-pill {
-    pointer-events: all;
     flex: 1;
     display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px;
-    background: rgba(14,14,24,0.88);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: var(--card);
+    border: 1px solid var(--line);
     border-radius: 999px;
     cursor: pointer;
     color: rgba(255,255,255,0.65);
     padding: 13px 0;
     font-size: 13px; font-weight: 700; letter-spacing: 0.01em;
     font-family: inherit;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.45);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
   .bnav-pill svg { width: 18px; height: 18px; flex-shrink: 0; }
-  .bnav-pill:active { background: rgba(20,20,36,0.96); }
+  .bnav-pill:active { background: var(--card2); }
   .bnav-pill--share {
     background: rgba(0,187,127,0.12);
     border-color: rgba(0,187,127,0.28);
     color: var(--green2);
   }
   .bnav-pill--share:active { background: rgba(0,187,127,0.22); }
-
-  /* Body padding so content clears the nav */
-  body { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
   /* Hide old back/home buttons — nav replaces them */
   .back,
