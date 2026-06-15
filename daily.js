@@ -69,8 +69,8 @@
   }
   function dailyWord() {
     var day = wordleDay();
-    /* Rotate lengths: 5 → 6 → 7 → 5 … */
-    var len = [5, 6, 7][((day.idx % 3) + 3) % 3];
+    /* Alternate: 5 → 6 → 5 → 6 … */
+    var len = day.idx % 2 === 0 ? 5 : 6;
     var pool = BY_LEN[len];
     if (!pool || !pool.length) { pool = BY_LEN[5]; len = 5; }
     return pool[djb2(day.str) % pool.length];
