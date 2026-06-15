@@ -1859,6 +1859,8 @@
     }
     e.username = un;
     var a = loadBoard(); a.push(e); saveBoard(a);
+    /* Global play counter — fire-and-forget */
+    try { fetch("https://api.counterapi.dev/v1/draft11/plays/up").catch(function(){}); } catch(_){}
   }
   function sameDay(a, b) { return new Date(a).toDateString() === new Date(b).toDateString(); }
 
@@ -2013,6 +2015,14 @@
     /* Live count — total scores today */
     var lbCount = document.getElementById("lbLiveCount");
     if (lbCount) { var all0 = loadBoard(), now0 = Date.now(); lbCount.textContent = all0.filter(function(e){ return sameDay(e.ts, now0); }).length; }
+    /* Global all-time play count */
+    var lbTotal = document.getElementById("lbTotalCount");
+    if (lbTotal) {
+      fetch("https://api.counterapi.dev/v1/draft11/plays")
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (lbTotal && d.count) lbTotal.textContent = Number(d.count).toLocaleString(); })
+        .catch(function(){});
+    }
     var all = loadBoard(), now = Date.now();
     var myName = getUsername();
     var filtered = all.filter(function (e) {
