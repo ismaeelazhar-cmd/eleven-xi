@@ -89,7 +89,11 @@
     var dvcBtn = document.getElementById("homeDVC");
     if (dvcBtn) {
       dvcBtn.addEventListener("click", function () {
-        if (typeof window.startDraftVsComputer === "function") window.startDraftVsComputer();
+        if (typeof window.showModePreview === "function") {
+          window.showModePreview("dvc", function(){ if (typeof window.startDraftVsComputer === "function") window.startDraftVsComputer(); });
+        } else if (typeof window.startDraftVsComputer === "function") {
+          window.startDraftVsComputer();
+        }
       });
     }
 

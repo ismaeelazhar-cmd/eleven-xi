@@ -133,20 +133,27 @@
   window.WCXI_addScore = function (e) { try { addScore(e); _trackProgress(e); } catch (err) {} };
   window.WCXI_shareXIPNG = function(btn) { shareXIPNG(btn); };
   window.WCXI_copyXIPNG  = function(btn) { copyXIPNG(btn); };
+  window.showModePreview = showModePreview;
 
   /* ── Progression system ───────────────────────────────────────────── */
   var PROG_KEY = "wcxi_progress";
   var PROG_MILESTONES = [
-    { id:"first_game",   check:function(p){ return p.gamesPlayed >= 1;  }, msg:"First game played!" },
-    { id:"first_win",    check:function(p){ return p.wins >= 1;          }, msg:"First win!" },
-    { id:"win_5",        check:function(p){ return p.wins >= 5;          }, msg:"5 wins — you're on a roll!" },
-    { id:"win_10",       check:function(p){ return p.wins >= 10;         }, msg:"10 wins — you're a manager now!" },
-    { id:"win_25",       check:function(p){ return p.wins >= 25;         }, msg:"25 wins — legendary form!" },
-    { id:"streak_3",     check:function(p){ return p.bestStreak >= 3;    }, msg:"3-win streak — on fire!" },
-    { id:"streak_5",     check:function(p){ return p.bestStreak >= 5;    }, msg:"5-win streak — unstoppable!" },
-    { id:"games_10",     check:function(p){ return p.gamesPlayed >= 10;  }, msg:"10 games played" },
-    { id:"games_50",     check:function(p){ return p.gamesPlayed >= 50;  }, msg:"50 games — true fan" },
-    { id:"games_100",    check:function(p){ return p.gamesPlayed >= 100; }, msg:"100 games — all-timer!" }
+    { id:"first_game",   check:function(p){ return p.gamesPlayed >= 1;  }, msg:"🎮 First game played!", badge:"Beginner" },
+    { id:"first_win",    check:function(p){ return p.wins >= 1;          }, msg:"🏆 First win!", badge:"Winner" },
+    { id:"win_5",        check:function(p){ return p.wins >= 5;          }, msg:"🔥 5 wins — you're on a roll!", badge:"On Fire" },
+    { id:"win_10",       check:function(p){ return p.wins >= 10;         }, msg:"⭐ 10 wins — you're a manager now!", badge:"Manager" },
+    { id:"win_25",       check:function(p){ return p.wins >= 25;         }, msg:"🌟 25 wins — legendary form!", badge:"Legend" },
+    { id:"streak_3",     check:function(p){ return p.bestStreak >= 3;    }, msg:"⚡ 3-win streak — on fire!", badge:"Hot Streak" },
+    { id:"streak_5",     check:function(p){ return p.bestStreak >= 5;    }, msg:"💥 5-win streak — unstoppable!", badge:"Unstoppable" },
+    { id:"streak_10",    check:function(p){ return p.bestStreak >= 10;   }, msg:"🚀 10-win streak — all-time great!", badge:"All-Time Great" },
+    { id:"games_10",     check:function(p){ return p.gamesPlayed >= 10;  }, msg:"🎯 10 games played", badge:"Regular" },
+    { id:"games_50",     check:function(p){ return p.gamesPlayed >= 50;  }, msg:"👏 50 games — true fan", badge:"True Fan" },
+    { id:"games_100",    check:function(p){ return p.gamesPlayed >= 100; }, msg:"🏅 100 games — all-timer!", badge:"All-Timer" },
+    { id:"wc_champion",  check:function(p){ return p.wcWins >= 1;        }, msg:"🏆 World Cup Winner!", badge:"World Champion" },
+    { id:"cl_champion",  check:function(p){ return p.clWins >= 1;        }, msg:"⭐ Champions League Winner!", badge:"UCL Champion" },
+    { id:"nations_5",    check:function(p){ return (p.nationsUsed||0) >= 5;  }, msg:"🌍 5 nations drafted — going global!", badge:"Globetrotter" },
+    { id:"nations_10",   check:function(p){ return (p.nationsUsed||0) >= 10; }, msg:"🌎 10 nations drafted — true worldie!", badge:"Worldie" },
+    { id:"perfect",      check:function(p){ return p.perfectGames >= 1;  }, msg:"💎 Perfect game — unbeaten run!", badge:"Perfectionist" }
   ];
   function _loadProgress(){
     try{ return JSON.parse(localStorage.getItem(PROG_KEY)||"{}"); }catch(e){ return {}; }
@@ -160,19 +167,30 @@
     if(typeof p.wins !== "number") p.wins = 0;
     if(typeof p.currentStreak !== "number") p.currentStreak = 0;
     if(typeof p.bestStreak !== "number") p.bestStreak = 0;
+    if(typeof p.wcWins !== "number") p.wcWins = 0;
+    if(typeof p.clWins !== "number") p.clWins = 0;
+    if(typeof p.perfectGames !== "number") p.perfectGames = 0;
     if(!p.milestones) p.milestones = {};
+    if(!p.nationsSet) p.nationsSet = {};
     p.gamesPlayed++;
-    /* Detect a win: score > 0 and result doesn't include "Relegated" or "Bottom" */
+    /* Track nations used */
+    squad.forEach(function(s){ if(s.country) p.nationsSet[s.country] = 1; });
+    p.nationsUsed = Object.keys(p.nationsSet).length;
+    /* Detect a win */
     var isWin = (e.score && e.score > 0) && !/relegate|bottom|last/i.test(e.result||"");
+    var isChamp = isWin && /champion|winner|1st|win/i.test(e.result||"");
+    var isPerfect = isChamp && e.score >= 2000;
     if(isWin){ p.wins++; p.currentStreak++; if(p.currentStreak > p.bestStreak) p.bestStreak = p.currentStreak; }
     else { p.currentStreak = 0; }
+    if(isChamp){ if(e.mode==="wc"||e.mode==="euro") p.wcWins++; if(e.mode==="cl") p.clWins++; }
+    if(isPerfect) p.perfectGames++;
     _saveProgress(p);
     /* Check milestones */
     PROG_MILESTONES.forEach(function(m){
       if(!p.milestones[m.id] && m.check(p)){
         p.milestones[m.id] = Date.now();
         _saveProgress(p);
-        setTimeout(function(){ if(typeof W.flToast==="function") W.flToast(m.msg, 3000); }, 600);
+        setTimeout(function(){ if(typeof W.flToast==="function") W.flToast(m.msg, 4000); }, 600);
       }
     });
   }
@@ -412,9 +430,12 @@
     function cell(c) {
       if (c.pick) {
         var tier = ratingTierClass(c.pick.r);
+        var lastName = c.pick.n.split(" ").slice(-1)[0];
+        if (lastName.length > 8) lastName = lastName.slice(0, 7) + ".";
         return '<div class="pdot filled ' + c.line + tier + '">' +
-          '<span class="dot-init">' + (c.pick.r ? c.pick.r : esc(initials(c.pick.n))) +
-          '</span><span class="dot-name">' + esc(shortName(c.pick.n)) + "</span></div>";
+          '<span class="dot-name">' + esc(lastName) + '</span>' +
+          '<span class="dot-rating">' + (c.pick.r || "") + '</span>' +
+          '</div>';
       }
       return '<div class="pdot ' + c.line + '"><span class="dot-pos">' + c.pos + "</span></div>";
     }
@@ -1112,7 +1133,14 @@
     $("goWorldCup").textContent = euro ? "Euro Championship with my XI" : "World Cup with my XI";
     $("goCL").disabled     = !full;   $("goCL").hidden       = !full || !cl;
     $("shareBtn").disabled = squad.length < 1;
-    $("autoFillBtn").disabled = full;
+    /* Auto-fill is a last-resort fallback — only show when rerolls are gone and XI isn't full */
+    var autoFillBtn = $("autoFillBtn");
+    if (autoFillBtn) {
+      var showAutoFill = !full && rerollsLeft === 0 && squad.length > 0;
+      autoFillBtn.style.display = showAutoFill ? "inline-flex" : "none";
+      autoFillBtn.removeAttribute("aria-hidden");
+      autoFillBtn.textContent = "Auto-fill remaining slots";
+    }
     elDone.style.display = full ? "block" : "none";
     if (full) {
       elDone.innerHTML = '<span class="done-main">Full ' + formation + ' XI — choose a competition below.</span>' +
@@ -1304,6 +1332,88 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { elHint.textContent = "Copied your XI to the clipboard!"; }, function () { window.prompt("Your XI:", text); });
     } else window.prompt("Your XI:", text);
+  }
+
+  /* ── Mode preview modal (#12) ───────────────────────────────────────── */
+  var MODE_INFO = {
+    wc: {
+      icon: "🏆",
+      name: "World Cup",
+      tagline: "93 nations · 1950–2026",
+      desc: "Draft your XI from any World Cup squad in history, then simulate the tournament. Group stage, knockout rounds, glory.",
+      example: "Brazil 2002 · Ronaldo leads your attack · World Cup Champions",
+      stats: ["93 nations", "76 years", "Up to 2,500 pts"]
+    },
+    cl: {
+      icon: "⭐",
+      name: "Champions League",
+      tagline: "153 clubs · 768 seasons",
+      desc: "Draft from the greatest club seasons in European history. Navigate the Swiss system or groups, then knockout rounds to the final.",
+      example: "Barcelona 2009 · Messi, Xavi, Iniesta · UCL Champions",
+      stats: ["153 clubs", "768 seasons", "Up to 2,200 pts"]
+    },
+    euro: {
+      icon: "🛡️",
+      name: "Euros",
+      tagline: "1980–2024 · 12 tournaments",
+      desc: "Build your XI from 12 European Championship squads. Groups, quarters, semis, final — can you win it?",
+      example: "France 2000 · Zidane at his peak · European Champions",
+      stats: ["24 nations", "12 editions", "Up to 1,800 pts"]
+    },
+    dvc: {
+      icon: "🖥️",
+      name: "Take on the CPU",
+      tagline: "Alternating draft · outsmart the algorithm",
+      desc: "You and the CPU take turns picking players. Spot the best player on each spin before the algorithm does. Head-to-head simulation.",
+      example: "You draft Ronaldo · CPU grabs Maldini · Your XI wins 2–1",
+      stats: ["1v1 draft", "Head-to-head", "Tactical depth"]
+    },
+    mp: {
+      icon: "👥",
+      name: "Draft Night",
+      tagline: "2–8 players · online",
+      desc: "Invite friends for a live draft session. Each player spins, picks, and builds their XI. Then simulate all matches to crown a winner.",
+      example: "4 players · 2026 World Cup squads only · Live final",
+      stats: ["2–8 players", "Live draft", "Tournament format"]
+    },
+    league: {
+      icon: "🏅",
+      name: "League Season",
+      tagline: "La Liga · Serie A · Bundesliga · Ligue 1",
+      desc: "Draft from a full domestic league and play a complete season. 38 matchdays, a full table, and a title to fight for.",
+      example: "La Liga · Your XI tops the table · Season champions",
+      stats: ["4 leagues", "38 matchdays", "Full table"]
+    }
+  };
+
+  function showModePreview(modeKey, onConfirm) {
+    var info = MODE_INFO[modeKey];
+    if (!info) { onConfirm(); return; }
+    var existing = document.getElementById("modePreviewModal");
+    if (existing) existing.remove();
+    var modal = document.createElement("div");
+    modal.id = "modePreviewModal";
+    modal.className = "mp-modal-overlay";
+    modal.innerHTML =
+      '<div class="mp-modal">' +
+        '<button class="mp-modal-close" id="mpModalClose">✕</button>' +
+        '<div class="mp-modal-icon">' + info.icon + '</div>' +
+        '<div class="mp-modal-name">' + esc(info.name) + '</div>' +
+        '<div class="mp-modal-tag">' + esc(info.tagline) + '</div>' +
+        '<p class="mp-modal-desc">' + esc(info.desc) + '</p>' +
+        '<div class="mp-modal-example">' +
+          '<span class="mp-modal-ex-label">Example outcome</span>' +
+          '<span class="mp-modal-ex-text">' + esc(info.example) + '</span>' +
+        '</div>' +
+        '<div class="mp-modal-stats">' +
+          info.stats.map(function(s){ return '<div class="mp-modal-stat">' + esc(s) + '</div>'; }).join("") +
+        '</div>' +
+        '<button class="btn-accent mp-modal-cta" id="mpModalPlay">Play ' + esc(info.name) + ' →</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    document.getElementById("mpModalClose").addEventListener("click", function(){ modal.remove(); });
+    document.getElementById("mpModalPlay").addEventListener("click", function(){ modal.remove(); onConfirm(); });
+    modal.addEventListener("click", function(e){ if (e.target === modal) modal.remove(); });
   }
 
   function renderClFormat() {
@@ -1794,45 +1904,69 @@
     var allRows = [a.gk].concat(a.lines);
     var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     var now = new Date(), dateStr = months[now.getMonth()] + " " + now.getDate();
-    var isChamp = resultLabel && (resultLabel.indexOf("Champions") !== -1 || resultLabel.indexOf("1st") !== -1);
+    var isChamp = resultLabel && (resultLabel.indexOf("Champions") !== -1 || resultLabel.indexOf("1st") !== -1 || /winner|champion/i.test(resultLabel));
+    /* Key players — top 3 by rating */
+    var allPlayers = [];
+    allRows.forEach(function(row){ row.forEach(function(c){ if(c.pick) allPlayers.push(c.pick); }); });
+    allPlayers.sort(function(a,b){ return (b.r||0)-(a.r||0); });
+    var keyPlayers = allPlayers.slice(0, 3);
+    var keyPlayersHTML = keyPlayers.map(function(pl){
+      var lastName = pl.n.split(" ").slice(-1)[0];
+      var tier = pl.r >= 97 ? "goat" : pl.r >= 93 ? "elite" : pl.r >= 88 ? "great" : "good";
+      return '<div class="sc-key-player sc-kp-' + tier + '">' +
+        '<span class="sc-kp-r">' + pl.r + '</span>' +
+        '<span class="sc-kp-n">' + esc(lastName) + '</span>' +
+        '<span class="sc-kp-era">' + esc(pl.country + " '" + String(pl.year||"").slice(-2)) + '</span>' +
+      '</div>';
+    }).join("");
     var gridRows = allRows.map(function(row) {
       return '<div class="f-row">' + row.map(function(cell) {
         var pick = cell && cell.pick;
         var isGK = cell && cell.pos === "GK";
-        var isGoat = pick && pick.r >= 98;
-        var isElite = pick && pick.r >= 94 && pick.r < 98;
+        var isGoat = pick && pick.r >= 97;
+        var isElite = pick && pick.r >= 93 && pick.r < 97;
         var cls = "f-player" +
           (isGK ? " gk" : "") +
           (isGoat ? " goat" : isElite ? " elite" : "");
         var lastName = pick ? pick.n.split(" ").slice(-1)[0] : "—";
         if (lastName.length > 9) lastName = lastName.slice(0, 8) + ".";
-        var flagYear = pick ? (pick.country + " '" + String(pick.year || "").slice(-2)) : "";
+        var ratingStr = pick ? pick.r : "";
         return '<div class="' + cls + '">' +
-          '<div class="f-rating">' + (pick ? pick.r : "") + '</div>' +
           '<div class="f-name">' + esc(lastName) + '</div>' +
-          '<div class="f-year">' + esc(flagYear) + '</div>' +
+          '<div class="f-rating">' + ratingStr + '</div>' +
           '</div>';
       }).join("") + '</div>';
     }).join("");
     var mgr = currentManager();
-    var mgrTxt = managerId !== "none" ? " · " + esc(mgr.name) : "";
+    var mgrTxt = managerId !== "none" ? mgr.name : "";
     var scoreVal = sc ? sc.score : 0;
     return '<div class="sc-card-label">📤 Your result — tap to share</div>' +
     '<div class="share-card' + (isChamp ? " share-card--champ" : "") + '" id="shareCard">' +
       '<div class="sc-header">' +
-        '<div class="sc-logo">⚽ DRAFT XI</div>' +
-        '<div class="sc-date">' + esc(dateStr) + ' · ' + esc(competitionLabel) + '</div>' +
+        '<div class="sc-logo-mark">⚽</div>' +
+        '<div class="sc-header-text">' +
+          '<div class="sc-logo">DRAFT XI</div>' +
+          '<div class="sc-date">' + esc(competitionLabel) + ' · ' + esc(dateStr) + '</div>' +
+        '</div>' +
+        (isChamp ? '<div class="sc-champ-crown">🏆</div>' : '') +
       '</div>' +
-      '<div class="sc-title">' + esc(teamDisplayName()) + '\'s XI</div>' +
-      '<div class="sc-sub">' + esc(formation) + mgrTxt + '</div>' +
+      '<div class="sc-title">' + esc(teamDisplayName()) + '</div>' +
+      '<div class="sc-sub">' + esc(formation) + (mgrTxt ? ' · ' + esc(mgrTxt) : '') + '</div>' +
+      '<div class="sc-key-players">' + keyPlayersHTML + '</div>' +
       '<div class="formation-grid">' + gridRows + '</div>' +
       '<div class="sc-result">' +
-        '<div><div class="sc-rt">Result</div><div class="sc-rv' + (isChamp ? " sc-rv--champ" : "") + '">' + esc(resultLabel) + '</div></div>' +
-        '<div style="text-align:right"><div class="sc-rt">Score</div><div class="sc-rrank">' + scoreVal + ' pts</div></div>' +
+        '<div class="sc-result-left">' +
+          '<div class="sc-rt">Result</div>' +
+          '<div class="sc-rv' + (isChamp ? " sc-rv--champ" : "") + '">' + esc(resultLabel) + '</div>' +
+        '</div>' +
+        '<div class="sc-result-right">' +
+          '<div class="sc-rt">Score</div>' +
+          '<div class="sc-rrank">' + scoreVal + '<span class="sc-pts-label"> pts</span></div>' +
+        '</div>' +
       '</div>' +
       '<div class="sc-share-row">' +
-        '<button class="sc-btn sc-btn-primary" id="shareXIBtn">Share ↗</button>' +
-        '<button class="sc-btn sc-btn-sec" id="copyImgBtn">Save image</button>' +
+        '<button class="sc-btn sc-btn-primary" id="shareXIBtn">📤 Share</button>' +
+        '<button class="sc-btn sc-btn-sec" id="copyImgBtn">💾 Save</button>' +
         '<button class="sc-btn sc-btn-sec" id="btmNewGame">New game</button>' +
       '</div>' +
       '<div class="sc-url">draft-11.com</div>' +
@@ -2522,10 +2656,10 @@
   // ================= WIRING =================
   elTeamName.addEventListener("input", function () { teamName = elTeamName.value; paintPitches(); renderXI(); });
   // Dark mode only — no theme toggle
-  $("homeWC").addEventListener("click", function () { setMode("wc"); });
-  $("homeCL").addEventListener("click", function () { setMode("cl"); });
+  $("homeWC").addEventListener("click", function () { showModePreview("wc", function(){ setMode("wc"); }); });
+  $("homeCL").addEventListener("click", function () { showModePreview("cl", function(){ setMode("cl"); }); });
   var _euroBtn = document.getElementById("homeEuro");
-  if (_euroBtn) _euroBtn.addEventListener("click", function () { setMode("euro"); });
+  if (_euroBtn) _euroBtn.addEventListener("click", function () { showModePreview("euro", function(){ setMode("euro"); }); });
   $("homeBoard").addEventListener("click", function () { renderBoard(); showView("board"); });
   $("goCL").addEventListener("click", function () { if (squad.length === XI_SIZE) runCLSim(clFormat); });
   $("setupBack").addEventListener("click", function () { showView("home"); });
