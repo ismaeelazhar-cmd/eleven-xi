@@ -1684,12 +1684,20 @@ body.light .lg-cup-result.L { background: rgba(255,122,89,.07); }
 }
 .reel--settled { animation: reelSettle 0.95s cubic-bezier(.15,.08,.12,1) both; }
 
+/* Bigger flourish on the whole machine when both reels lock in — the payoff beat */
+@keyframes machineLockIn {
+  0%   { box-shadow: none; transform: scale(1); }
+  20%  { box-shadow: 0 0 0 2px var(--gold), 0 0 52px rgba(245,180,60,.6); transform: scale(1.014); }
+  100% { box-shadow: none; transform: scale(1); }
+}
+.machine--lockin { animation: machineLockIn 0.7s cubic-bezier(.15,.08,.12,1) both; }
+
 /* ── Reduced-motion: strip all extras cleanly ── */
 @media (prefers-reduced-motion: reduce) {
   .fl-mode, .setup, .machine, .squad-card, .xi, .stat-grid,
   .lgr2-ptable, .lgr2-xi, .lgr2-break, .lgr2-narr, .lgr2-card,
   .score-banner, #setupView, #draftView, #resultsView, #leagueView, #boardView,
-  .pdot.filled, .reel--settled { animation: none !important; }
+  .pdot.filled, .reel--settled, .machine--lockin { animation: none !important; }
 }
 
 /* ── DvC tile grid (kept, not duplicate) ── */

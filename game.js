@@ -800,7 +800,6 @@
 
   function doSpin() {
     if (spinning) return;
-    if (window.sfx) window.sfx.spin();
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
     var pairs = poolPairs();
@@ -822,11 +821,28 @@
     current = { country: pick.c, year: pick.y };
     var pc = pairs.map(function (p) { return p.c; }), py = pairs.map(function (p) { return p.y; });
     elSpin.textContent = "SPINNING…";
-    /* Country settles first, then year snaps in — creates a two-beat reveal */
-    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), 1050);
-    var p2 = spinReel(elYearStrip,   function () { return yearItemHTML(rand(py)); },   yearItemHTML(pick.y),   1350);
-    p1.then(function () { elSpin.textContent = pick.c + "…"; });
-    Promise.all([p1, p2]).then(function () { spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = ""; renderSquadPicker(); if (window.GAFFER_OB) window.GAFFER_OB.afterSpin(); });
+    /* Country settles first, then year snaps in — creates a two-beat reveal.
+       Durations stretched slightly for more anticipation; a decelerating
+       tick sequence (matching the visual slowdown) plays underneath. */
+    var COUNTRY_MS = 1200, YEAR_MS = 1700;
+    if (window.sfx) window.sfx.spinSequence(YEAR_MS);
+    var p1 = spinReel(elCountryStrip, function () { return countryItemHTML(rand(pc)); }, countryItemHTML(pick.c), COUNTRY_MS);
+    var p2 = spinReel(elYearStrip,   function () { return yearItemHTML(rand(py)); },   yearItemHTML(pick.y),   YEAR_MS);
+    p1.then(function () {
+      elSpin.textContent = pick.c + "…";
+      if (window.sfx) window.sfx.reveal();
+    });
+    Promise.all([p1, p2]).then(function () {
+      spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = "";
+      if (window.sfx) window.sfx.lockIn();
+      var machineEl = elSpin.closest(".machine");
+      if (machineEl) {
+        machineEl.classList.add("machine--lockin");
+        setTimeout(function () { machineEl.classList.remove("machine--lockin"); }, 700);
+      }
+      renderSquadPicker();
+      if (window.GAFFER_OB) window.GAFFER_OB.afterSpin();
+    });
   }
 
   function ratingBadge(p) { return showRatings ? '<span class="mp-r-badge' + ratingTierClass(p.r) + '">' + p.r + '</span>' : ""; }
