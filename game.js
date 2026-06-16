@@ -927,7 +927,7 @@
         var noSlot = open.length === 0;
         if (!isTaken && !noSlot) draftable++;
         var isGoat = !isTaken && pl.n === goatName;
-        var cls = "player" + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "") + (isGoat ? " goat-player" : "");
+        var cls = "player" + ratingTierClass(pl.r) + (isTaken ? " taken" : "") + (noSlot && !isTaken ? " noslot" : "") + (isGoat ? " goat-player" : "");
         var gps = gpOf(pl), posTag = gps ? gps.join("/") : pl.p, lineCls = gps ? LINE_OF[gps[0]] : pl.p;
         var flavour = (!isTaken && !noSlot) ? playerFlavour(lineCls, pl.r || 75) : "";
         inner += '<div class="' + cls + '" data-name="' + esc(pl.n) + '">' +
@@ -1090,7 +1090,7 @@
       html += '<div class="line-label">' + g.label + "</div>";
       g.cells.forEach(function (c) {
         if (c.pick) {
-          html += '<div class="xi-row"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
+          html += '<div class="xi-row' + ratingTierClass(c.pick.r) + '"><span class="pos ' + c.line + '">' + c.pos + "</span>" +
             '<span class="info"><span class="pn">' + esc(c.pick.n) + (showRatings ? ' <span class="xi-rate' + ratingTierClass(c.pick.r) + '">' + c.pick.r + "</span>" : "") +
             '</span><span class="meta">' + c.pick.country + " &middot; " + c.pick.year +
             '</span></span></div>';
@@ -1422,19 +1422,65 @@
     html += '<h3 class="sec">Group stage</h3>' + renderGroups(result.groups);
     return html;
   }
-  function scorerLines(events) {
-    if (!events || !events.length) return "";
-    return '<div class="mscorers">' + events.map(function (e) {
-      return '<span class="goal">' + esc(e.scorer) + (e.assist ? ' <span class="assist">↳ ' + esc(e.assist) + "</span>" : "") + "</span>";
+  /* Build 3–5 named story events per match: goals (real scorer/assist data),
+     a save credited to the keeper on clean sheets, a concede beat when scored
+     against, and near-miss filler using real squad names so every match has
+     a minimum of 3 beats even on quiet 0-0s. Surfaced during the match reveal
+     sequence (revealListHTML/koRevealListHTML), not just after the fact. */
+  function matchStoryEvents(m, userTeam) {
+    var keeper = null, others = [];
+    (userTeam && userTeam.players || []).forEach(function (p) {
+      if (p.p === "GK") { if (!keeper || (p.r || 0) > (keeper.r || 0)) keeper = p; }
+      else others.push(p);
+    });
+    var usedMin = {};
+    function uniqMin(base) { var v = Math.min(90, base); while (usedMin[v]) v = Math.min(90, v + 1); usedMin[v] = true; return v; }
+    var events = [];
+
+    (m.events || []).forEach(function (e) {
+      if (!e.scorer || e.scorer === "—") return;
+      events.push({
+        min: uniqMin(6 + Math.floor(Math.random() * 82)), icon: "⚽",
+        text: e.assist ? (esc(e.scorer) + " strikes — teed up by " + esc(e.assist) + "!") : (esc(e.scorer) + " finds the net!")
+      });
+    });
+    if (m.cleanSheet && keeper) {
+      events.push({ min: uniqMin(66 + Math.floor(Math.random() * 22)), icon: "🧤", text: esc(keeper.n) + " produces a brilliant save to keep them out." });
+    }
+    if (m.ga > 0) {
+      var concedeFlavor = ["find a way through", "punish a rare lapse at the back", "break the deadlock against the run of play"];
+      events.push({ min: uniqMin(10 + Math.floor(Math.random() * 75)), icon: "⚠️", text: esc(m.opp.name) + " " + pick(concedeFlavor, m.ga + (m.gf || 0)) + "." });
+    }
+    var fillerVerbs = ["drags an effort just wide", "rattles the crossbar", "is denied by a last-ditch block", "fires over from a tight angle"];
+    var fi = 0;
+    while (events.length < 3 && others.length && fi < 6) {
+      var p = others[fi % others.length]; fi++;
+      events.push({ min: uniqMin(20 + Math.floor(Math.random() * 60)), icon: "💫", text: esc(p.n) + " " + pick(fillerVerbs, fi) + "." });
+    }
+    if (events.length < 5) {
+      var marginAbs = Math.abs(m.gf - m.ga);
+      var closingPool = marginAbs >= 3 ? ["Game won by the hour mark — men against boys."]
+        : marginAbs === 0 ? ["End-to-end right to the final whistle."]
+        : ["Nervy closing stages as the clock ticks down."];
+      events.push({ min: uniqMin(88 + Math.floor(Math.random() * 3)), icon: "🔥", text: pick(closingPool, m.gf + m.ga + 1) });
+    }
+    events.sort(function (a, b) { return a.min - b.min; });
+    return events.slice(0, 5);
+  }
+  function matchStoryHTML(m, userTeam) {
+    var evs = matchStoryEvents(m, userTeam);
+    if (!evs.length) return "";
+    return '<div class="mstory">' + evs.map(function (e) {
+      return '<div class="mstory-row"><span class="mstory-min">' + e.min + "&prime;</span><span class=\"mstory-ico\">" + e.icon + "</span><span class=\"mstory-txt\">" + e.text + "</span></div>";
     }).join("") + "</div>";
   }
-  function matchCardHTML(m, teamName) {
+  function matchCardHTML(m, teamName, userTeam) {
     var pens = m.pens ? ' <span class="pens">(pens ' + m.pens[0] + "–" + m.pens[1] + ")</span>" : "";
     return '<div class="mcard ' + m.result + '"><div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
       '<span class="pill ' + m.result + '">' + m.result + "</span></div>" +
       '<div class="mscore"><span class="me">' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
       '<span class="oppname">' + esc(m.opp.name) + "</span>" + pens + "</div>" +
-      scorerLines(m.events) + (m.cleanSheet ? '<div class="mclean">Clean sheet</div>' : "") + "</div>";
+      matchStoryHTML(m, userTeam) + (m.cleanSheet ? '<div class="mclean">Clean sheet</div>' : "") + "</div>";
   }
   function statRows(list, key, max) {
     if (!list.length) return '<div class="stat-empty">—</div>';
@@ -2279,9 +2325,9 @@
       revealTimer = setTimeout(function () { state.shown++; rerender(); }, delay);
     }
   }
-  function revealListHTML(matches, shown, teamName) {
+  function revealListHTML(matches, shown, teamName, userTeam) {
     var html = '<div class="journey">';
-    for (var i = 0; i < shown && i < matches.length; i++) html += matchCardHTML(matches[i], teamName);
+    for (var i = 0; i < shown && i < matches.length; i++) html += matchCardHTML(matches[i], teamName, userTeam);
     return html + "</div>";
   }
   function skipBarHTML(shown, total) {
@@ -2303,10 +2349,10 @@
     if (!rows) return "";
     return '<div class="ko-all-h">Other ' + esc(roundName) + " results</div><div class=\"ko-results\">" + rows + "</div>";
   }
-  function koRevealListHTML(wc, km, shown) {
+  function koRevealListHTML(wc, km, shown, userTeam) {
     var html = '<div class="journey">';
     for (var i = 0; i < shown && i < km.length; i++) {
-      html += '<div class="ko-round-block">' + matchCardHTML(km[i], wc.teamName) + roundOthersHTML(wc, km[i].round) + "</div>";
+      html += '<div class="ko-round-block">' + matchCardHTML(km[i], wc.teamName, userTeam) + roundOthersHTML(wc, km[i].round) + "</div>";
     }
     return html + "</div>";
   }
@@ -2359,9 +2405,9 @@
       var gm = r.groupMatches;
       html += '<div class="stage-badge">Part 1 · ' + phase + "</div>";
       if (r.shown < gm.length) {
-        html += skipBarHTML(r.shown, gm.length) + revealListHTML(gm, r.shown, wc.teamName);
+        html += skipBarHTML(r.shown, gm.length) + revealListHTML(gm, r.shown, wc.teamName, r.userTeam);
       } else {
-        html += revealListHTML(gm, gm.length, wc.teamName);
+        html += revealListHTML(gm, gm.length, wc.teamName, r.userTeam);
         if (wc.groups) {
           var ug = null;
           wc.groups.forEach(function (g) { if (g.table.some(function (row) { return row.team.isUser; })) ug = g; });
@@ -2375,9 +2421,9 @@
       if (!km.length) { r.stage = "result"; renderWCStage(); return; }
       html += '<div class="stage-badge">Part 2 · Knockouts</div>';
       if (r.shown < km.length) {
-        html += skipBarHTML(r.shown, km.length) + koRevealListHTML(wc, km, r.shown);
+        html += skipBarHTML(r.shown, km.length) + koRevealListHTML(wc, km, r.shown, r.userTeam);
       } else {
-        html += koRevealListHTML(wc, km, km.length);
+        html += koRevealListHTML(wc, km, km.length, r.userTeam);
         html += '<div class="reveal-bar"><button class="start-btn" id="toResult">See your result →</button></div>';
       }
     } else {
@@ -2397,7 +2443,7 @@
       var gPhase = r.phaseLabel || "Group stage";
       if (r.groupMatches && r.groupMatches.length) {
         html += '<h3 class="sec">Your ' + esc(gPhase.toLowerCase()) + '</h3>';
-        html += '<div class="journey">' + r.groupMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
+        html += '<div class="journey">' + r.groupMatches.map(function (m) { return matchCardHTML(m, wc.teamName, r.userTeam); }).join("") + "</div>";
         /* Show the user's group table for old-format CL or WC */
         if (wc.groups) {
           var ug2 = null;
@@ -2408,7 +2454,7 @@
       /* Knockout journey */
       if (r.koMatches && r.koMatches.length) {
         html += '<h3 class="sec">Knockouts</h3>';
-        html += '<div class="journey">' + r.koMatches.map(function (m) { return matchCardHTML(m, wc.teamName); }).join("") + "</div>";
+        html += '<div class="journey">' + r.koMatches.map(function (m) { return matchCardHTML(m, wc.teamName, r.userTeam); }).join("") + "</div>";
       }
       html += '<h3 class="sec">Knockout bracket</h3><p class="legend">Your team highlighted in gold.</p>' + renderBracket(wc.rounds);
       html += resultBottomNav();
@@ -2441,7 +2487,7 @@
       html += '<div class="stage-badge">Your season · game by game</div>';
       html += (r.shown < gm.length ? skipBarHTML(r.shown, gm.length)
         : '<div class="reveal-bar"><button class="start-btn" id="toResult">See your final standing →</button></div>');
-      html += revealListHTML(gm, r.shown, lg.teamName);
+      html += revealListHTML(gm, r.shown, lg.teamName, r.userTeam);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
       if (!r.saved) { r.saved = true; window._lastResultScore = r.sc.score; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }

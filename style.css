@@ -884,9 +884,14 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .mscore .me { font-weight: 800; color: var(--gold); }
 .mscore b { font-size: 17px; }
 .mscore .oppname { font-weight: 600; }
-.mscorers { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.goal { font-size: 13px; color: var(--text); }
-.goal .assist { color: var(--muted); font-size: 12px; }
+/* Match story ticker — 3-5 named beats per match (goals, saves, drama) */
+.mstory { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.mstory-row { display: flex; align-items: baseline; gap: 7px; font-size: 12.5px; line-height: 1.4; animation: mstoryIn 0.3s var(--ease-out, ease-out) both; }
+.mstory-min { flex: 0 0 auto; width: 26px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11px; }
+.mstory-ico { flex: 0 0 auto; font-size: 12px; line-height: 1; }
+.mstory-txt { color: var(--text); }
+@keyframes mstoryIn { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mstory-row { animation: none !important; } }
 .mclean { margin-top: 6px; font-size: 12px; color: var(--green2); font-weight: 700; }
 
 /* ---------- Stats summary ---------- */
@@ -1302,12 +1307,15 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 3
   border-color: rgba(255,122,89,0.55) !important;
   box-shadow: var(--pdot-shadow) !important;
 }
-/* Rating tier colours for dot-init text */
+/* Rating tier colours for dot-init text — Legend/Elite/Quality/Solid/Squad */
 .pdot.filled .dot-init      { color: #e8eeff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
-.pdot.filled.r-gold  .dot-init { color: #F5B43C; text-shadow: 0 0 8px rgba(245,180,60,0.7); }
-.pdot.filled.r-elite .dot-init { color: #FF4D8B; text-shadow: 0 0 8px rgba(255,77,139,0.6); }
-.pdot.filled.r-great .dot-init { color: #FF9800; text-shadow: 0 0 8px rgba(255,152,0,0.6); }
-.pdot.filled.r-good  .dot-init { color: #FF7A59; text-shadow: 0 0 6px rgba(255,122,89,0.5); }
+.pdot.filled.r-gold   .dot-init { color: var(--tier-legend, #FFD700);  text-shadow: 0 0 8px rgba(255,215,0,0.7); }
+.pdot.filled.r-elite  .dot-init { color: var(--tier-elite, #A78BFA);   text-shadow: 0 0 8px rgba(167,139,250,0.6); }
+.pdot.filled.r-great  .dot-init,
+.pdot.filled.r-good   .dot-init { color: var(--tier-quality, #60A5FA); text-shadow: 0 0 6px rgba(96,165,250,0.55); }
+.pdot.filled.r-amber  .dot-init { color: var(--tier-solid, #4ADE80);   text-shadow: 0 0 6px rgba(74,222,128,0.5); }
+.pdot.filled.r-orange .dot-init,
+.pdot.filled.r-red    .dot-init { color: var(--tier-squad, #9CA3AF); }
 /* Light mode overrides */
 body.light .pdot { background: rgba(240,245,255,0.75) !important; border-color: rgba(100,130,200,0.4) !important; }
 body.light .pdot.filled.GK  { background: rgba(245,180,60,0.18) !important; border-color: rgba(245,180,60,0.5) !important; }
@@ -6061,15 +6069,17 @@ body.light .mn-line { border-left-color: rgba(0,0,0,0.1); }
 }
 
 /* ===== RATING BADGE COLOUR BANDING ===== */
-/* Applied to .mp-r-badge via ratingTierClass() */
+/* Applied to .mp-r-badge via ratingTierClass(). Fallback only — the higher-
+   specificity `body .mp-r-badge.r-*` rules in floodlights.css win when both
+   stylesheets load; kept in sync here for consistency. Legend/Elite/Quality/Solid/Squad. */
 .mp-r-badge { transition: color 0.1s, background 0.1s; }
-.mp-r-badge.r-gold   { background: rgba(251,191,36,0.18);  color: #fbbf24; }   /* ≥90 amber/gold */
-.mp-r-badge.r-elite  { background: rgba(232,121,249,0.15); color: #e879f9; }   /* ≥85 magenta    */
-.mp-r-badge.r-great  { background: rgba(249,115,22,0.15);  color: #fb923c; }   /* ≥80 orange     */
-.mp-r-badge.r-good   { background: rgba(34,211,238,0.15);  color: #22d3ee; }   /* ≥75 cyan       */
-.mp-r-badge.r-amber  { background: rgba(163,163,163,0.12); color: #a3a3a3; }   /* ≥70 grey       */
-.mp-r-badge.r-orange { background: rgba(248,113,113,0.10); color: #f87171; }   /* ≥60 soft red   */
-.mp-r-badge.r-red    { background: rgba(239,68,68,0.10);   color: #ef4444; }   /* <60 red        */
+.mp-r-badge.r-gold   { background: rgba(255,215,0,0.18);   color: #FFD700; }   /* Legend  ≥90 */
+.mp-r-badge.r-elite  { background: rgba(167,139,250,0.18); color: #A78BFA; }   /* Elite   85-89 */
+.mp-r-badge.r-great  { background: rgba(96,165,250,0.18);  color: #60A5FA; }   /* Quality 80-84 */
+.mp-r-badge.r-good   { background: rgba(96,165,250,0.15);  color: #60A5FA; }   /* Quality 75-79 */
+.mp-r-badge.r-amber  { background: rgba(74,222,128,0.15);  color: #4ADE80; }   /* Solid   70-74 */
+.mp-r-badge.r-orange { background: rgba(156,163,175,0.13); color: #9CA3AF; }   /* Squad   60-69 */
+.mp-r-badge.r-red    { background: rgba(156,163,175,0.13); color: #9CA3AF; }   /* Squad   <60   */
 
 /* ===== XI ROWS — green accent for filled slots ===== */
 .xi-row:not(.empty) {

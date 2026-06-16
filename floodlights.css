@@ -1090,24 +1090,36 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
    T8 MAKEOVER — RATING TIER COLORS EVERYWHERE + SPIN WHEEL POLISH
    ============================================================ */
 
+/* ── Unified 5-tier player rating system: Legend/Elite/Quality/Solid/Squad ──
+   gold / purple / blue / green / grey. r-great + r-good both map to Quality
+   (blue); r-orange + r-red both map to Squad (grey) — collapses the old
+   7-bucket scheme into 5 visually distinct, consistent tiers everywhere. */
+:root {
+  --tier-legend:  #FFD700;
+  --tier-elite:   #A78BFA;
+  --tier-quality: #60A5FA;
+  --tier-solid:   #4ADE80;
+  --tier-squad:   #9CA3AF;
+}
+
 /* Rating tier on xi-rate (squad list) and rw-rev-rating (Duels reveal) */
 .xi-rate { font-weight: 800; font-size: 13px; border-radius: 4px; padding: 1px 5px; }
-.xi-rate.r-gold   { color: var(--champion); background: color-mix(in srgb, var(--champion) 15%, transparent); }
-.xi-rate.r-elite  { color: #FF4D8B; background: color-mix(in srgb, #FF4D8B 12%, transparent); }
-.xi-rate.r-great  { color: #FF9800; background: color-mix(in srgb, #FF9800 12%, transparent); }
-.xi-rate.r-good   { color: #C6E040; background: color-mix(in srgb, #C6E040 10%, transparent); }
-.xi-rate.r-amber  { color: #E8A020; background: color-mix(in srgb, #E8A020 12%, transparent); }
-.xi-rate.r-orange { color: #FF8C42; background: color-mix(in srgb, #FF8C42 12%, transparent); }
-.xi-rate.r-red    { color: #E04040; background: color-mix(in srgb, #E04040 12%, transparent); }
+.xi-rate.r-gold   { color: var(--tier-legend);  background: color-mix(in srgb, var(--tier-legend) 15%, transparent); }
+.xi-rate.r-elite  { color: var(--tier-elite);   background: color-mix(in srgb, var(--tier-elite) 14%, transparent); }
+.xi-rate.r-great  { color: var(--tier-quality); background: color-mix(in srgb, var(--tier-quality) 14%, transparent); }
+.xi-rate.r-good   { color: var(--tier-quality); background: color-mix(in srgb, var(--tier-quality) 12%, transparent); }
+.xi-rate.r-amber  { color: var(--tier-solid);   background: color-mix(in srgb, var(--tier-solid) 13%, transparent); }
+.xi-rate.r-orange { color: var(--tier-squad);   background: color-mix(in srgb, var(--tier-squad) 13%, transparent); }
+.xi-rate.r-red    { color: var(--tier-squad);   background: color-mix(in srgb, var(--tier-squad) 13%, transparent); }
 
 /* Duels reveal row rating — tier colors */
-.rw-rev-rating.r-gold   { color: var(--champion) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--champion) 55%, transparent); }
-.rw-rev-rating.r-elite  { color: #FF4D8B !important; text-shadow: 0 0 8px color-mix(in srgb, #FF4D8B 50%, transparent); }
-.rw-rev-rating.r-great  { color: #FF9800 !important; text-shadow: 0 0 8px color-mix(in srgb, #FF9800 50%, transparent); }
-.rw-rev-rating.r-good   { color: #C6E040 !important; text-shadow: 0 0 6px color-mix(in srgb, #C6E040 30%, transparent); }
-.rw-rev-rating.r-amber  { color: #E8A020 !important; text-shadow: 0 0 6px color-mix(in srgb, #E8A020 45%, transparent); }
-.rw-rev-rating.r-orange { color: #FF8C42 !important; text-shadow: 0 0 6px color-mix(in srgb, #FF8C42 45%, transparent); }
-.rw-rev-rating.r-red    { color: #E04040 !important; text-shadow: 0 0 6px color-mix(in srgb, #E04040 45%, transparent); }
+.rw-rev-rating.r-gold   { color: var(--tier-legend) !important;  text-shadow: 0 0 8px color-mix(in srgb, var(--tier-legend) 55%, transparent); }
+.rw-rev-rating.r-elite  { color: var(--tier-elite) !important;   text-shadow: 0 0 8px color-mix(in srgb, var(--tier-elite) 50%, transparent); }
+.rw-rev-rating.r-great  { color: var(--tier-quality) !important; text-shadow: 0 0 8px color-mix(in srgb, var(--tier-quality) 50%, transparent); }
+.rw-rev-rating.r-good   { color: var(--tier-quality) !important; text-shadow: 0 0 6px color-mix(in srgb, var(--tier-quality) 30%, transparent); }
+.rw-rev-rating.r-amber  { color: var(--tier-solid) !important;   text-shadow: 0 0 6px color-mix(in srgb, var(--tier-solid) 45%, transparent); }
+.rw-rev-rating.r-orange { color: var(--tier-squad) !important;   text-shadow: 0 0 6px color-mix(in srgb, var(--tier-squad) 45%, transparent); }
+.rw-rev-rating.r-red    { color: var(--tier-squad) !important;   text-shadow: 0 0 6px color-mix(in srgb, var(--tier-squad) 45%, transparent); }
 
 /* Player pop-out squad panel — rating badges with solid background + tier color.
    Prefixed with body to beat the body.light .mp-r-badge override in style.css. */
@@ -1117,23 +1129,51 @@ body.mode-cl .spin, #leagueView .spin, #mpView .spin, #dvcView .spin { padding: 
   font-weight: 800; font-size: var(--t-xs); font-variant-numeric: tabular-nums;
   background: var(--surface-3); color: var(--text-mute);
 }
-/* Rating badge colours — no purple anywhere */
-body .mp-r-badge.r-gold   { background: color-mix(in srgb, #FFD700 22%, var(--surface-2)); color: #FFD700; }   /* gold  ≥90 */
-body .mp-r-badge.r-elite  { background: color-mix(in srgb, #FF4D8B 18%, var(--surface-2)); color: #FF4D8B; }   /* rose  ≥85 */
-body .mp-r-badge.r-great  { background: color-mix(in srgb, #FF9800 18%, var(--surface-2)); color: #FF9800; }   /* orange ≥80 */
-body .mp-r-badge.r-good   { background: color-mix(in srgb, #C6E040 18%, var(--surface-2)); color: #C6E040; }   /* lime   ≥75 */
-body .mp-r-badge.r-amber  { background: color-mix(in srgb, #FFB74D 18%, var(--surface-2)); color: #FFB74D; }   /* amber ≥70 */
-body .mp-r-badge.r-orange { background: color-mix(in srgb, #FF8C42 18%, var(--surface-2)); color: #FF8C42; }   /* orange≥60 */
-body .mp-r-badge.r-red    { background: color-mix(in srgb, #E04040 18%, var(--surface-2)); color: #E04040; }   /* red   <60  */
+/* Rating badge colours — Legend/Elite/Quality/Solid/Squad */
+body .mp-r-badge.r-gold   { background: color-mix(in srgb, var(--tier-legend) 22%, var(--surface-2));  color: var(--tier-legend); }   /* Legend  ≥90 */
+body .mp-r-badge.r-elite  { background: color-mix(in srgb, var(--tier-elite) 20%, var(--surface-2));   color: var(--tier-elite); }    /* Elite   85-89 */
+body .mp-r-badge.r-great  { background: color-mix(in srgb, var(--tier-quality) 20%, var(--surface-2)); color: var(--tier-quality); }  /* Quality 80-84 */
+body .mp-r-badge.r-good   { background: color-mix(in srgb, var(--tier-quality) 18%, var(--surface-2)); color: var(--tier-quality); }  /* Quality 75-79 */
+body .mp-r-badge.r-amber  { background: color-mix(in srgb, var(--tier-solid) 18%, var(--surface-2));   color: var(--tier-solid); }    /* Solid   70-74 */
+body .mp-r-badge.r-orange { background: color-mix(in srgb, var(--tier-squad) 18%, var(--surface-2));   color: var(--tier-squad); }    /* Squad   60-69 */
+body .mp-r-badge.r-red    { background: color-mix(in srgb, var(--tier-squad) 18%, var(--surface-2));   color: var(--tier-squad); }    /* Squad   <60 */
 
 /* Player names in squad pop-outs must be full brightness — no inheritance ambiguity */
 .player .pname { color: var(--text); }
 
-/* Light mode overrides — re-darken r-good/r-great text so they read on light cards */
-body.light .mp-r-badge.r-great { background: color-mix(in srgb, #D97706 18%, var(--surface-2)); color: #D97706; }
-body.light .mp-r-badge.r-good  { background: color-mix(in srgb, #7A9E10 18%, var(--surface-2)); color: #7A9E10; }
-body.light .xi-rate.r-great    { color: #D97706; background: color-mix(in srgb, #D97706 12%, transparent); }
-body.light .xi-rate.r-good     { color: #7A9E10; background: color-mix(in srgb, #7A9E10 10%, transparent); }
+/* Light mode: darken blue/green slightly so they read on light cards */
+body.light .mp-r-badge.r-great,
+body.light .mp-r-badge.r-good  { background: color-mix(in srgb, #1D6FD9 18%, var(--surface-2)); color: #1D6FD9; }
+body.light .mp-r-badge.r-amber { background: color-mix(in srgb, #16A34A 18%, var(--surface-2)); color: #16A34A; }
+body.light .xi-rate.r-great,
+body.light .xi-rate.r-good     { color: #1D6FD9; background: color-mix(in srgb, #1D6FD9 12%, transparent); }
+body.light .xi-rate.r-amber    { color: #16A34A; background: color-mix(in srgb, #16A34A 12%, transparent); }
+
+/* ── Draft screen card tiers: visible accent on the card itself, not just
+   the badge — left-edge color bar + faint background tint per tier. ── */
+.player {
+  border-left: 3px solid transparent;
+  position: relative;
+}
+.player.r-gold   { border-left-color: var(--tier-legend);  background: linear-gradient(90deg, color-mix(in srgb, var(--tier-legend) 8%, transparent), transparent 60%); }
+.player.r-elite  { border-left-color: var(--tier-elite);   background: linear-gradient(90deg, color-mix(in srgb, var(--tier-elite) 7%, transparent), transparent 60%); }
+.player.r-great,
+.player.r-good   { border-left-color: var(--tier-quality); background: linear-gradient(90deg, color-mix(in srgb, var(--tier-quality) 6%, transparent), transparent 60%); }
+.player.r-amber  { border-left-color: var(--tier-solid);   background: linear-gradient(90deg, color-mix(in srgb, var(--tier-solid) 6%, transparent), transparent 60%); }
+.player.r-orange,
+.player.r-red    { border-left-color: var(--tier-squad); }
+.player.taken, .player.noslot { background: none !important; }
+
+/* "Your XI" list rows — same left-edge tier accent for consistency */
+.xi-row { border-left: 3px solid transparent; }
+.xi-row.r-gold   { border-left-color: var(--tier-legend); }
+.xi-row.r-elite  { border-left-color: var(--tier-elite); }
+.xi-row.r-great,
+.xi-row.r-good   { border-left-color: var(--tier-quality); }
+.xi-row.r-amber  { border-left-color: var(--tier-solid); }
+.xi-row.r-orange,
+.xi-row.r-red    { border-left-color: var(--tier-squad); }
+.xi-row.empty    { border-left-color: transparent; }
 
 /* Spin wheel machine — remap legacy green glow to Floodlights cyan */
 .machine {
