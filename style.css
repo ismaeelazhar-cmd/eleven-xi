@@ -6124,35 +6124,36 @@ body.light .mn-line { border-left-color: rgba(0,0,0,0.1); }
 }
 
 @media (max-width: 768px) {
-  /* ── Bottom nav ── */
+  /* ── Bottom nav: pinned, always reachable, 5 top-level destinations ── */
+  .wrap { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important; }
   .bnav {
     display: flex;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-    gap: 10px;
-    margin-top: auto;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 400;
+    padding: 7px 6px calc(7px + env(safe-area-inset-bottom, 0px));
+    gap: 2px;
+    background: rgba(15,15,26,0.96);
+    border-top: 1px solid var(--line);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
   .bnav-pill {
     flex: 1;
-    display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
     cursor: pointer;
-    color: rgba(255,255,255,0.65);
-    padding: 13px 0;
-    font-size: 13px; font-weight: 700; letter-spacing: 0.01em;
+    color: rgba(255,255,255,0.5);
+    padding: 7px 1px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.01em;
     font-family: inherit;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition: background 0.15s, color 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
-  .bnav-pill svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .bnav-pill svg { width: 19px; height: 19px; flex-shrink: 0; }
+  .bnav-pill span { line-height: 1; white-space: nowrap; }
   .bnav-pill:active { background: var(--card2); }
-  .bnav-pill--share {
-    background: rgba(0,187,127,0.12);
-    border-color: rgba(0,187,127,0.28);
-    color: var(--green2);
-  }
-  .bnav-pill--share:active { background: rgba(0,187,127,0.22); }
+  .bnav-pill.active { color: var(--green2); }
+  .bnav-pill.active svg { filter: drop-shadow(0 1px 5px rgba(0,187,127,0.45)); }
 
   /* Hide old back/home buttons — nav replaces them */
   .back,
@@ -6171,7 +6172,24 @@ body.light .bnav {
   background: rgba(250,246,236,0.94);
   border-top-color: rgba(200,134,10,0.15);
 }
-body.light .bnav-btn { color: rgba(42,38,32,0.38); }
-body.light .bnav-btn.active { color: var(--green); }
-body.light .bnav-btn.active svg { filter: drop-shadow(0 2px 5px rgba(10,158,110,0.4)); }
-body.light .bnav-btn.active::after { background: var(--green); }
+body.light .bnav-pill { color: rgba(42,38,32,0.4); }
+body.light .bnav-pill.active { color: var(--green); }
+body.light .bnav-pill.active svg { filter: drop-shadow(0 2px 5px rgba(10,158,110,0.4)); }
+
+/* About overlay (reuses .htp-overlay / .htp-panel shell) */
+.about-panel { max-width: 420px; }
+.about-body { text-align: center; }
+.about-logo { font-family: var(--font-display, inherit); font-size: 26px; font-weight: 800; color: var(--gold, #c9aa71); letter-spacing: 0.04em; margin-bottom: 4px; }
+.about-tag { font-size: 13px; color: rgba(255,255,255,0.55); font-weight: 600; margin: 0 0 14px; }
+.about-desc { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0 0 18px; }
+.about-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.about-link {
+  display: block; text-decoration: none; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+  color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 700;
+  padding: 11px; transition: background 0.15s, border-color 0.15s;
+}
+.about-link:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+.about-disclaimer { font-size: 10.5px; color: rgba(255,255,255,0.3); line-height: 1.6; text-align: left; margin: 0; }
+body.light .about-disclaimer { color: rgba(42,38,32,0.4); }
+body.light .about-link { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #1a1a2e; }

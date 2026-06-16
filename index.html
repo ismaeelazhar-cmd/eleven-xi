@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=140" />
+  <link rel="stylesheet" href="style.css?v=141" />
   <link rel="stylesheet" href="tokens.css?v=77" />
   <link rel="stylesheet" href="floodlights.css?v=138" />
 </head>
@@ -465,15 +465,52 @@
     </div>
   </div>
 
+  <!-- ===== ABOUT OVERLAY ===== -->
+  <div id="aboutOverlay" class="htp-overlay" hidden aria-modal="true" role="dialog">
+    <div class="htp-panel about-panel">
+      <div class="htp-top-row">
+        <span class="htp-brand">ABOUT</span>
+        <button class="htp-skip" id="aboutClose" aria-label="Close">Close</button>
+      </div>
+      <div class="about-body">
+        <div class="about-logo">DRAFT XI</div>
+        <p class="about-tag">Spin history. Draft the impossible.</p>
+        <p class="about-desc">Draft XI lets you spin real squads from 76 years of football history, build your best eleven, and simulate the World Cup, Champions League, Euros and more.</p>
+        <div class="about-links">
+          <a class="about-link" href="https://forms.gle/LFFEGyGUZrMqtdNG9" target="_blank" rel="noopener">Tell us what's wrong</a>
+          <a class="about-link" href="https://buymeacoffee.com/by94mc42hkf" target="_blank" rel="noopener">Buy me a drink</a>
+        </div>
+        <p class="about-disclaimer">
+          Draft XI is an independent, fan-made game. Not affiliated with, endorsed by, sponsored by, or
+          associated with FIFA, any national football association, competition, governing body, or organisation, or with
+          any other game, publisher, or ratings provider. All country names, player names, manager names, ratings, and
+          squad data are used for informational and descriptive purposes only.
+        </p>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== BOTTOM NAV (mobile only) ===== -->
   <nav class="bnav" id="bottomNav" aria-label="Main navigation">
-    <button class="bnav-btn bnav-pill" data-view="board" id="bnavBoard" aria-label="Leaderboard">
+    <button class="bnav-pill" id="bnavPlay" aria-label="Play">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+      <span>Play</span>
+    </button>
+    <button class="bnav-pill" id="bnavModes" aria-label="Modes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Modes</span>
+    </button>
+    <button class="bnav-pill" data-view="board" id="bnavBoard" aria-label="Leaderboard">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v3a6 6 0 0 1-12 0z"/><path d="M6 5H4a2 2 0 0 0 0 4h2M18 5h2a2 2 0 0 1 0 4h-2"/><path d="M9 19h6M10 15v4M14 15v4"/></svg>
       <span>Leaderboard</span>
     </button>
-    <button class="bnav-btn bnav-pill bnav-pill--share" data-view="share" id="bnavShare" aria-label="Share">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      <span>Share</span>
+    <button class="bnav-pill" id="bnavDaily" aria-label="Daily challenge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="15" r="2"/></svg>
+      <span>Daily</span>
+    </button>
+    <button class="bnav-pill" id="bnavAbout" aria-label="About">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="10.5" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+      <span>About</span>
     </button>
   </nav>
 
@@ -498,14 +535,14 @@
   <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=82"></script>
-  <script src="game.js?v=143"></script>
+  <script src="game.js?v=144"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=91"></script>
   <script src="audio.js?v=1" defer></script>
-  <script src="floodlights.js?v=101" defer></script>
+  <script src="floodlights.js?v=102" defer></script>
   <script src="ratingswar.js?v=116" defer></script>
   <script src="draftvscomputer.js?v=19" defer></script>
-  <script src="daily.js?v=4" defer></script>
+  <script src="daily.js?v=5" defer></script>
 </body>
 </html>

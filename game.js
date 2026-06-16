@@ -2588,20 +2588,46 @@
     b.addEventListener("click", function () { boardMode = b.getAttribute("data-mode"); renderBoard(); });
   });
 
-  // ---- Bottom nav ----
-  var _bnavHome  = $("bnavHome");
-  var _bnavDraft = $("bnavDraft");
+  // ---- Bottom nav: Play | Modes | Leaderboard | Daily | About ----
+  function setBnavActive(id) {
+    Array.prototype.forEach.call(document.querySelectorAll("#bottomNav .bnav-pill"), function (b) {
+      b.classList.toggle("active", b.id === id);
+    });
+  }
+  var _bnavPlay  = $("bnavPlay");
+  var _bnavModes = $("bnavModes");
   var _bnavBoard = $("bnavBoard");
-  var _bnavShare = $("bnavShare");
-  if (_bnavHome)  _bnavHome.addEventListener("click",  function () { showView("home"); });
-  if (_bnavDraft) _bnavDraft.addEventListener("click", function () {
+  var _bnavDaily = $("bnavDaily");
+  var _bnavAbout = $("bnavAbout");
+  if (_bnavPlay) _bnavPlay.addEventListener("click", function () {
+    setBnavActive("bnavPlay");
     if (squad.length > 0 || current) showView("draft");
     else { newGame(); showView("setup"); }
   });
-  if (_bnavBoard) _bnavBoard.addEventListener("click", function () { renderBoard(); showView("board"); });
-  if (_bnavShare) _bnavShare.addEventListener("click", function () {
-    if (squad.length > 0) shareTeam();
-    else if (window.flToast) window.flToast("Draft your XI first, then share it!", 2500);
+  if (_bnavModes) _bnavModes.addEventListener("click", function () {
+    setBnavActive("bnavModes");
+    showView("home");
+    setTimeout(function () {
+      var m = document.querySelector("#homeView .h2-modes");
+      if (m) m.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  });
+  if (_bnavBoard) _bnavBoard.addEventListener("click", function () { setBnavActive("bnavBoard"); renderBoard(); showView("board"); });
+  if (_bnavDaily) _bnavDaily.addEventListener("click", function () {
+    setBnavActive("bnavDaily");
+    var top = document.getElementById("homeDailyTop");
+    if (top) top.click();
+  });
+  if (_bnavAbout) _bnavAbout.addEventListener("click", function () {
+    setBnavActive("bnavAbout");
+    var ov = document.getElementById("aboutOverlay");
+    if (ov) ov.hidden = false;
+  });
+  var _aboutClose = $("aboutClose");
+  if (_aboutClose) _aboutClose.addEventListener("click", function () {
+    var ov = document.getElementById("aboutOverlay");
+    if (ov) ov.hidden = true;
+    setBnavActive("bnavPlay");
   });
 
   // ---- Keyboard navigation on spin wheel ----

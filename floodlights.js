@@ -49,9 +49,9 @@
     if (W.flResetSquadDock) W.flResetSquadDock();
     // Let online transport close cleanly if it was active
     try { if (W.ElxiNet && W.ElxiNet.isOnline && W.ElxiNet.isOnline()) W.ElxiNet.close(); } catch (e) {}
-    // Sync bottom nav — home is now active
-    Array.prototype.forEach.call(document.querySelectorAll(".bnav-btn"), function (b) {
-      b.classList.toggle("active", b.getAttribute("data-view") === "home");
+    // Home has no dedicated bottom-nav tab — clear any active state
+    Array.prototype.forEach.call(document.querySelectorAll("#bottomNav .bnav-pill"), function (b) {
+      b.classList.remove("active");
     });
   };
 

@@ -337,8 +337,8 @@
     });
 
     document.body.setAttribute("data-view", "daily");
-    Array.prototype.forEach.call(document.querySelectorAll(".bnav-pill"), function (b) {
-      b.classList.remove("active");
+    Array.prototype.forEach.call(document.querySelectorAll("#bottomNav .bnav-pill"), function (b) {
+      b.classList.toggle("active", b.id === "bnavDaily");
     });
 
     render();
