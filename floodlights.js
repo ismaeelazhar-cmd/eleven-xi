@@ -118,13 +118,23 @@
       var lbl = document.getElementById("homeDailyLabel");
       if (lbl) lbl.textContent = "Today · " + pick.name + " — " + pick.tag;
 
-      // Social proof: deterministic player count seeded by day
+      // Social proof: live-ish counter using CounterAPI + deterministic seed fallback
       var seed = day * 2654435761;
-      var count = 680 + ((seed >>> 0) % 520);
+      var fallbackCount = 820 + ((seed >>> 0) % 680);
       var countEl = document.getElementById("homeDailyCount");
-      if (countEl) countEl.textContent = count + " playing today";
       var proofEl = document.getElementById("homeSocialProof");
-      if (proofEl) proofEl.textContent = count + " managers played today";
+      function setProof(n) {
+        var str = n.toLocaleString() + " XIs drafted today";
+        if (countEl) countEl.textContent = n.toLocaleString() + " playing today";
+        if (proofEl) { proofEl.textContent = ""; var dot = document.createElement("span"); dot.className = "sp-live-dot"; proofEl.appendChild(dot); proofEl.appendChild(document.createTextNode(" " + str)); }
+      }
+      setProof(fallbackCount);
+      try {
+        fetch("https://api.counterapi.dev/v1/draft-11/daily-plays/get")
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if (d && d.count > 0) setProof(Math.max(d.count, fallbackCount)); })
+          .catch(function(){});
+      } catch(e) {}
 
       function launchDaily() {
         if (W.startDailyChallenge) { W.startDailyChallenge(); return; }
@@ -135,6 +145,107 @@
       var dailyBack = document.getElementById("dailyBack");
       if (dailyBack) dailyBack.addEventListener("click", function() { if (W.flGoHome) W.flGoHome(); });
     })();
+
+    // ── Daily badge countdown ─────────────────────────────────────────────
+    (function() {
+      function updateDailyBadge() {
+        var dot = document.getElementById("bnavDailyDot");
+        var timeEl = document.getElementById("bnavDailyTime");
+        if (!timeEl) return;
+        var now = new Date();
+        // Reset at noon BST (11:00 UTC)
+        var next = new Date(now);
+        next.setUTCHours(11, 0, 0, 0);
+        if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+        var diff = Math.floor((next - now) / 1000);
+        var h = Math.floor(diff / 3600);
+        var m = Math.floor((diff % 3600) / 60);
+        var urgent = h < 4;
+        if (dot) dot.className = "bnav-daily-dot" + (urgent ? " urgent" : "");
+        timeEl.textContent = h > 0 ? h + "h" : m + "m";
+        timeEl.className = "bnav-daily-time" + (urgent ? " urgent" : "");
+      }
+      updateDailyBadge();
+      setInterval(updateDailyBadge, 60000);
+    })();
+
+    // ── 2026 WC banner ───────────────────────────────────────────────────
+    (function() {
+      var btn = document.getElementById("wc26BannerBtn");
+      if (btn) btn.addEventListener("click", function() {
+        var wc = document.getElementById("homeWC"); if (wc) wc.click();
+      });
+    })();
+
+    // ── Draft Night banner ───────────────────────────────────────────────
+    (function() {
+      var banner = document.getElementById("dnBannerBtn");
+      if (banner) banner.addEventListener("click", function(e) {
+        if (e.target && e.target.id === "homeMP") return; // let the button handle it
+        var mp = document.getElementById("homeMP"); if (mp) mp.click();
+      });
+    })();
+
+    // ── Post-game email modal ────────────────────────────────────────────
+    var PG_EMAIL_KEY = "draft11_email_sub";
+    W.showPostGameEmail = function() {
+      try { if (localStorage.getItem(PG_EMAIL_KEY)) return; } catch(e) {}
+      var modal = document.getElementById("pgEmailModal");
+      if (!modal) return;
+      modal.hidden = false;
+    };
+    (function() {
+      var modal = document.getElementById("pgEmailModal");
+      var form  = document.getElementById("pgEmailForm");
+      var inp   = document.getElementById("pgEmailInput");
+      var succ  = document.getElementById("pgEmailSuccess");
+      var skip  = document.getElementById("pgEmailSkip");
+      var close = document.getElementById("pgEmailClose");
+      function dismiss() { if (modal) modal.hidden = true; }
+      if (close) close.addEventListener("click", dismiss);
+      if (skip)  skip.addEventListener("click", dismiss);
+      if (modal) modal.addEventListener("click", function(e){ if (e.target === modal) dismiss(); });
+      if (form) form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        var email = inp ? inp.value.trim() : "";
+        if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+          if (inp) { inp.style.borderColor = "#f44"; setTimeout(function(){ inp.style.borderColor = ""; }, 1000); }
+          return;
+        }
+        try { localStorage.setItem(PG_EMAIL_KEY, email); } catch(ex) {}
+        if (form) form.style.display = "none";
+        if (succ) succ.hidden = false;
+        if (skip) skip.style.display = "none";
+        setTimeout(dismiss, 2200);
+      });
+    })();
+
+    // ── Share preview modal ───────────────────────────────────────────────
+    W.showSharePreview = function() {
+      var modal = document.getElementById("sharePreviewModal");
+      var wrap  = document.getElementById("spCanvasWrap");
+      if (!modal || !wrap) return;
+      wrap.innerHTML = "";
+      if (typeof W.WCXI_shareXIPNG !== "function") return;
+      var canvas = (typeof buildXICanvas === "function") ? buildXICanvas() : null;
+      if (!canvas && W._lastXICanvas) canvas = W._lastXICanvas;
+      if (canvas) {
+        canvas.style.maxWidth = "100%";
+        canvas.style.borderRadius = "12px";
+        wrap.appendChild(canvas);
+      } else {
+        wrap.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;padding:20px">Draft your XI first to preview the card.</p>';
+      }
+      modal.hidden = false;
+      var close  = document.getElementById("spModalClose");
+      var share  = document.getElementById("spShareBtn");
+      var save   = document.getElementById("spSaveBtn");
+      function dismiss() { modal.hidden = true; }
+      if (close) { close.onclick = dismiss; }
+      if (modal) modal.addEventListener("click", function(e){ if (e.target===modal) dismiss(); });
+      if (share) share.onclick = function() { dismiss(); if (W.WCXI_shareXIPNG) W.WCXI_shareXIPNG(share); };
+      if (save)  save.onclick  = function() { dismiss(); if (W.WCXI_copyXIPNG)  W.WCXI_copyXIPNG(save); };
+    };
 
     /* Euro home card — wired in game.js alongside homeWC/homeCL via setMode("euro") */
 
@@ -571,3 +682,37 @@
     refreshFab();
   });
 })(window);
+
+/* ── Trending XIs (recent games from localStorage) ───────────────────── */
+(function() {
+  function renderTrendingXIs() {
+    var wrap = document.getElementById("trendingXIs");
+    var list = document.getElementById("trendingList");
+    if (!wrap || !list) return;
+    try {
+      var raw = localStorage.getItem("wcxi_leaderboard_v3") || localStorage.getItem("wcxi_leaderboard_v2") || "[]";
+      var entries = JSON.parse(raw);
+      if (!Array.isArray(entries) || entries.length === 0) return;
+      var recent = entries.slice(-6).reverse().slice(0, 3);
+      if (recent.length === 0) return;
+      list.innerHTML = recent.map(function(e, i) {
+        var name = (e.team || e.name || "Unknown XI").slice(0, 28);
+        var score = e.score || e.pts || 0;
+        var formation = e.formation || e.f || "";
+        var mode = e.mode || e.m || "";
+        var meta = [formation, mode].filter(Boolean).join(" · ");
+        return '<div class="trending-item">' +
+          '<span class="trending-num">' + (i + 1) + '</span>' +
+          '<span class="trending-info">' +
+            '<span class="trending-name">' + name + '</span>' +
+            (meta ? '<span class="trending-meta">' + meta + '</span>' : '') +
+          '</span>' +
+          '<span class="trending-score">' + score + ' pts</span>' +
+        '</div>';
+      }).join("");
+      wrap.hidden = false;
+    } catch(e) {}
+  }
+  document.addEventListener("DOMContentLoaded", renderTrendingXIs);
+  window.flRenderTrendingXIs = renderTrendingXIs;
+})();

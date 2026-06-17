@@ -33,10 +33,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="style.css?v=146" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
+  <link rel="stylesheet" href="style.css?v=147" />
   <link rel="stylesheet" href="tokens.css?v=77" />
-  <link rel="stylesheet" href="floodlights.css?v=140" />
+  <link rel="stylesheet" href="floodlights.css?v=141" />
 </head>
 <body>
   <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
@@ -148,6 +148,12 @@
             <span class="h2-mode-arrow">›</span>
           </button>
         </div>
+      </div>
+
+      <!-- Trending XIs (last 3 games from localStorage) -->
+      <div class="trending-xis" id="trendingXIs" hidden>
+        <div class="trending-label">Recent XIs</div>
+        <div class="trending-list" id="trendingList"></div>
       </div>
 
       <div class="home-links">
@@ -402,6 +408,22 @@
         <a class="foot-btn" id="feedbackBtn" href="https://forms.gle/LFFEGyGUZrMqtdNG9" target="_blank" rel="noopener">Tell us what's wrong</a>
         <a class="foot-btn coffee" id="coffeeBtn" href="https://buymeacoffee.com/by94mc42hkf" target="_blank" rel="noopener">Buy me a drink</a>
       </div>
+
+      <!-- Social links -->
+      <div class="foot-social">
+        <a class="foot-social-link" href="https://x.com/DraftXI" target="_blank" rel="noopener" aria-label="Follow on X">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a class="foot-social-link" href="https://instagram.com/draftxi" target="_blank" rel="noopener" aria-label="Follow on Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a class="foot-social-link" href="https://tiktok.com/@draftxi" target="_blank" rel="noopener" aria-label="Follow on TikTok">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+        </a>
+      </div>
+
+      <p class="foot-founder">Built by a football fan, for football fans. ⚽</p>
+
       <p class="foot-disclaimer">
         Draft XI is an independent, fan-made game. Not affiliated with, endorsed by, sponsored by, or
         associated with FIFA, any national football association, competition, governing body, or organisation, or with
@@ -594,7 +616,7 @@
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=91"></script>
   <script src="audio.js?v=2" defer></script>
-  <script src="floodlights.js?v=103" defer></script>
+  <script src="floodlights.js?v=104" defer></script>
   <script src="ratingswar.js?v=116" defer></script>
   <script src="draftvscomputer.js?v=19" defer></script>
   <script src="daily.js?v=5" defer></script>

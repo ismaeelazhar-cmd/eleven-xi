@@ -245,8 +245,8 @@ header p {
   max-width: 100%;
   word-break: break-word;
 }
-.reel-item .name { font-size: 18px; text-align: center; width: 100%; display: block; font-weight: 800; letter-spacing: 0.5px; }
-.reel-item .year { font-size: 34px; color: var(--green); letter-spacing: 2px; }
+.reel-item .name { font-size: 18px; text-align: center; width: 100%; display: block; font-weight: 800; letter-spacing: 0.5px; font-family: "DM Mono", "Roboto Mono", ui-monospace, monospace; }
+.reel-item .year { font-size: 34px; color: var(--green); letter-spacing: 4px; font-family: "DM Mono", "Roboto Mono", ui-monospace, monospace; font-weight: 800; }
 
 .controls {
   display: flex;
@@ -6361,21 +6361,21 @@ body.light .wc26-label { color: #5a0fa0; }
 .h2-play-hero {
   display: block;
   width: 100%;
-  background: linear-gradient(135deg, var(--green2, #00c97f) 0%, #00a566 100%);
+  background: linear-gradient(135deg, #00C2FF 0%, #0099d6 100%);
   color: #fff;
   border: none;
   border-radius: 16px;
-  padding: 18px 24px;
-  font-size: 20px;
+  padding: 20px 24px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   cursor: pointer;
   margin-bottom: 8px;
   transition: transform 0.1s, box-shadow 0.15s;
-  box-shadow: 0 6px 24px rgba(0,201,127,0.35);
+  box-shadow: 0 6px 28px rgba(0,194,255,0.45);
 }
 .h2-play-hero:active { transform: scale(0.98); }
-.h2-play-hero:hover { box-shadow: 0 8px 30px rgba(0,201,127,0.45); }
+.h2-play-hero:hover { box-shadow: 0 10px 36px rgba(0,194,255,0.55); }
 
 /* ── Social proof row ────────────────────────────────────────────────── */
 .h2-social-proof-row {
@@ -6531,3 +6531,49 @@ body.light .pg-modal-skip { color: rgba(0,0,0,0.3); }
 body.light .sp-modal { background: #fff; border-color: rgba(0,0,0,0.08); }
 body.light .sp-modal-title { color: #1a1a2e; }
 body.light .sp-save-btn { background: rgba(0,0,0,0.05); color: #333; border-color: rgba(0,0,0,0.12); }
+
+/* ── Trending XIs widget ─────────────────────────────────────────────── */
+.trending-xis { margin: 4px 0 14px; }
+.trending-label { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.trending-list { display: flex; flex-direction: column; gap: 6px; }
+.trending-item {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.trending-item:hover { background: rgba(255,255,255,0.07); }
+.trending-num { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.25); min-width: 14px; }
+.trending-info { flex: 1; min-width: 0; }
+.trending-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trending-meta { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px; }
+.trending-score { font-size: 13px; font-weight: 800; color: #00C2FF; }
+body.light .trending-label { color: rgba(0,0,0,0.35); }
+body.light .trending-item { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
+body.light .trending-name { color: rgba(0,0,0,0.8); }
+body.light .trending-meta { color: rgba(0,0,0,0.4); }
+
+/* ── Footer social ───────────────────────────────────────────────────── */
+.foot-social {
+  display: flex; gap: 14px; justify-content: center;
+  margin: 14px 0 8px;
+}
+.foot-social-link {
+  color: rgba(255,255,255,0.35);
+  transition: color 0.15s;
+  display: flex; align-items: center;
+}
+.foot-social-link:hover { color: rgba(255,255,255,0.75); }
+body.light .foot-social-link { color: rgba(0,0,0,0.3); }
+body.light .foot-social-link:hover { color: rgba(0,0,0,0.65); }
+
+/* ── Founder line ────────────────────────────────────────────────────── */
+.foot-founder {
+  font-size: 12px; color: rgba(255,255,255,0.3);
+  text-align: center; margin: 0 0 14px;
+  font-style: italic;
+}
+body.light .foot-founder { color: rgba(0,0,0,0.3); }
