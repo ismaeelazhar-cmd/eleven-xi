@@ -1857,7 +1857,9 @@
       }
     });
     var shareXIBtn = document.getElementById("shareXIBtn");
-    if (shareXIBtn) shareXIBtn.addEventListener("click", function () { shareXIPNG(this); });
+    if (shareXIBtn) shareXIBtn.addEventListener("click", function () {
+      if (window.showSharePreview) { window.showSharePreview(); } else { shareXIPNG(this); }
+    });
     var copyImgBtn = document.getElementById("copyImgBtn");
     if (copyImgBtn) copyImgBtn.addEventListener("click", function () { copyXIPNG(this); });
     var boardBtn = document.getElementById("boardBtn");
@@ -1869,6 +1871,9 @@
     if (wiFooter) wiFooter.addEventListener("click", newGame);
     animateRankReveal();
     wireNextStep();
+    setTimeout(function () {
+      if (window.showPostGameEmail) window.showPostGameEmail();
+    }, 4000);
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
