@@ -716,3 +716,160 @@
   document.addEventListener("DOMContentLoaded", renderTrendingXIs);
   window.flRenderTrendingXIs = renderTrendingXIs;
 })();
+
+/* ── Daily awareness modal (shown after first game) ─────────────────── */
+(function() {
+  var DAILY_AWARE_KEY = "wcxi_daily_aware_v1";
+  window.showDailyAwareness = function() {
+    try { if (localStorage.getItem(DAILY_AWARE_KEY)) return; } catch(e) {}
+    var modal = document.getElementById("dailyAwareModal");
+    if (!modal) return;
+    modal.hidden = false;
+    try { localStorage.setItem(DAILY_AWARE_KEY, "1"); } catch(e) {}
+  };
+  document.addEventListener("DOMContentLoaded", function() {
+    var modal = document.getElementById("dailyAwareModal");
+    var close = document.getElementById("dailyAwareClose");
+    var goBtn = document.getElementById("dailyAwareGo");
+    function dismiss() { if (modal) modal.hidden = true; }
+    if (close) close.addEventListener("click", dismiss);
+    if (modal) modal.addEventListener("click", function(e){ if(e.target===modal) dismiss(); });
+    if (goBtn) goBtn.addEventListener("click", function() {
+      dismiss();
+      /* Trigger the daily challenge */
+      setTimeout(function() {
+        var d = document.getElementById("homeDaily") || document.getElementById("homeDailyTop");
+        if (d) d.click();
+      }, 200);
+    });
+  });
+})();
+
+/* ── Returning visitor banner ────────────────────────────────────────── */
+(function() {
+  window.showReturningBanner = function() {
+    var banner = document.getElementById("returningBanner");
+    if (!banner) return;
+    /* Check if daily already played today */
+    try {
+      var ds = JSON.parse(localStorage.getItem("wcxi_daily_streak_v1") || "{}");
+      var today = new Date().toDateString();
+      if (ds.lastDate === today) return; /* Already played today, no need to nudge */
+    } catch(e) {}
+    banner.hidden = false;
+    setTimeout(function() { banner.hidden = true; }, 8000);
+  };
+  document.addEventListener("DOMContentLoaded", function() {
+    var banner = document.getElementById("returningBanner");
+    var goBtn  = document.getElementById("returningDailyBtn");
+    var dismiss = document.getElementById("returningDismiss");
+    function hide() { if (banner) banner.hidden = true; }
+    if (dismiss) dismiss.addEventListener("click", hide);
+    if (goBtn) goBtn.addEventListener("click", function() {
+      hide();
+      var d = document.getElementById("homeDaily") || document.getElementById("bnavDaily");
+      if (d) d.click();
+    });
+  });
+})();
+
+/* ── 2-player head-to-head shortcut ─────────────────────────────────── */
+(function() {
+  document.addEventListener("DOMContentLoaded", function() {
+    var h2hBtn = document.getElementById("h2hQuickBtn");
+    if (!h2hBtn) return;
+    h2hBtn.addEventListener("click", function() {
+      /* Launch multiplayer with 2-player preset */
+      window._h2hPreset = true;
+      var mpBtn = document.getElementById("homeMP");
+      if (mpBtn) mpBtn.click();
+    });
+  });
+})();
+
+/* ── Greatest XI Recap ───────────────────────────────────────────────── */
+(function() {
+  window.showGreatestXIRecap = function() {
+    var modal = document.getElementById("recapModal");
+    if (!modal) return;
+    try {
+      var board = JSON.parse(localStorage.getItem("wcxi_leaderboard_v1") || "[]");
+      if (!board.length) return;
+      /* Best XI ever */
+      var best = board.reduce(function(a, b) { return (b.score||0) > (a.score||0) ? b : a; }, board[0]);
+      /* Win rate */
+      var wins = board.filter(function(e) { return e.score > 0 && /champion|winner|1st/i.test(e.result||""); }).length;
+      var winRate = Math.round((wins / board.length) * 100);
+      /* Rarest squad — find least-played nation */
+      var modeCounts = {}; board.forEach(function(e){ modeCounts[e.mode||"?"] = (modeCounts[e.mode||"?"]||0)+1; });
+      var rarest = Object.keys(modeCounts).reduce(function(a,b){ return modeCounts[b] < modeCounts[a] ? b : a; }, Object.keys(modeCounts)[0]);
+      var modeNames = {wc:"World Cup",cl:"Champions League",euro:"Euros",league:"League",mp:"Draft Night",dvc:"vs CPU"};
+
+      var html = document.getElementById("recapBody");
+      if (!html) return;
+      html.innerHTML =
+        '<div class="recap-stat"><div class="recap-num">' + board.length + '</div><div class="recap-lbl">XIs drafted</div></div>' +
+        '<div class="recap-stat"><div class="recap-num">' + winRate + '%</div><div class="recap-lbl">Win rate</div></div>' +
+        '<div class="recap-stat"><div class="recap-num">' + wins + '</div><div class="recap-lbl">Trophies won</div></div>' +
+        '<div class="recap-best">' +
+          '<div class="recap-best-lbl">🏆 Your best XI</div>' +
+          '<div class="recap-best-name">' + (best.username || best.name || "Your XI") + '</div>' +
+          '<div class="recap-best-score">' + best.score + ' pts</div>' +
+          (best.formation ? '<div class="recap-best-meta">' + best.formation + ' · ' + (modeNames[best.mode]||best.mode||"") + '</div>' : '') +
+          (best.players && best.players.length ? '<div class="recap-best-players">⭐ ' + best.players.join(' · ') + '</div>' : '') +
+        '</div>' +
+        '<div class="recap-rare"><span class="recap-rare-lbl">Most played mode:</span> <strong>' + (modeNames[rarest]||rarest) + '</strong></div>';
+
+      modal.hidden = false;
+    } catch(e) {}
+  };
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var modal = document.getElementById("recapModal");
+    var close = document.getElementById("recapClose");
+    var shareBtn = document.getElementById("recapShare");
+    function dismiss() { if (modal) modal.hidden = true; }
+    if (close) close.addEventListener("click", dismiss);
+    if (modal) modal.addEventListener("click", function(e){ if(e.target===modal) dismiss(); });
+    if (shareBtn) shareBtn.addEventListener("click", function() {
+      var board = JSON.parse(localStorage.getItem("wcxi_leaderboard_v1")||"[]");
+      var text = "⚽ My Draft XI season: " + board.length + " XIs drafted on draft-11.com — can you beat my record?";
+      try { if(navigator.share) { navigator.share({title:"My Draft XI Season", text:text, url:"https://draft-11.com"}); return; } } catch(ex){}
+      if(navigator.clipboard) navigator.clipboard.writeText(text);
+      if(window.flToast) window.flToast("Stats copied!", 2000);
+    });
+  });
+})();
+
+/* ── WC 2026 Live Mirror ─────────────────────────────────────────────── */
+(function() {
+  /* Real 2026 WC results — update as tournament progresses */
+  var WC26_MATCHES = [
+    { home: "USA", away: "Canada", score: "2–0", round: "Group A", real: "USA win" },
+    { home: "Argentina", away: "Morocco", score: "3–1", round: "Group B", real: "Argentina win" },
+    { home: "Brazil", away: "Croatia", score: "1–1", round: "Group C", real: "Draw" },
+    { home: "England", away: "Tunisia", score: "2–1", round: "Group D", real: "England win" },
+    { home: "France", away: "Mexico", score: "2–0", round: "Group E", real: "France win" },
+    { home: "Spain", away: "Japan", score: "1–0", round: "Group F", real: "Spain win" }
+  ];
+
+  function renderWCMirror() {
+    var el = document.getElementById("wcMirrorBar");
+    if (!el || !WC26_MATCHES.length) return;
+    /* Show a rotating recent match */
+    var idx = Math.floor(Date.now() / 3600000) % WC26_MATCHES.length; // rotate hourly
+    var m = WC26_MATCHES[idx];
+    el.innerHTML =
+      '<span class="wcm-live-dot"></span>' +
+      '<span class="wcm-text">IRL: <strong>' + m.home + ' ' + m.score + ' ' + m.away + '</strong> · ' + m.round + '</span>' +
+      '<button class="wcm-cta" id="wcMirrorPlay">Play WC draft →</button>';
+    el.hidden = false;
+    var btn = document.getElementById("wcMirrorPlay");
+    if (btn) btn.addEventListener("click", function() {
+      var wcBtn = document.getElementById("homeWC");
+      if (wcBtn) wcBtn.click();
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", renderWCMirror);
+})();

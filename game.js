@@ -137,6 +137,88 @@
 
   /* ── Progression system ───────────────────────────────────────────── */
   var PROG_KEY = "wcxi_progress";
+  /* ── Daily streak cosmetics ─────────────────────────────────────── */
+  var STREAK_KEY = "wcxi_daily_streak_v1";
+  var COSMETIC_KEY = "wcxi_cosmetics_v1";
+
+  function _loadDailyStreak() {
+    try { return JSON.parse(localStorage.getItem(STREAK_KEY) || "{}"); } catch(e) { return {}; }
+  }
+  function _saveDailyStreak(d) {
+    try { localStorage.setItem(STREAK_KEY, JSON.stringify(d)); } catch(e) {}
+  }
+  function _trackDailyStreak(isDaily) {
+    if (!isDaily) return;
+    var d = _loadDailyStreak();
+    var today = new Date().toDateString();
+    if (d.lastDate === today) return; // already played today
+    var yesterday = new Date(Date.now() - 86400000).toDateString();
+    d.streak = (d.lastDate === yesterday) ? (d.streak || 0) + 1 : 1;
+    d.lastDate = today;
+    d.bestStreak = Math.max(d.streak, d.bestStreak || 0);
+    _saveDailyStreak(d);
+    _checkStreakCosmetics(d.streak);
+  }
+  var STREAK_COSMETICS = [
+    { day: 1,  id: "rookie",    badge: "🔥 Day 1",       color: null,       msg: "🔥 Day 1 streak — you're on the board! Badge unlocked." },
+    { day: 2,  id: "day2",      badge: "⚡ Day 2",       color: null,       msg: "⚡ 2-day streak — keep it up!" },
+    { day: 7,  id: "warrior",   badge: "⚔️ Weekly Warrior", color: null,    msg: "⚔️ 7-day streak — Weekly Warrior badge unlocked!" },
+    { day: 14, id: "devoted",   badge: "💜 Devoted",     color: "#a855f7",  msg: "💜 14-day streak — Devoted Fan! Purple name unlocked." },
+    { day: 30, id: "legendary", badge: "👑 Legendary",   color: "#f59e0b",  msg: "👑 30-day streak — LEGENDARY! Gold name unlocked." }
+  ];
+  function _checkStreakCosmetics(streak) {
+    var c = _loadCosmetics();
+    STREAK_COSMETICS.forEach(function(sc) {
+      if (streak >= sc.day && !c[sc.id]) {
+        c[sc.id] = true;
+        _saveCosmetics(c);
+        setTimeout(function() {
+          if (window.flToast) window.flToast(sc.msg, 5000);
+          _showCosmeticUnlock(sc);
+        }, 1200);
+      }
+    });
+  }
+  function _loadCosmetics() {
+    try { return JSON.parse(localStorage.getItem(COSMETIC_KEY) || "{}"); } catch(e) { return {}; }
+  }
+  function _saveCosmetics(c) {
+    try { localStorage.setItem(COSMETIC_KEY, JSON.stringify(c)); } catch(e) {}
+  }
+  function getActiveCosmetic() {
+    var c = _loadCosmetics();
+    var active = null;
+    STREAK_COSMETICS.slice().reverse().forEach(function(sc) {
+      if (c[sc.id] && !active) active = sc;
+    });
+    return active;
+  }
+  function _showCosmeticUnlock(sc) {
+    var el = document.createElement("div");
+    el.className = "cosmetic-unlock-toast";
+    el.innerHTML = '<div class="cut-icon">' + sc.badge + '</div>' +
+      '<div class="cut-text"><div class="cut-title">Badge unlocked!</div>' +
+      '<div class="cut-sub">' + sc.badge + ' — shows on your leaderboard card</div></div>';
+    document.body.appendChild(el);
+    setTimeout(function() { el.classList.add("show"); }, 50);
+    setTimeout(function() { el.classList.remove("show"); setTimeout(function() { el.remove(); }, 400); }, 4000);
+  }
+
+  /* ── Greatest XI Recap ───────────────────────────────────────────── */
+  var RECAP_KEY = "wcxi_recap_seen_v1";
+  function _checkRecapTrigger(gamesPlayed) {
+    var milestones = [30, 90, 365];
+    var seen = {};
+    try { seen = JSON.parse(localStorage.getItem(RECAP_KEY) || "{}"); } catch(e) {}
+    var hit = milestones.find(function(m) { return gamesPlayed >= m && !seen[m]; });
+    if (!hit) return;
+    seen[hit] = true;
+    try { localStorage.setItem(RECAP_KEY, JSON.stringify(seen)); } catch(e) {}
+    setTimeout(function() {
+      if (window.showGreatestXIRecap) window.showGreatestXIRecap();
+    }, 5000);
+  }
+
   var PROG_MILESTONES = [
     { id:"first_game",   check:function(p){ return p.gamesPlayed >= 1;  }, msg:"🎮 First game played!", badge:"Beginner" },
     { id:"first_win",    check:function(p){ return p.wins >= 1;          }, msg:"🏆 First win!", badge:"Winner" },
@@ -185,6 +267,10 @@
     if(isChamp){ if(e.mode==="wc"||e.mode==="euro") p.wcWins++; if(e.mode==="cl") p.clWins++; }
     if(isPerfect) p.perfectGames++;
     _saveProgress(p);
+    /* Track daily challenge streak */
+    _trackDailyStreak(e.mode === "daily");
+    /* Check recap trigger */
+    _checkRecapTrigger(p.gamesPlayed);
     /* Check milestones */
     PROG_MILESTONES.forEach(function(m){
       if(!p.milestones[m.id] && m.check(p)){
@@ -1871,9 +1957,28 @@
     if (wiFooter) wiFooter.addEventListener("click", newGame);
     animateRankReveal();
     wireNextStep();
+    /* Wire quick-retry CTA */
+    var retryBtn = document.getElementById("retrySpinBtn");
+    if (retryBtn) retryBtn.addEventListener("click", function() { newGame(); showView("setup"); });
+    /* Wire "challenge a friend" share */
+    var challengeBtn = document.getElementById("challengeFriendBtn");
+    if (challengeBtn) challengeBtn.addEventListener("click", function() {
+      var sc = window._lastResultScore || 0;
+      var txt = "⚽ I drafted a " + formation + " XI and scored " + sc + " pts on Draft XI. Beat my score → https://draft-11.com";
+      try { if (navigator.share) { navigator.share({ title: "Beat my Draft XI", text: txt, url: "https://draft-11.com" }); return; } } catch(e) {}
+      if (navigator.clipboard) { navigator.clipboard.writeText(txt); if (window.flToast) window.flToast("Challenge link copied!", 2000); }
+    });
+    /* Post-game email modal (with slight delay) */
     setTimeout(function () {
       if (window.showPostGameEmail) window.showPostGameEmail();
     }, 4000);
+    /* First-game daily awareness — show once only */
+    var p = _loadProgress();
+    if (p.gamesPlayed === 1) {
+      setTimeout(function() {
+        if (window.showDailyAwareness) window.showDailyAwareness();
+      }, 2500);
+    }
   }
 
   // ---- scoring + leaderboards (only leaderboards persist) ----
@@ -1974,6 +2079,8 @@
         '<button class="sc-btn sc-btn-sec" id="copyImgBtn">💾 Save</button>' +
         '<button class="sc-btn sc-btn-sec" id="btmNewGame">New game</button>' +
       '</div>' +
+      '<button class="retry-spin-cta" id="retrySpinBtn">🎰 Spin again for a better squad →</button>' +
+      '<button class="challenge-friend-cta" id="challengeFriendBtn">⚡ Challenge a friend — beat my score</button>' +
       '<div class="sc-url">draft-11.com</div>' +
     '</div>';
   }
@@ -2310,16 +2417,32 @@
     }
     podHtml += '</div></div>';
 
-    /* ── My position card ── */
+    /* ── My position card + FOMO ── */
     var myCardHtml = "";
     if (myBest) {
       var mac = avColor(myName);
+      var gap = top[0] && myBest ? top[0].score - myBest.score : 0;
+      var fomoHtml = "";
+      if (myBestRank > 1 && gap > 0 && top[0]) {
+        var leader = top[0].username || top[0].name || "the leader";
+        var leaderPlayers = top[0].players && top[0].players.length ? top[0].players.join(" &amp; ") : "";
+        fomoHtml = '<div class="lb-fomo-bar">' +
+          '<span class="lb-fomo-icon">⚡</span>' +
+          '<span class="lb-fomo-text">You\'re <strong>' + gap + ' pts</strong> behind ' + esc(leader) +
+          (leaderPlayers ? ' <span class="lb-fomo-players">(' + leaderPlayers + ')</span>' : '') +
+          ' — play again to close the gap</span>' +
+          '<button class="lb-fomo-cta" id="lbFomoCTA">Play →</button>' +
+        '</div>';
+      }
+      var myCosmetic = getActiveCosmetic();
+      var cosmeticBadge = myCosmetic ? ' <span class="lb-streak-badge">' + myCosmetic.badge + '</span>' : '';
+      var cosmeticStyle = myCosmetic && myCosmetic.color ? ' style="color:' + myCosmetic.color + '"' : '';
       myCardHtml = '<div class="lb-section-lbl">Your position</div>' +
         '<div class="lb-my-card">' +
           '<div class="lb-my-left">' +
             '<div class="lb-my-av" style="background:' + mac.bg + ';color:' + mac.cl + '">' + initials(myName) + '</div>' +
             '<div class="lb-my-info">' +
-              '<div class="lb-my-name">' + esc(myName) + ' <span class="lb-me-tag">ME</span></div>' +
+              '<div class="lb-my-name"' + cosmeticStyle + '>' + esc(myName) + ' <span class="lb-me-tag">ME</span>' + cosmeticBadge + '</div>' +
               '<div class="lb-my-sub">' + playerSubline(myBest) + ' · ' + modeShort(myBest.mode) + '</div>' +
             '</div>' +
           '</div>' +
@@ -2328,7 +2451,7 @@
             '<div class="lb-my-rank">#' + myBestRank + '</div>' +
             '<div class="lb-my-pts">' + myBest.score + ' pts</div>' +
           '</div>' +
-        '</div>';
+        '</div>' + fomoHtml;
     }
 
     /* ── Table (rank 4+) ── */
@@ -2379,7 +2502,8 @@
 
     var html = podHtml + myCardHtml + tableHtml;
     elBoardBody.innerHTML = html;
-
+    var fomoBtn = document.getElementById("lbFomoCTA");
+    if (fomoBtn) fomoBtn.addEventListener("click", function() { newGame(); showView("setup"); });
   }
 
   function whoLabel(userTeam, comp) {
@@ -2874,4 +2998,17 @@
   // ---- init ----
   renderManager(); renderManagerStyles(); renderFormationBar(); renderRatingsToggle(); renderEra(); renderContinent(); renderDifficultyBar();
   paintPitches(); renderXI(); updateControls(); showView("home");
+
+  /* Returning visitor — surface daily challenge prominently */
+  (function() {
+    var VISIT_KEY = "wcxi_visit_count";
+    var visits = parseInt(localStorage.getItem(VISIT_KEY) || "0", 10) + 1;
+    localStorage.setItem(VISIT_KEY, visits);
+    if (visits > 1) {
+      /* Show returning visitor banner after a short delay */
+      setTimeout(function() {
+        if (window.showReturningBanner) window.showReturningBanner();
+      }, 800);
+    }
+  })();
 })(window);

@@ -6577,3 +6577,221 @@ body.light .foot-social-link:hover { color: rgba(0,0,0,0.65); }
   font-style: italic;
 }
 body.light .foot-founder { color: rgba(0,0,0,0.3); }
+
+/* ── Streak cosmetic unlock toast ───────────────────────────────────── */
+.cosmetic-unlock-toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+  z-index: 1400;
+  background: linear-gradient(135deg, #1a0d2e, #2d1a4a);
+  border: 1px solid rgba(168,85,247,0.4);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+  max-width: 320px; width: 90%;
+  opacity: 0; transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.cosmetic-unlock-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.cut-icon { font-size: 24px; flex-shrink: 0; }
+.cut-title { font-size: 13px; font-weight: 800; color: #fff; }
+.cut-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+/* ── Streak badge on leaderboard ────────────────────────────────────── */
+.lb-streak-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(245,158,11,0.2));
+  border: 1px solid rgba(168,85,247,0.35);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* ── Leaderboard FOMO bar ────────────────────────────────────────────── */
+.lb-fomo-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0,194,255,0.06);
+  border: 1px solid rgba(0,194,255,0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.lb-fomo-icon { font-size: 14px; flex-shrink: 0; }
+.lb-fomo-text { flex: 1; font-size: 12px; color: rgba(255,255,255,0.7); min-width: 0; }
+.lb-fomo-text strong { color: #00C2FF; }
+.lb-fomo-players { color: rgba(255,255,255,0.45); font-size: 11px; }
+.lb-fomo-cta {
+  background: #00C2FF; color: #000; border: none;
+  border-radius: 7px; padding: 5px 12px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  flex-shrink: 0; transition: opacity 0.15s;
+}
+.lb-fomo-cta:hover { opacity: 0.85; }
+body.light .lb-fomo-bar { background: rgba(0,120,200,0.05); border-color: rgba(0,120,200,0.2); }
+body.light .lb-fomo-text { color: rgba(0,0,0,0.65); }
+
+/* ── WC 2026 Live Mirror bar ─────────────────────────────────────────── */
+.wc-mirror-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,69,69,0.07);
+  border: 1px solid rgba(255,69,69,0.25);
+  border-radius: 10px;
+  padding: 9px 14px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.wc-mirror-bar[hidden] { display: none; }
+.wcm-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ff4545; flex-shrink: 0;
+  animation: pulseRed 1.4s ease-in-out infinite;
+}
+.wcm-text { flex: 1; font-size: 12px; color: rgba(255,255,255,0.75); min-width: 0; }
+.wcm-text strong { color: #fff; }
+.wcm-cta {
+  background: rgba(255,69,69,0.15); border: 1px solid rgba(255,69,69,0.35);
+  color: #ff6060; border-radius: 7px; padding: 5px 11px;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  white-space: nowrap; transition: background 0.15s;
+}
+.wcm-cta:hover { background: rgba(255,69,69,0.25); }
+body.light .wc-mirror-bar { background: rgba(200,0,0,0.04); border-color: rgba(200,0,0,0.2); }
+body.light .wcm-text { color: rgba(0,0,0,0.7); }
+body.light .wcm-text strong { color: rgba(0,0,0,0.9); }
+
+/* ── Greatest XI Recap modal ─────────────────────────────────────────── */
+.recap-modal { text-align: center; }
+.recap-header { margin-bottom: 20px; }
+.recap-trophy { font-size: 40px; margin-bottom: 6px; }
+.recap-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.recap-sub { font-size: 13px; color: rgba(255,255,255,0.5); }
+.recap-stats-grid { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+.recap-stat {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  min-width: 70px;
+}
+.recap-num { font-size: 26px; font-weight: 800; color: #00C2FF; line-height: 1; }
+.recap-lbl { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+.recap-best {
+  background: rgba(0,194,255,0.06);
+  border: 1px solid rgba(0,194,255,0.2);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+.recap-best-lbl { font-size: 10px; font-weight: 700; color: #00C2FF; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.recap-best-name { font-size: 16px; font-weight: 800; color: #fff; }
+.recap-best-score { font-size: 22px; font-weight: 800; color: #00C2FF; margin: 4px 0; }
+.recap-best-meta { font-size: 12px; color: rgba(255,255,255,0.5); }
+.recap-best-players { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+.recap-rare { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
+.recap-rare strong { color: rgba(255,255,255,0.85); }
+.recap-actions { margin-top: 4px; }
+.recap-share-btn { width: 100%; padding: 13px; font-size: 14px; }
+body.light .recap-title { color: #1a1a2e; }
+body.light .recap-sub { color: rgba(0,0,0,0.5); }
+body.light .recap-stat { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+body.light .recap-lbl { color: rgba(0,0,0,0.4); }
+body.light .recap-best { background: rgba(0,100,200,0.05); border-color: rgba(0,100,200,0.2); }
+body.light .recap-best-name { color: #1a1a2e; }
+body.light .recap-rare { color: rgba(0,0,0,0.45); }
+
+/* ── Post-result retry + challenge CTAs ─────────────────────────────── */
+.retry-spin-cta {
+  display: block; width: 100%;
+  background: rgba(0,194,255,0.08);
+  border: 1px solid rgba(0,194,255,0.25);
+  color: #00C2FF; border-radius: 12px;
+  padding: 13px 16px; font-size: 14px; font-weight: 700;
+  cursor: pointer; margin-top: 10px;
+  transition: background 0.15s;
+  text-align: center;
+}
+.retry-spin-cta:hover { background: rgba(0,194,255,0.15); }
+.challenge-friend-cta {
+  display: block; width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7); border-radius: 12px;
+  padding: 11px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; margin-top: 8px;
+  transition: background 0.15s;
+  text-align: center;
+}
+.challenge-friend-cta:hover { background: rgba(255,255,255,0.09); }
+body.light .retry-spin-cta { background: rgba(0,100,200,0.06); border-color: rgba(0,100,200,0.2); color: #0060cc; }
+body.light .challenge-friend-cta { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: rgba(0,0,0,0.6); }
+
+/* ── Returning visitor banner ────────────────────────────────────────── */
+.returning-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1200;
+  background: linear-gradient(135deg, #0a1a2e, #0d2240);
+  border-bottom: 1px solid rgba(0,194,255,0.25);
+  padding: env(safe-area-inset-top, 0) 0 0;
+  animation: slideDown 0.3s ease;
+}
+.returning-banner[hidden] { display: none; }
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+.returning-banner-inner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  max-width: 480px; margin: 0 auto;
+}
+.returning-icon { font-size: 20px; flex-shrink: 0; }
+.returning-text { flex: 1; min-width: 0; }
+.returning-title { font-size: 13px; font-weight: 700; color: #fff; }
+.returning-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+.returning-cta {
+  background: #00C2FF; color: #000; border: none;
+  border-radius: 8px; padding: 7px 14px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  flex-shrink: 0; transition: opacity 0.15s;
+}
+.returning-cta:hover { opacity: 0.85; }
+.returning-dismiss {
+  background: none; border: none; color: rgba(255,255,255,0.35);
+  font-size: 16px; cursor: pointer; padding: 4px; flex-shrink: 0;
+}
+.returning-dismiss:hover { color: rgba(255,255,255,0.7); }
+body.light .returning-banner { background: linear-gradient(135deg, #e8f4ff, #d0eaff); border-color: rgba(0,120,200,0.25); }
+body.light .returning-title { color: #0a2a40; }
+body.light .returning-sub { color: rgba(0,0,0,0.5); }
+body.light .returning-dismiss { color: rgba(0,0,0,0.3); }
+
+/* ── Daily awareness modal ───────────────────────────────────────────── */
+.daily-aware-modal { text-align: center; }
+.daily-aware-preview {
+  display: flex; flex-direction: column; gap: 8px;
+  margin: 14px 0 18px; text-align: left;
+}
+.dap-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8);
+}
+.daily-aware-go { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; }
+body.light .dap-item { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); color: rgba(0,0,0,0.75); }
+
+/* ── 1v1 head-to-head button ─────────────────────────────────────────── */
+.dn-banner-btns { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.dn-h2h-btn {
+  background: rgba(0,180,255,0.08);
+  border: 1px solid rgba(0,180,255,0.3);
+  color: rgba(0,200,255,0.8); border-radius: 8px;
+  padding: 7px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: background 0.15s;
+}
+.dn-h2h-btn:hover { background: rgba(0,180,255,0.18); }
+body.light .dn-h2h-btn { background: rgba(0,120,200,0.08); border-color: rgba(0,120,200,0.25); color: #0060aa; }

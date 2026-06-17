@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
-  <link rel="stylesheet" href="style.css?v=147" />
+  <link rel="stylesheet" href="style.css?v=149" />
   <link rel="stylesheet" href="tokens.css?v=77" />
   <link rel="stylesheet" href="floodlights.css?v=141" />
 </head>
@@ -66,6 +66,9 @@
         </div>
         <button class="wc26-banner-cta" id="wc26BannerBtn">Draft your squad →</button>
       </div>
+
+      <!-- WC 2026 Live Mirror bar -->
+      <div class="wc-mirror-bar" id="wcMirrorBar" hidden></div>
 
       <!-- Hero -->
       <div class="h2-hero">
@@ -118,7 +121,10 @@
               <span class="dn-banner-sub">Play with up to 8 friends · Live draft · Online</span>
             </div>
           </div>
-          <button class="dn-banner-cta" id="homeMP">Invite friends →</button>
+          <div class="dn-banner-btns">
+            <button class="dn-h2h-btn" id="h2hQuickBtn">1v1 →</button>
+            <button class="dn-banner-cta" id="homeMP">Invite friends →</button>
+          </div>
         </div>
 
         <!-- Secondary trio -->
@@ -550,6 +556,51 @@
     </div>
   </div>
 
+  <!-- ===== RETURNING VISITOR BANNER ===== -->
+  <div id="returningBanner" class="returning-banner" hidden>
+    <div class="returning-banner-inner">
+      <span class="returning-icon">👋</span>
+      <div class="returning-text">
+        <div class="returning-title">Welcome back — today's challenge is live</div>
+        <div class="returning-sub">New squads, same competition. Takes 3 minutes.</div>
+      </div>
+      <button class="returning-cta" id="returningDailyBtn">Play →</button>
+      <button class="returning-dismiss" id="returningDismiss" aria-label="Dismiss">✕</button>
+    </div>
+  </div>
+
+  <!-- ===== DAILY AWARENESS MODAL (shown after first game) ===== -->
+  <div id="dailyAwareModal" class="pg-modal-overlay" hidden aria-modal="true" role="dialog">
+    <div class="pg-modal daily-aware-modal">
+      <button class="pg-modal-close" id="dailyAwareClose" aria-label="Close">✕</button>
+      <div class="pg-modal-icon">📅</div>
+      <div class="pg-modal-title">Come back tomorrow</div>
+      <p class="pg-modal-sub">A fresh set of squads drops every 24 hours. Daily challenge — different history, same XI format.</p>
+      <div class="daily-aware-preview">
+        <div class="dap-item">🎯 New nations &amp; clubs every day</div>
+        <div class="dap-item">🔥 Build a daily streak</div>
+        <div class="dap-item">📊 Compare with other fans</div>
+      </div>
+      <button class="btn-accent daily-aware-go" id="dailyAwareGo">Try today's challenge →</button>
+    </div>
+  </div>
+
+  <!-- ===== GREATEST XI RECAP MODAL ===== -->
+  <div id="recapModal" class="pg-modal-overlay" hidden aria-modal="true" role="dialog">
+    <div class="pg-modal recap-modal">
+      <button class="pg-modal-close" id="recapClose" aria-label="Close">✕</button>
+      <div class="recap-header">
+        <div class="recap-trophy">🏆</div>
+        <div class="recap-title">Your Draft XI Season</div>
+        <div class="recap-sub">Here's what you've built so far</div>
+      </div>
+      <div class="recap-stats-grid" id="recapBody"></div>
+      <div class="recap-actions">
+        <button class="btn-accent recap-share-btn" id="recapShare">📤 Share my stats</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== SHARE PREVIEW MODAL ===== -->
   <div id="sharePreviewModal" class="pg-modal-overlay" hidden aria-modal="true" role="dialog">
     <div class="pg-modal sp-modal">
@@ -611,12 +662,12 @@
   <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=82"></script>
-  <script src="game.js?v=149"></script>
+  <script src="game.js?v=151"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=91"></script>
   <script src="audio.js?v=2" defer></script>
-  <script src="floodlights.js?v=104" defer></script>
+  <script src="floodlights.js?v=106" defer></script>
   <script src="ratingswar.js?v=116" defer></script>
   <script src="draftvscomputer.js?v=19" defer></script>
   <script src="daily.js?v=5" defer></script>
