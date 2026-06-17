@@ -201,7 +201,7 @@
       var succ  = document.getElementById("pgEmailSuccess");
       var skip  = document.getElementById("pgEmailSkip");
       var close = document.getElementById("pgEmailClose");
-      function dismiss() { if (modal) modal.hidden = true; }
+      function dismiss() { if (modal) modal.hidden = true; try { localStorage.setItem(PG_EMAIL_KEY, "skipped"); } catch(e) {} }
       if (close) close.addEventListener("click", dismiss);
       if (skip)  skip.addEventListener("click", dismiss);
       if (modal) modal.addEventListener("click", function(e){ if (e.target === modal) dismiss(); });
