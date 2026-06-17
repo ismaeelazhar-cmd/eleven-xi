@@ -591,7 +591,7 @@
   function renderManager() {
     if (managerId === "none") {
       elManagerStrip.innerHTML = '<div class="reel-item mgr-item"><span class="mgr-name-big">No manager</span></div>';
-      elManagerDesc.innerHTML = "Pick a tactical style above, or spin the wheel for a famous manager.";
+      elManagerDesc.innerHTML = "Spin to get a famous manager, or go Random.";
     } else {
       var st = currentManager();
       if (managerName) {

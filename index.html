@@ -34,7 +34,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
-  <link rel="stylesheet" href="style.css?v=149" />
+  <link rel="stylesheet" href="style.css?v=150" />
   <link rel="stylesheet" href="tokens.css?v=77" />
   <link rel="stylesheet" href="floodlights.css?v=141" />
 </head>
@@ -181,15 +181,15 @@
 
         <div class="setup-row setup-row-col">
           <span class="setup-label">Manager</span>
-          <div class="manager-options" id="managerStyles"></div>
-          <div class="mgr-wheel">
+          <div class="manager-options" id="managerStyles" style="display:none"></div>
+          <div class="mgr-wheel mgr-wheel--centered">
             <div class="reel mgr-reel"><div class="reel-strip" id="managerStrip"></div></div>
-            <div class="mgr-wheel-btns">
+            <div class="mgr-wheel-btns mgr-wheel-btns--centered">
               <button class="btn-accent" id="managerSpin">Spin legend</button>
               <button class="btn-ghost mgr-random-btn" id="managerRandom">⚡ Random</button>
             </div>
           </div>
-          <div class="manager-desc" id="managerDesc"></div>
+          <div class="manager-desc manager-desc--centered" id="managerDesc"></div>
         </div>
 
         <div class="setup-pitch-wrap">
@@ -662,7 +662,7 @@
   <script src="data_league.js?v=75"></script>
   <script src="data_championship_history.js?v=71"></script>
   <script src="engine.js?v=82"></script>
-  <script src="game.js?v=151"></script>
+  <script src="game.js?v=152"></script>
   <script src="net.js?v=84"></script>
   <script src="multiplayer.js?v=106"></script>
   <script src="league.js?v=91"></script>

@@ -5492,6 +5492,15 @@ body.light .squad-search:focus { border-color: #4338ca; }
 .mgr-wheel-btns { display: flex; gap: 8px; flex-direction: column; }
 .mgr-random-btn { font-size: 12px; padding: 6px 12px; }
 
+/* Manager wheel — centered layout (no style picker) */
+#managerStyles { display: none !important; }
+.mgr-wheel--centered { flex-direction: column; align-items: center; gap: 12px; }
+.mgr-wheel--centered .mgr-reel { width: 100%; flex: none; height: 80px; }
+.mgr-wheel-btns--centered { flex-direction: row; justify-content: center; gap: 10px; }
+.mgr-wheel-btns--centered #managerSpin { flex: 1; max-width: 180px; }
+.mgr-wheel-btns--centered .mgr-random-btn { flex-shrink: 0; }
+.manager-desc--centered { text-align: center; }
+
 /* ══ RESULTS SCREEN — 5 FEATURES ════════════════════════════════════════ */
 
 /* 2. Animated rank reveal */
