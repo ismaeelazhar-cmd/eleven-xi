@@ -845,12 +845,26 @@
 (function() {
   /* Real 2026 WC results — update as tournament progresses */
   var WC26_MATCHES = [
-    { home: "USA", away: "Canada", score: "2–0", round: "Group A", real: "USA win" },
-    { home: "Argentina", away: "Morocco", score: "3–1", round: "Group B", real: "Argentina win" },
-    { home: "Brazil", away: "Croatia", score: "1–1", round: "Group C", real: "Draw" },
-    { home: "England", away: "Tunisia", score: "2–1", round: "Group D", real: "England win" },
-    { home: "France", away: "Mexico", score: "2–0", round: "Group E", real: "France win" },
-    { home: "Spain", away: "Japan", score: "1–0", round: "Group F", real: "Spain win" }
+    { home: "Mexico", away: "South Africa", score: "2–0", round: "Group A", date: "Jun 11" },
+    { home: "South Korea", away: "Czechia", score: "2–1", round: "Group A", date: "Jun 11" },
+    { home: "USA", away: "Paraguay", score: "4–1", round: "Group D", date: "Jun 12" },
+    { home: "Canada", away: "Bosnia & Herz.", score: "1–1", round: "Group B", date: "Jun 12" },
+    { home: "Qatar", away: "Switzerland", score: "1–1", round: "Group B", date: "Jun 13" },
+    { home: "Brazil", away: "Morocco", score: "1–1", round: "Group C", date: "Jun 13" },
+    { home: "Haiti", away: "Scotland", score: "0–1", round: "Group C", date: "Jun 13" },
+    { home: "Australia", away: "Türkiye", score: "2–0", round: "Group D", date: "Jun 13" },
+    { home: "Germany", away: "Curaçao", score: "7–1", round: "Group E", date: "Jun 14" },
+    { home: "Ivory Coast", away: "Ecuador", score: "1–0", round: "Group E", date: "Jun 14" },
+    { home: "Netherlands", away: "Japan", score: "2–2", round: "Group F", date: "Jun 14" },
+    { home: "Sweden", away: "Tunisia", score: "5–1", round: "Group F", date: "Jun 14" },
+    { home: "Spain", away: "Cape Verde", score: "0–0", round: "Group H", date: "Jun 15" },
+    { home: "Saudi Arabia", away: "Uruguay", score: "1–1", round: "Group H", date: "Jun 15" },
+    { home: "Belgium", away: "Egypt", score: "1–1", round: "Group G", date: "Jun 15" },
+    { home: "Iran", away: "New Zealand", score: "2–2", round: "Group G", date: "Jun 15" },
+    { home: "France", away: "Senegal", score: "3–1", round: "Group I", date: "Jun 16" },
+    { home: "Norway", away: "Iraq", score: "4–1", round: "Group I", date: "Jun 16" },
+    { home: "Argentina", away: "Algeria", score: "3–0", round: "Group J", date: "Jun 16" },
+    { home: "Austria", away: "Jordan", score: "3–1", round: "Group J", date: "Jun 17" }
   ];
 
   function renderWCMirror() {
@@ -861,7 +875,7 @@
     var m = WC26_MATCHES[idx];
     el.innerHTML =
       '<span class="wcm-live-dot"></span>' +
-      '<span class="wcm-text">IRL: <strong>' + m.home + ' ' + m.score + ' ' + m.away + '</strong> · ' + m.round + '</span>' +
+      '<span class="wcm-text">IRL: <strong>' + m.home + ' ' + m.score + ' ' + m.away + '</strong> · ' + m.round + ' · ' + (m.date||"") + '</span>' +
       '<button class="wcm-cta" id="wcMirrorPlay">Play WC draft →</button>';
     el.hidden = false;
     var btn = document.getElementById("wcMirrorPlay");
