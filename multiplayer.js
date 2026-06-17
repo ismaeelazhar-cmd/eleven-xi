@@ -1060,24 +1060,8 @@
     var mSec = mk("div","mp-section");
     mSec.innerHTML = '<div class="mp-label">Manager</div>';
 
-    /* Style selector */
-    var styleRow = mk("div","mp-mgr-style-row");
-    MP_MANAGERS.forEach(function(m){
-      var active = p.manager && p.manager.id===m.id;
-      var b = mk("button","mp-mgr-style-btn"+(active?" active":""), m.emoji+"<span>"+esc(m.name)+"</span>");
-      b.title = m.desc;
-      b.addEventListener("click",function(){
-        p.manager = { id:m.id, emoji:m.emoji, name:m.name, atk:m.atk, def:m.def, ko:m.ko, desc:m.desc };
-        st.mgrSpinResult = null;
-        try{ localStorage.setItem("wcxi_manager", JSON.stringify({id:m.id,name:""})); }catch(e){}
-        _render();
-      });
-      styleRow.appendChild(b);
-    });
-    mSec.appendChild(styleRow);
-
     /* Spin reel */
-    var spinWrap = mk("div","mp-mgr-spin-wrap");
+    var spinWrap = mk("div","mp-mgr-spin-wrap mgr-wheel--centered");
     var reelEl = mk("div","mp-mgr-reel");
     reelEl.id = "mpMgrReel";
     var stripEl = mk("div","mp-mgr-strip");

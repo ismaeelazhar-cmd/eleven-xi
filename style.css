@@ -2257,6 +2257,10 @@ body.light .mp-sub-hint { color: rgba(0,0,0,0.38); }
   gap: 14px;
   margin-bottom: 12px;
 }
+.mp-mgr-spin-wrap.mgr-wheel--centered {
+  flex-direction: column;
+  align-items: center;
+}
 .mp-mgr-reel {
   width: 240px;
   height: 48px;

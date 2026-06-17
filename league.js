@@ -237,12 +237,14 @@
         /* Manager */
         "<div class='setup-row setup-row-col'>"+
           "<span class='setup-label'>Manager</span>"+
-          "<div class='manager-options' id='lgMgrStyles'></div>"+
-          "<div class='mgr-wheel'>"+
+          "<div class='manager-options' id='lgMgrStyles' style='display:none'></div>"+
+          "<div class='mgr-wheel mgr-wheel--centered'>"+
             "<div class='reel mgr-reel'><div class='reel-strip' id='lgMgrStrip'></div></div>"+
-            "<button class='btn-accent' id='lgMgrSpin'"+(mgrSpinDone?" disabled":"")+">"+(mgrSpinDone?"Manager appointed":"Spin")+"</button>"+
+            "<div class='mgr-wheel-btns mgr-wheel-btns--centered'>"+
+              "<button class='btn-accent' id='lgMgrSpin'"+(mgrSpinDone?" disabled":"")+">"+(mgrSpinDone?"Manager appointed":"Spin legend")+"</button>"+
+            "</div>"+
           "</div>"+
-          "<div class='manager-desc' id='lgMgrDesc'></div>"+
+          "<div class='manager-desc manager-desc--centered' id='lgMgrDesc'></div>"+
         "</div>"+
         /* Pitch preview */
         "<div class='setup-pitch-wrap'>"+
