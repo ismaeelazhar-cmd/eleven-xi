@@ -164,9 +164,9 @@ header p {
     linear-gradient(180deg, var(--card2), var(--card3));
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  margin-bottom: 22px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  margin-bottom: 18px;
 }
 
 .reels {
@@ -5018,6 +5018,7 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
    ═══════════════════════════════════════════════════ */
 
 /* Replace stacked reels with a single horizontal row */
+/* ── Spin row layout ──────────────────────────────────────────────── */
 .spin-row {
   display: flex;
   align-items: flex-end;
@@ -5029,55 +5030,92 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
   flex: 1 1 0;
   min-width: 0;
 }
-/* Give the year reel a sensible minimum so "2024" never looks cramped */
-.spin-row .spin-col:last-of-type { min-width: 92px; }
-.spin-col-btn {
-  flex: 0 0 auto;
-}
+/* Year col: fixed comfortable width so "2026" is never cramped */
+.spin-row .spin-col:nth-child(2) { flex: 0 0 90px; }
+/* SPIN button col: auto-width, never stretches */
+.spin-col-btn { flex: 0 0 auto; }
+
+/* Column label */
 .spin-col-label {
-  font-size: 10px;
-  letter-spacing: 2px;
+  font-size: 9px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
   color: var(--gold);
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   text-align: center;
+  opacity: 0.8;
 }
-/* Reuse .reel but compact height in the row */
+
+/* ── Spin reel: taller, cleaner, readable ─────────────────────────── */
 .spin-reel {
-  height: 58px !important;
+  height: 72px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 28%, transparent 72%, rgba(0,0,0,0.55) 100%),
+    var(--reel) !important;
 }
 .spin-reel::after {
-  height: 58px !important;
+  height: 72px !important;
+  box-shadow: inset 0 0 0 2px rgba(245, 180, 60, 0.3), inset 0 2px 8px rgba(245,180,60,0.06) !important;
+  border-radius: 12px !important;
 }
 .spin-reel .reel-item {
-  height: 58px !important;
+  height: 72px !important;
+  gap: 3px !important;
 }
-.spin-reel .reel-item .flag { font-size: 20px; }
+
+/* Flag: bigger, crisper */
+.spin-reel .reel-item .flag {
+  font-size: 26px !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+}
+
+/* Nation/club name: readable, no truncation */
 .spin-reel .reel-item .name {
-  font-size: 10px;
-  letter-spacing: normal;
-  padding: 0 4px;
-  line-height: 1.15;
-  word-break: normal;
+  font-size: 11px !important;
+  letter-spacing: 0.3px;
+  padding: 0 6px;
+  line-height: 1.2;
+  word-break: break-word;
   overflow-wrap: break-word;
-  /* override the generic .reel-item .name truncation — small text should
-     read in full, not get clipped with an ellipsis */
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-  max-height: 100%;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  max-height: none;
+  display: block;
+  text-align: center;
+  font-weight: 800;
+  color: rgba(255,255,255,0.92);
 }
-.spin-reel .reel-item .year { font-size: 22px; }
+
+/* Year: larger, gold, monospace */
+.spin-reel .reel-item .year {
+  font-size: 26px !important;
+  letter-spacing: 3px !important;
+  line-height: 1 !important;
+  color: var(--gold) !important;
+  font-weight: 900 !important;
+}
+
+/* ── SPIN button ─────────────────────────────────────────────────── */
 .spin-col-btn button.spin {
-  padding: 11px 22px;
-  font-size: 15px;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
   width: 100%;
   white-space: nowrap;
-  min-height: 44px;
+  min-height: 72px;
+  border-radius: 12px !important;
+  border: none;
+  background: linear-gradient(160deg, #8B5CF6, #6D28D9) !important;
+  box-shadow: 0 4px 20px rgba(109,40,217,0.45), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.08s;
 }
 .spin-sub-row {
   display: flex;
@@ -5249,16 +5287,16 @@ body.light .pos.FWD { background: rgba(200, 80, 50, 0.14);  color: #c04020; }
 
 /* ── 2. Spin row (all modes) ─── */
 @media (max-width: 480px) {
-  /* Make reels shorter on phone so whole row fits */
+  /* Spin reel on phone: keep height, tighten text */
   .spin-reel, .spin-reel::after, .spin-reel .reel-item {
-    height: 48px !important;
+    height: 62px !important;
   }
-  .spin-reel .reel-item .name { font-size: 8.5px !important; padding: 0 2px !important; }
-  .spin-col-label { font-size: 9px !important; }
-  .spin-col-btn button.spin {
-    padding: 8px 14px !important;
-    font-size: 13px !important;
-  }
+  .spin-reel .reel-item .flag { font-size: 20px !important; }
+  .spin-reel .reel-item .name { font-size: 9.5px !important; padding: 0 3px !important; }
+  .spin-reel .reel-item .year { font-size: 20px !important; letter-spacing: 2px !important; }
+  .spin-col-btn button.spin { min-height: 62px !important; font-size: 13px !important; }
+  /* Year col narrower on small phones */
+  .spin-row .spin-col:nth-child(2) { flex: 0 0 72px !important; }
 }
 
 /* ── 3. Draft layout (World Cup + Euros) ─── */
@@ -6881,13 +6919,7 @@ body.light .dn-h2h-btn { background: rgba(0,120,200,0.08); border-color: rgba(0,
   .mode-card  { border-radius: 12px !important; }
 }
 
-/* 4 ── Spin reel: readable names, comfortable height */
-@media (max-width: 480px) {
-  .spin-reel, .spin-reel::after, .spin-reel .reel-item { height: 52px !important; }
-  .spin-reel .reel-item .flag { font-size: 22px !important; }
-  .spin-reel .reel-item .year { font-size: 18px !important; }
-  .spin-col-btn .spin { min-height: 52px !important; font-size: 14px !important; }
-}
+/* 4 ── Spin reel: handled above in section ── 2 */
 
 /* 5 ── Cards: full-width match cards, no cramped side margins */
 @media (max-width: 480px) {
