@@ -884,7 +884,11 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .mscore .me { font-weight: 800; color: var(--gold); }
 .mscore b { font-size: 17px; }
 .mscore .oppname { font-weight: 600; }
-/* Match story ticker — 3-5 named beats per match (goals, saves, drama) */
+/* Flat scorer list — League / CL / Euros (no ticker) */
+.mscorers { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
+.mscore-line { font-size: 12px; color: var(--muted); }
+.massist { opacity: 0.7; }
+/* Match story ticker — 3-5 named beats per match (WC + MP only) */
 .mstory { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 .mstory-row { display: flex; align-items: baseline; gap: 7px; font-size: 12.5px; line-height: 1.4; animation: mstoryIn 0.3s var(--ease-out, ease-out) both; }
 .mstory-min { flex: 0 0 auto; width: 26px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 11px; }

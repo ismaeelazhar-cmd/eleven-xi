@@ -1670,13 +1670,23 @@
       return '<div class="mstory-row"><span class="mstory-min">' + e.min + "&prime;</span><span class=\"mstory-ico\">" + e.icon + "</span><span class=\"mstory-txt\">" + e.text + "</span></div>";
     }).join("") + "</div>";
   }
-  function matchCardHTML(m, teamName, userTeam) {
+  function scorerLinesHTML(m) {
+    var lines = (m.events || []).filter(function (e) { return e.scorer && e.scorer !== "—"; });
+    if (!lines.length) return "";
+    return '<div class="mscorers">' + lines.map(function (e) {
+      return '<span class="mscore-line">⚽ ' + esc(e.scorer) + (e.assist ? " <span class=\"massist\">(assist: " + esc(e.assist) + ")</span>" : "") + "</span>";
+    }).join("") + "</div>";
+  }
+  function matchCardHTML(m, teamName, userTeam, simple) {
     var pens = m.pens ? ' <span class="pens">(pens ' + m.pens[0] + "–" + m.pens[1] + ")</span>" : "";
+    var details = simple
+      ? scorerLinesHTML(m)
+      : matchStoryHTML(m, userTeam);
     return '<div class="mcard ' + m.result + '"><div class="mcard-top"><span class="mround">' + esc(m.round) + "</span>" +
       '<span class="pill ' + m.result + '">' + m.result + "</span></div>" +
       '<div class="mscore"><span class="me">' + esc(teamName) + "</span> <b>" + m.gf + "–" + m.ga + "</b> " +
       '<span class="oppname">' + esc(m.opp.name) + "</span>" + pens + "</div>" +
-      matchStoryHTML(m, userTeam) + (m.cleanSheet ? '<div class="mclean">Clean sheet</div>' : "") + "</div>";
+      details + (m.cleanSheet ? '<div class="mclean">Clean sheet</div>' : "") + "</div>";
   }
   function statRows(list, key, max) {
     if (!list.length) return '<div class="stat-empty">—</div>';
@@ -1874,12 +1884,12 @@
     // ---- Part 1: Group stage ----
     html += '<h3 class="sec">① Group stage</h3>';
     if (userGroup) html += '<div class="grid-groups">' + groupCardHTML(userGroup) + "</div>";
-    html += '<div class="journey">' + groupMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+    html += '<div class="journey">' + groupMatches.map(function (m) { return matchCardHTML(m, result.teamName, null, true); }).join("") + "</div>";
 
     // ---- Part 2: Knockouts ----
     html += '<h3 class="sec">② Knockouts</h3>';
     if (koMatches.length) {
-      html += '<div class="journey">' + koMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+      html += '<div class="journey">' + koMatches.map(function (m) { return matchCardHTML(m, result.teamName, null, true); }).join("") + "</div>";
     } else {
       html += '<p class="legend">Your run ended in the group stage.</p>';
     }
@@ -1894,7 +1904,7 @@
     var html = '<h2 class="res-title">' + label + '</h2><div class="champion big">' + esc(ur.team.name) + " finished <b>" + ordinal(result.userPos) + "</b> of " + result.table.length + " &middot; " + ur.Pts + " pts</div>";
     html += statsSummaryHTML(result.userStats);
     html += '<h3 class="sec">Your games <span class="legend-note">(' + result.userMatches.length + " shown · other " + (result.totalMatches - result.userMatches.length) + " simulated in the background)</span></h3>";
-    html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName); }).join("") + "</div>";
+    html += '<div class="journey">' + result.userMatches.map(function (m) { return matchCardHTML(m, result.teamName, null, true); }).join("") + "</div>";
     html += '<button class="btn-ghost" id="toggleTable" data-show="Show full ' + result.table.length + '-team table">Show full ' + result.table.length + '-team table</button>';
     html += '<div id="fullTableWrap" style="display:none;margin-top:14px;">' + leagueTableHTML(result) + "</div>";
     return html;
@@ -2588,9 +2598,9 @@
       revealTimer = setTimeout(function () { state.shown++; rerender(); }, delay);
     }
   }
-  function revealListHTML(matches, shown, teamName, userTeam) {
+  function revealListHTML(matches, shown, teamName, userTeam, simple) {
     var html = '<div class="journey">';
-    for (var i = 0; i < shown && i < matches.length; i++) html += matchCardHTML(matches[i], teamName, userTeam);
+    for (var i = 0; i < shown && i < matches.length; i++) html += matchCardHTML(matches[i], teamName, userTeam, simple);
     return html + "</div>";
   }
   function skipBarHTML(shown, total) {
@@ -2750,7 +2760,7 @@
       html += '<div class="stage-badge">Your season · game by game</div>';
       html += (r.shown < gm.length ? skipBarHTML(r.shown, gm.length)
         : '<div class="reveal-bar"><button class="start-btn" id="toResult">See your final standing →</button></div>');
-      html += revealListHTML(gm, r.shown, lg.teamName, r.userTeam);
+      html += revealListHTML(gm, r.shown, lg.teamName, null, true);
     } else {
       var result = ordinal(lg.userPos) + " of " + lg.table.length;
       if (!r.saved) { r.saved = true; window._lastResultScore = r.sc.score; if (window.sfx && lg.userPos === 1) window.sfx.win(); addScore({ name: r.userTeam.name, score: r.sc.score, result: result, mode: r.cl ? "cl" : "league", ts: Date.now() }); if (window.GAFFER_OB) setTimeout(function(){ window.GAFFER_OB.onResult(r.sc.score); }, 1800); }
