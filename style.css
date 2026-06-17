@@ -6823,3 +6823,166 @@ body.light .dap-item { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.
 }
 .dn-h2h-btn:hover { background: rgba(0,180,255,0.18); }
 body.light .dn-h2h-btn { background: rgba(0,120,200,0.08); border-color: rgba(0,120,200,0.25); color: #0060aa; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMISATION PASS — consolidated improvements for phones
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* 1 ── Fluid typography: use clamp everywhere critical sizes are fixed */
+@media (max-width: 600px) {
+  /* Hero */
+  header h1 { font-size: clamp(26px, 8vw, 38px) !important; letter-spacing: 0; }
+  header p  { font-size: 13px; }
+
+  /* Section headings */
+  h2, .res-title { font-size: clamp(18px, 5.5vw, 26px) !important; }
+  h3.sec        { font-size: clamp(14px, 4vw, 18px) !important; }
+
+  /* Body copy */
+  body { font-size: 15px; line-height: 1.5; }
+}
+
+/* 2 ── Touch targets: every tappable element ≥ 44px on phones */
+@media (max-width: 768px) {
+  /* Ensure ALL buttons are large enough */
+  button, .btn-primary, .btn-ghost, .btn-accent, .start-btn,
+  .seg-opt, .home-mode-card, .formation-opt, .diff-opt,
+  .choose-pos, .mp-choose-pos, .back, .bnav-pill,
+  .player:not(.taken):not(.noslot) {
+    min-height: 44px !important;
+  }
+
+  /* Larger tap zone on player rows */
+  .player { padding: 10px 12px !important; }
+
+  /* Back button needs a comfortable tap area */
+  .back { padding: 10px 18px !important; display: inline-flex; align-items: center; }
+
+  /* Mode cards: bigger padding for fat-finger friendliness */
+  .mode-card { padding: 18px 16px !important; }
+}
+
+/* 3 ── Spacing: tighten vertical whitespace, widen horizontal breathing room */
+@media (max-width: 480px) {
+  .wrap { padding-left: 12px !important; padding-right: 12px !important; }
+
+  /* Reduce excessive margins between sections */
+  .machine    { margin-bottom: 12px !important; }
+  .setup      { padding: 14px !important; margin-bottom: 12px !important; }
+  header      { margin-bottom: 12px !important; }
+  h2          { margin-top: 14px !important; margin-bottom: 8px !important; }
+  h3.sec      { margin-top: 10px !important; }
+
+  /* Draft screen: tighter gap between left machine + right squad panel */
+  .draft-cols { gap: 10px !important; }
+
+  /* Mode selection grid: full-width single column */
+  .home-modes { gap: 8px !important; }
+  .mode-card  { border-radius: 12px !important; }
+}
+
+/* 4 ── Spin reel: readable names, comfortable height */
+@media (max-width: 480px) {
+  .spin-reel, .spin-reel::after, .spin-reel .reel-item { height: 52px !important; }
+  .spin-reel .reel-item .flag { font-size: 22px !important; }
+  .spin-reel .reel-item .year { font-size: 18px !important; }
+  .spin-col-btn .spin { min-height: 52px !important; font-size: 14px !important; }
+}
+
+/* 5 ── Cards: full-width match cards, no cramped side margins */
+@media (max-width: 480px) {
+  .mcard    { border-radius: 10px !important; padding: 10px 12px !important; }
+  .mstory   { gap: 5px !important; }
+  .mstory-row { font-size: 12px !important; }
+  .mscore b { font-size: 17px !important; }
+}
+
+/* 6 ── Squad picker overlay: full-screen feel on phone */
+@media (max-width: 480px) {
+  .squad-card {
+    border-radius: 16px 16px 0 0 !important;
+    padding: 14px 12px !important;
+  }
+  .squad-head h2 { font-size: 15px !important; }
+  .player        { padding: 9px 10px !important; }
+  .pname         { font-size: 13px !important; }
+  .ppos-badge    { font-size: 10px !important; }
+}
+
+/* 7 ── Stats / results screen: comfortable on narrow screens */
+@media (max-width: 480px) {
+  .stats-summary  { padding: 12px !important; }
+  .stat-pill      { font-size: 12px !important; padding: 4px 8px !important; }
+  .stat-row       { font-size: 12px !important; }
+  .verdict-card   { padding: 12px !important; }
+  .vc-k           { font-size: 11px !important; }
+  .vc-v           { font-size: 18px !important; }
+}
+
+/* 8 ── Leaderboard: compact rows, readable text */
+@media (max-width: 480px) {
+  .board-row  { padding: 9px 10px !important; font-size: 12px !important; }
+  .bname      { font-size: 12px !important; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brank      { width: 28px !important; font-size: 13px !important; }
+  .bscore     { font-size: 14px !important; }
+}
+
+/* 9 ── Modals / overlays: full-screen on phone, no side gaps */
+@media (max-width: 480px) {
+  .htp-panel, .about-panel, .lg-modal-inner, .pgEmailModal .modal-inner {
+    border-radius: 18px 18px 0 0 !important;
+    max-height: 90dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* 10 ── Forms: larger inputs, no zoom on focus (font-size ≥ 16px stops iOS zoom) */
+@media (max-width: 768px) {
+  input[type="text"], input[type="email"], input[type="number"],
+  textarea, select {
+    font-size: 16px !important; /* prevents iOS auto-zoom */
+    min-height: 44px !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+  }
+}
+
+/* 11 ── Bottom nav: slightly taller on large phones, icon bigger */
+@media (min-width: 390px) and (max-width: 768px) {
+  .bnav-pill { font-size: 11px !important; padding: 8px 2px !important; }
+  .bnav-pill svg { width: 22px !important; height: 22px !important; }
+}
+
+/* 12 ── Scroll performance: promote scrolling layers */
+@media (max-width: 768px) {
+  .journey, .squad-list, .table-scroll,
+  .lg-modal-list, .lgr2-ptable { will-change: scroll-position; }
+}
+
+/* 13 ── Prevent text selection on UI chrome (buttons, labels, nav) */
+@media (max-width: 768px) {
+  .bnav, .bnav-pill, .mode-card, .seg-opt, .machine,
+  .spin-col-btn, .back, .formation-opt, .diff-opt {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* 14 ── Daily challenge banner: stack on phone */
+@media (max-width: 480px) {
+  .daily-notice-bar { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+  .dn-banner-btns   { width: 100% !important; }
+  .dn-banner-btns .start-btn, .daily-aware-go { width: 100% !important; }
+}
+
+/* 15 ── Share / score card: full-width on phone */
+@media (max-width: 480px) {
+  .share-card { padding: 16px !important; border-radius: 14px !important; }
+  .sc-score   { font-size: clamp(36px, 12vw, 56px) !important; }
+  .sc-rank    { font-size: 13px !important; }
+  .sc-share-btns { flex-direction: column !important; gap: 8px !important; }
+  .sc-share-btns button { width: 100% !important; min-height: 48px !important; }
+}
+
+/* ── END MOBILE OPTIMISATION PASS ── */
