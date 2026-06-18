@@ -6477,25 +6477,48 @@ body.light .h2-sp-text { color: rgba(0,0,0,0.45); }
   margin: 0 0 16px;
   gap: 12px;
   cursor: pointer;
+  flex-wrap: wrap; /* allow wrapping on small screens */
 }
-.dn-banner-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.dn-banner-left { display: flex; align-items: center; gap: 12px; flex: 1 1 0; min-width: 0; }
 .dn-banner-icon { font-size: 28px; flex-shrink: 0; }
 .dn-banner-text { display: flex; flex-direction: column; min-width: 0; }
 .dn-banner-title { font-size: 15px; font-weight: 800; color: #fff; }
-.dn-banner-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dn-banner-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; white-space: normal; line-height: 1.4; }
 .dn-banner-cta {
   background: rgba(0,180,255,0.15);
   border: 1px solid rgba(0,180,255,0.4);
   color: rgba(0,200,255,0.95); border-radius: 10px;
   padding: 8px 14px; font-size: 12px; font-weight: 700;
-  cursor: pointer; white-space: nowrap;
-  transition: background 0.15s;
+  cursor: pointer; white-space: nowrap; min-height: 44px;
+  transition: background 0.15s; flex: 1 1 auto;
 }
 .dn-banner-cta:hover { background: rgba(0,180,255,0.25); }
 body.light .dn-banner { background: linear-gradient(135deg, #e8f4ff 0%, #d0eaff 100%); border-color: rgba(0,120,200,0.25); }
 body.light .dn-banner-title { color: #0a2a40; }
 body.light .dn-banner-sub { color: rgba(0,0,0,0.5); }
 body.light .dn-banner-cta { background: rgba(0,120,200,0.1); border-color: rgba(0,120,200,0.3); color: #0060aa; }
+
+/* Mobile: stack banner text + buttons, both buttons full-width */
+@media (max-width: 520px) {
+  .dn-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .dn-banner-left { flex: none; }
+  .dn-banner-btns {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .dn-h2h-btn, .dn-banner-cta {
+    flex: 1 1 0 !important;
+    text-align: center !important;
+    min-height: 44px !important;
+    width: auto !important;
+  }
+}
 
 /* ── Daily tab badge ─────────────────────────────────────────────────── */
 .bnav-daily-wrap { display: flex; align-items: center; gap: 4px; }
@@ -7008,8 +7031,7 @@ body.light .dn-h2h-btn { background: rgba(0,120,200,0.08); border-color: rgba(0,
 /* 14 ── Daily challenge banner: stack on phone */
 @media (max-width: 480px) {
   .daily-notice-bar { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
-  .dn-banner-btns   { width: 100% !important; }
-  .dn-banner-btns .start-btn, .daily-aware-go { width: 100% !important; }
+  .daily-aware-go { width: 100% !important; }
 }
 
 /* 15 ── Share / score card: full-width on phone */
