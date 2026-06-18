@@ -1324,27 +1324,69 @@
     var CW = 900, CH = 1200, PAD = 48;
     var c = document.createElement("canvas"); c.width = CW; c.height = CH;
     var ctx = c.getContext("2d"); if (!ctx) return null;
-    var FS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+    var FS = "'Segoe UI', system-ui, -apple-system, sans-serif";
+
+    /* ── Background: deep navy gradient ── */
     var bg = ctx.createLinearGradient(0, 0, 0, CH);
-    bg.addColorStop(0, "#0B1020"); bg.addColorStop(1, "#121830");
+    bg.addColorStop(0, "#0E1530"); bg.addColorStop(1, "#0B1020");
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
-    var pitchY = 140, pitchH = CH - pitchY - 80;
+
+    /* ── Header bar ── */
+    var hdrH = 160;
+    var hdrBg = ctx.createLinearGradient(0, 0, 0, hdrH);
+    hdrBg.addColorStop(0, "rgba(124,92,252,0.18)"); hdrBg.addColorStop(1, "rgba(124,92,252,0)");
+    ctx.fillStyle = hdrBg; ctx.fillRect(0, 0, CW, hdrH);
+
+    /* ── Brand mark: spin-disc drawn in canvas ── */
+    var mx = CW / 2, my = 54, mr = 32;
+    /* outer ring violet */
+    ctx.save();
+    ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.strokeStyle = "#7C5CFC"; ctx.lineWidth = 5; ctx.setLineDash([4, 22]);
+    ctx.lineDashOffset = 0; ctx.stroke();
+    /* outer ring cyan offset */
+    ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.strokeStyle = "#22E0C8"; ctx.lineWidth = 5; ctx.setLineDash([4, 22]);
+    ctx.lineDashOffset = -14; ctx.globalAlpha = 0.6; ctx.stroke();
+    ctx.restore();
+    /* inner circle */
+    ctx.beginPath(); ctx.arc(mx, my, mr * 0.76, 0, Math.PI * 2);
+    ctx.fillStyle = "#0B1126"; ctx.fill();
+    /* XI text inside mark */
+    ctx.fillStyle = "#C9AA71"; ctx.font = "900 22px " + FS;
+    ctx.textAlign = "center"; ctx.fillText("XI", mx, my + 8);
+    /* gold top pip */
+    ctx.fillStyle = "#C9AA71";
+    ctx.beginPath(); ctx.moveTo(mx, my - mr - 2); ctx.lineTo(mx + 7, my - mr + 10); ctx.lineTo(mx - 7, my - mr + 10); ctx.closePath(); ctx.fill();
+
+    /* ── Wordmark ── */
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#C9AA71"; ctx.font = "800 22px " + FS; ctx.fillText("DRAFT XI", CW / 2, 110);
+    ctx.fillStyle = "rgba(236,241,255,0.4)"; ctx.font = "400 14px " + FS; ctx.fillText("draft-11.com  ·  @DraftXI", CW / 2, 132);
+
+    /* ── Team name ── */
+    ctx.fillStyle = "#ECF1FF"; ctx.font = "800 36px " + FS; ctx.fillText(teamDisplayName(), CW / 2, 168);
+    var mgr = currentManager();
+    ctx.fillStyle = "rgba(236,241,255,0.55)"; ctx.font = "500 18px " + FS;
+    ctx.fillText(formation + (managerId !== "none" ? "  ·  " + mgr.name : ""), CW / 2, 198);
+    if (lastSim && lastSim.userTeam && lastSim.userTeam.result) {
+      ctx.fillStyle = "#F5B43C"; ctx.font = "700 16px " + FS;
+      ctx.fillText(String(lastSim.userTeam.result), CW / 2, 224);
+    }
+
+    /* ── Pitch ── */
+    var pitchY = 248, pitchH = CH - pitchY - 100;
     var pg = ctx.createLinearGradient(0, pitchY, 0, pitchY + pitchH);
     pg.addColorStop(0, "#0d1f14"); pg.addColorStop(1, "#091510");
     ctx.fillStyle = pg; ctx.fillRect(PAD, pitchY, CW - PAD * 2, pitchH);
-    ctx.strokeStyle = "rgba(34,224,200,0.18)"; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(34,224,200,0.2)"; ctx.lineWidth = 1.5; ctx.setLineDash([]);
     ctx.strokeRect(PAD, pitchY, CW - PAD * 2, pitchH);
-    var pbW = (CW - PAD * 2) * 0.56, pbH = pitchH * 0.3, pbX = PAD + (CW - PAD * 2 - pbW) / 2, pbY = pitchY + pitchH - pbH;
+    /* penalty box */
+    var pbW = (CW - PAD * 2) * 0.56, pbH = pitchH * 0.28;
+    var pbX = PAD + (CW - PAD * 2 - pbW) / 2, pbY = pitchY + pitchH - pbH;
     ctx.strokeRect(pbX, pbY, pbW, pbH);
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#22E0C8"; ctx.font = "700 18px " + FS; ctx.fillText("DRAFT XI", CW / 2, 38);
-    ctx.fillStyle = "#ECF1FF"; ctx.font = "800 32px " + FS; ctx.fillText(teamDisplayName(), CW / 2, 78);
-    ctx.fillStyle = "rgba(236,241,255,0.5)"; ctx.font = "500 17px " + FS;
-    ctx.fillText(formation + "  ·  " + currentManager().name, CW / 2, 110);
-    if (lastSim && lastSim.userTeam && lastSim.userTeam.result) {
-      ctx.fillStyle = "#F5B43C"; ctx.font = "700 15px " + FS;
-      ctx.fillText(String(lastSim.userTeam.result), CW / 2, 132);
-    }
+
+    /* ── Players ── */
     var lineColors = { GK: "#F5B43C", DEF: "#22E0C8", MID: "#7C5CFC", FWD: "#FF7A59" };
     lines.forEach(function (row, rowIdx) {
       var n = row.length, rowFrac = (rowIdx + 0.6) / (lines.length);
@@ -1354,22 +1396,28 @@
         var x = PAD + (CW - PAD * 2) * ((colIdx + 0.5) / n);
         var line = rowIdx === 0 ? "GK" : (rowIdx === lines.length - 1 ? "FWD" : (rowIdx <= 1 ? "DEF" : "MID"));
         var col = lineColors[line] || "#ECF1FF";
-        ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(11,16,32,0.85)"; ctx.fill();
-        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = col; ctx.font = "700 10px " + FS; ctx.textAlign = "center";
-        ctx.fillText(cell.pos, x, y - 7);
+        /* dot */
+        ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(11,16,32,0.9)"; ctx.fill();
+        ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
+        /* position label */
+        ctx.fillStyle = col; ctx.font = "700 11px " + FS; ctx.textAlign = "center";
+        ctx.fillText(cell.pos, x, y - 8);
         if (cell.pick) {
           var name = cell.pick.n.split(" ").pop();
-          ctx.fillStyle = "#ECF1FF"; ctx.font = "600 11px " + FS;
-          ctx.fillText(name.length > 10 ? name.slice(0, 9) + "." : name, x, y + 6);
-          if (showRatings) { ctx.fillStyle = col; ctx.font = "700 9px " + FS; ctx.fillText(cell.pick.r, x, y + 18); }
+          ctx.fillStyle = "#ECF1FF"; ctx.font = "600 12px " + FS;
+          ctx.fillText(name.length > 10 ? name.slice(0, 9) + "." : name, x, y + 7);
+          if (showRatings) { ctx.fillStyle = col; ctx.font = "700 10px " + FS; ctx.fillText(cell.pick.r, x, y + 20); }
         }
         ctx.textAlign = "center";
       });
     });
-    ctx.fillStyle = "rgba(236,241,255,0.25)"; ctx.font = "500 14px " + FS;
-    ctx.fillText("Draft XI", CW / 2, CH - 24);
+
+    /* ── Footer ── */
+    ctx.fillStyle = "rgba(201,170,113,0.5)"; ctx.font = "600 15px " + FS;
+    ctx.fillText("Spin history. Draft the impossible.", CW / 2, CH - 42);
+    ctx.fillStyle = "rgba(236,241,255,0.2)"; ctx.font = "400 13px " + FS;
+    ctx.fillText("draft-11.com  ·  @DraftXI", CW / 2, CH - 20);
     return c;
   }
 
@@ -1933,7 +1981,7 @@
           try {
             var file = new File([blob], fname, { type: "image/png" });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              navigator.share({ files: [file], title: "My Draft XI", text: "⚽ " + teamDisplayName() + "'s " + formation + " XI — " + (window._lastResultScore || "") + " pts · draft-11.com" }).catch(function () {});
+              navigator.share({ files: [file], title: "My Draft XI", text: "⚽ " + teamDisplayName() + "'s " + formation + " XI — " + (window._lastResultScore || "") + " pts\nSpin history. Draft the impossible.\ndraft-11.com @DraftXI" }).catch(function () {});
               return;
             }
           } catch (e) {}
@@ -1945,9 +1993,9 @@
         }, "image/png");
       } else {
         /* No canvas (squad not built yet) — share text link */
-        var text = "⚽ Draft XI — " + teamDisplayName() + "'s " + formation + " XI\n" +
-          (window._lastResultScore ? window._lastResultScore + " pts · " : "") +
-          "Can you beat it?\n🔗 draft-11.com";
+        var text = "⚽ " + teamDisplayName() + "'s " + formation + " XI" +
+          (window._lastResultScore ? " — " + window._lastResultScore + " pts" : "") +
+          "\nSpin history. Draft the impossible.\ndraft-11.com @DraftXI";
         try { if (navigator.share) { navigator.share({ title: "Draft XI", text: text, url: "https://draft-11.com" }); return; } } catch(e) {}
         if (navigator.clipboard) { navigator.clipboard.writeText(text); if (window.flToast) window.flToast("Link copied!", 2000); }
       }
@@ -1974,7 +2022,7 @@
     var challengeBtn = document.getElementById("challengeFriendBtn");
     if (challengeBtn) challengeBtn.addEventListener("click", function() {
       var sc = window._lastResultScore || 0;
-      var txt = "⚽ I drafted a " + formation + " XI and scored " + sc + " pts on Draft XI. Beat my score → https://draft-11.com";
+      var txt = "⚽ I scored " + sc + " pts on Draft XI with a " + formation + " XI. Can you beat it?\ndraft-11.com @DraftXI";
       try { if (navigator.share) { navigator.share({ title: "Beat my Draft XI", text: txt, url: "https://draft-11.com" }); return; } } catch(e) {}
       if (navigator.clipboard) { navigator.clipboard.writeText(txt); if (window.flToast) window.flToast("Challenge link copied!", 2000); }
     });
@@ -2063,7 +2111,7 @@
     return '<div class="sc-card-label">📤 Your result — tap to share</div>' +
     '<div class="share-card' + (isChamp ? " share-card--champ" : "") + '" id="shareCard">' +
       '<div class="sc-header">' +
-        '<div class="sc-logo-mark">⚽</div>' +
+        '<img src="logo-icon.svg" class="sc-logo-mark" alt="Draft XI" width="36" height="36" style="border-radius:50%;flex-shrink:0;" />' +
         '<div class="sc-header-text">' +
           '<div class="sc-logo">DRAFT XI</div>' +
           '<div class="sc-date">' + esc(competitionLabel) + ' · ' + esc(dateStr) + '</div>' +
@@ -2310,7 +2358,7 @@
     if (nsWC) nsWC.addEventListener("click", function() { setMode("wc"); });
     var nsChallenge = document.getElementById("nsChallenge");
     if (nsChallenge) nsChallenge.addEventListener("click", function() {
-      var text = "I scored " + (window._lastResultScore||"") + " pts in Draft XI — can you beat it?\n🔗 draft-11.com";
+      var text = "⚽ I scored " + (window._lastResultScore||"") + " pts on Draft XI — can you beat it?\ndraft-11.com @DraftXI";
       try { navigator.share({ text: text }); } catch(e) {
         navigator.clipboard && navigator.clipboard.writeText(text);
         nsChallenge.textContent = "Copied!"; setTimeout(function(){ nsChallenge.textContent = "📣 Challenge a friend to beat this"; }, 2000);
