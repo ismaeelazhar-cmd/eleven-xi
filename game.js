@@ -984,6 +984,26 @@
       if ((pl.r||0) > goatR) { goatR = pl.r||0; goatName = pl.n; }
     });
 
+    // When nothing is draftable, find the best player that fits any remaining open slot
+    // by relaxing position eligibility — try every open slot in the formation
+    var autoAssignPlayer = null, autoAssignPos = null;
+    if (draftable === 0) {
+      var openSlots = {};
+      formationSlots().forEach(function(s) { if (openOf(s.pos) > 0) openSlots[s.pos] = true; });
+      var candidates = [];
+      players.forEach(function(pl) {
+        if (taken.indexOf(c+"|"+y+"|"+pl.n) !== -1) return;
+        // try eligible positions first
+        var elig = openEligiblePositions(pl);
+        if (elig.length) { candidates.push({ pl: pl, pos: elig[0], r: pl.r||0 }); return; }
+        // fallback: any open slot at all (position flex)
+        var anyOpen = Object.keys(openSlots)[0];
+        if (anyOpen) candidates.push({ pl: pl, pos: anyOpen, r: pl.r||0, flex: true });
+      });
+      candidates.sort(function(a,b){ return b.r - a.r; });
+      if (candidates.length) { autoAssignPlayer = candidates[0].pl; autoAssignPos = candidates[0].pos; }
+    }
+
     // Modal card header
     var flag = countryFlag(c);
     var inner = '<div class="squad-card">';
@@ -995,7 +1015,23 @@
       inner += '<span class="squad-respin-empty">No respins left</span>';
     }
     inner += '</div>';
-    inner += '<div class="sub">Pick a player, then choose where they play.</div>';
+
+    // No draftable players — show rescue banner
+    if (draftable === 0) {
+      inner += '<div class="no-picks-banner">' +
+        '<div class="npb-icon">⚠️</div>' +
+        '<div class="npb-text">' +
+          '<div class="npb-title">No players fit your remaining slots</div>' +
+          '<div class="npb-sub">Spin a new squad for free, or auto-assign the best available player.</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="npb-actions">' +
+          '<button class="npb-btn npb-respin" id="npbRespinBtn">🎰 Free respin</button>' +
+          (autoAssignPlayer ? '<button class="npb-btn npb-auto" id="npbAutoBtn">⚡ Auto-assign ' + esc(autoAssignPlayer.n.split(" ").pop()) + ' (' + (autoAssignPlayer.r||"?") + ')</button>' : '') +
+        '</div>';
+    }
+
+    inner += '<div class="sub">' + (draftable === 0 ? 'All players shown for reference — none fit your open slots.' : 'Pick a player, then choose where they play.') + '</div>';
     inner += '<div class="squad-search-wrap"><input class="squad-search" id="squadSearch" type="text" placeholder="Search players…" autocomplete="off" /></div>';
 
     if (pendingPick) {
@@ -1057,6 +1093,24 @@
 
     elSquadPanel.innerHTML = inner;
     elSquadPanel.style.display = "flex";
+
+    /* No-picks rescue: free respin (no reroll cost) */
+    var npbRespin = elSquadPanel.querySelector("#npbRespinBtn");
+    if (npbRespin) {
+      npbRespin.addEventListener("click", function () {
+        if (spinning) return;
+        pendingPick = null;
+        elSquadPanel.style.display = "none";
+        doSpin(); /* free — rerollsLeft unchanged */
+      });
+    }
+    /* No-picks rescue: auto-assign best available */
+    var npbAuto = elSquadPanel.querySelector("#npbAutoBtn");
+    if (npbAuto && autoAssignPlayer && autoAssignPos) {
+      npbAuto.addEventListener("click", function () {
+        pickPlayer(autoAssignPlayer.n, autoAssignPos);
+      });
+    }
 
     var respinBtn = elSquadPanel.querySelector("#squadRespinBtn");
     if (respinBtn) {

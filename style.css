@@ -4125,6 +4125,43 @@ button, a, .seg-opt { touch-action: manipulation; -webkit-tap-highlight-color: t
 }
 
 /* ── Squad picker: Respin button inside modal ── */
+/* No-picks rescue banner */
+.no-picks-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0 0 10px;
+}
+.npb-icon { font-size: 22px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.npb-text { display: flex; flex-direction: column; gap: 2px; }
+.npb-title { font-size: 14px; font-weight: 800; color: #FBD738; }
+.npb-sub { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.4; }
+.npb-actions {
+  display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap;
+}
+.npb-btn {
+  flex: 1 1 0; min-height: 44px; border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: filter 0.15s;
+}
+.npb-btn:hover { filter: brightness(1.08); }
+.npb-respin {
+  background: linear-gradient(160deg, #8B5CF6, #6D28D9);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(109,40,217,0.4);
+}
+.npb-auto {
+  background: rgba(251,191,36,0.15);
+  border: 1px solid rgba(251,191,36,0.4) !important;
+  color: #FBD738;
+}
+body.light .no-picks-banner { background: rgba(180,90,0,0.06); border-color: rgba(180,90,0,0.25); }
+body.light .npb-title { color: #92400e; }
+body.light .npb-sub { color: rgba(0,0,0,0.55); }
+body.light .npb-auto { background: rgba(180,90,0,0.08); border-color: rgba(180,90,0,0.3) !important; color: #92400e; }
+
 .squad-respin-btn {
   background: var(--btn-primary-bg, linear-gradient(180deg, #9A82FF 0%, #6A47ED 100%));
   color: var(--btn-primary-fg, #fff);
