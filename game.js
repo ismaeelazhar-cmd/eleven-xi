@@ -984,24 +984,28 @@
       if ((pl.r||0) > goatR) { goatR = pl.r||0; goatName = pl.n; }
     });
 
-    // When nothing is draftable, find the best player that fits any remaining open slot
-    // by relaxing position eligibility — try every open slot in the formation
-    var autoAssignPlayer = null, autoAssignPos = null;
+    // When nothing is draftable, find the best GK from this squad (capped at 75)
+    // for the auto-assign option. GK slot preferred; falls back to any open slot.
+    var autoGK = null, autoGKPos = null;
     if (draftable === 0) {
-      var openSlots = {};
-      formationSlots().forEach(function(s) { if (openOf(s.pos) > 0) openSlots[s.pos] = true; });
-      var candidates = [];
-      players.forEach(function(pl) {
-        if (taken.indexOf(c+"|"+y+"|"+pl.n) !== -1) return;
-        // try eligible positions first
-        var elig = openEligiblePositions(pl);
-        if (elig.length) { candidates.push({ pl: pl, pos: elig[0], r: pl.r||0 }); return; }
-        // fallback: any open slot at all (position flex)
-        var anyOpen = Object.keys(openSlots)[0];
-        if (anyOpen) candidates.push({ pl: pl, pos: anyOpen, r: pl.r||0, flex: true });
-      });
-      candidates.sort(function(a,b){ return b.r - a.r; });
-      if (candidates.length) { autoAssignPlayer = candidates[0].pl; autoAssignPos = candidates[0].pos; }
+      var gkCandidates = players.filter(function(pl) {
+        if (taken.indexOf(c+"|"+y+"|"+pl.n) !== -1) return false;
+        var gps = gpOf(pl);
+        return (gps && gps[0] === "GK") || pl.p === "GK";
+      }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
+      // Also try any available player if no GK exists in squad
+      var anyCandidates = players.filter(function(pl) {
+        return taken.indexOf(c+"|"+y+"|"+pl.n) === -1;
+      }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
+      var pick = gkCandidates[0] || anyCandidates[0];
+      if (pick) {
+        // Find a slot: GK slot first, then any open slot
+        var gkSlot = openOf("GK") > 0 ? "GK" : null;
+        if (!gkSlot) {
+          formationSlots().forEach(function(s) { if (!gkSlot && openOf(s.pos) > 0) gkSlot = s.pos; });
+        }
+        if (gkSlot) { autoGK = pick; autoGKPos = gkSlot; }
+      }
     }
 
     // Modal card header
@@ -1015,23 +1019,7 @@
       inner += '<span class="squad-respin-empty">No respins left</span>';
     }
     inner += '</div>';
-
-    // No draftable players — show rescue banner
-    if (draftable === 0) {
-      inner += '<div class="no-picks-banner">' +
-        '<div class="npb-icon">⚠️</div>' +
-        '<div class="npb-text">' +
-          '<div class="npb-title">No players fit your remaining slots</div>' +
-          '<div class="npb-sub">Spin a new squad for free, or auto-assign the best available player.</div>' +
-        '</div>' +
-        '</div>' +
-        '<div class="npb-actions">' +
-          '<button class="npb-btn npb-respin" id="npbRespinBtn">🎰 Free respin</button>' +
-          (autoAssignPlayer ? '<button class="npb-btn npb-auto" id="npbAutoBtn">⚡ Auto-assign ' + esc(autoAssignPlayer.n.split(" ").pop()) + ' (' + (autoAssignPlayer.r||"?") + ')</button>' : '') +
-        '</div>';
-    }
-
-    inner += '<div class="sub">' + (draftable === 0 ? 'All players shown for reference — none fit your open slots.' : 'Pick a player, then choose where they play.') + '</div>';
+    inner += '<div class="sub">Pick a player, then choose where they play.</div>';
     inner += '<div class="squad-search-wrap"><input class="squad-search" id="squadSearch" type="text" placeholder="Search players…" autocomplete="off" /></div>';
 
     if (pendingPick) {
@@ -1094,22 +1082,38 @@
     elSquadPanel.innerHTML = inner;
     elSquadPanel.style.display = "flex";
 
-    /* No-picks rescue: free respin (no reroll cost) */
-    var npbRespin = elSquadPanel.querySelector("#npbRespinBtn");
-    if (npbRespin) {
-      npbRespin.addEventListener("click", function () {
-        if (spinning) return;
-        pendingPick = null;
-        elSquadPanel.style.display = "none";
-        doSpin(); /* free — rerollsLeft unchanged */
-      });
-    }
-    /* No-picks rescue: auto-assign best available */
-    var npbAuto = elSquadPanel.querySelector("#npbAutoBtn");
-    if (npbAuto && autoAssignPlayer && autoAssignPos) {
-      npbAuto.addEventListener("click", function () {
-        pickPlayer(autoAssignPlayer.n, autoAssignPos);
-      });
+    /* No-picks rescue: inject popup overlay when nothing is draftable */
+    if (draftable === 0) {
+      var gkR = autoGK ? Math.min(autoGK.r || 75, 75) : null;
+      var popup = document.createElement("div");
+      popup.className = "nopicks-popup";
+      popup.innerHTML =
+        '<div class="nopicks-popup-inner">' +
+          '<div class="nopicks-icon">🚫</div>' +
+          '<div class="nopicks-title">No players fit your open slots</div>' +
+          '<div class="nopicks-sub">Spin a new squad for free, or auto-assign a goalkeeper.</div>' +
+          '<div class="nopicks-actions">' +
+            '<button class="nopicks-btn nopicks-respin" id="nopicksRespinBtn">🎰 Free respin</button>' +
+            (autoGK ? '<button class="nopicks-btn nopicks-auto" id="nopicksAutoBtn">⚡ Add GK · ' + esc(autoGK.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + gkR + '</span></button>' : '') +
+          '</div>' +
+        '</div>';
+      elSquadPanel.appendChild(popup);
+
+      var nopicksRespin = popup.querySelector("#nopicksRespinBtn");
+      if (nopicksRespin) {
+        nopicksRespin.addEventListener("click", function () {
+          if (spinning) return;
+          pendingPick = null;
+          elSquadPanel.style.display = "none";
+          doSpin(); /* free — rerollsLeft unchanged */
+        });
+      }
+      var nopicksAuto = popup.querySelector("#nopicksAutoBtn");
+      if (nopicksAuto && autoGK && autoGKPos) {
+        nopicksAuto.addEventListener("click", function () {
+          pickPlayer(autoGK.n, autoGKPos, gkR);
+        });
+      }
     }
 
     var respinBtn = elSquadPanel.querySelector("#squadRespinBtn");
@@ -1177,11 +1181,11 @@
     updateControls();
   }
 
-  function pickPlayer(name, pos) {
+  function pickPlayer(name, pos, overrideR) {
     if (squad.length >= XI_SIZE || !current || !pos || openOf(pos) <= 0) return;
     if (window.sfx) window.sfx.pick();
     var pl = playerByName(name);
-    var pickedR = pl ? pl.r : 80;
+    var pickedR = overrideR != null ? overrideR : (pl ? pl.r : 80);
     /* Close out the last reroll log entry — record what they kept */
     if (rerollLog.length && rerollLog[rerollLog.length - 1].kept === null) {
       rerollLog[rerollLog.length - 1].kept = pickedR;
