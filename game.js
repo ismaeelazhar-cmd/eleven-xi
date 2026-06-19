@@ -289,6 +289,7 @@
   var pendingPick = null;
   var current = null;
   var spinning = false;
+  var spunSquads = {};   // tracks country|year pairs already spun this session
   var awaitingPick = false;
   var rerollsLeft = REROLLS;
   var formation = "4-3-3";
@@ -909,7 +910,11 @@
     if (spinning) return;
     spinning = true; awaitingPick = false; elDone.style.display = "none";
     updateControls(); elHint.textContent = "Spinning…";
-    var pairs = poolPairs();
+    /* Filter out squads already spun this session */
+    var allPairs = poolPairs();
+    var pairs = allPairs.filter(function(p) { return !spunSquads[p.c + "|" + p.y]; });
+    /* If every squad in the pool has been spun, reset and allow repeats */
+    if (!pairs.length) { spunSquads = {}; pairs = allPairs; }
     // Weighted spin — big football nations are much more likely to appear
     var SPIN_WEIGHTS = {
       "Brazil":5,"Germany":5,"Italy":5,"Argentina":5,"France":5,"Spain":5,
@@ -942,6 +947,8 @@
     Promise.all([p1, p2]).then(function () {
       spinning = false; elSpin.textContent = "SPIN"; elHint.textContent = "";
       if (window.sfx) window.sfx.lockIn();
+      /* Mark this squad as spun so it won't land again this session */
+      spunSquads[pick.c + "|" + pick.y] = true;
       var machineEl = elSpin.closest(".machine");
       if (machineEl) {
         machineEl.classList.add("machine--lockin");
