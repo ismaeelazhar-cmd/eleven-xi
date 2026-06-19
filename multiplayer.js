@@ -743,6 +743,8 @@
       opp.formation=msg.formation||opp.formation||"4-3-3";
       opp.manager=msg.manager||null;
       opp.picks=mpSanitizePicks(msg.picks);
+      /* Lock opponent's picks so they can't appear as available in my squad panel */
+      opp.picks.forEach(function(pk){ st.lockedNames[pk.n] = st.oppIdx; });
       st.oppReady=true;
       maybeStartMpSim();
     } else if(msg.t==="mp_sim"){
@@ -760,7 +762,7 @@
       st.mpOnline=true; st.online=true; st.netRole=role;
       st.numPlayers=2; st.tournamentFormat="h2h";
       st.myIdx = role==="host"?0:1; st.oppIdx = role==="host"?1:0;
-      st.lockedNames={};                  /* duplicates allowed across the two squads */
+      st.lockedNames={};                  /* shared across both players — no duplicate picks */
       st.mySent=false; st.oppReady=false; st.myRematch=false; st.oppRematch=false;
       st.currentSpin=null; st.pendingPick=null; st.pendingHandoff=null;
       st.simData=null; st.simStep=-1; st.revealIdx=-1; st._histSaved=false; st.mgrSpinResult=null;
