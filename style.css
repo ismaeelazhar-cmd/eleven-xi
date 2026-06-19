@@ -6497,45 +6497,25 @@ body.light .mp-modal-stat { background: rgba(0,0,0,0.04); border-color: rgba(0,0
 body.light .wc26-banner { background: linear-gradient(135deg, #f0e8ff 0%, #e8d0ff 100%); border-color: rgba(120,40,200,0.3); }
 body.light .wc26-label { color: #5a0fa0; }
 
-/* ── Dominant Play CTA ───────────────────────────────────────────────── */
+/* ── Play CTA ────────────────────────────────────────────────────────── */
 .h2-play-hero {
   display: block;
   width: 100%;
   background: linear-gradient(135deg, #00C2FF 0%, #0099d6 100%);
   color: #fff;
   border: none;
-  border-radius: 16px;
-  padding: 20px 24px;
-  font-size: 22px;
+  border-radius: 14px;
+  padding: 16px 24px;
+  font-size: 18px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
   transition: transform 0.1s, box-shadow 0.15s;
-  box-shadow: 0 6px 28px rgba(0,194,255,0.45);
+  box-shadow: 0 4px 20px rgba(0,194,255,0.35);
 }
 .h2-play-hero:active { transform: scale(0.98); }
-.h2-play-hero:hover { box-shadow: 0 10px 36px rgba(0,194,255,0.55); }
-
-/* ── Social proof row ────────────────────────────────────────────────── */
-.h2-social-proof-row {
-  display: flex; align-items: center; gap: 6px;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-.h2-sp-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #00c97f;
-  box-shadow: 0 0 0 2px rgba(0,201,127,0.25);
-  animation: pulseGreen 2s ease-in-out infinite;
-  flex-shrink: 0;
-}
-@keyframes pulseGreen {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(0,201,127,0.25); }
-  50% { box-shadow: 0 0 0 5px rgba(0,201,127,0.08); }
-}
-.h2-sp-text { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500; }
-body.light .h2-sp-text { color: rgba(0,0,0,0.45); }
+.h2-play-hero:hover { box-shadow: 0 8px 28px rgba(0,194,255,0.45); }
 
 /* ── Draft Night featured banner ─────────────────────────────────────── */
 .dn-banner {

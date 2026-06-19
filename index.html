@@ -38,9 +38,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
-  <link rel="stylesheet" href="style.css?v=161" />
+  <link rel="stylesheet" href="style.css?v=162" />
   <link rel="stylesheet" href="tokens.css?v=77" />
-  <link rel="stylesheet" href="floodlights.css?v=141" />
+  <link rel="stylesheet" href="floodlights.css?v=142" />
 </head>
 <body>
   <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
@@ -63,34 +63,16 @@
     <!-- ===== HOME (first page) ===== -->
     <section id="homeView">
 
-      <!-- 2026 WC Hero Banner -->
-      <div class="wc26-banner" id="wc26Banner">
-        <div class="wc26-banner-left">
-          <span class="wc26-live-dot"></span>
-          <span class="wc26-label">2026 World Cup — Live Now</span>
-        </div>
-        <button class="wc26-banner-cta" id="wc26BannerBtn">Draft your squad →</button>
-      </div>
-
-      <!-- WC 2026 Live Mirror bar -->
+      <!-- WC 2026 Live scores bar -->
       <div class="wc-mirror-bar" id="wcMirrorBar" hidden></div>
 
       <!-- Hero -->
       <div class="h2-hero">
-        <div class="h2-hero-top">
-          <span class="h2-streak-chip" id="homeStreakChip" hidden></span>
-        </div>
+        <span class="h2-streak-chip" id="homeStreakChip" hidden></span>
         <h2 class="h2-title">Build the greatest XI<br><span>in history.</span></h2>
-        <p class="h2-sub">Spin history. Draft the impossible.</p>
+        <p class="h2-sub">Spin real squads. Draft your eleven.</p>
 
-        <!-- Primary CTA — dominant above the fold -->
-        <button class="h2-play-hero" id="homePlay">Play free →</button>
-
-        <!-- Social proof counter -->
-        <div class="h2-social-proof-row">
-          <span class="h2-sp-dot"></span>
-          <span class="h2-sp-text" id="homeSocialProof">Loading…</span>
-        </div>
+        <button class="h2-play-hero" id="homePlay">Play →</button>
 
         <div class="h2-stats">
           <div class="h2-stat"><span class="n">93</span><span class="l">Nations</span></div>
@@ -123,7 +105,7 @@
             </div>
             <div class="dn-banner-text">
               <span class="dn-banner-title">Draft Night</span>
-              <span class="dn-banner-sub">Play with up to 8 friends · Live draft · Online</span>
+              <span class="dn-banner-sub">Up to 8 players · live online draft</span>
             </div>
           </div>
           <div class="dn-banner-btns">
@@ -136,11 +118,11 @@
         <div class="h2-modes-trio">
           <button class="h2-mode h2-mode--sm" id="homeCL">
             <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21l-4.9 2.6.9-5.5-4-3.9 5.5-.8z"/></svg></span>
-            <span class="h2-mode-body"><span class="h2-mode-name">Champions League</span><span class="h2-mode-desc">153 clubs · 768 seasons</span><span class="fl-mode-stat" id="clBestScore"></span></span>
+            <span class="h2-mode-body"><span class="h2-mode-name">Champions League</span><span class="h2-mode-desc">153 clubs · 1955–2024</span><span class="fl-mode-stat" id="clBestScore"></span></span>
           </button>
           <button class="h2-mode h2-mode--sm" id="homeDVC">
             <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
-            <span class="h2-mode-body"><span class="h2-mode-name">Take on the CPU</span><span class="h2-mode-desc">Alternating draft · outsmart the algorithm</span><span class="fl-mode-stat" id="dvcHomeRecord"></span></span>
+            <span class="h2-mode-body"><span class="h2-mode-name">vs CPU</span><span class="h2-mode-desc">Alternating draft against the computer</span><span class="fl-mode-stat" id="dvcHomeRecord"></span></span>
           </button>
           <button class="h2-mode h2-mode--sm" id="homeEuro">
             <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
