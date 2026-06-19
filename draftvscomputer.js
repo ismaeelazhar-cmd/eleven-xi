@@ -523,7 +523,9 @@ window.startDraftVsComputer = (function (W) {
     if (DVC.playerPicks.length >= 11) return;
 
     var pool = DVC.teamPool;
-    var pick = pool[Math.floor(Math.random() * pool.length)];
+    var freshPool = pool.filter(function(p) { return !DVC.spunSquads[p.team + "|" + p.year]; });
+    if (!freshPool.length) { DVC.spunSquads = {}; freshPool = pool; }
+    var pick = freshPool[Math.floor(Math.random() * freshPool.length)];
     DVC.spinResult = pick;
     DVC.spinBusy = true;
 
@@ -540,6 +542,7 @@ window.startDraftVsComputer = (function (W) {
 
     Promise.all([p1]).then(function() {
       DVC.spinBusy = false;
+      DVC.spunSquads[pick.team + "|" + pick.year] = true;
       DVC.awaitingPick = true;
       if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = "SPIN THE REEL"; }
       showDvcSquadPicker();
@@ -701,7 +704,9 @@ window.startDraftVsComputer = (function (W) {
     }
 
     var pool = DVC.teamPool;
-    var pick = pool[Math.floor(Math.random() * pool.length)];
+    var freshPool = pool.filter(function(p) { return !DVC.spunSquads[p.team + "|" + p.year]; });
+    if (!freshPool.length) { DVC.spunSquads = {}; freshPool = pool; }
+    var pick = freshPool[Math.floor(Math.random() * freshPool.length)];
     DVC.spinBusy = true;
     updateDraftUI();
 
@@ -713,6 +718,7 @@ window.startDraftVsComputer = (function (W) {
       comboItemHTML(pick), 360);
 
     Promise.all([p1]).then(function() {
+      DVC.spunSquads[pick.team + "|" + pick.year] = true;
       var cpuPlayer = cpuPickFromSquad(pick.squad);
       if (!cpuPlayer) {
         /* No suitable player in this squad — spin again silently */
@@ -936,6 +942,7 @@ window.startDraftVsComputer = (function (W) {
       rerollsLeft: 3,
       poolKey: "all",
       teamPool: [],
+      spunSquads: {},
       playerPicks: [],
       cpuPicks: [],
       turn: 0,

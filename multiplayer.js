@@ -161,6 +161,7 @@
     lockedNames: {},
     usedFormations: {},
     currentSpin: null,
+    spunSquads: {},         // tracks country|year pairs spun this session
     mgrSpinResult: null,
     pendingPick: null,
     pendingHandoff: null, // {from, to, lastPick} — show pass screen after picking
@@ -1551,15 +1552,18 @@
     squadPanel.style.display = "none";
     st.currentSpin = null;
 
-    /* Pick a random country+year with at least 11 players */
-    var tries=0, pC, pY, pS;
-    do {
-      pC = countries[Math.floor(Math.random()*countries.length)];
-      var ys = Object.keys(DATA[pC].years);
-      pY = ys[Math.floor(Math.random()*ys.length)];
-      pS = DATA[pC].years[pY];
-      tries++;
-    } while(tries<80 && (!pS || pS.length < 11));
+    /* Build flat list of all valid country+year pairs, excluding already-spun ones */
+    var allPairs = [];
+    countries.forEach(function(c) {
+      Object.keys(DATA[c].years).forEach(function(y) {
+        var s = DATA[c].years[y];
+        if (s && s.length >= 11) allPairs.push({ c: c, y: y, s: s });
+      });
+    });
+    var freshPairs = allPairs.filter(function(p) { return !st.spunSquads[p.c + "|" + p.y]; });
+    if (!freshPairs.length) { st.spunSquads = {}; freshPairs = allPairs; }
+    var chosen = freshPairs[Math.floor(Math.random() * freshPairs.length)];
+    var pC = chosen.c, pY = chosen.y, pS = chosen.s;
 
     var BLUR=12, IH=56;
     var citems=[], yitems=[];
@@ -1599,6 +1603,7 @@
           if(cReel){ cReel.classList.add("reel--settled"); setTimeout(function(){ cReel.classList.remove("reel--settled"); }, 950); }
           if(yReel){ yReel.classList.add("reel--settled"); setTimeout(function(){ yReel.classList.remove("reel--settled"); }, 950); }
           _draftSpinning = false;
+          st.spunSquads[pC + "|" + pY] = true;
           st.currentSpin = { country:pC, year:pY, squad:pS };
           updateSpinBtn(spinBtn);
           showSquadPanel(squadPanel, st.currentSpin, player);
