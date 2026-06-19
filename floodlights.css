@@ -209,11 +209,13 @@ body.light .h2-cta.secondary:hover { background: rgba(255,255,255,.16); }
 .h2-daily {
   display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
   font-family: var(--font-body);
-  background: linear-gradient(100deg, color-mix(in srgb, var(--champion, #F5B43C) 13%, var(--card-bg)), var(--card-bg));
-  border:1px solid color-mix(in srgb, var(--champion, #F5B43C) 32%, var(--line));
-  border-radius:14px; padding:12px 14px;
-  transition: transform .12s var(--ease-spring);
+  background: linear-gradient(135deg, rgba(245,180,60,0.12) 0%, rgba(245,180,60,0.05) 100%);
+  border:1px solid rgba(245,180,60,0.5);
+  border-radius:14px; padding:14px 16px;
+  box-shadow: 0 2px 16px rgba(245,180,60,0.1);
+  transition: transform .12s var(--ease-spring), box-shadow .15s;
 }
+.h2-daily:hover { box-shadow: 0 4px 24px rgba(245,180,60,0.18); }
 .h2-daily--pinned {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 120;
   max-width: 560px; margin: 0 auto;
@@ -222,23 +224,16 @@ body.light .h2-cta.secondary:hover { background: rgba(255,255,255,.16); }
   box-shadow: 0 -8px 32px rgba(0,0,0,.45);
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
-.h2-daily--footer {
-  margin-bottom: 16px;
-}
-@media (max-width: 768px) {
-  .h2-daily--footer {
-    margin-bottom: 24px;
-  }
-}
+.h2-daily--footer { margin-bottom: 16px; }
+@media (max-width: 768px) { .h2-daily--footer { margin-bottom: 24px; } }
 .h2-daily:active { transform: scale(.99); }
-.h2-daily-ico { flex:0 0 auto; width:38px; height:38px; border-radius:10px; background: color-mix(in srgb, var(--champion, #F5B43C) 18%, transparent); display:flex; align-items:center; justify-content:center; font-size:20px; }
-.h2-daily-text { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
-.h2-daily-text .t { font-size:13px; font-weight:800; color: var(--text); }
-.h2-daily-text .s { font-size:11px; color: var(--text-mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-/* change 6: live count in daily bar */
-.h2-daily-count { flex:0 0 auto; font-size:10px; color: rgba(255,255,255,.35); white-space:nowrap; display:none; }
+.h2-daily-ico { flex:0 0 auto; width:40px; height:40px; border-radius:10px; background: rgba(245,180,60,0.2); border:1px solid rgba(245,180,60,0.3); display:flex; align-items:center; justify-content:center; font-size:20px; }
+.h2-daily-text { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.h2-daily-text .t { font-size:14px; font-weight:800; color: #F5B43C; }
+.h2-daily-text .s { font-size:11px; color: rgba(255,255,255,0.5); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.h2-daily-count { flex:0 0 auto; font-size:10px; color: rgba(245,180,60,0.5); white-space:nowrap; display:none; }
 @media (min-width:380px) { .h2-daily-count { display:block; } }
-.h2-daily-cta { flex:0 0 auto; font-size:12px; font-weight:800; background: var(--h2-green); color:#04140c; padding:7px 16px; border-radius:9px; }
+.h2-daily-cta { flex:0 0 auto; font-size:12px; font-weight:800; background: #F5B43C; color:#1a1000; padding:8px 16px; border-radius:9px; }
 
 /* ── Bottom links (change 7: Share game removed) ── */
 .home-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }

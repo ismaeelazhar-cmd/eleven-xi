@@ -2083,6 +2083,17 @@
     /* Wire quick-retry CTA */
     var retryBtn = document.getElementById("retrySpinBtn");
     if (retryBtn) retryBtn.addEventListener("click", function() { newGame(); showView("setup"); });
+    /* Wire daily challenge nudge (only shown if not played today) */
+    var dailyNudge = document.getElementById("scDailyNudge");
+    if (dailyNudge) {
+      dailyNudge.addEventListener("click", function() {
+        newGame();
+        setTimeout(function() {
+          var d = document.getElementById("homeDaily");
+          if (d) d.click();
+        }, 100);
+      });
+    }
     /* Wire "challenge a friend" share */
     var challengeBtn = document.getElementById("challengeFriendBtn");
     if (challengeBtn) challengeBtn.addEventListener("click", function() {
@@ -2204,6 +2215,16 @@
       '</div>' +
       '<button class="retry-spin-cta" id="retrySpinBtn">🎰 Spin again for a better squad →</button>' +
       '<button class="challenge-friend-cta" id="challengeFriendBtn">⚡ Challenge a friend — beat my score</button>' +
+      (function() {
+        try {
+          var ds = JSON.parse(localStorage.getItem(STREAK_KEY) || "{}");
+          var today = new Date().toDateString();
+          if (ds.lastDate !== today) {
+            return '<button class="sc-daily-nudge" id="scDailyNudge">🏆 Play today\'s Daily Challenge →</button>';
+          }
+        } catch(e) {}
+        return '';
+      })() +
       '<div class="sc-url">draft-11.com</div>' +
     '</div>';
   }
