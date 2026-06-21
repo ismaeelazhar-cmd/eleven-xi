@@ -974,12 +974,14 @@
       var fp = players.filter(activeConstraint.filterPlayer);
       if (fp.length > 0) players = fp;
     }
-    var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
+    /* Track by player name only — a name already in the squad can't be
+       picked again even if it appears in a different country/year squad. */
+    var taken = squad.map(function (s) { return s.n; });
 
     // Pre-compute draftable count so header can show respin button correctly
     var draftable = 0;
     players.forEach(function (pl) {
-      var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
+      var isTaken = taken.indexOf(pl.n) !== -1;
       var open = openEligiblePositions(pl);
       if (!isTaken && open.length > 0) draftable++;
     });
@@ -987,7 +989,7 @@
     // Find GOAT (highest-rated available player)
     var goatName = null, goatR = -1;
     players.forEach(function(pl) {
-      if (taken.indexOf(c+"|"+y+"|"+pl.n) !== -1) return;
+      if (taken.indexOf(pl.n) !== -1) return;
       if ((pl.r||0) > goatR) { goatR = pl.r||0; goatName = pl.n; }
     });
 
@@ -996,13 +998,13 @@
     var autoGK = null, autoGKPos = null;
     if (draftable === 0) {
       var gkCandidates = players.filter(function(pl) {
-        if (taken.indexOf(c+"|"+y+"|"+pl.n) !== -1) return false;
+        if (taken.indexOf(pl.n) !== -1) return false;
         var gps = gpOf(pl);
         return (gps && gps[0] === "GK") || pl.p === "GK";
       }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
       // Also try any available player if no GK exists in squad
       var anyCandidates = players.filter(function(pl) {
-        return taken.indexOf(c+"|"+y+"|"+pl.n) === -1;
+        return taken.indexOf(pl.n) === -1;
       }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
       var pick = gkCandidates[0] || anyCandidates[0];
       if (pick) {
@@ -1060,7 +1062,7 @@
       if (!grp.length) return;
       inner += '<div class="squad-group-label ' + line + '">' + lineLabels[line] + '</div>';
       grp.forEach(function (pl) {
-        var isTaken = taken.indexOf(c + "|" + y + "|" + pl.n) !== -1;
+        var isTaken = taken.indexOf(pl.n) !== -1;
         var open = openEligiblePositions(pl);
         var noSlot = open.length === 0;
         if (!isTaken && !noSlot) draftable++;
@@ -1190,6 +1192,8 @@
 
   function pickPlayer(name, pos, overrideR) {
     if (squad.length >= XI_SIZE || !current || !pos || openOf(pos) <= 0) return;
+    /* Player names are unique across the whole squad, even across different country/year spins */
+    if (squad.some(function(s) { return s.n === name; })) return;
     if (window.sfx) window.sfx.pick();
     var pl = playerByName(name);
     var pickedR = overrideR != null ? overrideR : (pl ? pl.r : 80);
@@ -1213,10 +1217,10 @@
   function autoPickCurrent() {
     if (!current) return;
     var list = DATA[current.country].years[current.year];
-    var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
+    var taken = squad.map(function (s) { return s.n; });
     var best = null, bestPos = null;
     list.forEach(function (pl) {
-      if (taken.indexOf(current.country + "|" + current.year + "|" + pl.n) !== -1) return;
+      if (taken.indexOf(pl.n) !== -1) return;
       var opts = openEligiblePositions(pl);
       if (!opts.length) return;
       if (!best || pl.r > best.r) { best = pl; bestPos = preferredSlot(pl, opts); }
@@ -1228,11 +1232,11 @@
     while (squad.length < XI_SIZE && guard < 600) {
       guard++;
       var pairs = poolPairs(), pk = rand(pairs), list = DATA[pk.c].years[pk.y];
-      var taken = squad.map(function (s) { return s.country + "|" + s.year + "|" + s.n; });
+      var taken = squad.map(function (s) { return s.n; });
       // Collect ALL eligible players then pick one at random (avoids always selecting the first)
       var eligible = [];
       list.forEach(function (pl) {
-        if (taken.indexOf(pk.c + "|" + pk.y + "|" + pl.n) !== -1) return;
+        if (taken.indexOf(pl.n) !== -1) return;
         if ((pl.r || 0) < 75) return;
         var opts = openEligiblePositions(pl);
         if (opts.length) eligible.push({ pl: pl, pos: preferredSlot(pl, opts) });
