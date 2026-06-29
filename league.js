@@ -42,13 +42,25 @@
     ligue1:     { label:"Ligue 1",    flag:"🇫🇷", games:34, dataKey:"LIGUE1_DATA",     src:"./data_ligue1_history.js?v=71",     getData:function(){ return W.LIGUE1_DATA; } }
   };
 
-  /* Lazy-load league data if not already on window */
+  /* Lazy-load the full historical squad file for a league.
+     NOTE: data_mp.js seeds window.PL_DATA (and friends) with a small
+     current-season-only placeholder for Duels/multiplayer mode, so
+     checking truthiness of lc.getData() — or W.lazyLoad's own
+     window[globalKey] check — would short-circuit and never fetch the
+     full multi-decade history file. Track "has the full file loaded"
+     separately so League mode always gets every season back to 1992. */
+  var _leagueFullLoaded = {};
   function ensureLeagueData(key, cb){
     var lc = LEAGUES[key];
     if(!lc){ cb(); return; }
-    if(lc.getData()){ cb(); return; }
-    if(typeof W.lazyLoad !== "function"){ cb(); return; }
-    W.lazyLoad(lc.src, lc.dataKey, cb);
+    if(_leagueFullLoaded[key]){ cb(); return; }
+    if(typeof W.lazyLoad !== "function"){ _leagueFullLoaded[key] = true; cb(); return; }
+    var trackKey = "_lgFullLoaded_" + key;
+    W.lazyLoad(lc.src, trackKey, function(){
+      window[trackKey] = true;
+      _leagueFullLoaded[key] = true;
+      cb();
+    });
   }
 
   /* ── Formations ── */
@@ -195,9 +207,12 @@
     v.querySelectorAll(".lg-card").forEach(function(btn){
       btn.addEventListener("click",function(){
         LS.league=btn.dataset.league;
-        /* Lazy-load league data before proceeding */
+        /* Always go through ensureLeagueData — it tracks its own "full file
+           loaded" state internally, since lc.getData() is already truthy
+           from data_mp.js's small Duels-mode placeholder and would
+           otherwise short-circuit before the full history file loads. */
         var lc = LEAGUES[LS.league];
-        if(lc && lc.src && !lc.getData()){
+        if(lc && lc.src && !_leagueFullLoaded[LS.league]){
           btn.disabled = true;
           btn.innerHTML = btn.innerHTML + "<span class='lg-loading'>Loading…</span>";
           ensureLeagueData(LS.league, function(){
