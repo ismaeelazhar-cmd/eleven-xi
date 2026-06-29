@@ -162,6 +162,7 @@
     usedFormations: {},
     currentSpin: null,
     spunSquads: {},         // tracks country|year pairs spun this session
+    showRatings: true,      // toggled on the setup screen — hides rating numbers while drafting
     mgrSpinResult: null,
     pendingPick: null,
     pendingHandoff: null, // {from, to, lastPick} — show pass screen after picking
@@ -559,6 +560,7 @@
         st.phase = "idle";
         if (msg.mode === "tournament"){
           if (msg.maxRerolls != null) st.maxRerolls = msg.maxRerolls;
+          if (msg.showRatings != null) st.showRatings = msg.showRatings;
           mpStartOnlineTournament("guest", msg.poolKey || "wc");
           return;
         }
@@ -646,6 +648,22 @@
       });
       rrWrap.appendChild(rrRow);
       wrap.appendChild(rrWrap);
+
+      /* Player ratings on/off — Duels is always blind-build by design, so this only applies to Tournament */
+      var ratWrap = mk("div","mp-section"); ratWrap.style.marginTop = "16px";
+      ratWrap.innerHTML = '<div class="mp-label">Player ratings</div>';
+      var ratRow = mk("div","mp-btn-row");
+      [{val:true,label:"Show ratings"},{val:false,label:"Hide ratings"}].forEach(function(opt){
+        var b = mk("button","mp-pill-btn"+(opt.val===st.showRatings?" active":""), opt.label);
+        b.addEventListener("click",function(){
+          st.showRatings=opt.val;
+          ratRow.querySelectorAll(".mp-pill-btn").forEach(function(x){x.classList.remove("active");});
+          b.classList.add("active");
+        });
+        ratRow.appendChild(b);
+      });
+      ratWrap.appendChild(ratRow);
+      wrap.appendChild(ratWrap);
     }
 
     var startBtn = mk("button","mp-start-btn", isTourn ? "Start Tournament →" : "Start Duels →");
@@ -655,7 +673,7 @@
       var chosenPool = null;
       for (var pi=0;pi<RW_POOLS.length;pi++){ if(RW_POOLS[pi].key===poolKey){ chosenPool=RW_POOLS[pi]; break; } }
       if (isTourn){
-        if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"tournament", poolKey:poolKey, maxRerolls:st.maxRerolls });
+        if (window.ElxiNet) window.ElxiNet.send({ t:"mp_start", mode:"tournament", poolKey:poolKey, maxRerolls:st.maxRerolls, showRatings:st.showRatings });
         st.phase = "idle";
         mpStartOnlineTournament("host", poolKey);
         return;
@@ -936,6 +954,19 @@
     });
     rrWrap.appendChild(rrRow);
     wrap.appendChild(rrWrap);
+
+    /* ── Player ratings on/off ── */
+    var ratWrap = mk("div","mp-section");
+    ratWrap.innerHTML = '<div class="mp-label">Player ratings</div>';
+    var ratRow = mk("div","mp-btn-row");
+    [{val:true,label:"Show ratings"},{val:false,label:"Hide ratings"}].forEach(function(opt){
+      var b = mk("button","mp-pill-btn"+(opt.val===st.showRatings?" active":""), opt.label);
+      b.addEventListener("click",function(){ st.showRatings=opt.val; _render(); });
+      ratRow.appendChild(b);
+    });
+    ratWrap.appendChild(ratRow);
+    ratWrap.appendChild(mk("div","seg-desc", st.showRatings ? "Player ratings are visible while you draft." : "Ratings hidden — draft blind for a tougher challenge."));
+    wrap.appendChild(ratWrap);
 
     /* ── Summary line ── */
     var fmtDesc  = st.tournamentFormat==="auto" ? autoLabel :
@@ -1682,7 +1713,7 @@
               ? '<span class="mp-locked-badge">'+esc(lockedByName||"✓")+'</span>'
               : noSlot
                 ? '<span class="slot-tag">no slot</span>'
-                : '<span class="mp-r-badge'+ratingTierClass(pl.r)+'">'+pl.r+'</span>'
+                : (st.showRatings ? '<span class="mp-r-badge'+ratingTierClass(pl.r)+'">'+pl.r+'</span>' : '')
             )+
           '</div>';
       });
@@ -1832,8 +1863,8 @@
         var pk = pop(slot);
         if(pk){
           var sn = pk.n.split(" ").pop();
-          html += '<div class="pdot filled '+lineCls+ratingTierClass(pk.r)+'">'+
-            '<span class="dot-init">'+(pk.r||slot)+'</span>'+
+          html += '<div class="pdot filled '+lineCls+(st.showRatings?ratingTierClass(pk.r):'')+'">'+
+            '<span class="dot-init">'+(st.showRatings ? (pk.r||slot) : slot)+'</span>'+
             '<span class="dot-name">'+esc(sn)+'</span>'+
             '</div>';
         } else {
@@ -1876,7 +1907,7 @@
         if(pk){
           var surname = pk.n.split(" ").pop();
           h += '<span class="mp-pv-name">'+esc(surname)+'</span>';
-          h += '<span class="mp-pv-rat">'+pk.r+'</span>';
+          if(st.showRatings) h += '<span class="mp-pv-rat">'+pk.r+'</span>';
         }
         h += '</div>';
       });
@@ -1913,7 +1944,7 @@
             '<div class="mp-ts-name">'+esc(p.name)+'</div>'+
             '<div class="mp-ts-meta">'+esc(p.formation)+(p.manager?' · '+p.manager.emoji+' '+esc(p.manager.name):'')+'</div>'+
           '</div>'+
-          '<div class="mp-ts-avg">'+avg+'<span>avg</span></div>';
+          (st.showRatings ? '<div class="mp-ts-avg">'+avg+'<span>avg</span></div>' : '');
         prevSec.appendChild(d);
       });
       wrap.appendChild(prevSec);
@@ -2016,7 +2047,7 @@
         var sqSec = mk("div","mp-section mp-squad-reveal");
         var isChamp = rp.name === sd.champion;
         sqSec.innerHTML = '<div class="mp-label">'+(isChamp?'🏆 ':'')+esc(rp.name)+'\'s Squad</div>'+
-          '<div class="mp-rev-meta">'+esc(rp.formation)+' · '+(rp.manager?rp.manager.emoji+' '+esc(rp.manager.name):'')+' · Avg '+rpAvg+'</div>';
+          '<div class="mp-rev-meta">'+esc(rp.formation)+' · '+(rp.manager?rp.manager.emoji+' '+esc(rp.manager.name):'')+(st.showRatings?' · Avg '+rpAvg:'')+'</div>';
         var pitchWrap = mk("div","mp-rev-pitch");
         pitchWrap.innerHTML = buildWCPitch(rp);
         sqSec.appendChild(pitchWrap);
@@ -2026,7 +2057,7 @@
           li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
             '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
             '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
-            '<span class="mp-tc-r mp-r-badge'+ratingTierClass(pk.r)+'">'+pk.r+'</span>';
+            (st.showRatings ? '<span class="mp-tc-r mp-r-badge'+ratingTierClass(pk.r)+'">'+pk.r+'</span>' : '');
           revList.appendChild(li);
         });
         sqSec.appendChild(revList);
@@ -2044,14 +2075,14 @@
           var isC = p.name===sd.champion;
           card.innerHTML = '<div class="mp-tc-head"><span class="mp-tc-name">'+(isC?'🏆 ':'')+esc(p.name)+'</span>'+
             '<span class="mp-tc-info">'+esc(p.formation)+' · '+(p.manager?p.manager.emoji+" "+esc(p.manager.name):"")+'</span>'+
-            '<span class="mp-tc-avg">Avg '+avg+'</span></div>';
+            (st.showRatings ? '<span class="mp-tc-avg">Avg '+avg+'</span>' : '')+'</div>';
           var ul = mk("ul","mp-tc-ul");
           p.picks.forEach(function(pk){
             var li = mk("li","mp-tc-player");
             li.innerHTML = '<span class="mp-tc-pos">'+esc(pk.slot||pk.gp||pk.p)+'</span>'+
               '<span class="mp-tc-pname">'+esc(pk.n)+'</span>'+
               '<span class="mp-tc-club">'+esc(pk.country)+' '+pk.year+'</span>'+
-              '<span class="mp-tc-r mp-r-badge'+ratingTierClass(pk.r)+'">'+pk.r+'</span>';
+              (st.showRatings ? '<span class="mp-tc-r mp-r-badge'+ratingTierClass(pk.r)+'">'+pk.r+'</span>' : '');
             ul.appendChild(li);
           });
           card.appendChild(ul);
