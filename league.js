@@ -35,7 +35,7 @@
 
   /* ── Leagues ── */
   var LEAGUES = {
-    pl:         { label:"Premier League", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", games:38, dataKey:"PL_DATA",         src:"./data_pl_history.js?v=71",         getData:function(){ return W.PL_DATA; } },
+    pl:         { label:"Premier League", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", games:38, dataKey:"PL_DATA",         src:"./data_pl_history.js?v=72",         getData:function(){ return W.PL_DATA; } },
     laliga:     { label:"La Liga",    flag:"🇪🇸", games:38, dataKey:"LALIGA_DATA",     src:"./data_laliga_history.js?v=71",     getData:function(){ return W.LALIGA_DATA; } },
     seriea:     { label:"Serie A",    flag:"🇮🇹", games:38, dataKey:"SERIEA_DATA",     src:"./data_seriea_history.js?v=71",     getData:function(){ return W.SERIEA_DATA; } },
     bundesliga: { label:"Bundesliga", flag:"🇩🇪", games:34, dataKey:"BUNDESLIGA_DATA", src:"./data_bundesliga_history.js?v=71", getData:function(){ return W.BUNDESLIGA_DATA; } },

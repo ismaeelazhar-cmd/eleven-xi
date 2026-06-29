@@ -986,7 +986,7 @@
 
   /* Lazy-load per-pool history files so multiplayer has full multi-season data */
   var POOL_LAZY = {
-    pl:         { src:"./data_pl_history.js?v=71",     key:"PL_DATA" },
+    pl:         { src:"./data_pl_history.js?v=72",     key:"PL_DATA" },
     laliga:     { src:"./data_laliga_history.js?v=71", key:"LALIGA_DATA" },
     seriea:     { src:"./data_seriea_history.js?v=71", key:"SERIEA_DATA" },
     bundesliga: { src:"./data_bundesliga_history.js?v=71", key:"BUNDESLIGA_DATA" }
