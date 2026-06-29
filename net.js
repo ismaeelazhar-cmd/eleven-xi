@@ -27,6 +27,21 @@
   var CODE_LEN = 4;
   var WAIT_MS = 90000;            // how long a host advertises before timing out
 
+  /* STUN-only ICE config fails to connect whenever either peer is behind a
+     NAT that can't do direct peer-to-peer (common on mobile data, corporate
+     wifi, some home routers) — the connection just hangs or times out with
+     no useful error. Adding a TURN relay fallback (Open Relay's public free
+     servers) lets the connection route through a relay in that case. */
+  var ICE_CONFIG = {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+    ]
+  };
+
   var _peerjsLoading = null;
 
   function loadPeerJS() {
@@ -114,7 +129,7 @@
         function tryOpen() {
           attempts++;
           var code = randCode();
-          var peer = new window.Peer(PREFIX + code, { debug: 0 });
+          var peer = new window.Peer(PREFIX + code, { debug: 0, config: ICE_CONFIG });
           Net._peer = peer;
           var settled = false;
           peer.on("open", function () {
@@ -165,7 +180,7 @@
     setState("loading");
     return loadPeerJS().then(function () {
       return new Promise(function (resolve, reject) {
-        var peer = new window.Peer({ debug: 0 });
+        var peer = new window.Peer({ debug: 0, config: ICE_CONFIG });
         Net._peer = peer;
         var settled = false;
         var connectTimer = setTimeout(function () {
@@ -174,7 +189,7 @@
             setState("error", { reason: "no-game", message: "No game found with code " + code + ". Check it and try again." });
             reject(new Error("timeout"));
           }
-        }, 15000);
+        }, 25000); /* generous — TURN relay negotiation adds latency on restrictive networks */
         peer.on("open", function () {
           setState("joining", { code: code });
           var conn = peer.connect(PREFIX + code, { reliable: true });
