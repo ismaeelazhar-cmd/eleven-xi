@@ -230,6 +230,29 @@
     return compat.filter(function(s){ return (counts[s]||0)>0; });
   }
 
+  /* Emergency pool-wide rescue: after several consecutive empty spins for a
+     player (no one in the spun squad fits any open slot), search the whole
+     active pool for the best-rated unlocked player who fills SOME open
+     slot. Guarantees the draft can always finish instead of auto-respinning
+     forever. Rating capped at 75 so it can't outclass a normal pick. */
+  function findMpEmergencyPick(draftPlayer){
+    var DATA = getData();
+    var best = null, bestSlot = null, bestOrigin = null, bestR = -1;
+    Object.keys(DATA).forEach(function(country){
+      var years = DATA[country].years || {};
+      Object.keys(years).forEach(function(year){
+        (years[year]||[]).forEach(function(pl){
+          if (st.lockedNames.hasOwnProperty(pl.n)) return;
+          var slots = eligibleSlots(pl, draftPlayer);
+          if (!slots.length) return;
+          if ((pl.r||0) > bestR) { bestR = pl.r||0; best = pl; bestSlot = slots[0]; bestOrigin = { country: country, year: year }; }
+        });
+      });
+    });
+    if (!best) return null;
+    return { n: best.n, p: best.p||"MID", gp: best.gp||best.p||"MID", r: Math.min(best.r||75, 75), slot: bestSlot, origin: bestOrigin };
+  }
+
   /* ── DOM helpers ── */
   function eid(id){ return document.getElementById(id); }
   function mk(tag, cls, html){
@@ -1726,25 +1749,67 @@
       if(!st.lockedNames.hasOwnProperty(pl.n) && eligibleSlots(pl, player).length > 0) draftableCount++;
     });
 
-    /* Free respin: no eligible players at all → auto spin again */
+    /* Free respin: no eligible players at all → auto spin again, but only
+       for a few tries — if the pool is genuinely exhausted for the open
+       slot, looping forever just looks like a freeze. */
     if(draftableCount === 0 && !st.pendingPick){
-      var freeHtml = html +
-        '<div class="mp-free-respin">No positions fit — <strong>Free Respin!</strong></div></div>';
-      panel.innerHTML = freeHtml;
+      player.emptySpinStreak = (player.emptySpinStreak||0) + 1;
+      if (player.emptySpinStreak < 4) {
+        var freeHtml = html +
+          '<div class="mp-free-respin">No positions fit — <strong>Free Respin!</strong></div></div>';
+        panel.innerHTML = freeHtml;
+        panel.style.display = "";
+        /* Trigger a free spin after a short delay so player sees the message */
+        setTimeout(function(){
+          st.currentSpin = null;
+          panel.style.display = "none";
+          var spinBtn2 = eid("mpDraftSpin");
+          var cS = eid("mpCS"), yS = eid("mpYS");
+          if(spinBtn2 && cS && yS){
+            initDraftStrips(cS, yS, null);
+            doSpinDraft(cS, yS, spinBtn2, panel, player);
+          }
+        }, 1800);
+        return;
+      }
+      /* Stuck too many times in a row — offer a guaranteed rescue pick
+         instead of spinning again. */
+      var rescue = findMpEmergencyPick(player);
+      var rescueHtml = html +
+        '<div class="nopicks-actions" style="margin:10px 0 0;">' +
+          '<button class="nopicks-btn nopicks-respin" id="mpEmergencyRespin">🎰 Free respin</button>' +
+          (rescue ? '<button class="nopicks-btn nopicks-auto" id="mpEmergencyPick">⚡ Add '+esc(MP_POS_FULL[rescue.slot]||rescue.slot)+' &middot; '+esc(rescue.n.split(" ").slice(-1)[0])+' <span class="nopicks-rating">'+rescue.r+'</span></button>' : '') +
+        '</div></div>';
+      panel.innerHTML = rescueHtml;
       panel.style.display = "";
-      /* Trigger a free spin after a short delay so player sees the message */
-      setTimeout(function(){
+      var mpEmergencyRespin = panel.querySelector("#mpEmergencyRespin");
+      if (mpEmergencyRespin) mpEmergencyRespin.addEventListener("click", function(){
+        player.emptySpinStreak = 0;
         st.currentSpin = null;
         panel.style.display = "none";
-        var spinBtn2 = eid("mpDraftSpin");
-        var cS = eid("mpCS"), yS = eid("mpYS");
-        if(spinBtn2 && cS && yS){
-          initDraftStrips(cS, yS, null);
-          doSpinDraft(cS, yS, spinBtn2, panel, player);
+        var spinBtn3 = eid("mpDraftSpin");
+        var cS3 = eid("mpCS"), yS3 = eid("mpYS");
+        if(spinBtn3 && cS3 && yS3){
+          initDraftStrips(cS3, yS3, null);
+          doSpinDraft(cS3, yS3, spinBtn3, panel, player);
         }
-      }, 1800);
+      });
+      var mpEmergencyPick = panel.querySelector("#mpEmergencyPick");
+      if (mpEmergencyPick && rescue) mpEmergencyPick.addEventListener("click", function(){
+        player.emptySpinStreak = 0;
+        st.currentSpin = null;
+        panel.style.display = "none";
+        player.picks.push({
+          n: rescue.n, p: rescue.p, r: rescue.r,
+          gp: rescue.gp, slot: rescue.slot,
+          country: rescue.origin.country, year: rescue.origin.year
+        });
+        st.lockedNames[rescue.n] = st.cur;
+        advanceDraft();
+      });
       return;
     }
+    player.emptySpinStreak = 0;
 
     panel.innerHTML = html;
     panel.style.display = "";

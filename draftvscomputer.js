@@ -194,6 +194,31 @@ window.startDraftVsComputer = (function (W) {
     });
   }
 
+  /* Emergency pool-wide rescue: find the best-rated player anywhere in the
+     active team pool who fills an open slot for the given picks, ignoring
+     which squad they came from. Used when a spun squad (and several
+     respins) can't offer a draftable player for the position that's still
+     needed — guarantees the draft can always be completed. Rating capped
+     at 75 so a rescue pick never outclasses a normal spin. */
+  function findEmergencyPick(picks) {
+    var takenNames = {};
+    DVC.playerPicks.forEach(function(p){ takenNames[p.n] = true; });
+    DVC.cpuPicks.forEach(function(p){ if(p) takenNames[p.n] = true; });
+    var open = openSlotsByLine(picks);
+    var best = null, bestPos = null, bestR = -1;
+    (DVC.teamPool || []).forEach(function(entry) {
+      (entry.squad || []).forEach(function(p) {
+        if (takenNames[p.n]) return;
+        var pos = p.gp || p.p || "MID";
+        var l = lineOf(pos);
+        if ((open[l] || 0) <= 0) return;
+        if ((p.r || 0) > bestR) { bestR = p.r || 0; best = p; bestPos = pos; }
+      });
+    });
+    if (!best) return null;
+    return { n: best.n, r: Math.min(best.r || 75, 75), pos: bestPos, line: lineOf(bestPos) };
+  }
+
   /* ---- CPU picking from a squad ---- */
   var PERSONALITY_BIAS = {
     scorer:   { FWD: 25, MID: 8,  DEF: -12, GK: 0 },
@@ -563,11 +588,24 @@ window.startDraftVsComputer = (function (W) {
     var annotated = annotateSquad(squad, DVC.playerPicks, DVC.cpuPicks);
     var hasDraftable = annotated.some(function(item){ return !item.taken && !item.noSlot; });
 
+    /* Track consecutive empty squads so we never leave the player stuck —
+       after a few free respins with nothing pickable, offer a guaranteed
+       emergency auto-assign instead of spinning forever. */
+    DVC.emptySpinStreak = hasDraftable ? 0 : (DVC.emptySpinStreak || 0) + 1;
+    var offerEmergency = !hasDraftable && DVC.emptySpinStreak >= 3;
+    var emergencyPick = offerEmergency ? findEmergencyPick(DVC.playerPicks) : null;
+
     var html = '<div class="squad-card">';
     html += '<div class="squad-head"><h2>' + esc(team) + ' &middot; ' + year + '</h2>';
     html += '</div>';
     if (!hasDraftable) {
-      html += '<div class="sub" style="color:var(--warning)">No pickable players in this squad &#8212; spin again for free.</div>';
+      html += '<div class="sub" style="color:var(--warning)">No pickable players in this squad.</div>';
+      html += '<div class="nopicks-actions">';
+      html += '<button class="nopicks-btn nopicks-respin" id="dvcFreeRespin">🎰 Free respin</button>';
+      if (emergencyPick) {
+        html += '<button class="nopicks-btn nopicks-auto" id="dvcEmergencyPick">⚡ Add ' + esc(emergencyPick.pos) + ' &middot; ' + esc(emergencyPick.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + emergencyPick.r + '</span></button>';
+      }
+      html += '</div>';
     } else {
       html += '<div class="sub">Pick a player for your XI</div>';
     }
@@ -597,11 +635,39 @@ window.startDraftVsComputer = (function (W) {
     var rerollBtn = document.getElementById("dvcRerollBtn");
     var spinBtn = document.getElementById("dvcSpinBtn");
     if (rerollBtn) {
-      rerollBtn.style.display = rerollsLeft > 0 ? "" : "none";
+      rerollBtn.style.display = (rerollsLeft > 0 && hasDraftable) ? "" : "none";
       rerollBtn.disabled = rerollsLeft <= 0;
       rerollBtn.textContent = "Reroll (" + rerollsLeft + " left)";
     }
     if (spinBtn) spinBtn.style.display = "none";
+
+    /* Rescue actions: always-clickable free respin, plus a guaranteed
+       emergency auto-assign once we've struck out a few times in a row —
+       never leave the player with zero interactive options. */
+    var freeRespinBtn = panel.querySelector("#dvcFreeRespin");
+    if (freeRespinBtn) {
+      freeRespinBtn.addEventListener("click", function() {
+        if (DVC.spinBusy) return;
+        DVC.spinResult = null;
+        DVC.awaitingPick = false;
+        panel.style.display = "none";
+        if (spinBtn) { spinBtn.disabled = false; spinBtn.style.display = ""; }
+        doDvcSpin();
+      });
+    }
+    var emergencyBtn = panel.querySelector("#dvcEmergencyPick");
+    if (emergencyBtn && emergencyPick) {
+      emergencyBtn.addEventListener("click", function() {
+        panel.style.display = "none";
+        DVC.awaitingPick = false;
+        DVC.spinResult = null;
+        DVC.emptySpinStreak = 0;
+        if (spinBtn) spinBtn.style.display = "";
+        if (rerollBtn) rerollBtn.style.display = "none";
+        DVC.rerollsLeft = DVC.maxRerolls || 3;
+        doPlayerPickDvc(emergencyPick);
+      });
+    }
 
 
     /* Player pick handlers */
@@ -721,11 +787,15 @@ window.startDraftVsComputer = (function (W) {
       DVC.spunSquads[pick.team + "|" + pick.year] = true;
       var cpuPlayer = cpuPickFromSquad(pick.squad);
       if (!cpuPlayer) {
-        /* No suitable player in this squad — spin again silently */
+        /* No suitable player in this squad — spin again silently, but
+           cap retries so a fully-exhausted pool can't spin forever. */
+        DVC._cpuEmptySpins = (DVC._cpuEmptySpins || 0) + 1;
         DVC.spinBusy = false;
+        if (DVC._cpuEmptySpins > 20) { DVC._cpuEmptySpins = 0; doCpuRemainingPicks(); return; }
         setTimeout(doCpuSpinTurn, 200);
         return;
       }
+      DVC._cpuEmptySpins = 0;
 
       var pos = cpuPlayer.gp || cpuPlayer.p || "MID";
       var l = lineOf(pos);
@@ -943,6 +1013,7 @@ window.startDraftVsComputer = (function (W) {
       poolKey: "all",
       teamPool: [],
       spunSquads: {},
+      emptySpinStreak: 0,
       playerPicks: [],
       cpuPicks: [],
       turn: 0,

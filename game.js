@@ -993,28 +993,36 @@
       if ((pl.r||0) > goatR) { goatR = pl.r||0; goatName = pl.n; }
     });
 
-    // When nothing is draftable, find the best GK from this squad (capped at 75)
-    // for the auto-assign option. GK slot preferred; falls back to any open slot.
-    var autoGK = null, autoGKPos = null;
+    // When nothing is draftable, find a rescue pick — the best-rated player
+    // (capped at 75) who can fill WHATEVER position is still open, not just
+    // GK. Try the current squad first; if it has nobody for any open slot,
+    // search the whole active pool so the draft can never soft-lock.
+    var autoGK = null, autoGKPos = null, autoGKOrigin = null;
     if (draftable === 0) {
-      var gkCandidates = players.filter(function(pl) {
-        if (taken.indexOf(pl.n) !== -1) return false;
-        var gps = gpOf(pl);
-        return (gps && gps[0] === "GK") || pl.p === "GK";
-      }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
-      // Also try any available player if no GK exists in squad
-      var anyCandidates = players.filter(function(pl) {
-        return taken.indexOf(pl.n) === -1;
-      }).sort(function(a,b){ return (b.r||0)-(a.r||0); });
-      var pick = gkCandidates[0] || anyCandidates[0];
-      if (pick) {
-        // Find a slot: GK slot first, then any open slot
-        var gkSlot = openOf("GK") > 0 ? "GK" : null;
-        if (!gkSlot) {
-          formationSlots().forEach(function(s) { if (!gkSlot && openOf(s.pos) > 0) gkSlot = s.pos; });
-        }
-        if (gkSlot) { autoGK = pick; autoGKPos = gkSlot; }
+      var findRescueInList = function(list, excludeNames) {
+        var best = null, bestPos = null, bestR = -1;
+        list.forEach(function(pl) {
+          if (excludeNames.indexOf(pl.n) !== -1) return;
+          var opts = openEligiblePositions(pl);
+          if (!opts.length) return;
+          if ((pl.r || 0) > bestR) { bestR = pl.r || 0; best = pl; bestPos = preferredSlot(pl, opts); }
+        });
+        return best ? { pick: best, pos: bestPos } : null;
+      };
+      var rescue = findRescueInList(players, taken);
+      var rescueOrigin = rescue ? { c: c, y: y } : null;
+      if (!rescue) {
+        // Nobody in the current squad fits any open slot — widen the search
+        // to every squad in the active pool.
+        poolPairs().some(function(p) {
+          var list = DATA[p.c] && DATA[p.c].years[p.y];
+          if (!list) return false;
+          var found = findRescueInList(list, taken);
+          if (found) { rescue = found; rescueOrigin = { c: p.c, y: p.y }; return true; }
+          return false;
+        });
       }
+      if (rescue) { autoGK = rescue.pick; autoGKPos = rescue.pos; autoGKOrigin = rescueOrigin; }
     }
 
     // Modal card header
@@ -1094,16 +1102,17 @@
     /* No-picks rescue: inject popup overlay when nothing is draftable */
     if (draftable === 0) {
       var gkR = autoGK ? Math.min(autoGK.r || 75, 75) : null;
+      var rescueLabel = autoGK ? (POS_FULL[autoGKPos] || autoGKPos) : null;
       var popup = document.createElement("div");
       popup.className = "nopicks-popup";
       popup.innerHTML =
         '<div class="nopicks-popup-inner">' +
           '<div class="nopicks-icon">🚫</div>' +
           '<div class="nopicks-title">No players fit your open slots</div>' +
-          '<div class="nopicks-sub">Spin a new squad for free, or auto-assign a goalkeeper.</div>' +
+          '<div class="nopicks-sub">' + (autoGK ? ('Spin a new squad for free, or auto-assign a ' + esc(rescueLabel).toLowerCase() + '.') : 'Spin a new squad for free.') + '</div>' +
           '<div class="nopicks-actions">' +
             '<button class="nopicks-btn nopicks-respin" id="nopicksRespinBtn">🎰 Free respin</button>' +
-            (autoGK ? '<button class="nopicks-btn nopicks-auto" id="nopicksAutoBtn">⚡ Add GK · ' + esc(autoGK.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + gkR + '</span></button>' : '') +
+            (autoGK ? '<button class="nopicks-btn nopicks-auto" id="nopicksAutoBtn">⚡ Add ' + esc(rescueLabel) + ' · ' + esc(autoGK.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + gkR + '</span></button>' : '') +
           '</div>' +
         '</div>';
       elSquadPanel.appendChild(popup);
@@ -1120,7 +1129,7 @@
       var nopicksAuto = popup.querySelector("#nopicksAutoBtn");
       if (nopicksAuto && autoGK && autoGKPos) {
         nopicksAuto.addEventListener("click", function () {
-          pickPlayer(autoGK.n, autoGKPos, gkR);
+          pickPlayer(autoGK.n, autoGKPos, gkR, autoGKOrigin);
         });
       }
     }
@@ -1190,19 +1199,28 @@
     updateControls();
   }
 
-  function pickPlayer(name, pos, overrideR) {
+  function pickPlayer(name, pos, overrideR, overrideOrigin) {
     if (squad.length >= XI_SIZE || !current || !pos || openOf(pos) <= 0) return;
     /* Player names are unique across the whole squad, even across different country/year spins */
     if (squad.some(function(s) { return s.n === name; })) return;
     if (window.sfx) window.sfx.pick();
-    var pl = playerByName(name);
+    /* Rescue picks (nopicks popup) may come from a squad other than the one
+       currently spun — look them up by their real origin when given. */
+    var originC = (overrideOrigin && overrideOrigin.c) || current.country;
+    var originY = (overrideOrigin && overrideOrigin.y) || current.year;
+    var pl = overrideOrigin ? (function() {
+      var list = DATA[originC] && DATA[originC].years[originY];
+      if (!list) return null;
+      for (var i = 0; i < list.length; i++) if (list[i].n === name) return list[i];
+      return null;
+    })() : playerByName(name);
     var pickedR = overrideR != null ? overrideR : (pl ? pl.r : 80);
     /* Close out the last reroll log entry — record what they kept */
     if (rerollLog.length && rerollLog[rerollLog.length - 1].kept === null) {
       rerollLog[rerollLog.length - 1].kept = pickedR;
     }
     pendingDiscard = null;
-    squad.push({ id: nextId++, n: name, p: pl ? pl.p : "MID", r: pickedR, slot: pos, country: current.country, year: current.year });
+    squad.push({ id: nextId++, n: name, p: pl ? pl.p : "MID", r: pickedR, slot: pos, country: originC, year: originY });
     current = null; awaitingPick = false; pendingPick = null;
     elSquadPanel.style.display = "none";
     renderXI(); paintPitches(); updateControls();
