@@ -15,6 +15,13 @@
   var ITEM_H = 96;
   var REROLLS = 3;
 
+  /* Small inline-SVG icons for rescue-popup action buttons — replaces the
+     🎰/⚡ emoji that sat awkwardly next to the app's custom SVG icon set. */
+  var RESCUE_ICO = {
+    respin: '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    add:    '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>'
+  };
+
   // Granular position → broad line (for pitch grouping + scoring) + full label.
   var LINE_OF = {
     GK: "GK", CB: "DEF", RB: "DEF", LB: "DEF", RWB: "DEF", LWB: "DEF",
@@ -1111,8 +1118,8 @@
           '<div class="nopicks-title">No players fit your open slots</div>' +
           '<div class="nopicks-sub">' + (autoGK ? ('Spin a new squad for free, or auto-assign a ' + esc(rescueLabel).toLowerCase() + '.') : 'Spin a new squad for free.') + '</div>' +
           '<div class="nopicks-actions">' +
-            '<button class="nopicks-btn nopicks-respin" id="nopicksRespinBtn">🎰 Free respin</button>' +
-            (autoGK ? '<button class="nopicks-btn nopicks-auto" id="nopicksAutoBtn">⚡ Add ' + esc(rescueLabel) + ' · ' + esc(autoGK.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + gkR + '</span></button>' : '') +
+            '<button class="nopicks-btn nopicks-respin" id="nopicksRespinBtn">' + RESCUE_ICO.respin + ' Free respin</button>' +
+            (autoGK ? '<button class="nopicks-btn nopicks-auto" id="nopicksAutoBtn">' + RESCUE_ICO.add + ' Add ' + esc(rescueLabel) + ' · ' + esc(autoGK.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + gkR + '</span></button>' : '') +
           '</div>' +
         '</div>';
       elSquadPanel.appendChild(popup);

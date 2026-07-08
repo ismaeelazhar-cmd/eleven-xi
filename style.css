@@ -359,6 +359,7 @@ button.spin:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.4)
 
 /* Position group headers inside squad picker */
 .squad-group-label {
+  font-family: var(--font-display);
   font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
   padding: 10px 2px 4px; margin-top: 4px;
 }
@@ -378,9 +379,13 @@ button.spin:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.4)
   background: var(--card);
   border: 1px solid var(--line);
   cursor: pointer;
-  transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.player:hover { transform: translateY(-2px); border-color: rgba(0,187,127,0.5); background: var(--card2); box-shadow: 0 0 0 1px rgba(0,187,127,0.12); }
+/* No lift here — this row repeats 20-30 times in a scrollable squad list;
+   a per-row translateY on hover makes the whole list feel twitchy as the
+   cursor passes over it. Border + background + ring already give clear
+   feedback without the jump — a card-list distinction from Phase 5. */
+.player:hover { border-color: rgba(0,187,127,0.5); background: var(--card2); box-shadow: 0 0 0 1px rgba(0,187,127,0.12); }
 .player .pos {
   flex: 0 0 auto;
   width: 34px; height: 34px;
@@ -782,7 +787,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
   white-space: nowrap; max-width: 64px; overflow: hidden; text-overflow: ellipsis;
   text-shadow: 0 1px 2px #000;
 }
-.pdot .dot-rate { font-size: 13px; font-weight: 900; color: #0a0a0f; }
+.pdot .dot-rate { font-size: 13px; font-weight: 900; color: #0a0a0f; font-variant-numeric: tabular-nums; }
 
 /* ---------- Draft header ---------- */
 /* ---------- Draft page layout ---------- */
@@ -857,7 +862,7 @@ table.league tr.me-row td { background: rgba(255,209,102,0.16); }
 .reroll:hover { background: rgba(141, 84, 255, 0.26); }
 .reroll:disabled { opacity: 0.5; cursor: not-allowed; }
 .rate-badge { margin-left: auto; background: rgba(249, 156, 0, 0.16); color: var(--gold); border-radius: 6px; padding: 2px 7px; font-size: 12px; font-weight: 800; }
-.xi-rate { color: var(--gold); font-weight: 800; font-size: 13px; }
+.xi-rate { color: var(--gold); font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 
 @media (max-width: 720px) {
   .draft-layout { grid-template-columns: 1fr; }
@@ -1799,11 +1804,15 @@ button.spin:active { animation: none; transform: translateY(2px); }
   border-color: rgba(255,255,255,0.07);
   transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
+/* No lift — this is the higher-specificity rule that actually wins over
+   the earlier .player:hover declaration (later in cascade + :not() chains);
+   same reasoning as the base rule: a 20-30 row scrollable list shouldn't
+   jump per-row on hover. Border + background + shadow still give clear
+   feedback. */
 .player:hover:not(.taken):not(.noslot) {
-  transform: translateY(-3px);
   border-color: rgba(0,187,127,0.5);
   background: rgba(0,187,127,0.06);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,187,127,0.1);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,187,127,0.1);
 }
 .player .pname { font-size: 13.5px; }
 .player .pos { border-radius: 9px; }
@@ -2519,6 +2528,8 @@ body.light .mp-sub-hint { color: rgba(0,0,0,0.38); }
   padding: 2px 7px;
   font-size: 12px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
 }
 /* Locked-by badge inside player cards */
 .mp-locked-badge {
@@ -3253,7 +3264,7 @@ body.light .lgr2-ptable, body.light .lgr2-break { background: rgba(0,0,0,.03); }
   border: 1px solid rgba(255,255,255,.1);
 }
 .lgs-pill.champ { background: rgba(245,180,60,.18); color: var(--gold); border-color: rgba(245,180,60,.3); }
-.lgs-pill.top4  { background: rgba(34,224,200,.1);  color: var(--cyan); border-color: rgba(34,224,200,.25); }
+.lgs-pill.top4  { background: rgba(34,224,200,.1);  color: var(--positive); border-color: rgba(34,224,200,.25); }
 .lgs-pill.rel   { background: rgba(255,93,93,.1);   color: #ff5d5d;     border-color: rgba(255,93,93,.25); }
 
 /* ── Record strip ── */
@@ -3321,12 +3332,12 @@ body.light .lgr2-ptable, body.light .lgr2-break { background: rgba(0,0,0,.03); }
 }
 .lgs-trow:last-child { border-bottom: none; }
 .lgs-trow.user {
-  background: rgba(124,92,252,.1); border-left: 3px solid var(--violet);
+  background: rgba(124,92,252,.1); border-left: 3px solid var(--p-violet-500);
 }
 .lgs-trow.rel { background: rgba(255,93,93,.04); }
 .lgs-tp { flex: 0 0 24px; text-align: center; color: var(--txt-dim); font-size: .78rem; font-weight: 700; }
 .lgs-tn { flex: 1; font-weight: 600; color: var(--txt); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lgs-trow.user .lgs-tn { color: var(--violet); font-weight: 800; }
+.lgs-trow.user .lgs-tn { color: var(--p-violet-500); font-weight: 800; }
 .lgs-tv { flex: 0 0 28px; text-align: center; font-weight: 600; color: var(--txt); font-size: .85rem; }
 .lgs-tv.pts { font-weight: 900; }
 .lgs-tv.gd  { color: var(--txt-dim); font-size: .8rem; }
@@ -4158,6 +4169,7 @@ button, a, .seg-opt { touch-action: manipulation; -webkit-tap-highlight-color: t
   transition: filter 0.15s, transform 0.1s;
 }
 .nopicks-btn:active { transform: scale(0.97); }
+.rescue-ico { vertical-align: -2px; margin-right: 2px; }
 .nopicks-respin {
   background: linear-gradient(160deg, #8B5CF6, #6D28D9);
   color: #fff;
@@ -6507,8 +6519,8 @@ body.light .wc26-label { color: #5a0fa0; }
 .h2-play-hero {
   display: block;
   width: 100%;
-  background: linear-gradient(135deg, #00C2FF 0%, #0099d6 100%);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
   border: none;
   border-radius: 14px;
   padding: 16px 24px;
@@ -6518,10 +6530,10 @@ body.light .wc26-label { color: #5a0fa0; }
   cursor: pointer;
   margin-bottom: 20px;
   transition: transform 0.1s, box-shadow 0.15s;
-  box-shadow: 0 4px 20px rgba(0,194,255,0.35);
+  box-shadow: var(--sh-glow-primary);
 }
 .h2-play-hero:active { transform: scale(0.98); }
-.h2-play-hero:hover { box-shadow: 0 8px 28px rgba(0,194,255,0.45); }
+.h2-play-hero:hover { box-shadow: 0 10px 30px rgba(47,168,79,.5); }
 
 /* ── Draft Night featured banner ─────────────────────────────────────── */
 .dn-banner {
@@ -6813,7 +6825,8 @@ body.light .wcm-text strong { color: rgba(0,0,0,0.9); }
 /* ── Greatest XI Recap modal ─────────────────────────────────────────── */
 .recap-modal { text-align: center; }
 .recap-header { margin-bottom: 20px; }
-.recap-trophy { font-size: 40px; margin-bottom: 6px; }
+.recap-trophy { margin-bottom: 6px; color: var(--champion); display: flex; justify-content: center; }
+.recap-trophy svg { width: 40px; height: 40px; }
 .recap-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
 .recap-sub { font-size: 13px; color: rgba(255,255,255,0.5); }
 .recap-stats-grid { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }

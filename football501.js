@@ -13,6 +13,14 @@
   var TIMED_SECONDS = 60;
   var STATS_KEY = "fb501_stats_v1";
 
+  /* Small inline-SVG icons for action buttons — replaces the 🔁/🚩 emoji
+     used as functional button-label icons, matching the icon language
+     used for the same rescue-action pattern in game.js/draftvscomputer.js/multiplayer.js. */
+  var ICO = {
+    replay: '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    flag:   '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M5 21V4"/><path d="M5 4h13l-3 4 3 4H5"/></svg>'
+  };
+
   function esc(s) { return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
   /* Normalize a name for matching: lowercase, strip diacritics/punctuation,
@@ -93,9 +101,13 @@
     if (!ST || ST.phase !== "play") return;
     var row = findMatch(raw, ST.category.rows, ST.used);
     if (!row) { flash("miss"); return; }
-    ST.used[row.n] = true;
     var next = ST.score - row.v;
     if (next < 0) {
+      /* Bust — the player didn't actually score with this name (their
+         score was too low for it to fit), so it must NOT be marked as
+         "used": that would permanently lock out a valid answer after one
+         unlucky guess and could make a category unsolvable if too few
+         names remain. Leave it guessable again once the score is lower. */
       ST.history.unshift({ name: row.n, v: row.v, resultScore: ST.score, bust: true });
       /* render() rebuilds the DOM, so flash the (new) score dial AFTER
          rendering — flashing first would animate a node that's about to
@@ -104,6 +116,7 @@
       flash("bust");
       return;
     }
+    ST.used[row.n] = true;
     ST.score = next;
     ST.history.unshift({ name: row.n, v: row.v, resultScore: next, bust: false });
     if (next === 0) {
@@ -173,7 +186,7 @@
       var s = stats[c.key];
       var statLine = s ? (s.wins + "/" + s.attempts + " won" + (s.bestGuesses != null ? " · best " + s.bestGuesses : "")) : "";
       return '<button class="h2-mode fb501-cat' + (c.locked ? " fb501-cat-locked" : "") + '" data-cat="' + esc(c.key) + '"' + (c.locked ? " disabled" : "") + '>' +
-        '<span class="h2-mode-ico fb501-ico">🎯</span>' +
+        '<span class="h2-mode-ico fb501-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.2"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>' +
         '<span class="h2-mode-body"><span class="h2-mode-name">' + esc(c.label) + '</span>' +
         '<span class="h2-mode-desc">' + (c.locked ? "Coming soon" : "Race to zero · " + esc(c.unit)) + '</span>' +
         (statLine ? '<span class="fl-mode-stat">' + esc(statLine) + '</span>' : '') +
@@ -220,10 +233,10 @@
         '<div class="nopicks-title">' + (won ? "Checked out!" : "Time's up") + '</div>' +
         '<div class="nopicks-sub">' + (won ? ("Finished in " + guesses + " guess" + (guesses === 1 ? "" : "es") + ".") : ("Left on " + ST.score + " — so close.")) + '</div>' +
         '<div class="nopicks-actions">' +
-          '<button class="nopicks-btn nopicks-respin" id="fb501Rematch">🔁 Play again</button>' +
+          '<button class="nopicks-btn nopicks-respin" id="fb501Rematch">' + ICO.replay + ' Play again</button>' +
           '<button class="nopicks-btn nopicks-auto" id="fb501BackToCats">Choose category</button>' +
         '</div>' +
-        '<button class="fb501-report-link" id="fb501ReportStat">🚩 Spot a wrong stat?</button>' +
+        '<button class="fb501-report-link" id="fb501ReportStat">' + ICO.flag + ' Spot a wrong stat?</button>' +
       '</div>' +
     '</div>';
   }

@@ -6,6 +6,13 @@
 (function (W) {
   "use strict";
 
+  /* Small inline-SVG icons for rescue-popup action buttons — replaces the
+     🎰/⚡ emoji that sat awkwardly next to the app's custom SVG icon set. */
+  var RESCUE_ICO = {
+    respin: '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    add:    '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>'
+  };
+
   /* ── Self-contained constants (mirrors game.js, no coupling) ── */
   var MP_LINE_OF = {
     GK:"GK", CB:"DEF", RB:"DEF", LB:"DEF", RWB:"DEF", LWB:"DEF",
@@ -1777,8 +1784,8 @@
       var rescue = findMpEmergencyPick(player);
       var rescueHtml = html +
         '<div class="nopicks-actions" style="margin:10px 0 0;">' +
-          '<button class="nopicks-btn nopicks-respin" id="mpEmergencyRespin">🎰 Free respin</button>' +
-          (rescue ? '<button class="nopicks-btn nopicks-auto" id="mpEmergencyPick">⚡ Add '+esc(MP_POS_FULL[rescue.slot]||rescue.slot)+' &middot; '+esc(rescue.n.split(" ").slice(-1)[0])+' <span class="nopicks-rating">'+rescue.r+'</span></button>' : '') +
+          '<button class="nopicks-btn nopicks-respin" id="mpEmergencyRespin">'+RESCUE_ICO.respin+' Free respin</button>' +
+          (rescue ? '<button class="nopicks-btn nopicks-auto" id="mpEmergencyPick">'+RESCUE_ICO.add+' Add '+esc(MP_POS_FULL[rescue.slot]||rescue.slot)+' &middot; '+esc(rescue.n.split(" ").slice(-1)[0])+' <span class="nopicks-rating">'+rescue.r+'</span></button>' : '') +
         '</div></div>';
       panel.innerHTML = rescueHtml;
       panel.style.display = "";

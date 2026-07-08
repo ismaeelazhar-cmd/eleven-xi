@@ -5,6 +5,13 @@
 window.startDraftVsComputer = (function (W) {
   "use strict";
 
+  /* Small inline-SVG icons for rescue-popup action buttons — replaces the
+     🎰/⚡ emoji that sat awkwardly next to the app's custom SVG icon set. */
+  var RESCUE_ICO = {
+    respin: '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+    add:    '<svg class="rescue-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>'
+  };
+
   var LINE_OF = {
     GK:"GK",
     CB:"DEF", RB:"DEF", LB:"DEF", RWB:"DEF", LWB:"DEF", DEF:"DEF",
@@ -601,9 +608,9 @@ window.startDraftVsComputer = (function (W) {
     if (!hasDraftable) {
       html += '<div class="sub" style="color:var(--warning)">No pickable players in this squad.</div>';
       html += '<div class="nopicks-actions">';
-      html += '<button class="nopicks-btn nopicks-respin" id="dvcFreeRespin">🎰 Free respin</button>';
+      html += '<button class="nopicks-btn nopicks-respin" id="dvcFreeRespin">' + RESCUE_ICO.respin + ' Free respin</button>';
       if (emergencyPick) {
-        html += '<button class="nopicks-btn nopicks-auto" id="dvcEmergencyPick">⚡ Add ' + esc(emergencyPick.pos) + ' &middot; ' + esc(emergencyPick.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + emergencyPick.r + '</span></button>';
+        html += '<button class="nopicks-btn nopicks-auto" id="dvcEmergencyPick">' + RESCUE_ICO.add + ' Add ' + esc(emergencyPick.pos) + ' &middot; ' + esc(emergencyPick.n.split(" ").slice(-1)[0]) + ' <span class="nopicks-rating">' + emergencyPick.r + '</span></button>';
       }
       html += '</div>';
     } else {
