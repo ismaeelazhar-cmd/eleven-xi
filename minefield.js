@@ -67,39 +67,65 @@
     return { n: n, cells: chosen.map(function (c, i) { return { i: i, name: c.name, mine: c.mine, revealed: false }; }) };
   }
 
-  /* ---- State ---- */
+  /* ---- State ----
+     Solo: unchanged, survive as long as you can. Pass & Play: two players
+     share the SAME board and alternate turns — a mine ends the game
+     immediately and the OTHER player wins (they didn't step on it), a
+     safe reveal passes the turn and play continues. Board-cleared with
+     no mine hit is a joint win (both survived). */
   var ST = null;
+  var pendingMode = "solo";
 
-  function newState(catKey) {
+  function newState(catKey, mode, playerNames) {
     var cat = categories().filter(function (c) { return c.key === catKey; })[0];
     if (!cat) return null;
+    mode = mode || "solo";
+    var names = playerNames || (mode === "passplay" ? ["Player 1", "Player 2"] : ["You"]);
     return {
       phase: "play",
+      mode: mode,
       category: cat,
       board: buildBoard(cat),
+      players: names.map(function (n) { return { name: n, safeRevealed: 0 }; }),
+      turnIdx: 0,
       safeRevealed: 0,
-      outcome: null // "mine" | null
+      outcome: null, // "mine" | "cleared" | null
+      winnerIdx: null
     };
   }
+
+  function isMultiplayer() { return ST.players.length > 1; }
+  function activePlayer() { return ST.players[ST.turnIdx]; }
+  function advanceTurn() { ST.turnIdx = (ST.turnIdx + 1) % ST.players.length; }
 
   function clickCell(idx) {
     if (!ST || ST.phase !== "play") return;
     var cell = ST.board.cells[idx];
     if (!cell || cell.revealed) return;
+    var actorIdx = ST.turnIdx;
     cell.revealed = true;
     if (cell.mine) {
       ST.outcome = "mine";
       ST.phase = "result";
-      ST.statLine = recordResult(ST.category.key, ST.safeRevealed);
+      if (isMultiplayer()) {
+        /* Whoever clicked the mine loses — the OTHER player wins, since
+           they're the one who didn't step on it. */
+        ST.winnerIdx = ST.players.length - 1 - actorIdx;
+      } else {
+        ST.statLine = recordResult(ST.category.key, ST.safeRevealed);
+      }
       render();
       return;
     }
     ST.safeRevealed++;
+    activePlayer().safeRevealed++;
     var allSafeGone = ST.board.cells.every(function (c) { return c.mine || c.revealed; });
     if (allSafeGone) {
       ST.outcome = "cleared";
       ST.phase = "result";
-      ST.statLine = recordResult(ST.category.key, ST.safeRevealed);
+      if (!isMultiplayer()) ST.statLine = recordResult(ST.category.key, ST.safeRevealed);
+    } else if (isMultiplayer()) {
+      advanceTurn();
     }
     render();
   }
@@ -115,12 +141,25 @@
     wire();
   }
 
+  function modeSelectHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Football Minefield</h2></div>' +
+      '<div class="sub">How do you want to play?</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" data-mode="solo"><span class="fb501-mode-btn-name">Solo</span><span class="fb501-mode-btn-desc">Survive as many safe cells as you can.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="passplay"><span class="fb501-mode-btn-name">Pass &amp; Play</span><span class="fb501-mode-btn-desc">Two players, one device — whoever hits a mine loses.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="online"><span class="fb501-mode-btn-name">Online 1v1</span><span class="fb501-mode-btn-desc">Head-to-head with a friend, anywhere — share a code.</span></button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function categoryPickHTML() {
     var stats = loadStats();
+    var multi = pendingMode === "passplay";
     var cats = categories();
     var cards = cats.map(function (c) {
       var s = stats[c.key];
-      var statLine = s ? (s.runs + " runs · best " + s.bestSafe + " safe") : "";
+      var statLine = (!multi && s) ? (s.runs + " runs · best " + s.bestSafe + " safe") : "";
       return '<button class="h2-mode fb501-cat" data-cat="' + esc(c.key) + '">' +
         '<span class="h2-mode-ico fb501-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span>' +
         '<span class="h2-mode-body"><span class="h2-mode-name">' + esc(c.label) + '</span>' +
@@ -137,13 +176,17 @@
 
   function playHTML() {
     var b = ST.board;
+    var multi = isMultiplayer();
     var cellsHTML = b.cells.map(function (c) {
       var cls = "mine-cell" + (c.revealed ? (c.mine ? " mine-cell--mine" : " mine-cell--safe") : "");
       return '<div class="' + cls + '" data-i="' + c.i + '">' + (c.revealed ? esc(c.name) : "?") + '</div>';
     }).join("");
+    var statusLine = multi
+      ? ST.players.map(function (p, i) { return esc(p.name) + ': ' + p.safeRevealed + (i === ST.turnIdx ? ' (their turn)' : ''); }).join(' · ')
+      : ('Safe revealed: ' + ST.safeRevealed + ' · Board: ' + b.n + '×' + b.n);
     return '<div class="fb501-play squad-card">' +
       '<div class="squad-head"><h2>' + esc(ST.category.label) + '</h2></div>' +
-      '<div class="sub">Safe revealed: ' + ST.safeRevealed + ' · Board: ' + b.n + '×' + b.n + '</div>' +
+      '<div class="sub">' + statusLine + '</div>' +
       '<div class="mine-grid" style="grid-template-columns: repeat(' + b.n + ', 1fr);">' + cellsHTML + '</div>' +
       '<button class="btn-ghost fb501-quit">Quit to menu</button>' +
     '</div>';
@@ -151,10 +194,25 @@
 
   function resultHTML() {
     var cleared = ST.outcome === "cleared";
+    var multi = isMultiplayer();
+    var title, sub;
+    if (multi) {
+      if (ST.winnerIdx === null) {
+        title = "Both survived!";
+        sub = ST.players.map(function (p) { return esc(p.name) + ': ' + p.safeRevealed; }).join(' · ');
+      } else {
+        var winner = ST.players[ST.winnerIdx];
+        title = esc(winner.name) + " wins!";
+        sub = ST.players.map(function (p) { return esc(p.name) + ': ' + p.safeRevealed; }).join(' · ');
+      }
+    } else {
+      title = cleared ? "Board cleared!" : "Boom.";
+      sub = 'Safe revealed: ' + ST.safeRevealed + (ST.statLine ? (' · Best: ' + ST.statLine.bestSafe) : '');
+    }
     return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner">' +
-      '<div class="nopicks-icon">' + (cleared ? "🏆" : "💥") + '</div>' +
-      '<div class="nopicks-title">' + (cleared ? "Board cleared!" : "Boom.") + '</div>' +
-      '<div class="nopicks-sub">Safe revealed: ' + ST.safeRevealed + (ST.statLine ? (' · Best: ' + ST.statLine.bestSafe) : '') + '</div>' +
+      '<div class="nopicks-icon">' + (multi ? (ST.winnerIdx === null ? "🏆" : "🎉") : (cleared ? "🏆" : "💥")) + '</div>' +
+      '<div class="nopicks-title">' + title + '</div>' +
+      '<div class="nopicks-sub">' + sub + '</div>' +
       '<div class="nopicks-actions">' +
         '<button class="nopicks-btn nopicks-respin" id="mineRematch">' + ICO.replay + ' New board</button>' +
         '<button class="nopicks-btn nopicks-auto" id="mineBackToMenu">Menu</button>' +
@@ -165,10 +223,22 @@
   function wire() {
     var el = root();
     if (!el) return;
+    Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
+      b.addEventListener("click", function () {
+        var m = b.getAttribute("data-mode");
+        if (m === "online") {
+          if (W.flToast) W.flToast("Online 1v1 for Football Minefield is coming soon — try Pass & Play for now.");
+          return;
+        }
+        pendingMode = m;
+        renderCategoryPick();
+      });
+    });
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-cat"), function (b) {
       b.addEventListener("click", function () {
         var key = b.getAttribute("data-cat");
-        var next = newState(key);
+        var names = pendingMode === "passplay" ? ["Player 1", "Player 2"] : ["You"];
+        var next = newState(key, pendingMode, names);
         if (!next) return;
         ST = next;
         render();
@@ -178,17 +248,27 @@
       td.addEventListener("click", function () { clickCell(parseInt(td.getAttribute("data-i"), 10)); });
     });
     var quit = el.querySelector(".fb501-quit");
-    if (quit) quit.addEventListener("click", function () { ST = null; renderCategoryPick(); });
+    if (quit) quit.addEventListener("click", function () { ST = null; renderModeSelect(); });
     var rematch = el.querySelector("#mineRematch");
     if (rematch) rematch.addEventListener("click", function () {
       var key = ST.category.key;
-      var next = newState(key);
+      var mode = ST.mode;
+      var names = ST.players.map(function (p) { return p.name; });
+      var next = newState(key, mode, names);
       if (!next) return;
       ST = next;
       render();
     });
     var back = el.querySelector("#mineBackToMenu");
-    if (back) back.addEventListener("click", function () { ST = null; renderCategoryPick(); });
+    if (back) back.addEventListener("click", function () { ST = null; renderModeSelect(); });
+  }
+
+  function renderModeSelect() {
+    var el = root();
+    if (!el) return;
+    pendingMode = "solo";
+    el.innerHTML = modeSelectHTML();
+    wire();
   }
 
   function renderCategoryPick() {
@@ -206,7 +286,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
-    renderCategoryPick();
+    renderModeSelect();
   };
 
   function init() {
