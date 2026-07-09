@@ -76,6 +76,71 @@
   var ST = null;
   var pendingMode = "solo";
 
+  /* ---- Online 1v1 ----
+     Same shape as Fill the Grid's online: host generates the board and
+     broadcasts it whole (so both sides see IDENTICAL mine placement —
+     board generation isn't deterministic), turns alternate, and every
+     click is replayed via the SAME clickCell() logic on the peer's
+     device rather than sending a separate "outcome" message — since
+     both sides hold an identical board, replaying the same cell index
+     deterministically produces an identical result on both screens. */
+  var ONL = null;
+  var myIdx = 0;
+
+  function onlineReset() {
+    ONL = { role: null, status: "idle", code: null, joinCode: "", joinError: null, myName: "You", oppName: "Opponent" };
+  }
+
+  function bindNetForMine() {
+    var Net = W.ElxiNet;
+    if (!Net) return;
+    Net.onStatus = function (state, info) {
+      if (!ONL) return;
+      if (ONL.role === "host") {
+        if (state === "waiting" || state === "loading") { ONL.status = state; if (info && info.code) ONL.code = info.code; }
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "error"; ONL.errMsg = (info && info.message) || "Something went wrong."; }
+      } else if (ONL.role === "guest") {
+        if (state === "loading" || state === "joining") ONL.status = state;
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "idle"; ONL.joinError = (info && info.message) || "Couldn't connect."; }
+      }
+      renderOnlineFlow();
+    };
+    Net.onPeerLeave = function () {
+      if (W.flToast) W.flToast("Your opponent disconnected.");
+      if (ST && ST.phase === "play") { ST.phase = "result"; ST.outcome = "forfeit"; ST.winnerIdx = myIdx; render(); }
+      else { ST = null; onlineReset(); renderModeSelect(); }
+    };
+    Net.onData = function (msg) { handleOnlineMessage(msg); };
+  }
+
+  function handleOnlineMessage(msg) {
+    if (!msg || !msg.t) return;
+    if (msg.t === "mf_name" && ONL) {
+      ONL.oppName = msg.name || "Opponent";
+      if (ST) { ST.players[1 - myIdx].name = ONL.oppName; render(); }
+      return;
+    }
+    if (msg.t === "mf_start") {
+      myIdx = 1;
+      var cat = categories().filter(function (c) { return c.key === msg.catKey; })[0];
+      if (!cat) return;
+      ST = {
+        phase: "play", mode: "online", category: cat, board: msg.board,
+        players: [ONL.oppName, ONL.myName].map(function (n) { return { name: n, safeRevealed: 0 }; }),
+        turnIdx: 0, safeRevealed: 0, outcome: null, winnerIdx: null
+      };
+      render();
+      return;
+    }
+    if (msg.t === "mf_guess") {
+      if (!ST) return;
+      clickCell(msg.idx, true);
+      return;
+    }
+  }
+
   function newState(catKey, mode, playerNames) {
     var cat = categories().filter(function (c) { return c.key === catKey; })[0];
     if (!cat) return null;
@@ -98,10 +163,12 @@
   function activePlayer() { return ST.players[ST.turnIdx]; }
   function advanceTurn() { ST.turnIdx = (ST.turnIdx + 1) % ST.players.length; }
 
-  function clickCell(idx) {
+  function clickCell(idx, fromRemote) {
     if (!ST || ST.phase !== "play") return;
+    if (ST.mode === "online" && !fromRemote && ST.turnIdx !== myIdx) return; // not your turn
     var cell = ST.board.cells[idx];
     if (!cell || cell.revealed) return;
+    if (ST.mode === "online" && !fromRemote && W.ElxiNet) W.ElxiNet.send({ t: "mf_guess", idx: idx });
     var actorIdx = ST.turnIdx;
     cell.revealed = true;
     if (cell.mine) {
@@ -226,10 +293,7 @@
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
       b.addEventListener("click", function () {
         var m = b.getAttribute("data-mode");
-        if (m === "online") {
-          if (W.flToast) W.flToast("Online 1v1 for Football Minefield is coming soon — try Pass & Play for now.");
-          return;
-        }
+        if (m === "online") { renderOnlineSetup(); return; }
         pendingMode = m;
         renderCategoryPick();
       });
@@ -237,10 +301,19 @@
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-cat"), function (b) {
       b.addEventListener("click", function () {
         var key = b.getAttribute("data-cat");
+        if (pendingMode === "online") {
+          var next = newState(key, "online", [ONL.myName, ONL.oppName]);
+          if (!next) return;
+          myIdx = 0;
+          if (W.ElxiNet) W.ElxiNet.send({ t: "mf_start", catKey: key, board: next.board });
+          ST = next;
+          render();
+          return;
+        }
         var names = pendingMode === "passplay" ? ["Player 1", "Player 2"] : ["You"];
-        var next = newState(key, pendingMode, names);
-        if (!next) return;
-        ST = next;
+        var next2 = newState(key, pendingMode, names);
+        if (!next2) return;
+        ST = next2;
         render();
       });
     });
@@ -278,6 +351,134 @@
     wire();
   }
 
+  /* ---- Online lobby, same host/join markup as football501.js/A4. ---- */
+  function renderOnlineSetup() {
+    onlineReset();
+    renderOnlineFlow();
+  }
+
+  function renderOnlineFlow() {
+    var el = root();
+    if (!el || !ONL) return;
+    var html;
+    if (!ONL.role) html = onlineChoiceHTML();
+    else if (ONL.role === "host") html = onlineHostHTML();
+    else html = onlineJoinHTML();
+    el.innerHTML = html;
+    wireOnlineFlow();
+  }
+
+  function onlineChoiceHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+      '<div class="sub">One of you creates the game; the other joins with the code.</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" id="mineOnlCreate"><span class="fb501-mode-btn-name">Create game</span><span class="fb501-mode-btn-desc">Generate a code and wait for your opponent.</span></button>' +
+        '<button class="fb501-mode-btn" id="mineOnlJoin"><span class="fb501-mode-btn-name">Join game</span><span class="fb501-mode-btn-desc">Enter the code your opponent shares with you.</span></button>' +
+      '</div>' +
+      '<button class="btn-ghost fb501-quit" id="mineOnlineBack" style="margin-top:14px">← Back</button>' +
+    '</div>';
+  }
+
+  function onlineHostHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Opponent connected!</h2></div>' +
+        '<div class="sub">You\'re the host — pick the category for both of you.</div>' +
+        '<button class="btn-primary" id="mineHostChooseCat" style="width:100%;margin-top:10px">Choose category →</button>' +
+      '</div>';
+    }
+    if (status === "error") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+        '<div class="sub mp-net-err">' + esc(ONL.errMsg || "Something went wrong.") + '</div>' +
+        '<button class="btn-primary" id="mineOnlRetryHost" style="width:100%;margin-top:10px">Try again</button>' +
+        '<button class="btn-ghost fb501-quit" id="mineOnlineBack">← Back</button>' +
+      '</div>';
+    }
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Your game</h2></div>' +
+      (ONL.code
+        ? '<div class="mp-code-card"><div class="mp-code-label">Share this code</div><div class="mp-code">' + esc(ONL.code) + '</div></div>'
+        : '<div class="mp-code-card"><div class="mp-code-label">Creating your game…</div><div class="mp-code mp-code-dim">····</div></div>') +
+      '<div class="mp-wait"><span class="mp-spinner"></span><span>Waiting for your opponent to join…</span></div>' +
+      '<button class="btn-ghost fb501-quit" id="mineOnlineBack">Cancel</button>' +
+    '</div>';
+  }
+
+  function onlineJoinHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Connected!</h2></div>' +
+        '<div class="sub">Waiting for the host to pick a category…</div>' +
+        '<div class="mp-wait"><span class="mp-spinner"></span></div>' +
+      '</div>';
+    }
+    var connecting = status === "loading" || status === "joining";
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Join a game</h2></div>' +
+      '<div class="sub">Type the code your opponent gave you.</div>' +
+      '<input class="mp-code-input" id="mineJoinCode" type="text" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" value="' + esc(ONL.joinCode || "") + '" />' +
+      (connecting ? '<div class="mp-wait"><span class="mp-spinner"></span><span>Connecting…</span></div>' :
+        '<button class="btn-primary" id="mineDoJoin" style="width:100%;margin-top:10px">Connect →</button>') +
+      (ONL.joinError ? '<div class="mp-net-err">' + esc(ONL.joinError) + '</div>' : '') +
+      '<button class="btn-ghost fb501-quit" id="mineOnlineBack">← Back</button>' +
+    '</div>';
+  }
+
+  function wireOnlineFlow() {
+    var el = root();
+    if (!el) return;
+    var back = el.querySelector("#mineOnlineBack");
+    if (back) back.addEventListener("click", function () {
+      if (W.ElxiNet) W.ElxiNet.close();
+      onlineReset();
+      renderModeSelect();
+    });
+    var create = el.querySelector("#mineOnlCreate");
+    if (create) create.addEventListener("click", onlineStartHost);
+    var retry = el.querySelector("#mineOnlRetryHost");
+    if (retry) retry.addEventListener("click", onlineStartHost);
+    var join = el.querySelector("#mineOnlJoin");
+    if (join) join.addEventListener("click", function () { ONL.role = "guest"; ONL.status = "idle"; ONL.joinError = null; renderOnlineFlow(); });
+    var codeInput = el.querySelector("#mineJoinCode");
+    if (codeInput) {
+      codeInput.addEventListener("input", function () {
+        codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+        ONL.joinCode = codeInput.value;
+      });
+      codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") onlineDoJoin(); });
+      setTimeout(function () { codeInput.focus(); }, 30);
+    }
+    var doJoinBtn = el.querySelector("#mineDoJoin");
+    if (doJoinBtn) doJoinBtn.addEventListener("click", onlineDoJoin);
+    var chooseCat = el.querySelector("#mineHostChooseCat");
+    if (chooseCat) chooseCat.addEventListener("click", function () { pendingMode = "online"; renderCategoryPick(); });
+  }
+
+  function onlineStartHost() {
+    ONL.role = "host"; ONL.status = "loading"; ONL.errMsg = null;
+    renderOnlineFlow();
+    bindNetForMine();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.host().then(function (code) {
+      ONL.code = code;
+      if (ONL.role === "host") renderOnlineFlow();
+    }).catch(function () {});
+  }
+
+  function onlineDoJoin() {
+    var code = (ONL.joinCode || "").trim();
+    if (code.length !== 4) { ONL.joinError = "Enter the 4-character code."; renderOnlineFlow(); return; }
+    ONL.status = "loading"; ONL.joinError = null;
+    renderOnlineFlow();
+    bindNetForMine();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.join(code).then(function () {}).catch(function () {});
+  }
+
   /* ---- Entry point ---- */
   W.startMinefield = function () {
     ALL_VIEWS.forEach(function (id) { var v = document.getElementById(id); if (v) v.style.display = "none"; });
@@ -286,6 +487,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
+    ONL = null;
     renderModeSelect();
   };
 
