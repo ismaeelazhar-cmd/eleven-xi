@@ -128,6 +128,84 @@
     return null;
   }
 
+  /* ---- Online 1v1 ----
+     Reuses net.js/ElxiNet exactly as football501.js's A4 does. Unlike
+     Transfer Roulette (independent parallel races), Fill the Grid is
+     turn-based on a SHARED grid, so both devices must see the exact
+     same grid and stay in lockstep on whose turn it is. Host generates
+     the grid and broadcasts the whole thing (rows/cols/cells) so the
+     guest never re-generates its own (grid generation isn't
+     deterministic — it's retried random sampling). Every guess (correct
+     or not) is broadcast as raw text and replayed through the SAME
+     submitGuess() logic on the peer's device — since both sides hold
+     identical grid + usedNames state, replaying the same guess text
+     deterministically produces an identical result on both screens, so
+     there's no need to also send the outcome. A `fromRemote` flag on
+     submitGuess() stops the replay from re-broadcasting (which would
+     ping-pong forever), and local guesses are gated to only be
+     accepted when it's actually the local player's turn. */
+  var ONL = null;
+  var myIdx = 0; // 0 = host, 1 = guest — which players[] index is "me" this device
+
+  function onlineReset() {
+    ONL = { role: null, status: "idle", code: null, joinCode: "", joinError: null, myName: "You", oppName: "Opponent" };
+  }
+
+  function bindNetForGrid() {
+    var Net = W.ElxiNet;
+    if (!Net) return;
+    Net.onStatus = function (state, info) {
+      if (!ONL) return;
+      if (ONL.role === "host") {
+        if (state === "waiting" || state === "loading") { ONL.status = state; if (info && info.code) ONL.code = info.code; }
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "error"; ONL.errMsg = (info && info.message) || "Something went wrong."; }
+      } else if (ONL.role === "guest") {
+        if (state === "loading" || state === "joining") ONL.status = state;
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "idle"; ONL.joinError = (info && info.message) || "Couldn't connect."; }
+      }
+      renderOnlineFlow();
+    };
+    Net.onPeerLeave = function () {
+      if (W.flToast) W.flToast("Your opponent disconnected.");
+      stopTimer();
+      if (ST && ST.phase === "play") { ST.phase = "result"; ST.outcome = "forfeit"; ST.winnerIdx = myIdx; render(); }
+      else { ST = null; onlineReset(); renderModeSelect(); }
+    };
+    Net.onData = function (msg) { handleOnlineMessage(msg); };
+  }
+
+  function handleOnlineMessage(msg) {
+    if (!msg || !msg.t) return;
+    if (msg.t === "gr_name" && ONL) {
+      ONL.oppName = msg.name || "Opponent";
+      if (ST) { ST.players[1 - myIdx].name = ONL.oppName; render(); }
+      return;
+    }
+    if (msg.t === "gr_start") {
+      /* Guest receives the host's fully-generated grid and mirrors it
+         locally, rather than generating its own (which would produce a
+         DIFFERENT grid — generation isn't deterministic). */
+      myIdx = 1;
+      var names = [ONL.oppName, ONL.myName]; // players[0]=host=opponent here, players[1]=me
+      ST = {
+        phase: "play", mode: "online", grid: msg.grid, usedNames: {},
+        players: names.map(function (n) { return { name: n, filled: 0 }; }),
+        turnIdx: 0, filledCount: 0, activeCell: null,
+        startTime: Date.now(), elapsedSeconds: 0, timerId: null, outcome: null, winnerIdx: null
+      };
+      render();
+      startTimer();
+      return;
+    }
+    if (msg.t === "gr_guess") {
+      if (!ST) return;
+      submitGuess(msg.raw, true);
+      return;
+    }
+  }
+
   /* ---- State ----
      Solo: unchanged, timed race to fill all 9. Pass & Play: TWO players
      share the SAME grid/usedNames pool and alternate turns claiming
@@ -177,8 +255,10 @@
     return null;
   }
 
-  function submitGuess(raw) {
+  function submitGuess(raw, fromRemote) {
     if (!ST || ST.phase !== "play" || !ST.activeCell) return;
+    if (ST.mode === "online" && !fromRemote && ST.turnIdx !== myIdx) return; // not your turn
+    if (ST.mode === "online" && !fromRemote && W.ElxiNet) W.ElxiNet.send({ t: "gr_guess", raw: raw });
     var cell = ST.activeCell;
     var name = findValidPlayer(raw, cell);
     if (!name) {
@@ -285,6 +365,7 @@
     var scoreLine = multi
       ? ST.players.map(function (p, i) { return esc(p.name) + ': ' + p.filled + (i === ST.turnIdx ? ' (their turn)' : ''); }).join(' · ')
       : '';
+    var myTurn = ST.mode !== "online" || ST.turnIdx === myIdx;
     var gridHTML = '<table class="grid-table"><thead><tr><th></th>' +
       g.cols.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join("") + '</tr></thead><tbody>';
     for (var r = 0; r < 3; r++) {
@@ -303,8 +384,8 @@
     return '<div class="fb501-play squad-card">' +
       '<div class="squad-head"><h2>' + esc(g.label) + '</h2><span class="fb501-timer" id="gridTimer">0s</span></div>' +
       gridHTML +
-      '<div class="sub" id="gridPrompt">' + (ST.activeCell ? ('Name a player: <strong>' + esc(g.rows[ST.activeCell.r]) + '</strong> × <strong>' + esc(g.cols[ST.activeCell.c]) + '</strong>') : 'Tap an empty cell to fill it.') + '</div>' +
-      (ST.activeCell ? '<div class="squad-search-wrap"><input class="squad-search" id="gridInput" type="text" placeholder="Type a name…" autocomplete="off" /></div>' : '') +
+      '<div class="sub" id="gridPrompt">' + (!myTurn ? "Waiting for your opponent…" : ST.activeCell ? ('Name a player: <strong>' + esc(g.rows[ST.activeCell.r]) + '</strong> × <strong>' + esc(g.cols[ST.activeCell.c]) + '</strong>') : 'Tap an empty cell to fill it.') + '</div>' +
+      (myTurn && ST.activeCell ? '<div class="squad-search-wrap"><input class="squad-search" id="gridInput" type="text" placeholder="Type a name…" autocomplete="off" /></div>' : '') +
       '<div class="fl-mode-stat" style="text-align:center;">' + (multi ? scoreLine : (ST.filledCount + '/9 filled')) + '</div>' +
       '<button class="btn-ghost fb501-quit">Quit to menu</button>' +
     '</div>';
@@ -340,10 +421,7 @@
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
       b.addEventListener("click", function () {
         var mode = b.getAttribute("data-mode");
-        if (mode === "online") {
-          if (W.flToast) W.flToast("Online 1v1 for Fill the Grid is coming soon — try Pass & Play for now.");
-          return;
-        }
+        if (mode === "online") { renderOnlineSetup(); return; }
         pendingMode = mode;
         renderTypeSelect();
       });
@@ -351,6 +429,21 @@
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-cat"), function (b) {
       b.addEventListener("click", function () {
         var type = b.getAttribute("data-type");
+        if (pendingMode === "online") {
+          var grid = buildGrid(type);
+          if (!grid) { if (W.flToast) W.flToast("Couldn't build a grid for that right now — try again."); return; }
+          myIdx = 0;
+          if (W.ElxiNet) W.ElxiNet.send({ t: "gr_start", grid: grid });
+          ST = {
+            phase: "play", mode: "online", grid: grid, usedNames: {},
+            players: [ONL.myName, ONL.oppName].map(function (n) { return { name: n, filled: 0 }; }),
+            turnIdx: 0, filledCount: 0, activeCell: null,
+            startTime: Date.now(), elapsedSeconds: 0, timerId: null, outcome: null, winnerIdx: null
+          };
+          render();
+          startTimer();
+          return;
+        }
         ST = newState(type, pendingMode);
         if (!ST) {
           if (W.flToast) W.flToast("Couldn't build a grid for that right now — try again.");
@@ -361,6 +454,7 @@
     });
     Array.prototype.forEach.call(el.querySelectorAll(".grid-cell:not(.grid-cell--filled)"), function (td) {
       td.addEventListener("click", function () {
+        if (ST.mode === "online" && ST.turnIdx !== myIdx) return; // not your turn
         var r = parseInt(td.getAttribute("data-r"), 10), c = parseInt(td.getAttribute("data-c"), 10);
         ST.activeCell = cellAt(r, c);
         render();
@@ -399,6 +493,134 @@
     wire();
   }
 
+  /* ---- Online lobby, same host/join markup as football501.js/A4. ---- */
+  function renderOnlineSetup() {
+    onlineReset();
+    renderOnlineFlow();
+  }
+
+  function renderOnlineFlow() {
+    var el = root();
+    if (!el || !ONL) return;
+    var html;
+    if (!ONL.role) html = onlineChoiceHTML();
+    else if (ONL.role === "host") html = onlineHostHTML();
+    else html = onlineJoinHTML();
+    el.innerHTML = html;
+    wireOnlineFlow();
+  }
+
+  function onlineChoiceHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+      '<div class="sub">One of you creates the game; the other joins with the code.</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" id="gridOnlCreate"><span class="fb501-mode-btn-name">Create game</span><span class="fb501-mode-btn-desc">Generate a code and wait for your opponent.</span></button>' +
+        '<button class="fb501-mode-btn" id="gridOnlJoin"><span class="fb501-mode-btn-name">Join game</span><span class="fb501-mode-btn-desc">Enter the code your opponent shares with you.</span></button>' +
+      '</div>' +
+      '<button class="btn-ghost fb501-quit" id="gridOnlineBack" style="margin-top:14px">← Back</button>' +
+    '</div>';
+  }
+
+  function onlineHostHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Opponent connected!</h2></div>' +
+        '<div class="sub">You\'re the host — pick the grid type for both of you.</div>' +
+        '<button class="btn-primary" id="gridHostChooseType" style="width:100%;margin-top:10px">Choose grid →</button>' +
+      '</div>';
+    }
+    if (status === "error") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+        '<div class="sub mp-net-err">' + esc(ONL.errMsg || "Something went wrong.") + '</div>' +
+        '<button class="btn-primary" id="gridOnlRetryHost" style="width:100%;margin-top:10px">Try again</button>' +
+        '<button class="btn-ghost fb501-quit" id="gridOnlineBack">← Back</button>' +
+      '</div>';
+    }
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Your game</h2></div>' +
+      (ONL.code
+        ? '<div class="mp-code-card"><div class="mp-code-label">Share this code</div><div class="mp-code">' + esc(ONL.code) + '</div></div>'
+        : '<div class="mp-code-card"><div class="mp-code-label">Creating your game…</div><div class="mp-code mp-code-dim">····</div></div>') +
+      '<div class="mp-wait"><span class="mp-spinner"></span><span>Waiting for your opponent to join…</span></div>' +
+      '<button class="btn-ghost fb501-quit" id="gridOnlineBack">Cancel</button>' +
+    '</div>';
+  }
+
+  function onlineJoinHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Connected!</h2></div>' +
+        '<div class="sub">Waiting for the host to pick a grid…</div>' +
+        '<div class="mp-wait"><span class="mp-spinner"></span></div>' +
+      '</div>';
+    }
+    var connecting = status === "loading" || status === "joining";
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Join a game</h2></div>' +
+      '<div class="sub">Type the code your opponent gave you.</div>' +
+      '<input class="mp-code-input" id="gridJoinCode" type="text" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" value="' + esc(ONL.joinCode || "") + '" />' +
+      (connecting ? '<div class="mp-wait"><span class="mp-spinner"></span><span>Connecting…</span></div>' :
+        '<button class="btn-primary" id="gridDoJoin" style="width:100%;margin-top:10px">Connect →</button>') +
+      (ONL.joinError ? '<div class="mp-net-err">' + esc(ONL.joinError) + '</div>' : '') +
+      '<button class="btn-ghost fb501-quit" id="gridOnlineBack">← Back</button>' +
+    '</div>';
+  }
+
+  function wireOnlineFlow() {
+    var el = root();
+    if (!el) return;
+    var back = el.querySelector("#gridOnlineBack");
+    if (back) back.addEventListener("click", function () {
+      if (W.ElxiNet) W.ElxiNet.close();
+      onlineReset();
+      renderModeSelect();
+    });
+    var create = el.querySelector("#gridOnlCreate");
+    if (create) create.addEventListener("click", onlineStartHost);
+    var retry = el.querySelector("#gridOnlRetryHost");
+    if (retry) retry.addEventListener("click", onlineStartHost);
+    var join = el.querySelector("#gridOnlJoin");
+    if (join) join.addEventListener("click", function () { ONL.role = "guest"; ONL.status = "idle"; ONL.joinError = null; renderOnlineFlow(); });
+    var codeInput = el.querySelector("#gridJoinCode");
+    if (codeInput) {
+      codeInput.addEventListener("input", function () {
+        codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+        ONL.joinCode = codeInput.value;
+      });
+      codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") onlineDoJoin(); });
+      setTimeout(function () { codeInput.focus(); }, 30);
+    }
+    var doJoinBtn = el.querySelector("#gridDoJoin");
+    if (doJoinBtn) doJoinBtn.addEventListener("click", onlineDoJoin);
+    var chooseType = el.querySelector("#gridHostChooseType");
+    if (chooseType) chooseType.addEventListener("click", function () { pendingMode = "online"; renderTypeSelect(); });
+  }
+
+  function onlineStartHost() {
+    ONL.role = "host"; ONL.status = "loading"; ONL.errMsg = null;
+    renderOnlineFlow();
+    bindNetForGrid();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.host().then(function (code) {
+      ONL.code = code;
+      if (ONL.role === "host") renderOnlineFlow();
+    }).catch(function () {});
+  }
+
+  function onlineDoJoin() {
+    var code = (ONL.joinCode || "").trim();
+    if (code.length !== 4) { ONL.joinError = "Enter the 4-character code."; renderOnlineFlow(); return; }
+    ONL.status = "loading"; ONL.joinError = null;
+    renderOnlineFlow();
+    bindNetForGrid();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.join(code).then(function () {}).catch(function () {});
+  }
+
   /* ---- Entry point ---- */
   W.startFillTheGrid = function () {
     ALL_VIEWS.forEach(function (id) { var v = document.getElementById(id); if (v) v.style.display = "none"; });
@@ -407,6 +629,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
+    ONL = null;
     pendingMode = "solo";
     renderModeSelect();
   };
