@@ -58,6 +58,82 @@
     return out;
   }
 
+  /* ---- Online 1v1 ----
+     Same "each player gets one round on the identical list" shape as
+     Pass & Play, but the two rounds happen on SEPARATE devices instead
+     of a device handoff — host plays their round first while the guest
+     watches a "waiting" screen, then a round-result message flips
+     control to the guest for their round, then a final result message
+     flips it back so both sides see the same finish. The category
+     itself is derived identically from static data on both devices
+     (categories() is deterministic), so only the CHOSEN key needs to
+     be broadcast, not full category data. */
+  var ONL = null;
+  var myIdx = 0;
+
+  function onlineReset() {
+    ONL = { role: null, status: "idle", code: null, joinCode: "", joinError: null, myName: "You", oppName: "Opponent" };
+  }
+
+  function bindNetForTenable() {
+    var Net = W.ElxiNet;
+    if (!Net) return;
+    Net.onStatus = function (state, info) {
+      if (!ONL) return;
+      if (ONL.role === "host") {
+        if (state === "waiting" || state === "loading") { ONL.status = state; if (info && info.code) ONL.code = info.code; }
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "error"; ONL.errMsg = (info && info.message) || "Something went wrong."; }
+      } else if (ONL.role === "guest") {
+        if (state === "loading" || state === "joining") ONL.status = state;
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "idle"; ONL.joinError = (info && info.message) || "Couldn't connect."; }
+      }
+      renderOnlineFlow();
+    };
+    Net.onPeerLeave = function () {
+      if (W.flToast) W.flToast("Your opponent disconnected.");
+      if (ST && (ST.phase === "play" || ST.phase === "waitingOnline")) { ST.phase = "result"; ST.winnerIdx = myIdx; render(); }
+      else { ST = null; onlineReset(); renderModeSelect(); }
+    };
+    Net.onData = function (msg) { handleOnlineMessage(msg); };
+  }
+
+  function handleOnlineMessage(msg) {
+    if (!msg || !msg.t) return;
+    if (msg.t === "ten_name" && ONL) {
+      ONL.oppName = msg.name || "Opponent";
+      if (ST) { ST.players[1 - myIdx].name = ONL.oppName; render(); }
+      return;
+    }
+    if (msg.t === "ten_start") {
+      myIdx = 1;
+      var cat = categories().filter(function (c) { return c.key === msg.key; })[0];
+      if (!cat) return;
+      ST = newState(cat, "online", [ONL.oppName, ONL.myName]);
+      ST.phase = ST.turnIdx === myIdx ? "play" : "waitingOnline";
+      render();
+      return;
+    }
+    if (msg.t === "ten_roundDone") {
+      if (!ST) return;
+      var p = ST.players[msg.playerIdx];
+      p.banked = msg.banked; p.found = msg.found; p.done = true;
+      if (ST.players.every(function (x) { return x.done; })) {
+        var b = ST.players.map(function (x) { return x.banked; });
+        ST.winnerIdx = b[0] === b[1] ? null : (b[0] > b[1] ? 0 : 1);
+        ST.phase = "result";
+        render();
+        return;
+      }
+      ST.turnIdx = msg.playerIdx + 1;
+      ST.found = []; ST.livesLeft = 1; ST.outcome = null;
+      ST.phase = ST.turnIdx === myIdx ? "play" : "waitingOnline";
+      render();
+      return;
+    }
+  }
+
   /* ---- State ----
      Solo: one round, bank as much as you can. Pass & Play: each player
      gets exactly ONE round on the SAME category (same list, so it's a
@@ -127,6 +203,7 @@
       p.banked = ST.banked;
       p.found = ST.found.length;
       p.done = true;
+      if (ST.mode === "online" && W.ElxiNet) W.ElxiNet.send({ t: "ten_roundDone", playerIdx: ST.turnIdx, banked: ST.banked, found: ST.found.length });
       if (ST.players.every(function (x) { return x.done; })) {
         var b = ST.players.map(function (x) { return x.banked; });
         ST.winnerIdx = b[0] === b[1] ? null : (b[0] > b[1] ? 0 : 1);
@@ -134,14 +211,15 @@
         render();
         return;
       }
-      /* Move to the next player's round on the SAME category/list, fresh
-         found/lives — this is an interstitial "pass the device" screen,
-         not the final result. */
+      /* Pass & Play: an interstitial "pass the device" screen. Online:
+         a "waiting for your opponent" screen instead — the SAME state
+         transition, just a different screen, since control has moved
+         to the other device rather than the other side of one table. */
       ST.turnIdx++;
       ST.found = [];
       ST.livesLeft = 1;
       ST.outcome = null;
-      ST.phase = "handoff";
+      ST.phase = ST.mode === "online" ? "waitingOnline" : "handoff";
       render();
       return;
     }
@@ -170,6 +248,7 @@
     if (!el || !ST) return;
     if (ST.phase === "play") el.innerHTML = playHTML();
     else if (ST.phase === "handoff") el.innerHTML = handoffHTML();
+    else if (ST.phase === "waitingOnline") el.innerHTML = waitingOnlineHTML();
     else if (ST.phase === "result") el.innerHTML = resultHTML();
     wire();
   }
@@ -192,6 +271,14 @@
       '<div class="squad-head"><h2>Pass the device</h2></div>' +
       '<div class="sub">' + esc(p.name) + ', you\'re up on the same category: <strong>' + esc(ST.category.label) + '</strong>.</div>' +
       '<button class="btn-primary" id="tenHandoffGo" style="width:100%">' + esc(p.name) + ', start your round →</button>' +
+    '</div>';
+  }
+
+  function waitingOnlineHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Waiting…</h2></div>' +
+      '<div class="sub">Your opponent is playing their round on <strong>' + esc(ST.category.label) + '</strong>. You\'ll play the same list once they\'re done.</div>' +
+      '<div class="mp-wait"><span class="mp-spinner"></span></div>' +
     '</div>';
   }
 
@@ -252,7 +339,7 @@
         '<div class="nopicks-title">' + title + '</div>' +
         '<div class="nopicks-sub">' + sub + '</div>' +
         '<div class="nopicks-actions">' +
-          '<button class="nopicks-btn nopicks-respin" id="tenRematch">' + ICO.replay + ' Play again</button>' +
+          (ST.mode !== "online" ? '<button class="nopicks-btn nopicks-respin" id="tenRematch">' + ICO.replay + ' Play again</button>' : '') +
           '<button class="nopicks-btn nopicks-auto" id="tenBackToMenu">Choose category</button>' +
         '</div>' +
       '</div></div>';
@@ -275,10 +362,7 @@
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
       b.addEventListener("click", function () {
         var m = b.getAttribute("data-mode");
-        if (m === "online") {
-          if (W.flToast) W.flToast("Online 1v1 for Football Tenable is coming soon — try Pass & Play for now.");
-          return;
-        }
+        if (m === "online") { renderOnlineSetup(); return; }
         pendingMode = m;
         renderCategoryPick();
       });
@@ -288,6 +372,13 @@
         var key = b.getAttribute("data-cat");
         var cat = categories().filter(function (c) { return c.key === key; })[0];
         if (!cat) return;
+        if (pendingMode === "online") {
+          myIdx = 0;
+          if (W.ElxiNet) W.ElxiNet.send({ t: "ten_start", key: key });
+          ST = newState(cat, "online", [ONL.myName, ONL.oppName]);
+          render();
+          return;
+        }
         var names = pendingMode === "passplay" ? ["Player 1", "Player 2"] : ["You"];
         ST = newState(cat, pendingMode, names);
         render();
@@ -297,8 +388,16 @@
     if (surprise) surprise.addEventListener("click", function () {
       var cats = categories();
       if (!cats.length) return;
+      var cat = cats[Math.floor(Math.random() * cats.length)];
+      if (pendingMode === "online") {
+        myIdx = 0;
+        if (W.ElxiNet) W.ElxiNet.send({ t: "ten_start", key: cat.key });
+        ST = newState(cat, "online", [ONL.myName, ONL.oppName]);
+        render();
+        return;
+      }
       var names = pendingMode === "passplay" ? ["Player 1", "Player 2"] : ["You"];
-      ST = newState(cats[Math.floor(Math.random() * cats.length)], pendingMode, names);
+      ST = newState(cat, pendingMode, names);
       render();
     });
     var input = el.querySelector("#tenInput");
@@ -339,6 +438,134 @@
     wire();
   }
 
+  /* ---- Online lobby, same host/join markup as football501.js/A4. ---- */
+  function renderOnlineSetup() {
+    onlineReset();
+    renderOnlineFlow();
+  }
+
+  function renderOnlineFlow() {
+    var el = root();
+    if (!el || !ONL) return;
+    var html;
+    if (!ONL.role) html = onlineChoiceHTML();
+    else if (ONL.role === "host") html = onlineHostHTML();
+    else html = onlineJoinHTML();
+    el.innerHTML = html;
+    wireOnlineFlow();
+  }
+
+  function onlineChoiceHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+      '<div class="sub">One of you creates the game; the other joins with the code.</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" id="tenOnlCreate"><span class="fb501-mode-btn-name">Create game</span><span class="fb501-mode-btn-desc">Generate a code and wait for your opponent.</span></button>' +
+        '<button class="fb501-mode-btn" id="tenOnlJoin"><span class="fb501-mode-btn-name">Join game</span><span class="fb501-mode-btn-desc">Enter the code your opponent shares with you.</span></button>' +
+      '</div>' +
+      '<button class="btn-ghost fb501-quit" id="tenOnlineBack" style="margin-top:14px">← Back</button>' +
+    '</div>';
+  }
+
+  function onlineHostHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Opponent connected!</h2></div>' +
+        '<div class="sub">You\'re the host — pick the category for both of you.</div>' +
+        '<button class="btn-primary" id="tenHostChooseCat" style="width:100%;margin-top:10px">Choose category →</button>' +
+      '</div>';
+    }
+    if (status === "error") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+        '<div class="sub mp-net-err">' + esc(ONL.errMsg || "Something went wrong.") + '</div>' +
+        '<button class="btn-primary" id="tenOnlRetryHost" style="width:100%;margin-top:10px">Try again</button>' +
+        '<button class="btn-ghost fb501-quit" id="tenOnlineBack">← Back</button>' +
+      '</div>';
+    }
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Your game</h2></div>' +
+      (ONL.code
+        ? '<div class="mp-code-card"><div class="mp-code-label">Share this code</div><div class="mp-code">' + esc(ONL.code) + '</div></div>'
+        : '<div class="mp-code-card"><div class="mp-code-label">Creating your game…</div><div class="mp-code mp-code-dim">····</div></div>') +
+      '<div class="mp-wait"><span class="mp-spinner"></span><span>Waiting for your opponent to join…</span></div>' +
+      '<button class="btn-ghost fb501-quit" id="tenOnlineBack">Cancel</button>' +
+    '</div>';
+  }
+
+  function onlineJoinHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Connected!</h2></div>' +
+        '<div class="sub">Waiting for the host to pick a category…</div>' +
+        '<div class="mp-wait"><span class="mp-spinner"></span></div>' +
+      '</div>';
+    }
+    var connecting = status === "loading" || status === "joining";
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Join a game</h2></div>' +
+      '<div class="sub">Type the code your opponent gave you.</div>' +
+      '<input class="mp-code-input" id="tenJoinCode" type="text" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" value="' + esc(ONL.joinCode || "") + '" />' +
+      (connecting ? '<div class="mp-wait"><span class="mp-spinner"></span><span>Connecting…</span></div>' :
+        '<button class="btn-primary" id="tenDoJoin" style="width:100%;margin-top:10px">Connect →</button>') +
+      (ONL.joinError ? '<div class="mp-net-err">' + esc(ONL.joinError) + '</div>' : '') +
+      '<button class="btn-ghost fb501-quit" id="tenOnlineBack">← Back</button>' +
+    '</div>';
+  }
+
+  function wireOnlineFlow() {
+    var el = root();
+    if (!el) return;
+    var back = el.querySelector("#tenOnlineBack");
+    if (back) back.addEventListener("click", function () {
+      if (W.ElxiNet) W.ElxiNet.close();
+      onlineReset();
+      renderModeSelect();
+    });
+    var create = el.querySelector("#tenOnlCreate");
+    if (create) create.addEventListener("click", onlineStartHost);
+    var retry = el.querySelector("#tenOnlRetryHost");
+    if (retry) retry.addEventListener("click", onlineStartHost);
+    var join = el.querySelector("#tenOnlJoin");
+    if (join) join.addEventListener("click", function () { ONL.role = "guest"; ONL.status = "idle"; ONL.joinError = null; renderOnlineFlow(); });
+    var codeInput = el.querySelector("#tenJoinCode");
+    if (codeInput) {
+      codeInput.addEventListener("input", function () {
+        codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+        ONL.joinCode = codeInput.value;
+      });
+      codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") onlineDoJoin(); });
+      setTimeout(function () { codeInput.focus(); }, 30);
+    }
+    var doJoinBtn = el.querySelector("#tenDoJoin");
+    if (doJoinBtn) doJoinBtn.addEventListener("click", onlineDoJoin);
+    var chooseCat = el.querySelector("#tenHostChooseCat");
+    if (chooseCat) chooseCat.addEventListener("click", function () { pendingMode = "online"; renderCategoryPick(); });
+  }
+
+  function onlineStartHost() {
+    ONL.role = "host"; ONL.status = "loading"; ONL.errMsg = null;
+    renderOnlineFlow();
+    bindNetForTenable();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.host().then(function (code) {
+      ONL.code = code;
+      if (ONL.role === "host") renderOnlineFlow();
+    }).catch(function () {});
+  }
+
+  function onlineDoJoin() {
+    var code = (ONL.joinCode || "").trim();
+    if (code.length !== 4) { ONL.joinError = "Enter the 4-character code."; renderOnlineFlow(); return; }
+    ONL.status = "loading"; ONL.joinError = null;
+    renderOnlineFlow();
+    bindNetForTenable();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.join(code).then(function () {}).catch(function () {});
+  }
+
   /* ---- Entry point ---- */
   W.startFootballTenable = function () {
     ALL_VIEWS.forEach(function (id) { var v = document.getElementById(id); if (v) v.style.display = "none"; });
@@ -347,6 +574,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
+    ONL = null;
     renderModeSelect();
   };
 
