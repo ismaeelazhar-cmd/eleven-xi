@@ -128,24 +128,41 @@
     return null;
   }
 
-  /* ---- State ---- */
+  /* ---- State ----
+     Solo: unchanged, timed race to fill all 9. Pass & Play: TWO players
+     share the SAME grid/usedNames pool and alternate turns claiming
+     cells — a wrong guess or an already-claimed name just passes the
+     turn (no penalty), same "a bad go just ends your go" spirit as
+     Football 501/Transfer Roulette's turn-passing. Whoever fills more
+     cells by the time the grid is full wins. */
   var ST = null;
+  var pendingMode = "solo";
 
-  function newState(typeKey) {
+  function newState(typeKey, mode, playerNames) {
     var grid = buildGrid(typeKey);
     if (!grid) return null;
+    mode = mode || "solo";
+    var names = playerNames || (mode === "passplay" ? ["Player 1", "Player 2"] : ["You"]);
     return {
       phase: "play",
+      mode: mode,
       grid: grid,
       usedNames: {},
+      players: names.map(function (n) { return { name: n, filled: 0 }; }),
+      turnIdx: 0,
       filledCount: 0,
       activeCell: null,
       startTime: Date.now(),
       elapsedSeconds: 0,
       timerId: null,
-      outcome: null
+      outcome: null,
+      winnerIdx: null
     };
   }
+
+  function isMultiplayer() { return ST.players.length > 1; }
+  function activePlayer() { return ST.players[ST.turnIdx]; }
+  function advanceTurn() { ST.turnIdx = (ST.turnIdx + 1) % ST.players.length; }
 
   function cellAt(r, c) { return ST.grid.cells.filter(function (cell) { return cell.r === r && cell.c === c; })[0]; }
 
@@ -164,13 +181,20 @@
     if (!ST || ST.phase !== "play" || !ST.activeCell) return;
     var cell = ST.activeCell;
     var name = findValidPlayer(raw, cell);
-    if (!name) { flash("miss"); return; }
+    if (!name) {
+      flash("miss");
+      if (isMultiplayer()) { ST.activeCell = null; advanceTurn(); render(); }
+      return;
+    }
     cell.filled = name;
+    cell.filledBy = ST.turnIdx;
     ST.usedNames[name] = true;
     ST.filledCount++;
+    activePlayer().filled++;
     ST.activeCell = null;
     flash("correct");
     if (ST.filledCount === 9) { endGame(); return; }
+    if (isMultiplayer()) advanceTurn();
     render();
   }
 
@@ -179,7 +203,12 @@
     stopTimer();
     var seconds = Math.floor((Date.now() - ST.startTime) / 1000);
     ST.finalSeconds = seconds;
-    ST.statLine = recordResult(ST.grid.typeKey, seconds);
+    if (isMultiplayer()) {
+      var a = ST.players[0].filled, b = ST.players[1].filled;
+      ST.winnerIdx = a === b ? null : (a > b ? 0 : 1);
+    } else {
+      ST.statLine = recordResult(ST.grid.typeKey, seconds);
+    }
     render();
   }
 
@@ -217,12 +246,25 @@
     if (ST.phase === "play") startTimer();
   }
 
+  function modeSelectHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Fill the Grid</h2></div>' +
+      '<div class="sub">How do you want to play?</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" data-mode="solo"><span class="fb501-mode-btn-name">Solo</span><span class="fb501-mode-btn-desc">Race the clock to fill the whole grid.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="passplay"><span class="fb501-mode-btn-name">Pass &amp; Play</span><span class="fb501-mode-btn-desc">Two players, one device — take turns claiming cells.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="online"><span class="fb501-mode-btn-name">Online 1v1</span><span class="fb501-mode-btn-desc">Head-to-head with a friend, anywhere — share a code.</span></button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function typeSelectHTML() {
     var stats = loadStats();
+    var multi = pendingMode === "passplay";
     var cards = Object.keys(GRID_TYPES).map(function (key) {
       var type = GRID_TYPES[key];
       var s = stats[key];
-      var statLine = s ? (s.played + " played · best " + s.bestSeconds + "s") : "";
+      var statLine = (!multi && s) ? (s.played + " played · best " + s.bestSeconds + "s") : "";
       return '<button class="h2-mode fb501-cat" data-type="' + esc(key) + '">' +
         '<span class="h2-mode-ico fb501-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>' +
         '<span class="h2-mode-body"><span class="h2-mode-name">' + esc(type.label) + '</span>' +
@@ -239,6 +281,10 @@
 
   function playHTML() {
     var g = ST.grid;
+    var multi = isMultiplayer();
+    var scoreLine = multi
+      ? ST.players.map(function (p, i) { return esc(p.name) + ': ' + p.filled + (i === ST.turnIdx ? ' (their turn)' : ''); }).join(' · ')
+      : '';
     var gridHTML = '<table class="grid-table"><thead><tr><th></th>' +
       g.cols.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join("") + '</tr></thead><tbody>';
     for (var r = 0; r < 3; r++) {
@@ -259,12 +305,24 @@
       gridHTML +
       '<div class="sub" id="gridPrompt">' + (ST.activeCell ? ('Name a player: <strong>' + esc(g.rows[ST.activeCell.r]) + '</strong> × <strong>' + esc(g.cols[ST.activeCell.c]) + '</strong>') : 'Tap an empty cell to fill it.') + '</div>' +
       (ST.activeCell ? '<div class="squad-search-wrap"><input class="squad-search" id="gridInput" type="text" placeholder="Type a name…" autocomplete="off" /></div>' : '') +
-      '<div class="fl-mode-stat" style="text-align:center;">' + ST.filledCount + '/9 filled</div>' +
+      '<div class="fl-mode-stat" style="text-align:center;">' + (multi ? scoreLine : (ST.filledCount + '/9 filled')) + '</div>' +
       '<button class="btn-ghost fb501-quit">Quit to menu</button>' +
     '</div>';
   }
 
   function resultHTML() {
+    if (isMultiplayer()) {
+      var winner = ST.winnerIdx != null ? ST.players[ST.winnerIdx] : null;
+      return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner">' +
+        '<div class="nopicks-icon">🏆</div>' +
+        '<div class="nopicks-title">' + (winner ? (esc(winner.name) + ' wins!') : "It's a tie!") + '</div>' +
+        '<div class="nopicks-sub">' + ST.players.map(function (p) { return esc(p.name) + ': ' + p.filled; }).join(' · ') + '</div>' +
+        '<div class="nopicks-actions">' +
+          '<button class="nopicks-btn nopicks-respin" id="gridRematch">' + ICO.replay + ' Rematch</button>' +
+          '<button class="nopicks-btn nopicks-auto" id="gridBackToMenu">Menu</button>' +
+        '</div>' +
+      '</div></div>';
+    }
     return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner">' +
       '<div class="nopicks-icon">🏆</div>' +
       '<div class="nopicks-title">Grid complete!</div>' +
@@ -279,10 +337,21 @@
   function wire() {
     var el = root();
     if (!el) return;
+    Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
+      b.addEventListener("click", function () {
+        var mode = b.getAttribute("data-mode");
+        if (mode === "online") {
+          if (W.flToast) W.flToast("Online 1v1 for Fill the Grid is coming soon — try Pass & Play for now.");
+          return;
+        }
+        pendingMode = mode;
+        renderTypeSelect();
+      });
+    });
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-cat"), function (b) {
       b.addEventListener("click", function () {
         var type = b.getAttribute("data-type");
-        ST = newState(type);
+        ST = newState(type, pendingMode);
         if (!ST) {
           if (W.flToast) W.flToast("Couldn't build a grid for that right now — try again.");
           return;
@@ -303,17 +372,24 @@
       setTimeout(function () { input.focus(); }, 30);
     }
     var quit = el.querySelector(".fb501-quit");
-    if (quit) quit.addEventListener("click", function () { stopTimer(); ST = null; renderTypeSelect(); });
+    if (quit) quit.addEventListener("click", function () { stopTimer(); ST = null; renderModeSelect(); });
     var rematch = el.querySelector("#gridRematch");
     if (rematch) rematch.addEventListener("click", function () {
-      var type = ST.grid.typeKey;
-      var next = newState(type);
+      var type = ST.grid.typeKey, mode = ST.mode, names = ST.players.map(function (p) { return p.name; });
+      var next = newState(type, mode, names);
       if (!next) { if (W.flToast) W.flToast("Couldn't build a new grid right now — try again."); return; }
       ST = next;
       render();
     });
     var back = el.querySelector("#gridBackToMenu");
-    if (back) back.addEventListener("click", function () { ST = null; renderTypeSelect(); });
+    if (back) back.addEventListener("click", function () { ST = null; renderModeSelect(); });
+  }
+
+  function renderModeSelect() {
+    var el = root();
+    if (!el) return;
+    el.innerHTML = modeSelectHTML();
+    wire();
   }
 
   function renderTypeSelect() {
@@ -331,7 +407,8 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
-    renderTypeSelect();
+    pendingMode = "solo";
+    renderModeSelect();
   };
 
   function init() {
