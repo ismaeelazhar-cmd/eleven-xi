@@ -58,19 +58,34 @@
     return out;
   }
 
-  /* ---- State ---- */
+  /* ---- State ----
+     Solo: one round, bank as much as you can. Pass & Play: each player
+     gets exactly ONE round on the SAME category (same list, so it's a
+     fair head-to-head), taking turns — after player 1's round ends
+     (banked or eliminated), player 2 plays the identical list fresh;
+     whoever banked more wins. */
   var ST = null;
+  var pendingMode = "solo";
 
-  function newState(cat) {
+  function newState(cat, mode, playerNames) {
+    mode = mode || "solo";
+    var names = playerNames || (mode === "passplay" ? ["Player 1", "Player 2"] : ["You"]);
     return {
       phase: "play",
+      mode: mode,
       category: cat,
-      found: [],        // rows found so far
+      players: names.map(function (n) { return { name: n, banked: null, found: 0, done: false }; }),
+      turnIdx: 0,
+      winnerIdx: null,
+      found: [],        // rows found so far, this player's live round
       livesLeft: 1,      // one life — first wrong forgiven
       outcome: null,    // "eliminated" | "banked" | null
       banked: 0
     };
   }
+
+  function isMultiplayer() { return ST.players.length > 1; }
+  function activePlayer() { return ST.players[ST.turnIdx]; }
 
   function tierFor(count) {
     if (count < 5) return 0;
@@ -105,9 +120,32 @@
   }
 
   function endRound(outcome) {
-    ST.phase = "result";
     ST.outcome = outcome;
     ST.banked = outcome === "banked" ? tierFor(ST.found.length) : 0;
+    if (isMultiplayer()) {
+      var p = activePlayer();
+      p.banked = ST.banked;
+      p.found = ST.found.length;
+      p.done = true;
+      if (ST.players.every(function (x) { return x.done; })) {
+        var b = ST.players.map(function (x) { return x.banked; });
+        ST.winnerIdx = b[0] === b[1] ? null : (b[0] > b[1] ? 0 : 1);
+        ST.phase = "result";
+        render();
+        return;
+      }
+      /* Move to the next player's round on the SAME category/list, fresh
+         found/lives — this is an interstitial "pass the device" screen,
+         not the final result. */
+      ST.turnIdx++;
+      ST.found = [];
+      ST.livesLeft = 1;
+      ST.outcome = null;
+      ST.phase = "handoff";
+      render();
+      return;
+    }
+    ST.phase = "result";
     ST.statLine = recordResult(ST.category.key, ST.banked, ST.found.length);
     render();
   }
@@ -131,8 +169,30 @@
     var el = root();
     if (!el || !ST) return;
     if (ST.phase === "play") el.innerHTML = playHTML();
+    else if (ST.phase === "handoff") el.innerHTML = handoffHTML();
     else if (ST.phase === "result") el.innerHTML = resultHTML();
     wire();
+  }
+
+  function modeSelectHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Football Tenable</h2></div>' +
+      '<div class="sub">How do you want to play?</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" data-mode="solo"><span class="fb501-mode-btn-name">Solo</span><span class="fb501-mode-btn-desc">Bank as many points as you can.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="passplay"><span class="fb501-mode-btn-name">Pass &amp; Play</span><span class="fb501-mode-btn-desc">Two players, one device — same list, higher bank wins.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="online"><span class="fb501-mode-btn-name">Online 1v1</span><span class="fb501-mode-btn-desc">Head-to-head with a friend, anywhere — share a code.</span></button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function handoffHTML() {
+    var p = activePlayer();
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Pass the device</h2></div>' +
+      '<div class="sub">' + esc(p.name) + ', you\'re up on the same category: <strong>' + esc(ST.category.label) + '</strong>.</div>' +
+      '<button class="btn-primary" id="tenHandoffGo" style="width:100%">' + esc(p.name) + ', start your round →</button>' +
+    '</div>';
   }
 
   function categoryPickHTML() {
@@ -169,8 +229,9 @@
       '</div>';
     }).join("");
     var canBank = ST.found.length >= 5;
+    var turnLabel = isMultiplayer() ? (esc(activePlayer().name) + "'s round · ") : "";
     return '<div class="fb501-play squad-card">' +
-      '<div class="squad-head"><h2>' + esc(c.label) + '</h2><span class="fb501-timer">' + (ST.livesLeft + 1) + ' ' + (ST.livesLeft + 1 === 1 ? "life" : "lives") + '</span></div>' +
+      '<div class="squad-head"><h2>' + turnLabel + esc(c.label) + '</h2><span class="fb501-timer">' + (ST.livesLeft + 1) + ' ' + (ST.livesLeft + 1 === 1 ? "life" : "lives") + '</span></div>' +
       '<div class="fb501-score-dial" style="font-size:clamp(28px,8vw,40px);">' + ST.found.length + '/10</div>' +
       '<div class="sub" id="tenPrompt">' + (canBank ? "You can bank now, or keep going for more — one more wrong answer ends the round." : "Name 5 correct to unlock banking.") + '</div>' +
       '<div class="fb501-history">' + listHTML + '</div>' +
@@ -183,6 +244,19 @@
   }
 
   function resultHTML() {
+    if (isMultiplayer()) {
+      var title = ST.winnerIdx === null ? "It's a tie!" : (esc(ST.players[ST.winnerIdx].name) + " wins!");
+      var sub = ST.players.map(function (p) { return esc(p.name) + ': ' + p.banked + ' pts (' + p.found + '/10)'; }).join(' · ');
+      return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner">' +
+        '<div class="nopicks-icon">' + (ST.winnerIdx === null ? "🤝" : "🏆") + '</div>' +
+        '<div class="nopicks-title">' + title + '</div>' +
+        '<div class="nopicks-sub">' + sub + '</div>' +
+        '<div class="nopicks-actions">' +
+          '<button class="nopicks-btn nopicks-respin" id="tenRematch">' + ICO.replay + ' Play again</button>' +
+          '<button class="nopicks-btn nopicks-auto" id="tenBackToMenu">Choose category</button>' +
+        '</div>' +
+      '</div></div>';
+    }
     var banked = ST.outcome === "banked";
     return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner">' +
       '<div class="nopicks-icon">' + (banked ? "🏆" : "💥") + '</div>' +
@@ -198,12 +272,24 @@
   function wire() {
     var el = root();
     if (!el) return;
+    Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
+      b.addEventListener("click", function () {
+        var m = b.getAttribute("data-mode");
+        if (m === "online") {
+          if (W.flToast) W.flToast("Online 1v1 for Football Tenable is coming soon — try Pass & Play for now.");
+          return;
+        }
+        pendingMode = m;
+        renderCategoryPick();
+      });
+    });
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-cat"), function (b) {
       b.addEventListener("click", function () {
         var key = b.getAttribute("data-cat");
         var cat = categories().filter(function (c) { return c.key === key; })[0];
         if (!cat) return;
-        ST = newState(cat);
+        var names = pendingMode === "passplay" ? ["Player 1", "Player 2"] : ["You"];
+        ST = newState(cat, pendingMode, names);
         render();
       });
     });
@@ -211,7 +297,8 @@
     if (surprise) surprise.addEventListener("click", function () {
       var cats = categories();
       if (!cats.length) return;
-      ST = newState(cats[Math.floor(Math.random() * cats.length)]);
+      var names = pendingMode === "passplay" ? ["Player 1", "Player 2"] : ["You"];
+      ST = newState(cats[Math.floor(Math.random() * cats.length)], pendingMode, names);
       render();
     });
     var input = el.querySelector("#tenInput");
@@ -222,15 +309,27 @@
     var bank = el.querySelector("#tenBank");
     if (bank) bank.addEventListener("click", bankNow);
     var quit = el.querySelector(".fb501-quit");
-    if (quit) quit.addEventListener("click", function () { ST = null; renderCategoryPick(); });
+    if (quit) quit.addEventListener("click", function () { ST = null; renderModeSelect(); });
+    var handoffGo = el.querySelector("#tenHandoffGo");
+    if (handoffGo) handoffGo.addEventListener("click", function () { ST.phase = "play"; render(); });
     var rematch = el.querySelector("#tenRematch");
     if (rematch) rematch.addEventListener("click", function () {
       var cat = ST.category;
-      ST = newState(cat);
+      var mode = ST.mode;
+      var names = ST.players.map(function (p) { return p.name; });
+      ST = newState(cat, mode, names);
       render();
     });
     var back = el.querySelector("#tenBackToMenu");
-    if (back) back.addEventListener("click", function () { ST = null; renderCategoryPick(); });
+    if (back) back.addEventListener("click", function () { ST = null; renderModeSelect(); });
+  }
+
+  function renderModeSelect() {
+    var el = root();
+    if (!el) return;
+    pendingMode = "solo";
+    el.innerHTML = modeSelectHTML();
+    wire();
   }
 
   function renderCategoryPick() {
@@ -248,7 +347,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
-    renderCategoryPick();
+    renderModeSelect();
   };
 
   function init() {
