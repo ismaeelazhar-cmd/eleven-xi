@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
   <link rel="stylesheet" href="style.css?v=172" />
   <link rel="stylesheet" href="tokens.css?v=79" />
-  <link rel="stylesheet" href="floodlights.css?v=153" />
+  <link rel="stylesheet" href="floodlights.css?v=154" />
 </head>
 <body>
   <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
@@ -143,6 +143,11 @@
           <button class="h2-mode m-euro" id="homeEuro">
             <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
             <span class="h2-mode-body"><span class="h2-mode-name">Euros</span><span class="h2-mode-desc">1980–2024 · 12 tournaments</span><span class="fl-mode-stat" id="euroBestScore"></span></span>
+            <span class="h2-mode-arrow">›</span>
+          </button>
+          <button class="h2-mode m-rr" id="homeRoulette">
+            <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1"/></svg></span>
+            <span class="h2-mode-body"><span class="h2-mode-name">Transfer Roulette</span><span class="h2-mode-desc">Spin nationality · position · decade — name a player in 10s</span><span class="fl-mode-stat" id="rrBestScore"></span></span>
             <span class="h2-mode-arrow">›</span>
           </button>
         </div>
@@ -322,6 +327,12 @@
     <section id="f501View" style="display:none;">
       <button class="back" id="f501Back">← Home</button>
       <div id="f501Body"></div>
+    </section>
+
+    <!-- ===== TRANSFER ROULETTE ===== -->
+    <section id="rrView" style="display:none;">
+      <button class="back" id="rrBack">← Home</button>
+      <div id="rrBody"></div>
     </section>
 
     <!-- ===== MULTIPLAYER ===== -->
@@ -665,7 +676,7 @@
   <script src="multiplayer.js?v=113"></script>
   <script src="league.js?v=94"></script>
   <script src="audio.js?v=2" defer></script>
-  <script src="floodlights.js?v=109" defer></script>
+  <script src="floodlights.js?v=110" defer></script>
   <script src="ratingswar.js?v=116" defer></script>
   <script src="draftvscomputer.js?v=21" defer></script>
   <script src="daily.js?v=5" defer></script>
@@ -677,6 +688,8 @@
   <script src="data_501_assists.js?v=1" defer></script>
   <script src="data_501_clean_sheets.js?v=1" defer></script>
   <script src="data_501_index.js?v=2" defer></script>
-  <script src="football501.js?v=7" defer></script>
+  <script src="football501.js?v=8" defer></script>
+  <script src="data_roulette_pools.js?v=1" defer></script>
+  <script src="transferroulette.js?v=1" defer></script>
 </body>
 </html>

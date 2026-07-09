@@ -1,6 +1,6 @@
 /* Service worker: network-first so the latest build always loads when online,
  * falling back to cache when offline (the app still installs + works offline). */
-const CACHE = "wcxi-v205";
+const CACHE = "wcxi-v206";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./tokens.css", "./floodlights.css", "./floodlights.js", "./audio.js", "./ratingswar.js", "./draftvscomputer.js",
   "./data.js", "./data_extra.js", "./data_full.js", "./data_legacy.js", "./data_full2.js", "./data_wc_history.js", "./data_patches.js", "./ratings_overrides.js", "./positions.js", "./data_fixups.js", "./cl_clubs.js", "./cl_data.js", "./cl_data2.js", "./nations.js", "./engine.js", "./game.js",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./data_league.js", "./data_championship_history.js", "./league.js", "./daily.js",
   "./football501.js", "./data_501_pl_scorers.js", "./data_501_pl_appearances.js", "./data_501_index.js",
   "./data_501_transfer_fees.js", "./data_501_market_value.js", "./data_501_cl_goals.js", "./data_501_assists.js", "./data_501_clean_sheets.js",
+  "./transferroulette.js", "./data_roulette_pools.js",
   /* lazy-loaded on demand — cached by network-first on first access */
   /* "./data_pl_history.js", "./data_laliga_history.js", "./data_seriea_history.js", "./data_bundesliga_history.js", "./data_ligue1_history.js" */
   "./manifest.webmanifest",
