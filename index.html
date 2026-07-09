@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
   <link rel="stylesheet" href="style.css?v=172" />
   <link rel="stylesheet" href="tokens.css?v=79" />
-  <link rel="stylesheet" href="floodlights.css?v=154" />
+  <link rel="stylesheet" href="floodlights.css?v=155" />
 </head>
 <body>
   <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
@@ -148,6 +148,11 @@
           <button class="h2-mode m-rr" id="homeRoulette">
             <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1"/></svg></span>
             <span class="h2-mode-body"><span class="h2-mode-name">Transfer Roulette</span><span class="h2-mode-desc">Spin nationality · position · decade — name a player in 10s</span><span class="fl-mode-stat" id="rrBestScore"></span></span>
+            <span class="h2-mode-arrow">›</span>
+          </button>
+          <button class="h2-mode m-grid" id="homeGrid">
+            <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+            <span class="h2-mode-body"><span class="h2-mode-name">Fill the Grid</span><span class="h2-mode-desc">3×3 grid · a player for every row and column</span><span class="fl-mode-stat" id="gridBestScore"></span></span>
             <span class="h2-mode-arrow">›</span>
           </button>
         </div>
@@ -333,6 +338,12 @@
     <section id="rrView" style="display:none;">
       <button class="back" id="rrBack">← Home</button>
       <div id="rrBody"></div>
+    </section>
+
+    <!-- ===== FILL THE GRID ===== -->
+    <section id="gridView" style="display:none;">
+      <button class="back" id="gridBack">← Home</button>
+      <div id="gridBody"></div>
     </section>
 
     <!-- ===== MULTIPLAYER ===== -->
@@ -676,7 +687,7 @@
   <script src="multiplayer.js?v=113"></script>
   <script src="league.js?v=94"></script>
   <script src="audio.js?v=2" defer></script>
-  <script src="floodlights.js?v=110" defer></script>
+  <script src="floodlights.js?v=111" defer></script>
   <script src="ratingswar.js?v=116" defer></script>
   <script src="draftvscomputer.js?v=21" defer></script>
   <script src="daily.js?v=5" defer></script>
@@ -688,8 +699,9 @@
   <script src="data_501_assists.js?v=1" defer></script>
   <script src="data_501_clean_sheets.js?v=1" defer></script>
   <script src="data_501_index.js?v=2" defer></script>
-  <script src="football501.js?v=8" defer></script>
+  <script src="football501.js?v=9" defer></script>
   <script src="data_roulette_pools.js?v=1" defer></script>
-  <script src="transferroulette.js?v=1" defer></script>
+  <script src="transferroulette.js?v=2" defer></script>
+  <script src="fillthegrid.js?v=3" defer></script>
 </body>
 </html>
