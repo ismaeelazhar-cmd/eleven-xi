@@ -77,6 +77,77 @@
     });
   }
 
+  /* ---- Online 1v1 (A4) ----
+     Reuses net.js/ElxiNet exactly as multiplayer.js's Draft Night does —
+     same host/join 4-char code broker, same onStatus/onData/onPeerLeave
+     callback shape. Unlike Pass & Play (turn-alternating on one device),
+     online play is SIMULTANEOUS: both players throw at their own pace on
+     their own device, each maintaining their own local score, and
+     broadcasting the result of every guess to the other side so both
+     screens show live progress — this avoids round-tripping every single
+     guess over the network before the next one can be thrown. */
+  var ONL = null; // { role: "host"|"guest", status, code, joinCode, joinError, myName, oppName }
+
+  function onlineReset() {
+    ONL = { role: null, status: "idle", code: null, joinCode: "", joinError: null, myName: "You", oppName: "Opponent" };
+  }
+
+  function bindNetForFb501() {
+    var Net = W.ElxiNet;
+    if (!Net) return;
+    Net.onStatus = function (state, info) {
+      if (!ONL) return;
+      if (ONL.role === "host") {
+        if (state === "waiting" || state === "loading") { ONL.status = state; if (info && info.code) ONL.code = info.code; }
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "error"; ONL.errMsg = (info && info.message) || "Something went wrong."; }
+      } else if (ONL.role === "guest") {
+        if (state === "loading" || state === "joining") ONL.status = state;
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "idle"; ONL.joinError = (info && info.message) || "Couldn't connect."; }
+      }
+      renderOnlineFlow();
+    };
+    Net.onPeerLeave = function () {
+      if (W.flToast) W.flToast("Your opponent disconnected.");
+      stopTimer();
+      if (ST && ST.phase === "play") { ST.phase = "result"; ST.outcome = "forfeit"; ST.winnerIdx = 0; render(); }
+      else { ST = null; onlineReset(); renderModeSelect(); }
+    };
+    Net.onData = function (msg) { handleOnlineMessage(msg); };
+  }
+
+  function handleOnlineMessage(msg) {
+    if (!msg || !msg.t) return;
+    if (msg.t === "f501_name" && ONL) {
+      ONL.oppName = msg.name || "Opponent";
+      if (ST) { ST.players[1].name = ONL.oppName; render(); }
+      return;
+    }
+    if (msg.t === "f501_category") {
+      /* Guest receives the host's category choice and mirrors it locally —
+         host is authoritative for what's played, matching the plan. */
+      var cat = categories().filter(function (c) { return c.key === msg.key; })[0];
+      if (!cat) return;
+      ST = newState(cat, msg.variant || "classic", "online", [ONL.myName, ONL.oppName]);
+      render();
+      return;
+    }
+    if (msg.t === "f501_guessResult") {
+      if (!ST || !isMultiplayer()) return;
+      var opp = ST.players[1];
+      opp.score = msg.newScore;
+      opp.history.unshift({ name: msg.name, v: msg.v, resultScore: msg.newScore, bust: msg.bust, over: msg.over });
+      render();
+      return;
+    }
+    if (msg.t === "f501_matchOver") {
+      if (!ST) return;
+      endGame("won", 1); // opponent (index 1) won
+      return;
+    }
+  }
+
   /* ---- State ----
      Unified for solo AND pass-and-play (and online, added next): ST always
      holds a `players` array (length 1 for solo, 2 for head-to-head) and a
@@ -107,6 +178,11 @@
 
   function activePlayer() { return ST.players[ST.turnIdx]; }
   function isMultiplayer() { return ST.players.length > 1; }
+  /* Only Pass & Play alternates a shared turn — Online is simultaneous
+     (both players always "active" on their own device, throwing whenever
+     they want), so turnIdx just always stays 0 there and activePlayer()
+     naturally always resolves to the local player (index 0). */
+  function isTurnBased() { return ST.mode === "passplay"; }
   function advanceTurn() { ST.turnIdx = (ST.turnIdx + 1) % ST.players.length; }
 
   function findMatch(raw, rows, used) {
@@ -135,7 +211,8 @@
          busts below — a name that's currently too big to throw might
          still be the right answer once the score is lower. */
       p.history.unshift({ name: row.n, v: row.v, resultScore: p.score, over: true });
-      if (isMultiplayer()) advanceTurn();
+      if (isTurnBased()) advanceTurn();
+      if (ST.mode === "online") netSendGuessResult(row.n, row.v, p.score, false, true);
       render();
       flash("bust", actorIdx);
       return;
@@ -148,7 +225,8 @@
          unlucky guess and could make a category unsolvable if too few
          names remain. Leave it guessable again once the score is lower. */
       p.history.unshift({ name: row.n, v: row.v, resultScore: p.score, bust: true });
-      if (isMultiplayer()) advanceTurn();
+      if (isTurnBased()) advanceTurn();
+      if (ST.mode === "online") netSendGuessResult(row.n, row.v, p.score, true, false);
       /* render() rebuilds the DOM, so flash the (new) score dial AFTER
          rendering — flashing first would animate a node that's about to
          be destroyed and the animation would never actually play. */
@@ -159,13 +237,19 @@
     p.used[row.n] = true;
     p.score = next;
     p.history.unshift({ name: row.n, v: row.v, resultScore: next, bust: false });
+    if (ST.mode === "online") netSendGuessResult(row.n, row.v, next, false, false);
     if (next === 0) {
+      if (ST.mode === "online" && W.ElxiNet) W.ElxiNet.send({ t: "f501_matchOver" });
       endGame("won", actorIdx);
       return;
     }
-    if (isMultiplayer()) advanceTurn();
+    if (isTurnBased()) advanceTurn();
     render();
     flash("correct", actorIdx);
+  }
+
+  function netSendGuessResult(name, v, newScore, bust, over) {
+    if (W.ElxiNet) W.ElxiNet.send({ t: "f501_guessResult", name: name, v: v, newScore: newScore, bust: bust, over: over });
   }
 
   function endGame(outcome, winnerIdx) {
@@ -173,7 +257,7 @@
     ST.outcome = outcome;
     ST.winnerIdx = winnerIdx != null ? winnerIdx : null;
     stopTimer();
-    /* Personal-best tracking only makes sense for solo — a pass-and-play
+    /* Personal-best tracking only makes sense for solo — a head-to-head
        win isn't "your" checkout streak the way a solo one is. */
     if (!isMultiplayer()) {
       var won = outcome === "won";
@@ -319,20 +403,23 @@
   function playHTML() {
     var c = ST.category;
     if (isMultiplayer()) {
+      var turnBased = isTurnBased();
       var dials = ST.players.map(function (p, i) {
-        var active = i === ST.turnIdx;
+        var active = turnBased && i === ST.turnIdx;
         return '<div class="fb501-mp-side' + (active ? " fb501-mp-side--active" : "") + '">' +
           '<div class="fb501-mp-name">' + esc(p.name) + (active ? ' <span class="fb501-mp-turn">throwing</span>' : '') + '</div>' +
           '<div class="fb501-score-dial fb501-score-dial--mp" id="fb501Score' + i + '">' + p.score + '</div>' +
         '</div>';
       }).join('<div class="fb501-mp-vs">v</div>');
-      var activeName = esc(ST.players[ST.turnIdx].name);
+      var subLine = turnBased
+        ? (esc(ST.players[ST.turnIdx].name) + '’s throw — name a ' + esc(c.label.toLowerCase()) + ' entry. Exact zero checks out and wins; over ' + MAX_THROW + ' or below zero passes the turn.')
+        : ('Race to checkout — name a ' + esc(c.label.toLowerCase()) + ' entry. First to exactly zero wins; over ' + MAX_THROW + ' or below zero is no good.');
       return '<div class="fb501-play squad-card">' +
         '<div class="squad-head"><h2>' + esc(c.label) + '</h2>' +
           (ST.variant === "timed" ? '<span class="fb501-timer" id="fb501Timer">' + TIMED_SECONDS + 's</span>' : '') +
         '</div>' +
         '<div class="fb501-mp-dials">' + dials + '</div>' +
-        '<div class="sub">' + activeName + '’s throw — name a ' + esc(c.label.toLowerCase()) + ' entry. Exact zero checks out and wins; over ' + MAX_THROW + ' or below zero passes the turn.</div>' +
+        '<div class="sub">' + subLine + '</div>' +
         '<div class="squad-search-wrap"><input class="squad-search" id="fb501Input" type="text" placeholder="Type a name…" autocomplete="off" /></div>' +
         '<div class="fb501-history">' + historyRowsHTML(c, ST.players[ST.turnIdx].history) + '</div>' +
         '<button class="btn-ghost fb501-quit">Quit to categories</button>' +
@@ -404,7 +491,14 @@
         if (!cat || cat.locked) return;
         var variantBtn = el.querySelector(".fb501-variant-btn.active");
         var variant = variantBtn ? variantBtn.getAttribute("data-variant") : "classic";
-        ST = newState(cat, variant, pendingMode);
+        if (pendingMode === "online") {
+          /* Host is authoritative for category choice — broadcast it to
+             the guest, who mirrors it locally via handleOnlineMessage(). */
+          if (W.ElxiNet) W.ElxiNet.send({ t: "f501_category", key: cat.key, variant: variant });
+          ST = newState(cat, variant, "online", [ONL.myName, ONL.oppName]);
+        } else {
+          ST = newState(cat, variant, pendingMode);
+        }
         render();
       });
     });
@@ -480,20 +574,149 @@
     wire();
   }
 
-  /* Online setup is built in the next milestone (A4) — for now this is a
-     clearly-labeled placeholder rather than a dead button, so the mode
-     picker (A5) is already wired for it and nothing needs to change here
-     once A4 lands, just this function's body. */
+  /* ── Online 1v1 lobby (A4) — Create/Join choice → code exchange → host
+     picks a category → both sides drop into the same simultaneous play
+     screen. Mirrors multiplayer.js's Draft Night host/join UX exactly. ── */
   function renderOnlineSetup() {
+    onlineReset();
+    renderOnlineFlow();
+  }
+
+  function renderOnlineFlow() {
     var el = root();
-    if (!el) return;
-    el.innerHTML = '<div class="fb501-setup squad-card">' +
+    if (!el || !ONL) return;
+    var html;
+    if (!ONL.role) html = onlineChoiceHTML();
+    else if (ONL.role === "host") html = onlineHostHTML();
+    else html = onlineJoinHTML();
+    el.innerHTML = html;
+    wireOnlineFlow();
+  }
+
+  function onlineChoiceHTML() {
+    return '<div class="fb501-setup squad-card">' +
       '<div class="squad-head"><h2>Online 1v1</h2></div>' +
-      '<div class="sub">Head-to-head online play is coming very soon — for now, play Pass &amp; Play on one device.</div>' +
+      '<div class="sub">One of you creates the game; the other joins with the code.</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" id="fb501OnlCreate">' +
+          '<span class="fb501-mode-btn-name">Create game</span>' +
+          '<span class="fb501-mode-btn-desc">Generate a code and wait for your opponent.</span>' +
+        '</button>' +
+        '<button class="fb501-mode-btn" id="fb501OnlJoin">' +
+          '<span class="fb501-mode-btn-name">Join game</span>' +
+          '<span class="fb501-mode-btn-desc">Enter the code your opponent shares with you.</span>' +
+        '</button>' +
+      '</div>' +
+      '<button class="btn-ghost fb501-quit" id="fb501OnlineBack" style="margin-top:14px">← Back</button>' +
+    '</div>';
+  }
+
+  function onlineHostHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Opponent connected!</h2></div>' +
+        '<div class="sub">You\'re the host — pick the category for both of you.</div>' +
+        '<button class="btn-primary" id="fb501HostChooseCat" style="width:100%;margin-top:10px">Choose category →</button>' +
+      '</div>';
+    }
+    if (status === "error") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+        '<div class="sub mp-net-err">' + esc(ONL.errMsg || "Something went wrong.") + '</div>' +
+        '<button class="btn-primary" id="fb501OnlRetryHost" style="width:100%;margin-top:10px">Try again</button>' +
+        '<button class="btn-ghost fb501-quit" id="fb501OnlineBack">← Back</button>' +
+      '</div>';
+    }
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Your game</h2></div>' +
+      (ONL.code
+        ? '<div class="mp-code-card"><div class="mp-code-label">Share this code</div><div class="mp-code">' + esc(ONL.code) + '</div></div>'
+        : '<div class="mp-code-card"><div class="mp-code-label">Creating your game…</div><div class="mp-code mp-code-dim">····</div></div>') +
+      '<div class="mp-wait"><span class="mp-spinner"></span><span>Waiting for your opponent to join…</span></div>' +
+      '<button class="btn-ghost fb501-quit" id="fb501OnlineBack">Cancel</button>' +
+    '</div>';
+  }
+
+  function onlineJoinHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Connected!</h2></div>' +
+        '<div class="sub">Waiting for the host to pick a category…</div>' +
+        '<div class="mp-wait"><span class="mp-spinner"></span></div>' +
+      '</div>';
+    }
+    var connecting = status === "loading" || status === "joining";
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Join a game</h2></div>' +
+      '<div class="sub">Type the code your opponent gave you.</div>' +
+      '<input class="mp-code-input" id="fb501JoinCode" type="text" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" value="' + esc(ONL.joinCode || "") + '" />' +
+      (connecting ? '<div class="mp-wait"><span class="mp-spinner"></span><span>Connecting…</span></div>' :
+        '<button class="btn-primary" id="fb501DoJoin" style="width:100%;margin-top:10px">Connect →</button>') +
+      (ONL.joinError ? '<div class="mp-net-err">' + esc(ONL.joinError) + '</div>' : '') +
       '<button class="btn-ghost fb501-quit" id="fb501OnlineBack">← Back</button>' +
     '</div>';
+  }
+
+  function wireOnlineFlow() {
+    var el = root();
+    if (!el) return;
     var back = el.querySelector("#fb501OnlineBack");
-    if (back) back.addEventListener("click", renderModeSelect);
+    if (back) back.addEventListener("click", function () {
+      if (W.ElxiNet) W.ElxiNet.close();
+      onlineReset();
+      renderModeSelect();
+    });
+
+    var create = el.querySelector("#fb501OnlCreate");
+    if (create) create.addEventListener("click", onlineStartHost);
+    var retry = el.querySelector("#fb501OnlRetryHost");
+    if (retry) retry.addEventListener("click", onlineStartHost);
+
+    var join = el.querySelector("#fb501OnlJoin");
+    if (join) join.addEventListener("click", function () { ONL.role = "guest"; ONL.status = "idle"; ONL.joinError = null; renderOnlineFlow(); });
+
+    var codeInput = el.querySelector("#fb501JoinCode");
+    if (codeInput) {
+      codeInput.addEventListener("input", function () {
+        codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+        ONL.joinCode = codeInput.value;
+      });
+      codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") onlineDoJoin(); });
+      setTimeout(function () { codeInput.focus(); }, 30);
+    }
+    var doJoinBtn = el.querySelector("#fb501DoJoin");
+    if (doJoinBtn) doJoinBtn.addEventListener("click", onlineDoJoin);
+
+    var chooseCat = el.querySelector("#fb501HostChooseCat");
+    if (chooseCat) chooseCat.addEventListener("click", function () {
+      pendingMode = "online";
+      renderCategoryPick();
+    });
+  }
+
+  function onlineStartHost() {
+    ONL.role = "host"; ONL.status = "loading"; ONL.errMsg = null;
+    renderOnlineFlow();
+    bindNetForFb501();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.host().then(function (code) {
+      ONL.code = code;
+      if (ONL.role === "host") renderOnlineFlow();
+    }).catch(function () { /* onStatus reports the error */ });
+  }
+
+  function onlineDoJoin() {
+    var code = (ONL.joinCode || "").trim();
+    if (code.length !== 4) { ONL.joinError = "Enter the 4-character code."; renderOnlineFlow(); return; }
+    ONL.status = "loading"; ONL.joinError = null;
+    renderOnlineFlow();
+    bindNetForFb501();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.join(code).then(function () {
+      /* onStatus -> connected handles the render */
+    }).catch(function () { /* onStatus reports the error */ });
   }
 
   /* ---- Entry point ---- */
