@@ -10,7 +10,7 @@
 (function (W) {
   "use strict";
 
-  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","gridView"];
+  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","gridView","mineView"];
   var ROUND_SECONDS = 10;
   var ITEM_H = 96;
   var STATS_KEY = "roulette_stats_v1";
