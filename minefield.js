@@ -10,7 +10,7 @@
 (function (W) {
   "use strict";
 
-  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","rrView","gridView","topxiView"];
+  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","rrView","gridView","topxiView","tenView"];
   var STATS_KEY = "minefield_stats_v1";
 
   var ICO = {

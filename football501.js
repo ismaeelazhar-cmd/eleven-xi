@@ -9,7 +9,7 @@
 (function (W) {
   "use strict";
 
-  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","rrView","gridView","mineView","topxiView"];
+  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","rrView","gridView","mineView","topxiView","tenView"];
   var TIMED_SECONDS = 60;
   var STATS_KEY = "fb501_stats_v1";
   /* Real 501 darts: the maximum possible single-visit score is 180 (three

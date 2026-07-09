@@ -13,7 +13,7 @@
 (function (W) {
   "use strict";
 
-  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","rrView","gridView","mineView"];
+  var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","rrView","gridView","mineView","tenView"];
   var STATS_KEY = "topxi_stats_v1";
   var BUDGET = 850;
   var FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 }; // simple broad-position slot counts, 11 total
