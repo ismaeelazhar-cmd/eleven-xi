@@ -258,6 +258,7 @@
       '<div class="fb501-mode-select">' +
         '<button class="fb501-mode-btn" data-mode="solo"><span class="fb501-mode-btn-name">Solo streak</span><span class="fb501-mode-btn-desc">Keep spinning — one wrong answer or timeout ends your run.</span></button>' +
         '<button class="fb501-mode-btn" data-mode="passplay"><span class="fb501-mode-btn-name">Pass &amp; Play</span><span class="fb501-mode-btn-desc">Two players, one device — first to 5 points wins.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="online"><span class="fb501-mode-btn-name">Online 1v1</span><span class="fb501-mode-btn-desc">Head-to-head with a friend, anywhere — share a code.</span></button>' +
       '</div>' +
     '</div>';
   }
@@ -323,7 +324,12 @@
     if (!el) return;
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
       b.addEventListener("click", function () {
-        pendingMode = b.getAttribute("data-mode");
+        var m = b.getAttribute("data-mode");
+        if (m === "online") {
+          if (W.flToast) W.flToast("Online 1v1 for Transfer Roulette is coming soon — try Pass & Play for now.");
+          return;
+        }
+        pendingMode = m;
         ST = newState(pendingMode);
         doSpin();
       });
