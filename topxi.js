@@ -53,51 +53,87 @@
     return poolCache;
   }
 
-  /* ---- State ---- */
+  /* ---- State ----
+     Solo: build one squad. Pass & Play: two players build SEPARATE squads
+     from the SAME shared budget/pool/formation, alternating single picks
+     snake-draft-style (once a player's picked, they're off the board for
+     BOTH sides, same as a real draft) — whoever finishes first still waits
+     for the other, then totals are compared for a winner. */
   var ST = null;
+  var pendingMode = "solo";
 
-  function newState() {
+  function newState(mode, playerNames) {
+    mode = mode || "solo";
+    var names = playerNames || (mode === "passplay" ? ["Player 1", "Player 2"] : ["You"]);
     return {
       phase: "play",
-      squad: [], // { n, p, r, country, year }
-      budgetLeft: BUDGET,
+      mode: mode,
+      players: names.map(function (n) { return { name: n, squad: [], budgetLeft: BUDGET }; }),
+      turnIdx: 0,
+      winnerIdx: null,
       outcome: null
     };
   }
 
-  function slotCounts() {
+  function isMultiplayer() { return ST.players.length > 1; }
+  function activePlayer() { return ST.players[ST.turnIdx]; }
+  function allPicked() { return ST.players.reduce(function (s, p) { return s.concat(p.squad); }, []); }
+  function advanceTurn() { ST.turnIdx = (ST.turnIdx + 1) % ST.players.length; }
+
+  function slotCounts(p) {
     var c = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
-    ST.squad.forEach(function (p) { c[p.p] = (c[p.p] || 0) + 1; });
+    p.squad.forEach(function (pl) { c[pl.p] = (c[pl.p] || 0) + 1; });
     return c;
   }
-  function openSlots(pos) { return (FORMATION[pos] || 0) - (slotCounts()[pos] || 0); }
-  function totalRating() { return ST.squad.reduce(function (s, p) { return s + p.r; }, 0); }
+  function openSlots(p, pos) { return (FORMATION[pos] || 0) - (slotCounts(p)[pos] || 0); }
+  function totalRating(p) { return p.squad.reduce(function (s, pl) { return s + pl.r; }, 0); }
 
   function pickPlayer(name) {
     if (!ST || ST.phase !== "play") return;
-    if (ST.squad.length >= 11) return;
-    var pl = pool().filter(function (p) { return p.n === name; })[0];
+    var p = activePlayer();
+    if (p.squad.length >= 11) return;
+    var pl = pool().filter(function (x) { return x.n === name; })[0];
     if (!pl) return;
-    if (ST.squad.some(function (p) { return p.n === pl.n; })) return; // already picked
-    if (openSlots(pl.p) <= 0) return; // no slot left for their position
-    if (pl.r > ST.budgetLeft) return; // can't afford
-    ST.squad.push(pl);
-    ST.budgetLeft -= pl.r;
-    if (ST.squad.length === 11) { endGame(); return; }
+    if (allPicked().some(function (x) { return x.n === pl.n; })) return; // already picked (either side)
+    if (openSlots(p, pl.p) <= 0) return; // no slot left for their position
+    if (pl.r > p.budgetLeft) return; // can't afford
+    p.squad.push(pl);
+    p.budgetLeft -= pl.r;
+    if (p.squad.length === 11) {
+      if (isMultiplayer()) {
+        if (ST.players.every(function (x) { return x.squad.length === 11; })) { endGame(); return; }
+        advanceTurn();
+        // skip any player who's already finished
+        while (activePlayer().squad.length === 11) advanceTurn();
+      } else {
+        endGame();
+        return;
+      }
+    } else if (isMultiplayer()) {
+      advanceTurn();
+      while (activePlayer().squad.length === 11) advanceTurn();
+    }
     render();
   }
 
   function removePlayer(name) {
-    var idx = ST.squad.findIndex(function (p) { return p.n === name; });
+    var p = activePlayer();
+    var idx = p.squad.findIndex(function (x) { return x.n === name; });
     if (idx === -1) return;
-    ST.budgetLeft += ST.squad[idx].r;
-    ST.squad.splice(idx, 1);
+    p.budgetLeft += p.squad[idx].r;
+    p.squad.splice(idx, 1);
     render();
   }
 
   function endGame() {
     ST.phase = "result";
-    ST.statLine = recordResult(totalRating());
+    if (isMultiplayer()) {
+      var totals = ST.players.map(totalRating);
+      if (totals[0] === totals[1]) ST.winnerIdx = null;
+      else ST.winnerIdx = totals[0] > totals[1] ? 0 : 1;
+    } else {
+      ST.statLine = recordResult(totalRating(ST.players[0]));
+    }
     render();
   }
 
@@ -112,6 +148,18 @@
     wire();
   }
 
+  function modeSelectHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Top XI — Budget Cap</h2></div>' +
+      '<div class="sub">How do you want to play?</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" data-mode="solo"><span class="fb501-mode-btn-name">Solo</span><span class="fb501-mode-btn-desc">Build the best XI you can within budget.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="passplay"><span class="fb501-mode-btn-name">Pass &amp; Play</span><span class="fb501-mode-btn-desc">Two players, one device — snake-draft your own XIs, highest total wins.</span></button>' +
+        '<button class="fb501-mode-btn" data-mode="online"><span class="fb501-mode-btn-name">Online 1v1</span><span class="fb501-mode-btn-desc">Head-to-head with a friend, anywhere — share a code.</span></button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function introHTML() {
     var stats = loadStats();
     var statLine = stats.best ? (stats.attempts + " attempts · best total " + stats.best) : "";
@@ -124,25 +172,28 @@
   }
 
   function playHTML() {
-    var counts = slotCounts();
+    var multi = isMultiplayer();
+    var p = activePlayer();
+    var counts = slotCounts(p);
     var slotsHTML = ["GK", "DEF", "MID", "FWD"].map(function (pos) {
       return '<span class="fl-mode-stat">' + pos + ' ' + counts[pos] + '/' + FORMATION[pos] + '</span>';
     }).join(" ");
-    var squadHTML = ST.squad.map(function (p) {
+    var squadHTML = p.squad.map(function (pl) {
       return '<div class="player">' +
-        '<span class="pos ' + p.p + '">' + p.p + '</span>' +
-        '<div class="player-body"><span class="pname">' + esc(p.n) + '</span><span class="player-era">' + esc(p.country) + ' · ' + esc(p.year) + ' · ' + p.r + '</span></div>' +
-        '<button class="rescue-ico topxi-remove" data-name="' + esc(p.n) + '" style="background:none;border:none;cursor:pointer;color:var(--warning);">✕</button>' +
+        '<span class="pos ' + pl.p + '">' + pl.p + '</span>' +
+        '<div class="player-body"><span class="pname">' + esc(pl.n) + '</span><span class="player-era">' + esc(pl.country) + ' · ' + esc(pl.year) + ' · ' + pl.r + '</span></div>' +
+        '<button class="rescue-ico topxi-remove" data-name="' + esc(pl.n) + '" style="background:none;border:none;cursor:pointer;color:var(--warning);">✕</button>' +
       '</div>';
     }).join("");
-    var candidates = pool().filter(function (p) {
-      return !ST.squad.some(function (s) { return s.n === p.n; }) && openSlots(p.p) > 0 && p.r <= ST.budgetLeft;
+    var taken = allPicked();
+    var candidates = pool().filter(function (pl) {
+      return !taken.some(function (s) { return s.n === pl.n; }) && openSlots(p, pl.p) > 0 && pl.r <= p.budgetLeft;
     }).slice(0, 30);
-    var candHTML = candidates.map(function (p) {
-      return '<div class="player" data-pick="' + esc(p.n) + '">' +
-        '<span class="pos ' + p.p + '">' + p.p + '</span>' +
-        '<div class="player-body"><span class="pname">' + esc(p.n) + '</span><span class="player-era">' + esc(p.country) + ' · ' + esc(p.year) + '</span></div>' +
-        '<span class="fl-mode-stat">' + p.r + '</span>' +
+    var candHTML = candidates.map(function (pl) {
+      return '<div class="player" data-pick="' + esc(pl.n) + '">' +
+        '<span class="pos ' + pl.p + '">' + pl.p + '</span>' +
+        '<div class="player-body"><span class="pname">' + esc(pl.n) + '</span><span class="player-era">' + esc(pl.country) + ' · ' + esc(pl.year) + '</span></div>' +
+        '<span class="fl-mode-stat">' + pl.r + '</span>' +
       '</div>';
     }).join("");
     /* If budget/slots leave nobody affordable, this isn't a dead end — the
@@ -150,9 +201,11 @@
        path needs to be explained, not left to be discovered by accident
        (the same "never leave a silent dead end" principle behind the
        draft soft-lock fix earlier this session). */
-    var stuck = candidates.length === 0 && ST.squad.length < 11;
+    var stuck = candidates.length === 0 && p.squad.length < 11;
+    var headTitle = multi ? (esc(p.name) + "'s turn — Budget left: " + p.budgetLeft) : ('Budget left: ' + p.budgetLeft);
     return '<div class="fb501-play squad-card">' +
-      '<div class="squad-head"><h2>Budget left: ' + ST.budgetLeft + '</h2></div>' +
+      '<div class="squad-head"><h2>' + headTitle + '</h2></div>' +
+      (multi ? '<div class="sub">' + ST.players.map(function (x) { return esc(x.name) + ': ' + x.squad.length + '/11'; }).join(' · ') + '</div>' : '') +
       '<div class="sub">' + slotsHTML + '</div>' +
       (squadHTML ? '<div class="fb501-history">' + squadHTML + '</div>' : '') +
       (stuck ? '<div class="sub" style="color:var(--warning)">Nobody affordable fits your remaining slots — remove a player above (✕) to free up budget and try a cheaper combination.</div>' : '') +
@@ -163,8 +216,28 @@
   }
 
   function resultHTML() {
-    var total = totalRating();
-    var squadHTML = ST.squad.map(function (p) {
+    var multi = isMultiplayer();
+    if (multi) {
+      var totals = ST.players.map(totalRating);
+      var title = ST.winnerIdx === null ? "It's a tie!" : (esc(ST.players[ST.winnerIdx].name) + " wins!");
+      var squadsHTML = ST.players.map(function (p, i) {
+        var sq = p.squad.map(function (pl) {
+          return '<div class="player"><span class="pos ' + pl.p + '">' + pl.p + '</span><div class="player-body"><span class="pname">' + esc(pl.n) + '</span></div><span class="fl-mode-stat">' + pl.r + '</span></div>';
+        }).join("");
+        return '<div class="sub" style="margin-top:8px;font-weight:700;">' + esc(p.name) + ' — total ' + totals[i] + '</div><div class="fb501-history" style="max-height:150px;">' + sq + '</div>';
+      }).join("");
+      return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner" style="max-width:340px;">' +
+        '<div class="nopicks-icon">' + (ST.winnerIdx === null ? "🤝" : "🏆") + '</div>' +
+        '<div class="nopicks-title">' + title + '</div>' +
+        squadsHTML +
+        '<div class="nopicks-actions">' +
+          '<button class="nopicks-btn nopicks-respin" id="topxiRematch">' + ICO.replay + ' Build again</button>' +
+          '<button class="nopicks-btn nopicks-auto" id="topxiBackToMenu">Menu</button>' +
+        '</div>' +
+      '</div></div>';
+    }
+    var total = totalRating(ST.players[0]);
+    var squadHTML = ST.players[0].squad.map(function (p) {
       return '<div class="player"><span class="pos ' + p.p + '">' + p.p + '</span><div class="player-body"><span class="pname">' + esc(p.n) + '</span></div><span class="fl-mode-stat">' + p.r + '</span></div>';
     }).join("");
     return '<div class="nopicks-popup fb501-result-popup"><div class="nopicks-popup-inner" style="max-width:340px;">' +
@@ -182,8 +255,20 @@
   function wire() {
     var el = root();
     if (!el) return;
+    Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
+      b.addEventListener("click", function () {
+        var m = b.getAttribute("data-mode");
+        if (m === "online") {
+          if (W.flToast) W.flToast("Online 1v1 for Top XI is coming soon — try Pass & Play for now.");
+          return;
+        }
+        pendingMode = m;
+        ST = newState(m);
+        render();
+      });
+    });
     var start = el.querySelector("#topxiStart");
-    if (start) start.addEventListener("click", function () { ST = newState(); render(); });
+    if (start) start.addEventListener("click", function () { ST = newState(pendingMode); render(); });
     Array.prototype.forEach.call(el.querySelectorAll("[data-pick]"), function (row) {
       row.addEventListener("click", function () { pickPlayer(row.getAttribute("data-pick")); });
     });
@@ -201,17 +286,18 @@
       });
     }
     var quit = el.querySelector(".fb501-quit");
-    if (quit) quit.addEventListener("click", function () { ST = null; renderIntro(); });
+    if (quit) quit.addEventListener("click", function () { ST = null; renderModeSelect(); });
     var rematch = el.querySelector("#topxiRematch");
-    if (rematch) rematch.addEventListener("click", function () { ST = newState(); render(); });
+    if (rematch) rematch.addEventListener("click", function () { ST = newState(ST.mode, ST.players.map(function (p) { return p.name; })); render(); });
     var back = el.querySelector("#topxiBackToMenu");
-    if (back) back.addEventListener("click", function () { ST = null; renderIntro(); });
+    if (back) back.addEventListener("click", function () { ST = null; renderModeSelect(); });
   }
 
-  function renderIntro() {
+  function renderModeSelect() {
     var el = root();
     if (!el) return;
-    el.innerHTML = introHTML();
+    pendingMode = "solo";
+    el.innerHTML = modeSelectHTML();
     wire();
   }
 
@@ -223,7 +309,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
-    renderIntro();
+    renderModeSelect();
   };
 
   function init() {
