@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&display=swap" />
   <link rel="stylesheet" href="style.css?v=172" />
   <link rel="stylesheet" href="tokens.css?v=79" />
-  <link rel="stylesheet" href="floodlights.css?v=151" />
+  <link rel="stylesheet" href="floodlights.css?v=152" />
 </head>
 <body>
   <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
@@ -124,9 +124,9 @@
             <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3M13 14h4"/></svg></span>
             <span class="h2-mode-body"><span class="h2-mode-name">Take on the CPU</span><span class="h2-mode-desc">Alternating draft · outsmart the algorithm</span><span class="fl-mode-stat" id="dvcHomeRecord"></span></span>
           </button>
-          <button class="h2-mode h2-mode--sm m-euro" id="homeEuro">
-            <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
-            <span class="h2-mode-body"><span class="h2-mode-name">Euros</span><span class="h2-mode-desc">1980–2024 · 12 tournaments</span><span class="fl-mode-stat" id="euroBestScore"></span></span>
+          <button class="h2-mode h2-mode--sm m-f501" id="homeF501">
+            <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>
+            <span class="h2-mode-body"><span class="h2-mode-name">Football 501</span><span class="h2-mode-desc">Race to zero · football darts</span><span class="fl-mode-stat" id="f501BestScore"></span></span>
           </button>
         </div>
 
@@ -140,9 +140,9 @@
             <span class="h2-mode-body"><span class="h2-mode-name">League</span><span class="h2-mode-desc">La Liga · Serie A · Bundesliga · Ligue 1</span><span class="fl-mode-stat" id="lgBestScore"></span></span>
             <span class="h2-mode-arrow">›</span>
           </button>
-          <button class="h2-mode m-f501" id="homeF501">
-            <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>
-            <span class="h2-mode-body"><span class="h2-mode-name">Football 501</span><span class="h2-mode-desc">Race to zero · football trivia darts</span><span class="fl-mode-stat" id="f501BestScore"></span></span>
+          <button class="h2-mode m-euro" id="homeEuro">
+            <span class="h2-mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5.25 3.5 9.3 8 10 4.5-.7 8-4.75 8-10V6l-8-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <span class="h2-mode-body"><span class="h2-mode-name">Euros</span><span class="h2-mode-desc">1980–2024 · 12 tournaments</span><span class="fl-mode-stat" id="euroBestScore"></span></span>
             <span class="h2-mode-arrow">›</span>
           </button>
         </div>
@@ -670,8 +670,13 @@
   <script src="draftvscomputer.js?v=21" defer></script>
   <script src="daily.js?v=5" defer></script>
   <script src="data_501_pl_scorers.js?v=2" defer></script>
-  <script src="data_501_pl_appearances.js?v=2" defer></script>
-  <script src="data_501_index.js?v=1" defer></script>
-  <script src="football501.js?v=4" defer></script>
+  <script src="data_501_pl_appearances.js?v=3" defer></script>
+  <script src="data_501_transfer_fees.js?v=1" defer></script>
+  <script src="data_501_market_value.js?v=1" defer></script>
+  <script src="data_501_cl_goals.js?v=1" defer></script>
+  <script src="data_501_assists.js?v=1" defer></script>
+  <script src="data_501_clean_sheets.js?v=1" defer></script>
+  <script src="data_501_index.js?v=2" defer></script>
+  <script src="football501.js?v=5" defer></script>
 </body>
 </html>

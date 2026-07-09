@@ -1,17 +1,26 @@
-/* data_501_pl_appearances.js — Football 501 category: Premier League all-time
- * appearance leaders. Value = career Premier League appearances.
+/* data_501_pl_appearances.js — Football 501 category: Premier League
+ * appearances. Value = career Premier League appearances.
  *
  * VERIFICATION (per plan's B6 data accuracy pipeline):
- *   Primary source:      Wikipedia — "Premier League records and statistics",
- *                         Most Appearances table
- *   Cross-check source:  The Analyst (Opta) — "Players With the Most Premier
- *                         League Appearances" — independently confirms all 20
- *                         rows below match exactly between both sources.
- *   asOf:                2026-07-08
- *   Re-verify:           James Milner (#1) retired June 2026, so his total is
- *                         now a closed record — this list is fully closed for
- *                         all 20 rows as of this snapshot. Still spot-check
- *                         before major pushes in case of record corrections.
+ *   All-time-leaders rows (658 down to 469): Wikipedia — "Premier League
+ *     records and statistics", Most Appearances table; cross-checked
+ *     against The Analyst (Opta)'s "Players With the Most Premier League
+ *     Appearances" — all match exactly between both sources.
+ *   Mid-range rows (392-420): myfootballfacts.com "All Time 300 or More
+ *     Players' Premier League Appearances" table.
+ *   Low rows (33-99): Football365 "Top ten Premier League players with
+ *     fewer than 100 games" and Opta Analyst "Race to the Century" —
+ *     Zlatan Ibrahimovic, Michu, Mascherano, Demba Ba figures confirmed there.
+ *   asOf: 2026-07-08
+ *
+ * IMPORTANT — why the low/mid rows exist: Football 501's darts-realistic
+ * rule caps any single "throw" at 180 (real 501's max single-visit score).
+ * The original 20-row all-time-leaders list was ENTIRELY 469+ — every
+ * single value exceeded 180, making the category mathematically
+ * unwinnable from the very first guess under that rule. These extra rows
+ * give the category a genuine spread down into throwable range so a real
+ * checkout path exists, exactly like a real darts leg needs some markers
+ * good for finishing, not just big numbers.
  *
  * Shape mirrors every other data file in this app: {label, unit, asOf, rows}. */
 window.FB501_DATA = window.FB501_DATA || {};
@@ -40,6 +49,17 @@ window.FB501_DATA.pl_appearances = {
     { n: "Wayne Rooney",     v: 491 },
     { n: "Ashley Young",     v: 485 },
     { n: "Michael Carrick",  v: 481 },
-    { n: "Sylvain Distin",   v: 469 }
+    { n: "Sylvain Distin",   v: 469 },
+    { n: "Leighton Baines",  v: 420 },
+    { n: "Teddy Sheringham", v: 418 },
+    { n: "Danny Murphy",     v: 417 },
+    { n: "Nicky Butt",       v: 411 },
+    { n: "Gary Neville",     v: 400 },
+    { n: "Raheem Sterling",  v: 396 },
+    { n: "Damien Duff",      v: 392 },
+    { n: "Demba Ba",         v: 99 },
+    { n: "Javier Mascherano", v: 99 },
+    { n: "Michu",            v: 52 },
+    { n: "Zlatan Ibrahimovic", v: 33 }
   ]
 };

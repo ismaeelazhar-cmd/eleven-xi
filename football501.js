@@ -12,6 +12,13 @@
   var ALL_VIEWS = ["homeView","setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView"];
   var TIMED_SECONDS = 60;
   var STATS_KEY = "fb501_stats_v1";
+  /* Real 501 darts: the maximum possible single-visit score is 180 (three
+     treble-20s) — no legal dart throw is ever worth more. A guess whose
+     real stat value exceeds this isn't a reduced throw, it's an illegal
+     one: score doesn't move, the go is used up. This is what forces
+     players toward small, precise finishing numbers — the actual
+     checkout tension the format is built on. */
+  var MAX_THROW = 180;
 
   /* Small inline-SVG icons for action buttons — replaces the 🔁/🚩 emoji
      used as functional button-label icons, matching the icon language
@@ -101,6 +108,18 @@
     if (!ST || ST.phase !== "play") return;
     var row = findMatch(raw, ST.category.rows, ST.used);
     if (!row) { flash("miss"); return; }
+    if (row.v > MAX_THROW) {
+      /* Illegal throw, not a bust — no real dart visit is ever worth more
+         than 180, so this guess could never have been "thrown" at all.
+         Distinct from a bust (score-would-go-negative): here the score
+         genuinely can't move. Also NOT marked used, same reasoning as
+         busts below — a name that's currently too big to throw might
+         still be the right answer once the score is lower. */
+      ST.history.unshift({ name: row.n, v: row.v, resultScore: ST.score, over: true });
+      render();
+      flash("bust");
+      return;
+    }
     var next = ST.score - row.v;
     if (next < 0) {
       /* Bust — the player didn't actually score with this name (their
@@ -199,16 +218,36 @@
         '<button class="btn-primary fb501-variant-btn active" data-variant="classic">Classic</button>' +
         '<button class="btn-ghost fb501-variant-btn" data-variant="timed">Timed (' + TIMED_SECONDS + 's)</button>' +
       '</div>' +
+      '<button class="btn-ghost fb501-surprise-btn" id="fb501Surprise">🎲 Surprise me</button>' +
       '<div class="fb501-cat-list">' + cards + '</div>' +
     '</div>';
+  }
+
+  /* Picks a random unlocked category and jumps straight into play with it,
+     using whichever variant (Classic/Timed) is currently selected. */
+  function surpriseCategory() {
+    var el = root();
+    var unlocked = categories().filter(function (c) { return !c.locked; });
+    if (!unlocked.length) return;
+    var cat = unlocked[Math.floor(Math.random() * unlocked.length)];
+    var variantBtn = el && el.querySelector(".fb501-variant-btn.active");
+    var variant = variantBtn ? variantBtn.getAttribute("data-variant") : "classic";
+    ST = newState(cat, variant);
+    render();
   }
 
   function playHTML() {
     var c = ST.category;
     var historyHTML = ST.history.slice(0, 8).map(function (h) {
-      return '<div class="player fb501-hist-row' + (h.bust ? " fb501-hist-bust" : "") + '">' +
-        '<span class="pos ' + (h.bust ? "FWD" : "DEF") + '">' + (h.bust ? "BUST" : "−" + h.v) + '</span>' +
-        '<div class="player-body"><span class="pname">' + esc(h.name) + '</span></div>' +
+      var cls = h.over ? "fb501-hist-over" : h.bust ? "fb501-hist-bust" : "";
+      var tag = h.over ? "OVER" : h.bust ? "BUST" : ("−" + h.v);
+      var posCls = h.over ? "MID" : h.bust ? "FWD" : "DEF";
+      var sub = h.over ? ('Their ' + esc(c.unit) + ' (' + h.v + ') is over ' + MAX_THROW + ' — no dart visit is worth that much, no go.') : "";
+      return '<div class="player fb501-hist-row' + (cls ? " " + cls : "") + '">' +
+        '<span class="pos ' + posCls + '">' + tag + '</span>' +
+        '<div class="player-body"><span class="pname">' + esc(h.name) + '</span>' +
+          (sub ? '<span class="player-flavour">' + sub + '</span>' : '') +
+        '</div>' +
       '</div>';
     }).join("");
     return '<div class="fb501-play squad-card">' +
@@ -216,7 +255,7 @@
         (ST.variant === "timed" ? '<span class="fb501-timer" id="fb501Timer">' + TIMED_SECONDS + 's</span>' : '') +
       '</div>' +
       '<div class="fb501-score-dial" id="fb501Score">' + ST.score + '</div>' +
-      '<div class="sub">Name a ' + esc(c.label.toLowerCase()) + ' entry to subtract their ' + esc(c.unit) + '. Exact zero wins — going below busts.</div>' +
+      '<div class="sub">Name a ' + esc(c.label.toLowerCase()) + ' entry to subtract their ' + esc(c.unit) + '. Exact zero wins — over ' + MAX_THROW + ' or below zero is no good, just like a real 501 visit.</div>' +
       '<div class="squad-search-wrap"><input class="squad-search" id="fb501Input" type="text" placeholder="Type a name…" autocomplete="off" /></div>' +
       '<div class="fb501-history">' + historyHTML + '</div>' +
       '<button class="btn-ghost fb501-quit">Quit to categories</button>' +
@@ -255,6 +294,8 @@
         render();
       });
     });
+    var surpriseBtn = el.querySelector("#fb501Surprise");
+    if (surpriseBtn) surpriseBtn.addEventListener("click", surpriseCategory);
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-variant-btn"), function (b) {
       b.addEventListener("click", function () {
         Array.prototype.forEach.call(el.querySelectorAll(".fb501-variant-btn"), function (o) {
