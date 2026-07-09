@@ -80,6 +80,73 @@
     return null;
   }
 
+  /* ---- Online 1v1 ----
+     Reuses net.js/ElxiNet exactly as football501.js's A4 does — same
+     host/join 4-char code broker. Unlike Pass & Play, online is
+     SIMULTANEOUS and each side spins its OWN independent combo (no
+     shared-combo sync needed) — it's a pure race to 5 correct, each
+     side racing their own reels at their own pace, broadcasting only
+     their running score so both screens show live progress. Simpler
+     and more robust than trying to keep two peers' spin animations in
+     lockstep over the network. */
+  var ONL = null;
+
+  function onlineReset() {
+    ONL = { role: null, status: "idle", code: null, joinCode: "", joinError: null, myName: "You", oppName: "Opponent" };
+  }
+
+  function bindNetForRR() {
+    var Net = W.ElxiNet;
+    if (!Net) return;
+    Net.onStatus = function (state, info) {
+      if (!ONL) return;
+      if (ONL.role === "host") {
+        if (state === "waiting" || state === "loading") { ONL.status = state; if (info && info.code) ONL.code = info.code; }
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "error"; ONL.errMsg = (info && info.message) || "Something went wrong."; }
+      } else if (ONL.role === "guest") {
+        if (state === "loading" || state === "joining") ONL.status = state;
+        else if (state === "connected") { ONL.status = "connected"; }
+        else if (state === "error") { ONL.status = "idle"; ONL.joinError = (info && info.message) || "Couldn't connect."; }
+      }
+      renderOnlineFlow();
+    };
+    Net.onPeerLeave = function () {
+      if (W.flToast) W.flToast("Your opponent disconnected.");
+      stopRoundTimer();
+      if (ST && ST.phase === "play") { ST.phase = "result"; ST.outcome = "forfeit"; ST.winnerIdx = 0; render(); }
+      else { ST = null; onlineReset(); renderModeSelect(); }
+    };
+    Net.onData = function (msg) { handleOnlineMessage(msg); };
+  }
+
+  function handleOnlineMessage(msg) {
+    if (!msg || !msg.t) return;
+    if (msg.t === "rr_name" && ONL) {
+      ONL.oppName = msg.name || "Opponent";
+      if (ST) { ST.players[1].name = ONL.oppName; render(); }
+      return;
+    }
+    if (msg.t === "rr_start") {
+      /* Guest receives the go-ahead from the host and starts its own
+         independent race locally. */
+      ST = newState("online", [ONL.myName, ONL.oppName]);
+      doSpin();
+      return;
+    }
+    if (msg.t === "rr_score") {
+      if (!ST || !isMultiplayer()) return;
+      ST.players[1].score = msg.score;
+      render();
+      return;
+    }
+    if (msg.t === "rr_matchOver") {
+      if (!ST) return;
+      endGame("won", 1); // opponent (index 1) won
+      return;
+    }
+  }
+
   /* ---- State: same players[]-array shape as football501.js, proven for
      solo + pass-and-play (turnIdx stays 0 for solo, alternates for
      pass-and-play). ---- */
@@ -205,7 +272,12 @@
       return;
     }
     p.score++;
-    if (p.score >= 5) { endGame("won", ST.turnIdx); return; }
+    if (ST.mode === "online" && W.ElxiNet) W.ElxiNet.send({ t: "rr_score", score: p.score });
+    if (p.score >= 5) {
+      if (ST.mode === "online" && W.ElxiNet) W.ElxiNet.send({ t: "rr_matchOver" });
+      endGame("won", ST.turnIdx);
+      return;
+    }
     if (isTurnBased()) advanceTurn();
     flash("correct");
     doSpin();
@@ -325,10 +397,7 @@
     Array.prototype.forEach.call(el.querySelectorAll(".fb501-mode-btn"), function (b) {
       b.addEventListener("click", function () {
         var m = b.getAttribute("data-mode");
-        if (m === "online") {
-          if (W.flToast) W.flToast("Online 1v1 for Transfer Roulette is coming soon — try Pass & Play for now.");
-          return;
-        }
+        if (m === "online") { renderOnlineSetup(); return; }
         pendingMode = m;
         ST = newState(pendingMode);
         doSpin();
@@ -358,6 +427,139 @@
     wire();
   }
 
+  /* ---- Online lobby (host/join code UI), reused verbatim from
+     football501.js's A4 pattern — same markup classes, same flow. ---- */
+  function renderOnlineSetup() {
+    onlineReset();
+    renderOnlineFlow();
+  }
+
+  function renderOnlineFlow() {
+    var el = root();
+    if (!el || !ONL) return;
+    var html;
+    if (!ONL.role) html = onlineChoiceHTML();
+    else if (ONL.role === "host") html = onlineHostHTML();
+    else html = onlineJoinHTML();
+    el.innerHTML = html;
+    wireOnlineFlow();
+  }
+
+  function onlineChoiceHTML() {
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+      '<div class="sub">One of you creates the game; the other joins with the code.</div>' +
+      '<div class="fb501-mode-select">' +
+        '<button class="fb501-mode-btn" id="rrOnlCreate"><span class="fb501-mode-btn-name">Create game</span><span class="fb501-mode-btn-desc">Generate a code and wait for your opponent.</span></button>' +
+        '<button class="fb501-mode-btn" id="rrOnlJoin"><span class="fb501-mode-btn-name">Join game</span><span class="fb501-mode-btn-desc">Enter the code your opponent shares with you.</span></button>' +
+      '</div>' +
+      '<button class="btn-ghost fb501-quit" id="rrOnlineBack" style="margin-top:14px">← Back</button>' +
+    '</div>';
+  }
+
+  function onlineHostHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Opponent connected!</h2></div>' +
+        '<div class="sub">Race to 5 correct — your reels, their reels, same finish line.</div>' +
+        '<button class="btn-primary" id="rrHostGo" style="width:100%;margin-top:10px">Start racing →</button>' +
+      '</div>';
+    }
+    if (status === "error") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Online 1v1</h2></div>' +
+        '<div class="sub mp-net-err">' + esc(ONL.errMsg || "Something went wrong.") + '</div>' +
+        '<button class="btn-primary" id="rrOnlRetryHost" style="width:100%;margin-top:10px">Try again</button>' +
+        '<button class="btn-ghost fb501-quit" id="rrOnlineBack">← Back</button>' +
+      '</div>';
+    }
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Your game</h2></div>' +
+      (ONL.code
+        ? '<div class="mp-code-card"><div class="mp-code-label">Share this code</div><div class="mp-code">' + esc(ONL.code) + '</div></div>'
+        : '<div class="mp-code-card"><div class="mp-code-label">Creating your game…</div><div class="mp-code mp-code-dim">····</div></div>') +
+      '<div class="mp-wait"><span class="mp-spinner"></span><span>Waiting for your opponent to join…</span></div>' +
+      '<button class="btn-ghost fb501-quit" id="rrOnlineBack">Cancel</button>' +
+    '</div>';
+  }
+
+  function onlineJoinHTML() {
+    var status = ONL.status;
+    if (status === "connected") {
+      return '<div class="fb501-setup squad-card">' +
+        '<div class="squad-head"><h2>Connected!</h2></div>' +
+        '<div class="sub">Waiting for the host to start the race…</div>' +
+        '<div class="mp-wait"><span class="mp-spinner"></span></div>' +
+      '</div>';
+    }
+    var connecting = status === "loading" || status === "joining";
+    return '<div class="fb501-setup squad-card">' +
+      '<div class="squad-head"><h2>Join a game</h2></div>' +
+      '<div class="sub">Type the code your opponent gave you.</div>' +
+      '<input class="mp-code-input" id="rrJoinCode" type="text" maxlength="4" autocapitalize="characters" autocomplete="off" placeholder="CODE" value="' + esc(ONL.joinCode || "") + '" />' +
+      (connecting ? '<div class="mp-wait"><span class="mp-spinner"></span><span>Connecting…</span></div>' :
+        '<button class="btn-primary" id="rrDoJoin" style="width:100%;margin-top:10px">Connect →</button>') +
+      (ONL.joinError ? '<div class="mp-net-err">' + esc(ONL.joinError) + '</div>' : '') +
+      '<button class="btn-ghost fb501-quit" id="rrOnlineBack">← Back</button>' +
+    '</div>';
+  }
+
+  function wireOnlineFlow() {
+    var el = root();
+    if (!el) return;
+    var back = el.querySelector("#rrOnlineBack");
+    if (back) back.addEventListener("click", function () {
+      if (W.ElxiNet) W.ElxiNet.close();
+      onlineReset();
+      renderModeSelect();
+    });
+    var create = el.querySelector("#rrOnlCreate");
+    if (create) create.addEventListener("click", onlineStartHost);
+    var retry = el.querySelector("#rrOnlRetryHost");
+    if (retry) retry.addEventListener("click", onlineStartHost);
+    var join = el.querySelector("#rrOnlJoin");
+    if (join) join.addEventListener("click", function () { ONL.role = "guest"; ONL.status = "idle"; ONL.joinError = null; renderOnlineFlow(); });
+    var codeInput = el.querySelector("#rrJoinCode");
+    if (codeInput) {
+      codeInput.addEventListener("input", function () {
+        codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+        ONL.joinCode = codeInput.value;
+      });
+      codeInput.addEventListener("keydown", function (e) { if (e.key === "Enter") onlineDoJoin(); });
+      setTimeout(function () { codeInput.focus(); }, 30);
+    }
+    var doJoinBtn = el.querySelector("#rrDoJoin");
+    if (doJoinBtn) doJoinBtn.addEventListener("click", onlineDoJoin);
+    var hostGo = el.querySelector("#rrHostGo");
+    if (hostGo) hostGo.addEventListener("click", function () {
+      if (W.ElxiNet) W.ElxiNet.send({ t: "rr_start" });
+      ST = newState("online", [ONL.myName, ONL.oppName]);
+      doSpin();
+    });
+  }
+
+  function onlineStartHost() {
+    ONL.role = "host"; ONL.status = "loading"; ONL.errMsg = null;
+    renderOnlineFlow();
+    bindNetForRR();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.host().then(function (code) {
+      ONL.code = code;
+      if (ONL.role === "host") renderOnlineFlow();
+    }).catch(function () {});
+  }
+
+  function onlineDoJoin() {
+    var code = (ONL.joinCode || "").trim();
+    if (code.length !== 4) { ONL.joinError = "Enter the 4-character code."; renderOnlineFlow(); return; }
+    ONL.status = "loading"; ONL.joinError = null;
+    renderOnlineFlow();
+    bindNetForRR();
+    if (!W.ElxiNet) return;
+    W.ElxiNet.join(code).then(function () {}).catch(function () {});
+  }
+
   /* ---- Entry point ---- */
   W.startTransferRoulette = function () {
     ALL_VIEWS.forEach(function (id) { var v = document.getElementById(id); if (v) v.style.display = "none"; });
@@ -366,6 +568,7 @@
     outer.style.display = "";
     if (W.scrollTo) W.scrollTo(0, 0);
     ST = null;
+    ONL = null;
     renderModeSelect();
   };
 
