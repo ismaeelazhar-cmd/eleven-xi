@@ -135,6 +135,7 @@ header h1 {
 .m-rr    { --mode-accent: #22C55E; } /* roulette green — distinct from the app's primary pitch-green shade */
 .m-grid  { --mode-accent: #38BDF8; } /* sky blue — distinct from every other mode accent */
 .m-mine  { --mode-accent: #F97316; } /* orange — distinct from every other mode accent */
+.m-topxi { --mode-accent: #EAB308; } /* gold-yellow — distinct from every other mode accent */
 
 /* ============================================================
    HOME REDESIGN (v2) — hero, stats strip, mode list, daily bar

@@ -40,7 +40,7 @@
      Each module's own goHome handles cleanup; this covers the logo tap
      from any screen without needing per-module hooks. */
   W.flGoHome = function () {
-    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","rrView","gridView","mineView"];
+    var ALL = ["setupView","draftView","resultsView","mpView","leagueView","boardView","rwView","dvcView","euroView","dailyView","challengeView","f501View","rrView","gridView","mineView","topxiView"];
     ALL.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = "none"; });
     var home = document.getElementById("homeView");
     if (home) home.style.display = "";
