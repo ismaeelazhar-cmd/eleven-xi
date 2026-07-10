@@ -23,6 +23,12 @@
   function normalize(s) {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
   }
+  /* Last-name-only guessing fallback — see findValidPlayer() below. */
+  function lastName(s) {
+    var n = normalize(s);
+    var parts = n.split(" ");
+    return parts[parts.length - 1];
+  }
 
   function decadeOf(year) { return String(Math.floor(parseInt(year, 10) / 10) * 10) + "s"; }
 
@@ -67,6 +73,7 @@
     if (!q) return null;
     var country = (W.WORLD_CUP_DATA || {})[combo.nat];
     if (!country) return null;
+    var lastMatches = [];
     for (var y in country.years) {
       if (decadeOf(y) !== combo.dec) continue;
       var players = country.years[y];
@@ -75,9 +82,17 @@
         if (pl.p !== combo.pos) continue;
         if (usedNames[pl.n]) continue;
         if (normalize(pl.n) === q) return pl;
+        if (lastName(pl.n) === q) lastMatches.push(pl);
       }
     }
-    return null;
+    /* Fallback: last-name-only match, but only if unambiguous among DISTINCT
+       eligible candidates — dedupe by name first, since the same real player
+       can appear in multiple squad-years (e.g. capped across two decades),
+       which shouldn't count as "two different people" ambiguity. */
+    var distinctNames = {};
+    lastMatches.forEach(function (pl) { distinctNames[pl.n] = pl; });
+    var distinct = Object.keys(distinctNames).map(function (n) { return distinctNames[n]; });
+    return distinct.length === 1 ? distinct[0] : null;
   }
 
   /* ---- Online 1v1 ----

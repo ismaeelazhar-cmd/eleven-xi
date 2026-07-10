@@ -21,6 +21,12 @@
   function normalize(s) {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
   }
+  /* Last-name-only guessing fallback — see findValidPlayer() below. */
+  function lastName(s) {
+    var n = normalize(s);
+    var parts = n.split(" ");
+    return parts[parts.length - 1];
+  }
 
   function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch (e) { return {}; } }
   function saveStats(s) { try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch (e) {} }
@@ -252,7 +258,10 @@
       if (ST.usedNames[name]) continue;
       if (normalize(name) === q) return name;
     }
-    return null;
+    /* Fallback: last-name-only match, but only if unambiguous among
+       eligible candidates (see football501.js's findMatch for the same rule). */
+    var lastMatches = cell.candidates.filter(function (name) { return !ST.usedNames[name] && lastName(name) === q; });
+    return lastMatches.length === 1 ? lastMatches[0] : null;
   }
 
   function submitGuess(raw, fromRemote) {

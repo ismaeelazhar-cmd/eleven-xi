@@ -42,6 +42,15 @@
       .trim();
   }
 
+  /* Last-name-only guessing: players naturally want to type "Kane" instead
+     of "Harry Kane". Used as a fallback AFTER full-name matching fails —
+     see findMatch() below for the two-pass lookup and its ambiguity rule. */
+  function lastName(s) {
+    var n = normalize(s);
+    var parts = n.split(" ");
+    return parts[parts.length - 1];
+  }
+
   function loadStats() {
     try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch (e) { return {}; }
   }
@@ -192,7 +201,11 @@
       if (used[rows[i].n]) continue;
       if (normalize(rows[i].n) === q) return rows[i];
     }
-    return null;
+    /* Fallback: last-name-only match, but ONLY if exactly one still-eligible
+       row has that last name — an ambiguous last name (two eligible rows
+       sharing it) must not silently guess on the player's behalf. */
+    var lastMatches = rows.filter(function (r) { return !used[r.n] && lastName(r.n) === q; });
+    return lastMatches.length === 1 ? lastMatches[0] : null;
   }
 
   function submitGuess(raw) {

@@ -28,6 +28,12 @@
   function normalize(s) {
     return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
   }
+  /* Last-name-only guessing fallback — see submitGuess() below. */
+  function lastName(s) {
+    var n = normalize(s);
+    var parts = n.split(" ");
+    return parts[parts.length - 1];
+  }
 
   function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch (e) { return {}; } }
   function saveStats(s) { try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch (e) {} }
@@ -174,7 +180,14 @@
     if (!ST || ST.phase !== "play") return;
     var q = normalize(raw);
     if (!q) { flash("miss"); return; }
-    var row = ST.category.rows.filter(function (r) { return !ST.found.some(function (f) { return f.n === r.n; }) && normalize(r.n) === q; })[0];
+    var eligible = ST.category.rows.filter(function (r) { return !ST.found.some(function (f) { return f.n === r.n; }); });
+    var row = eligible.filter(function (r) { return normalize(r.n) === q; })[0];
+    if (!row) {
+      /* Fallback: last-name-only match, but only if unambiguous among
+         eligible rows (see football501.js's findMatch for the same rule). */
+      var lastMatches = eligible.filter(function (r) { return lastName(r.n) === q; });
+      if (lastMatches.length === 1) row = lastMatches[0];
+    }
     if (!row) {
       /* Wrong guess (or a name already found) — uses the one life. */
       ST.livesLeft--;
