@@ -18,5 +18,7 @@ window.FB501_CATEGORIES = [
   { key: "man_utd_scorers",     locked: false },
   { key: "laliga_scorers",      locked: false },
   { key: "seriea_scorers",      locked: false },
-  { key: "bundesliga_scorers",  locked: false }
+  { key: "bundesliga_scorers",  locked: false },
+  { key: "cl_appearances",      locked: false },
+  { key: "intl_caps",           locked: false }
 ];
