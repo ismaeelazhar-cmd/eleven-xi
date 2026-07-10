@@ -2,14 +2,18 @@
  * football501.js reads this list instead of hardcoding dataset keys, so
  * adding a new category later (data_501_*.js) is just: author the data
  * file, add its key here, add its <script> tag in index.html.
- * All 7 categories from the original spec are now live — none shipped as
- * a locked "coming soon" placeholder. */
+ * The original 7 categories are all live; more are being added
+ * incrementally in verified batches per the "clubs, leagues, appearances"
+ * content-expansion pass — each batch commit adds a few keys here. */
 window.FB501_CATEGORIES = [
-  { key: "pl_scorers",      locked: false },
-  { key: "pl_appearances",  locked: false },
-  { key: "transfer_fees",   locked: false },
-  { key: "market_value",    locked: false },
-  { key: "cl_goals",        locked: false },
-  { key: "assists",         locked: false },
-  { key: "clean_sheets",    locked: false }
+  { key: "pl_scorers",         locked: false },
+  { key: "pl_appearances",     locked: false },
+  { key: "transfer_fees",      locked: false },
+  { key: "market_value",       locked: false },
+  { key: "cl_goals",           locked: false },
+  { key: "assists",            locked: false },
+  { key: "clean_sheets",       locked: false },
+  { key: "real_madrid_scorers", locked: false },
+  { key: "barcelona_scorers",   locked: false },
+  { key: "man_utd_scorers",     locked: false }
 ];
