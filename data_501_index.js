@@ -20,5 +20,6 @@ window.FB501_CATEGORIES = [
   { key: "seriea_scorers",      locked: false },
   { key: "bundesliga_scorers",  locked: false },
   { key: "cl_appearances",      locked: false },
-  { key: "intl_caps",           locked: false }
+  { key: "intl_caps",           locked: false },
+  { key: "intl_goals",          locked: false }
 ];
