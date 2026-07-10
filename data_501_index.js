@@ -15,5 +15,8 @@ window.FB501_CATEGORIES = [
   { key: "clean_sheets",       locked: false },
   { key: "real_madrid_scorers", locked: false },
   { key: "barcelona_scorers",   locked: false },
-  { key: "man_utd_scorers",     locked: false }
+  { key: "man_utd_scorers",     locked: false },
+  { key: "laliga_scorers",      locked: false },
+  { key: "seriea_scorers",      locked: false },
+  { key: "bundesliga_scorers",  locked: false }
 ];
