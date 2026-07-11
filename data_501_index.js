@@ -41,5 +41,8 @@ window.FB501_CATEGORIES = [
   { key: "west_ham_scorers",    locked: false },
   { key: "everton_scorers",     locked: false },
   { key: "villa_scorers",       locked: false },
-  { key: "leeds_scorers",       locked: false }
+  { key: "leeds_scorers",       locked: false },
+  { key: "napoli_scorers",      locked: false },
+  { key: "roma_scorers",        locked: false },
+  { key: "sevilla_scorers",     locked: false }
 ];
