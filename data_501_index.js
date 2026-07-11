@@ -50,5 +50,8 @@ window.FB501_CATEGORIES = [
   { key: "crystal_palace_scorers", locked: false },
   { key: "fulham_scorers",      locked: false },
   { key: "brighton_scorers",    locked: false },
-  { key: "burnley_scorers",     locked: false }
+  { key: "burnley_scorers",     locked: false },
+  { key: "celtic_scorers",      locked: false },
+  { key: "rangers_scorers",     locked: false },
+  { key: "benfica_scorers",     locked: false }
 ];
