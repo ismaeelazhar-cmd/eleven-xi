@@ -38,5 +38,8 @@ window.FB501_CATEGORIES = [
   { key: "eredivisie_scorers",  locked: false },
   { key: "spurs_scorers",       locked: false },
   { key: "newcastle_scorers",   locked: false },
-  { key: "west_ham_scorers",    locked: false }
+  { key: "west_ham_scorers",    locked: false },
+  { key: "everton_scorers",     locked: false },
+  { key: "villa_scorers",       locked: false },
+  { key: "leeds_scorers",       locked: false }
 ];
