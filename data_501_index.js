@@ -24,5 +24,8 @@ window.FB501_CATEGORIES = [
   { key: "intl_goals",          locked: false },
   { key: "bayern_scorers",      locked: false },
   { key: "liverpool_scorers",   locked: false },
-  { key: "juventus_scorers",    locked: false }
+  { key: "juventus_scorers",    locked: false },
+  { key: "arsenal_scorers",     locked: false },
+  { key: "chelsea_scorers",     locked: false },
+  { key: "man_city_scorers",    locked: false }
 ];

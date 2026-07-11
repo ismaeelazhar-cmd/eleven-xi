@@ -1,6 +1,6 @@
 /* Service worker: network-first so the latest build always loads when online,
  * falling back to cache when offline (the app still installs + works offline). */
-const CACHE = "wcxi-v228";
+const CACHE = "wcxi-v229";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./tokens.css", "./floodlights.css", "./floodlights.js", "./audio.js", "./ratingswar.js", "./draftvscomputer.js",
   "./data.js", "./data_extra.js", "./data_full.js", "./data_legacy.js", "./data_full2.js", "./data_wc_history.js", "./data_patches.js", "./ratings_overrides.js", "./positions.js", "./data_fixups.js", "./cl_clubs.js", "./cl_data.js", "./cl_data2.js", "./nations.js", "./engine.js", "./game.js",
@@ -12,6 +12,7 @@ const ASSETS = [
   "./data_501_laliga_scorers.js", "./data_501_seriea_scorers.js", "./data_501_bundesliga_scorers.js",
   "./data_501_cl_appearances.js", "./data_501_intl_caps.js", "./data_501_intl_goals.js",
   "./data_501_bayern_scorers.js", "./data_501_liverpool_scorers.js", "./data_501_juventus_scorers.js",
+  "./data_501_arsenal_scorers.js", "./data_501_chelsea_scorers.js", "./data_501_man_city_scorers.js",
   "./transferroulette.js", "./data_roulette_pools.js", "./fillthegrid.js",
   "./minefield.js", "./data_minefield_wc_final_scorers.js", "./data_minefield_ballon_dor.js", "./topxi.js", "./footballtenable.js",
   /* lazy-loaded on demand — cached by network-first on first access */
