@@ -59,5 +59,8 @@ window.FB501_CATEGORIES = [
   { key: "psv_scorers",         locked: false },
   { key: "feyenoord_scorers",   locked: false },
   { key: "schalke_scorers",     locked: false },
-  { key: "leverkusen_scorers",  locked: false }
+  { key: "leverkusen_scorers",  locked: false },
+  { key: "england_scorers",     locked: false },
+  { key: "brazil_scorers",      locked: false },
+  { key: "argentina_scorers",   locked: false }
 ];
