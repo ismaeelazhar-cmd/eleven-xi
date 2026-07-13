@@ -1,6 +1,6 @@
 /* Service worker: network-first so the latest build always loads when online,
  * falling back to cache when offline (the app still installs + works offline). */
-const CACHE = "wcxi-v252";
+const CACHE = "wcxi-v253";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./tokens.css", "./floodlights.css", "./floodlights.js", "./audio.js", "./ratingswar.js", "./draftvscomputer.js",
   "./data.js", "./data_extra.js", "./data_full.js", "./data_legacy.js", "./data_full2.js", "./data_wc_history.js", "./data_patches.js", "./ratings_overrides.js", "./positions.js", "./data_fixups.js", "./cl_clubs.js", "./cl_data.js", "./cl_data2.js", "./nations.js", "./engine.js", "./game.js",
@@ -31,6 +31,7 @@ const ASSETS = [
   "./data_501_italy_scorers.js", "./data_501_netherlands_scorers.js", "./data_501_portugal_scorers.js",
   "./data_501_italy_caps.js", "./data_501_netherlands_caps.js", "./data_501_portugal_caps.js",
   "./data_501_belgium_scorers.js", "./data_501_uruguay_scorers.js", "./data_501_croatia_scorers.js",
+  "./data_501_belgium_caps.js", "./data_501_uruguay_caps.js", "./data_501_croatia_caps.js",
   "./transferroulette.js", "./data_roulette_pools.js", "./fillthegrid.js",
   "./minefield.js", "./data_minefield_wc_final_scorers.js", "./data_minefield_ballon_dor.js",
   "./data_minefield_cl_final_scorers.js", "./data_minefield_100_caps.js", "./data_minefield_pl_golden_boot.js",
