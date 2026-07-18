@@ -89,5 +89,11 @@ window.FB501_CATEGORIES = [
   { key: "sweden_scorers",      locked: false },
   { key: "sweden_caps",         locked: false },
   { key: "denmark_scorers",     locked: false },
-  { key: "denmark_caps",        locked: false }
+  { key: "denmark_caps",        locked: false },
+  { key: "wales_scorers",       locked: false },
+  { key: "wales_caps",          locked: false },
+  { key: "scotland_scorers",    locked: false },
+  { key: "scotland_caps",       locked: false },
+  { key: "ireland_scorers",     locked: false },
+  { key: "ireland_caps",        locked: false }
 ];
