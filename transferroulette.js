@@ -1,10 +1,11 @@
 /* transferroulette.js — Transfer Roulette.
- * Spinner lands on Nationality → Position → Decade; name a real World Cup
- * squad player matching all 3 within 10 seconds. Reuses the exact 3-reel
- * spin mechanic from game.js (spinReel()) and validates guesses by live-
- * filtering window.WORLD_CUP_DATA rather than a new player database — no
- * new player data file needed, only data_roulette_pools.js which defines
- * which reel values are eligible.
+ * Spinner lands on From Club → To Club → Decade; name the real player
+ * who made that transfer within 10 seconds. On a correct guess, the
+ * real transfer fee is revealed as a payoff. Validates guesses by
+ * live-filtering window.TRANSFER_DATA (data_transfers.js) — every combo
+ * is derived directly from the transfer list itself (no separate
+ * "eligible pools" file needed, unlike the old nationality/position/
+ * decade version this replaced).
  *
  * Self-contained IIFE, same shape as football501.js/draftvscomputer.js. */
 (function (W) {
@@ -42,55 +43,44 @@
     return s;
   }
 
-  /* ---- Combo pool: every nationality/position/decade combo that has at
-     least one real answer in WORLD_CUP_DATA, built once and cached. ---- */
+  /* ---- Combo pool: every {from, to, decade} triple that has at least
+     one real transfer in TRANSFER_DATA, built once and cached. Unlike
+     the old nationality/position/decade version, there's no separate
+     "eligible pools" file — every combo is derived directly from the
+     transfer list itself. ---- */
   var comboCache = null;
   function buildCombos() {
     if (comboCache) return comboCache;
-    var pools = W.ROULETTE_POOLS || { nations: [], positions: [], decades: [] };
-    var DATA = W.WORLD_CUP_DATA || {};
-    var combos = [];
-    pools.nations.forEach(function (nat) {
-      var country = DATA[nat];
-      if (!country) return;
-      pools.positions.forEach(function (pos) {
-        pools.decades.forEach(function (dec) {
-          var count = 0;
-          for (var y in country.years) {
-            if (decadeOf(y) !== dec) continue;
-            country.years[y].forEach(function (pl) { if (pl.p === pos) count++; });
-          }
-          if (count > 0) combos.push({ nat: nat, pos: pos, dec: dec, count: count });
-        });
-      });
+    var DATA = W.TRANSFER_DATA || [];
+    var map = {};
+    DATA.forEach(function (t) {
+      var dec = decadeOf(t.year);
+      var key = t.from + "|" + t.to + "|" + dec;
+      (map[key] = map[key] || []).push(t);
     });
-    comboCache = combos;
-    return combos;
+    var list = Object.keys(map).map(function (key) {
+      var parts = key.split("|");
+      return { from: parts[0], to: parts[1], dec: parts[2] };
+    });
+    comboCache = { list: list, map: map };
+    return comboCache;
   }
 
   function findValidPlayer(raw, combo, usedNames) {
     var q = normalize(raw);
     if (!q) return null;
-    var country = (W.WORLD_CUP_DATA || {})[combo.nat];
-    if (!country) return null;
-    var lastMatches = [];
-    for (var y in country.years) {
-      if (decadeOf(y) !== combo.dec) continue;
-      var players = country.years[y];
-      for (var i = 0; i < players.length; i++) {
-        var pl = players[i];
-        if (pl.p !== combo.pos) continue;
-        if (usedNames[pl.n]) continue;
-        if (normalize(pl.n) === q) return pl;
-        if (lastName(pl.n) === q) lastMatches.push(pl);
-      }
+    var key = combo.from + "|" + combo.to + "|" + combo.dec;
+    var candidates = (buildCombos().map[key] || []).filter(function (t) { return !usedNames[t.player]; });
+    for (var i = 0; i < candidates.length; i++) {
+      if (normalize(candidates[i].player) === q) return candidates[i];
     }
     /* Fallback: last-name-only match, but only if unambiguous among DISTINCT
-       eligible candidates — dedupe by name first, since the same real player
-       can appear in multiple squad-years (e.g. capped across two decades),
-       which shouldn't count as "two different people" ambiguity. */
+       eligible candidates — dedupe by full name first, since (rarely) the
+       same player could appear twice in the data across different
+       transfers, which shouldn't count as "two different people" ambiguity. */
+    var lastMatches = candidates.filter(function (t) { return lastName(t.player) === q; });
     var distinctNames = {};
-    lastMatches.forEach(function (pl) { distinctNames[pl.n] = pl; });
+    lastMatches.forEach(function (t) { distinctNames[t.player] = t; });
     var distinct = Object.keys(distinctNames).map(function (n) { return distinctNames[n]; });
     return distinct.length === 1 ? distinct[0] : null;
   }
@@ -192,9 +182,9 @@
 
   /* ---- Spin ---- */
   function nextCombo() {
-    var combos = buildCombos();
-    if (!combos.length) return null;
-    return combos[Math.floor(Math.random() * combos.length)];
+    var list = buildCombos().list;
+    if (!list.length) return null;
+    return list[Math.floor(Math.random() * list.length)];
   }
 
   function spinReel(stripEl, randomItem, finalHTML, duration) {
@@ -231,15 +221,16 @@
     ST.combo = combo;
     ST.phase = "spinning";
     render();
-    var natStrip = document.getElementById("rrNatStrip");
-    var posStrip = document.getElementById("rrPosStrip");
+    var fromStrip = document.getElementById("rrFromStrip");
+    var toStrip = document.getElementById("rrToStrip");
     var decStrip = document.getElementById("rrDecStrip");
-    if (!natStrip || !posStrip || !decStrip) { finishSpin(); return; }
-    var pools = W.ROULETTE_POOLS;
+    if (!fromStrip || !toStrip || !decStrip) { finishSpin(); return; }
+    var DATA = W.TRANSFER_DATA || [];
+    var decades = ["2000s", "2010s", "2020s"];
     Promise.all([
-      spinReel(natStrip, function () { return itemHTML(pools.nations[Math.floor(Math.random() * pools.nations.length)]); }, itemHTML(combo.nat), 900),
-      spinReel(posStrip, function () { return itemHTML(pools.positions[Math.floor(Math.random() * pools.positions.length)]); }, itemHTML(combo.pos), 1100),
-      spinReel(decStrip, function () { return itemHTML(pools.decades[Math.floor(Math.random() * pools.decades.length)]); }, itemHTML(combo.dec), 1300)
+      spinReel(fromStrip, function () { return itemHTML((DATA[Math.floor(Math.random() * DATA.length)] || {}).from || "?"); }, itemHTML(combo.from), 900),
+      spinReel(toStrip, function () { return itemHTML((DATA[Math.floor(Math.random() * DATA.length)] || {}).to || "?"); }, itemHTML(combo.to), 1100),
+      spinReel(decStrip, function () { return itemHTML(decades[Math.floor(Math.random() * decades.length)]); }, itemHTML(combo.dec), 1300)
     ]).then(finishSpin);
   }
 
@@ -278,24 +269,27 @@
     var p = activePlayer();
     var pl = findValidPlayer(raw, ST.combo, ST.usedNames);
     if (!pl) { flash("miss"); return; }
-    ST.usedNames[pl.n] = true;
+    ST.usedNames[pl.player] = true;
+    var feeMsg = "Correct! " + pl.player + " — " + pl.feeLabel + ", " + pl.year;
     stopRoundTimer();
+    flash("correct", feeMsg);
+    /* Small delay before the next spin so the fee-reveal payoff is
+       actually readable — without it, render() would wipe #rrPrompt in
+       the same synchronous tick before the browser ever paints it. */
     if (ST.mode === "solo") {
       p.streak++;
-      flash("correct");
-      doSpin();
+      setTimeout(function () { if (ST) doSpin(); }, 900);
       return;
     }
     p.score++;
     if (ST.mode === "online" && W.ElxiNet) W.ElxiNet.send({ t: "rr_score", score: p.score });
     if (p.score >= 5) {
       if (ST.mode === "online" && W.ElxiNet) W.ElxiNet.send({ t: "rr_matchOver" });
-      endGame("won", ST.turnIdx);
+      setTimeout(function () { if (ST) endGame("won", ST.turnIdx); }, 900);
       return;
     }
     if (isTurnBased()) advanceTurn();
-    flash("correct");
-    doSpin();
+    setTimeout(function () { if (ST) doSpin(); }, 900);
   }
 
   function endSolo() {
@@ -315,11 +309,12 @@
   }
 
   var flashTimer = null;
-  function flash(kind) {
+  function flash(kind, msg) {
     var el = document.getElementById("rrPrompt");
     if (!el) return;
     var cls = kind === "correct" ? "rr-flash-correct" : "rr-flash-miss";
     el.classList.remove("rr-flash-correct", "rr-flash-miss");
+    if (kind === "correct" && msg) el.textContent = msg;
     void el.offsetWidth;
     el.classList.add(cls);
     clearTimeout(flashTimer);
@@ -350,10 +345,10 @@
     '</div>';
   }
 
-  function reelsHTML(natVal, posVal, decVal) {
+  function reelsHTML(fromVal, toVal, decVal) {
     return '<div class="rr-reels">' +
-      '<div class="reel rr-reel"><div class="reel-strip" id="rrNatStrip">' + itemHTML(natVal || "?") + '</div></div>' +
-      '<div class="reel rr-reel"><div class="reel-strip" id="rrPosStrip">' + itemHTML(posVal || "?") + '</div></div>' +
+      '<div class="reel rr-reel"><div class="reel-strip" id="rrFromStrip">' + itemHTML(fromVal || "?") + '</div></div>' +
+      '<div class="reel rr-reel"><div class="reel-strip" id="rrToStrip">' + itemHTML(toVal || "?") + '</div></div>' +
       '<div class="reel rr-reel"><div class="reel-strip" id="rrDecStrip">' + itemHTML(decVal || "?") + '</div></div>' +
     '</div>';
   }
@@ -373,8 +368,8 @@
       : ('Streak: ' + ST.players[0].streak);
     return '<div class="fb501-play squad-card">' +
       '<div class="squad-head"><h2>Transfer Roulette</h2><span class="fb501-timer" id="rrTimer">' + ROUND_SECONDS + 's</span></div>' +
-      reelsHTML(c.nat, c.pos, c.dec) +
-      '<div class="sub" id="rrPrompt">Name a <strong>' + esc(c.pos) + '</strong> who played for <strong>' + esc(c.nat) + '</strong> in the <strong>' + esc(c.dec) + '</strong>.</div>' +
+      reelsHTML(c.from, c.to, c.dec) +
+      '<div class="sub" id="rrPrompt">Name the player who moved from <strong>' + esc(c.from) + '</strong> to <strong>' + esc(c.to) + '</strong> in the <strong>' + esc(c.dec) + '</strong>.</div>' +
       '<div class="fl-mode-stat" style="text-align:center;margin-bottom:8px;">' + scoreLine + '</div>' +
       '<div class="squad-search-wrap"><input class="squad-search" id="rrInput" type="text" placeholder="Type a name…" autocomplete="off" /></div>' +
       '<button class="btn-ghost fb501-quit">Quit to menu</button>' +
