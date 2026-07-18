@@ -1,6 +1,6 @@
 /* Service worker: network-first so the latest build always loads when online,
  * falling back to cache when offline (the app still installs + works offline). */
-const CACHE = "wcxi-v260";
+const CACHE = "wcxi-v261";
 const ASSETS = [
   "./", "./index.html", "./style.css", "./tokens.css", "./floodlights.css", "./floodlights.js", "./audio.js", "./ratingswar.js", "./draftvscomputer.js",
   "./data.js", "./data_extra.js", "./data_full.js", "./data_legacy.js", "./data_full2.js", "./data_wc_history.js", "./data_patches.js", "./ratings_overrides.js", "./positions.js", "./data_fixups.js", "./cl_clubs.js", "./cl_data.js", "./cl_data2.js", "./nations.js", "./engine.js", "./game.js",
@@ -49,6 +49,7 @@ const ASSETS = [
   "./data_minefield_cl_final_scorers.js", "./data_minefield_100_caps.js", "./data_minefield_pl_golden_boot.js",
   "./data_minefield_wc_golden_boot.js", "./data_minefield_pl_hattrick.js", "./data_minefield_multi_wc_winner.js",
   "./data_minefield_wc_hattricks.js", "./data_minefield_cl_two_clubs.js", "./data_minefield_two_countries.js",
+  "./data_minefield_cl_player_and_manager.js", "./data_minefield_foreign_national_manager.js", "./data_minefield_pfa_player_of_year.js",
   "./topxi.js", "./footballtenable.js",
   /* lazy-loaded on demand — cached by network-first on first access */
   /* "./data_pl_history.js", "./data_laliga_history.js", "./data_seriea_history.js", "./data_bundesliga_history.js", "./data_ligue1_history.js" */
