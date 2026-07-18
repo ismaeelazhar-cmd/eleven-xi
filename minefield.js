@@ -236,7 +236,7 @@
     }).join("");
     return '<div class="fb501-setup squad-card">' +
       '<div class="squad-head"><h2>Football Minefield</h2></div>' +
-      '<div class="sub">Pick a category. Click cells to reveal them — a correct name is safe, a wrong one is a mine.</div>' +
+      '<div class="sub">Pick a category. All the names are shown up front — click the ones you think are correct. A right pick is safe, a wrong one is a mine.</div>' +
       '<div class="fb501-cat-list">' + cards + '</div>' +
     '</div>';
   }
@@ -246,7 +246,7 @@
     var multi = isMultiplayer();
     var cellsHTML = b.cells.map(function (c) {
       var cls = "mine-cell" + (c.revealed ? (c.mine ? " mine-cell--mine" : " mine-cell--safe") : "");
-      return '<div class="' + cls + '" data-i="' + c.i + '">' + (c.revealed ? esc(c.name) : "?") + '</div>';
+      return '<div class="' + cls + '" data-i="' + c.i + '">' + esc(c.name) + '</div>';
     }).join("");
     var statusLine = multi
       ? ST.players.map(function (p, i) { return esc(p.name) + ': ' + p.safeRevealed + (i === ST.turnIdx ? ' (their turn)' : ''); }).join(' · ')
