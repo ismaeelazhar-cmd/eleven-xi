@@ -123,5 +123,9 @@ window.FB501_CATEGORIES = [
   { key: "switzerland_scorers", locked: false },
   { key: "switzerland_caps",    locked: false },
   { key: "austria_scorers",     locked: false },
-  { key: "austria_caps",        locked: false }
+  { key: "austria_caps",        locked: false },
+  { key: "turkey_scorers",      locked: false },
+  { key: "turkey_caps",         locked: false },
+  { key: "ukraine_caps",        locked: false },
+  { key: "iceland_caps",        locked: false }
 ];
