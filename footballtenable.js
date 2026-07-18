@@ -35,6 +35,25 @@
     return parts[parts.length - 1];
   }
 
+  /* Levenshtein edit distance — small helper, duplicated per-file by
+     convention (see submitGuess()'s third pass below). */
+  function editDistance(a, b) {
+    var m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    var prev = [];
+    for (var j = 0; j <= n; j++) prev[j] = j;
+    for (var i = 1; i <= m; i++) {
+      var cur = [i];
+      for (var j2 = 1; j2 <= n; j2++) {
+        var cost = a[i - 1] === b[j2 - 1] ? 0 : 1;
+        cur[j2] = Math.min(prev[j2] + 1, cur[j2 - 1] + 1, prev[j2 - 1] + cost);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+
   function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch (e) { return {}; } }
   function saveStats(s) { try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch (e) {} }
   function recordResult(catKey, banked, correctCount) {
@@ -187,6 +206,19 @@
          eligible rows (see football501.js's findMatch for the same rule). */
       var lastMatches = eligible.filter(function (r) { return lastName(r.n) === q; });
       if (lastMatches.length === 1) row = lastMatches[0];
+    }
+    if (!row && q.length >= 5) {
+      /* Third pass: single-typo tolerance, only for guesses of at least 5
+         normalized characters and only if exactly one eligible row is the
+         unique closest match — see football501.js's findMatch for the
+         same rule. */
+      var best = null, bestDist = Infinity, tie = false;
+      for (var k = 0; k < eligible.length; k++) {
+        var d = editDistance(q, normalize(eligible[k].n));
+        if (d < bestDist) { bestDist = d; best = eligible[k]; tie = false; }
+        else if (d === bestDist) { tie = true; }
+      }
+      if (bestDist === 1 && !tie) row = best;
     }
     if (!row) {
       /* Wrong guess (or a name already found) — uses the one life. */

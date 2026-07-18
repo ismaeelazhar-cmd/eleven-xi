@@ -51,6 +51,25 @@
     return parts[parts.length - 1];
   }
 
+  /* Levenshtein edit distance — small helper, duplicated per-file by
+     convention (see findMatch()'s third pass below). */
+  function editDistance(a, b) {
+    var m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    var prev = [];
+    for (var j = 0; j <= n; j++) prev[j] = j;
+    for (var i = 1; i <= m; i++) {
+      var cur = [i];
+      for (var j2 = 1; j2 <= n; j2++) {
+        var cost = a[i - 1] === b[j2 - 1] ? 0 : 1;
+        cur[j2] = Math.min(prev[j2] + 1, cur[j2 - 1] + 1, prev[j2 - 1] + cost);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+
   function loadStats() {
     try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch (e) { return {}; }
   }
@@ -205,7 +224,23 @@
        row has that last name — an ambiguous last name (two eligible rows
        sharing it) must not silently guess on the player's behalf. */
     var lastMatches = rows.filter(function (r) { return !used[r.n] && lastName(r.n) === q; });
-    return lastMatches.length === 1 ? lastMatches[0] : null;
+    if (lastMatches.length === 1) return lastMatches[0];
+    if (lastMatches.length > 1) return null;
+    /* Third pass: single-typo tolerance. Only for guesses of at least 5
+       normalized characters — shorter guesses (e.g. "Kane") sit too close
+       to unrelated short real names for a 1-edit match to be safe. Only
+       accepted if exactly one eligible row is the unique closest match. */
+    if (q.length >= 5) {
+      var best = null, bestDist = Infinity, tie = false;
+      for (var k = 0; k < rows.length; k++) {
+        if (used[rows[k].n]) continue;
+        var d = editDistance(q, normalize(rows[k].n));
+        if (d < bestDist) { bestDist = d; best = rows[k]; tie = false; }
+        else if (d === bestDist) { tie = true; }
+      }
+      if (bestDist === 1 && !tie) return best;
+    }
+    return null;
   }
 
   function submitGuess(raw) {

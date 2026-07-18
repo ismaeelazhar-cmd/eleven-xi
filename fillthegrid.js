@@ -28,6 +28,25 @@
     return parts[parts.length - 1];
   }
 
+  /* Levenshtein edit distance — small helper, duplicated per-file by
+     convention (see findValidPlayer()'s third pass below). */
+  function editDistance(a, b) {
+    var m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    var prev = [];
+    for (var j = 0; j <= n; j++) prev[j] = j;
+    for (var i = 1; i <= m; i++) {
+      var cur = [i];
+      for (var j2 = 1; j2 <= n; j2++) {
+        var cost = a[i - 1] === b[j2 - 1] ? 0 : 1;
+        cur[j2] = Math.min(prev[j2] + 1, cur[j2 - 1] + 1, prev[j2 - 1] + cost);
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+
   function loadStats() { try { return JSON.parse(localStorage.getItem(STATS_KEY) || "{}"); } catch (e) { return {}; } }
   function saveStats(s) { try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch (e) {} }
   function recordResult(gridType, seconds) {
@@ -261,7 +280,23 @@
     /* Fallback: last-name-only match, but only if unambiguous among
        eligible candidates (see football501.js's findMatch for the same rule). */
     var lastMatches = cell.candidates.filter(function (name) { return !ST.usedNames[name] && lastName(name) === q; });
-    return lastMatches.length === 1 ? lastMatches[0] : null;
+    if (lastMatches.length === 1) return lastMatches[0];
+    if (lastMatches.length > 1) return null;
+    /* Third pass: single-typo tolerance, only for guesses of at least 5
+       normalized characters and only if exactly one eligible candidate is
+       the unique closest match (see football501.js's findMatch). */
+    if (q.length >= 5) {
+      var best = null, bestDist = Infinity, tie = false;
+      for (var k = 0; k < cell.candidates.length; k++) {
+        var cand = cell.candidates[k];
+        if (ST.usedNames[cand]) continue;
+        var d = editDistance(q, normalize(cand));
+        if (d < bestDist) { bestDist = d; best = cand; tie = false; }
+        else if (d === bestDist) { tie = true; }
+      }
+      if (bestDist === 1 && !tie) return best;
+    }
+    return null;
   }
 
   function submitGuess(raw, fromRemote) {
