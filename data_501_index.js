@@ -106,5 +106,10 @@ window.FB501_CATEGORIES = [
   { key: "southkorea_caps",     locked: false },
   { key: "nigeria_scorers",     locked: false },
   { key: "nigeria_caps",        locked: false },
-  { key: "senegal_caps",        locked: false }
+  { key: "senegal_caps",        locked: false },
+  { key: "egypt_scorers",       locked: false },
+  { key: "egypt_caps",          locked: false },
+  { key: "ghana_scorers",       locked: false },
+  { key: "ghana_caps",          locked: false },
+  { key: "morocco_caps",        locked: false }
 ];
